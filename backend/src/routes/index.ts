@@ -5,6 +5,7 @@ import authRoutes from "../modules/auth/auth.routes";
 import editorialBoardRoutes from "../modules/editorial-board/editorial-board.routes";
 import notificationRoutes from "../modules/notifications/notification.routes";
 import articlesRoutes from "../modules/articles/article.routes";
+import specialIssueRoutes from "../modules/special-issues/special-issue.routes";
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.use("/staff", staffRoutes);
 router.use("/editorial-boards", editorialBoardRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/articles", articlesRoutes);
+router.use("/issues", specialIssueRoutes);
 
 
 export default router;

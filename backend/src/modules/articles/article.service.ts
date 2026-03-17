@@ -1,4 +1,3 @@
-import e from "express";
 import * as repository from "./article.repository";
 
 const ALLOWED_STATUSES = [
@@ -9,10 +8,21 @@ const ALLOWED_STATUSES = [
 
 type ArticleStatus = (typeof ALLOWED_STATUSES)[number];
 
+export type GetArticlesFilters = {
+    status?: string;
+    category?: string;
+    featured?: boolean;
+    search?: string;
+    sort?: "latest" | "oldest" | "mostViewed";
+    page?: number;
+    limit?: number;
+    tags?: string[];
+};
+
 //**Retrieve all articles optionally filtered by status */
 
-export async function getArticles(status?: string) {
-    return repository.findAll(status);
+export async function getArticles(filters: GetArticlesFilters = {}) {
+    return repository.findAll(filters);
 }
 
 /** Retrieve an article by its slug (Used for article pages) */
@@ -34,7 +44,7 @@ export async function createArticle(data: unknown) {
  *  Update Article Content.
  * Used by the admin editor.
  */
- export async function updateArticle(id: number, data: unknown) {
+ export async function updateArticle(id: string, data: unknown) {
     return repository.update(id, data);
 }
 
@@ -42,7 +52,7 @@ export async function createArticle(data: unknown) {
  * Publish an article.
  * Automatically sets published_at timestamp in the repository.
  */
-export async function publishArticle(id: number) {
+export async function publishArticle(id: string) {
     return repository.publish(id);
 }
 
@@ -50,14 +60,14 @@ export async function publishArticle(id: number) {
  * Archive an article
  * Archived articles no longer appear publicly but remain in the database for record-keeping.
  */
-export async function archiveArticle(id: number) {
+export async function archiveArticle(id: string) {
     return repository.archive(id);
 }
 
 /** Update article status with validation. 
  * Adds defense-in-depth validation to ensure only allowed statuses are set, even if the repository layer is bypassed.
 */
-export async function updateArticleStatus(id: number, status: string) {
+export async function updateArticleStatus(id: string, status: string) {
 
     if (!ALLOWED_STATUSES.includes(status as ArticleStatus)) {
         const err = Object.assign
@@ -83,6 +93,6 @@ export async function incrementArticleViews(slug: string) {
 }
 
 /** Delete article permanently (admin action). */
-export async function deleteArticle(id: number) {
+export async function deleteArticle(id: string) {
     return repository.remove(id);
 }

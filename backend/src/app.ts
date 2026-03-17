@@ -21,9 +21,12 @@ app.use(
   })
 );
 
-// Limit JSON body size to 50 kb to prevent payload abuse
-app.use(express.json({ limit: "50kb" }));
-app.use(express.urlencoded({ extended: false, limit: "50kb" }));
+// Increase JSON body size to allow image/PDF uploads as base64 (short-term fix).
+// Consider switching to multipart uploads for files + smaller JSON payloads.
+// NOTE: base64 increases payload size by ~33% over the original file size.
+const requestBodyLimit = process.env.REQUEST_BODY_LIMIT || "120mb";
+app.use(express.json({ limit: requestBodyLimit }));
+app.use(express.urlencoded({ extended: false, limit: requestBodyLimit }));
 
 // Sanitize req.body and req.query to strip XSS payloads
 app.use(xssSanitize);
