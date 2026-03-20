@@ -78,6 +78,24 @@ export async function removeBoardMember(memberId: string) {
   }
 }
 
+export async function updateBoardMember(boardId: string, memberId: string, section: string, role: string) {
+  if (!boardId || !memberId || !section || !role) {
+    throw Object.assign(new Error("boardId, memberId, section, and role are required"), { statusCode: 400 });
+  }
+
+  const board = await repository.findBoardById(boardId);
+  if (!board) {
+    throw Object.assign(new Error("Editorial board not found"), { statusCode: 404 });
+  }
+
+  const updated = await repository.updateMember(boardId, memberId, section.trim(), role.trim());
+  if (!updated) {
+    throw Object.assign(new Error("Board member not found"), { statusCode: 404 });
+  }
+
+  return updated;
+}
+
 export async function revokeBoardMember(boardId: string, memberId: string) {
   if (!boardId || !memberId) throw new Error("boardId and memberId are required");
   const success = await repository.revokeMember(boardId, memberId);

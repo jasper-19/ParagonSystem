@@ -16,6 +16,7 @@ router.delete("/:boardId", authenticate, controller.deleteBoard);
 // Member routes
 router.get("/:boardId/members", authenticate, controller.getMembers);
 router.post("/:boardId/members", authenticate, controller.addMember);
+router.patch("/:boardId/members/:memberId", authenticate, controller.updateMember);
 router.delete("/:boardId/members/:memberId", authenticate, controller.removeMember);
 router.post("/:boardId/members/:memberId/revoke", authenticate, controller.revokeMember);
 

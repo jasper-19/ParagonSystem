@@ -11,6 +11,8 @@ router.get("/eligible-for-board", authenticate, controller.getEligibleStaff);
 
 router.get("/:id", authenticate, controller.getStaffById);
 
+router.patch("/:id", authenticate, controller.updateStaff);
+
 router.post("/from-application/:applicationId", authenticate, controller.createFromApplication);
 
 router.delete("/:id", authenticate, controller.deleteStaff);

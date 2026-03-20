@@ -6,16 +6,20 @@ import editorialBoardRoutes from "../modules/editorial-board/editorial-board.rou
 import notificationRoutes from "../modules/notifications/notification.routes";
 import articlesRoutes from "../modules/articles/article.routes";
 import specialIssueRoutes from "../modules/special-issues/special-issue.routes";
+import userRoutes from "../modules/users/user.routes";
+import collegeRoutes from "../modules/colleges/college.routes";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
+router.use("/users", userRoutes);
 router.use("/applications", applicationRoutes);
 router.use("/staff", staffRoutes);
 router.use("/editorial-boards", editorialBoardRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/articles", articlesRoutes);
 router.use("/issues", specialIssueRoutes);
+router.use("/colleges", collegeRoutes);
 
 
 export default router;

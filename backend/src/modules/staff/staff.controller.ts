@@ -47,3 +47,24 @@ export const deleteStaff = asyncHandler(async (req: Request, res: Response) => {
   await service.deleteStaffMember(id);
   res.status(204).send();
 });
+
+/** PATCH /api/staff/:id */
+export const updateStaff = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params["id"] as string;
+
+  const patch = req.body as Partial<{
+    fullName: string;
+    email: string;
+    studentId: string | null;
+    yearLevel: string | null;
+    collegeId: string | null;
+    programId: string | null;
+    positionId: string | null;
+    subRole: string | null;
+    assignedSection: string | null;
+    assignedRole: string | null;
+  }>;
+
+  const member = await service.updateStaffMember(id, patch);
+  res.json(member);
+});

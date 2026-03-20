@@ -4,6 +4,9 @@
 -- Each statement uses IF NOT EXISTS / DO blocks so it is safe to
 -- re-run without errors if a column already exists.
 
+-- Required for gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 DO $$
 BEGIN
   -- Interview scheduling
@@ -201,3 +204,118 @@ CREATE TABLE IF NOT EXISTS notifications (
   is_read    BOOLEAN      NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
+
+-- ============================================================
+-- users table (authentication accounts)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS users (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  username      VARCHAR(100) NOT NULL UNIQUE,
+  password_hash TEXT         NOT NULL,
+  role          VARCHAR(50)  NOT NULL DEFAULT 'admin'
+    CHECK (role IN ('admin', 'staff')),
+  staff_id      UUID REFERENCES staff_members(id) ON DELETE SET NULL,
+  two_fa_enabled BOOLEAN     NOT NULL DEFAULT FALSE,
+  last_login_at TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- Add missing columns if the table already existed without them
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'staff_id'
+  ) THEN
+    ALTER TABLE users ADD COLUMN staff_id UUID REFERENCES staff_members(id) ON DELETE SET NULL;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'last_login_at'
+  ) THEN
+    ALTER TABLE users ADD COLUMN last_login_at TIMESTAMPTZ;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'two_fa_enabled'
+  ) THEN
+    ALTER TABLE users ADD COLUMN two_fa_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'created_at'
+  ) THEN
+    ALTER TABLE users ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'updated_at'
+  ) THEN
+    ALTER TABLE users ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+  END IF;
+END
+$$;
+
+-- ============================================================
+-- user sessions table (JWT session tracking)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_agent     TEXT,
+  ip_address     TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_active_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  revoked_at     TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id_active ON user_sessions(user_id) WHERE revoked_at IS NULL;
+
+-- ============================================================
+-- colleges / programs reference tables
+-- ============================================================
+CREATE TABLE IF NOT EXISTS colleges (
+  id         VARCHAR(50) PRIMARY KEY,
+  name       VARCHAR(255) NOT NULL,
+  is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
+  sort_order INT          NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS programs (
+  id         VARCHAR(50) PRIMARY KEY,
+  college_id VARCHAR(50)  NOT NULL REFERENCES colleges(id) ON DELETE RESTRICT,
+  name       VARCHAR(255) NOT NULL,
+  is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
+  sort_order INT          NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_programs_college_id ON programs(college_id);
+
+-- Seed minimal colleges/programs (safe to re-run)
+INSERT INTO colleges (id, name, sort_order) VALUES
+  ('ca',   'College of Agriculture', 10),
+  ('cbea', 'College of Business and Entrepreneurship and Accountancy', 20),
+  ('ccje', 'College of Criminal Justice Education', 30),
+  ('chm',  'College of Hospitality Management', 40),
+  ('cics', 'College of Information and Computing Sciences', 50),
+  ('cte',  'College of Teacher Education', 60)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO programs (id, college_id, name, sort_order) VALUES
+  ('agri',   'ca',   'Bachelor of Science in Agriculture', 10),
+  ('acis',   'cbea', 'Bachelor of Science in Accountancy and Information Systems', 10),
+  ('crim',   'ccje', 'Bachelor of Science in Criminology', 10),
+  ('hosp',   'chm',  'Bachelor of Science in Hospitality Management', 10),
+  ('it',     'cics', 'Bachelor of Science in Information Technology', 10),
+  ('elem',   'cte',  'Bachelor of Elementary Education', 10),
+  ('se-eng', 'cte',  'Bachelor of Secondary Education Major in English', 20),
+  ('se-fil', 'cte',  'Bachelor of Secondary Education Major in Filipino', 30)
+ON CONFLICT (id) DO NOTHING;

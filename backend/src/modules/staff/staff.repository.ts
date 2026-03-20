@@ -130,3 +130,56 @@ export async function remove(id: string) {
 
   return true;
 }
+
+type StaffPatch = Partial<{
+  fullName: string;
+  email: string;
+  studentId: string | null;
+  yearLevel: string | null;
+  collegeId: string | null;
+  programId: string | null;
+  positionId: string | null;
+  subRole: string | null;
+  assignedSection: string | null;
+  assignedRole: string | null;
+}>;
+
+export async function updateById(id: string, patch: StaffPatch) {
+  const allowed: Array<[keyof StaffPatch, string]> = [
+    ["fullName", "full_name"],
+    ["email", "email"],
+    ["studentId", "student_id"],
+    ["yearLevel", "year_level"],
+    ["collegeId", "college_id"],
+    ["programId", "program_id"],
+    ["positionId", "position_id"],
+    ["subRole", "sub_role"],
+    ["assignedSection", "assigned_section"],
+    ["assignedRole", "assigned_role"],
+  ];
+
+  const setClauses: string[] = [];
+  const values: any[] = [id];
+
+  for (const [key, column] of allowed) {
+    if (!(key in (patch ?? {}))) continue;
+    // Preserve explicit nulls (allows clearing fields).
+    const nextValue = (patch as any)[key];
+    values.push(typeof nextValue === "string" ? nextValue.trim() : nextValue);
+    setClauses.push(`${column} = $${values.length}`);
+  }
+
+  if (setClauses.length === 0) {
+    return findById(id);
+  }
+
+  const result = await db.query(
+    `UPDATE staff_members
+     SET ${setClauses.join(", ")}
+     WHERE id = $1
+     RETURNING *`,
+    values
+  );
+
+  return result.rows[0] ? mapRow(result.rows[0]) : undefined;
+}

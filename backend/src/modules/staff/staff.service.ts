@@ -41,3 +41,29 @@ export async function deleteStaffMember(id: string) {
     throw err;
   }
 }
+
+export async function updateStaffMember(
+  id: string,
+  patch: Partial<{
+    fullName: string;
+    email: string;
+    studentId: string | null;
+    yearLevel: string | null;
+    collegeId: string | null;
+    programId: string | null;
+    positionId: string | null;
+    subRole: string | null;
+    assignedSection: string | null;
+    assignedRole: string | null;
+  }>
+) {
+  if (!id) {
+    throw new Error("Staff id required");
+  }
+
+  const updated = await repository.updateById(id, patch ?? {});
+  if (!updated) {
+    throw Object.assign(new Error("Staff member not found"), { statusCode: 404 });
+  }
+  return updated;
+}

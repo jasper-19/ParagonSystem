@@ -165,6 +165,42 @@ export async function removeMember(memberId: string) {
   return result.rows[0] ?? undefined;
 }
 
+export async function updateMember(boardId: string, memberId: string, section: string, role: string) {
+  const updateResult = await db.query(
+    `UPDATE editorial_board_members
+     SET section = $3,
+         role    = $4
+     WHERE id = $2 AND board_id = $1
+     RETURNING staff_id`,
+    [boardId, memberId, section, role]
+  );
+
+  if (!updateResult.rowCount || updateResult.rowCount === 0) {
+    return undefined;
+  }
+
+  const staffId: string = updateResult.rows[0].staff_id;
+
+  // Keep staff_members and applications assignment fields in sync.
+  await db.query(
+    `UPDATE staff_members
+     SET assigned_section = $2,
+         assigned_role    = $3
+     WHERE id = $1`,
+    [staffId, section, role]
+  );
+
+  await db.query(
+    `UPDATE applications
+     SET assigned_section = $2,
+         assigned_role    = $3
+     WHERE id = (SELECT application_id FROM staff_members WHERE id = $1 AND application_id IS NOT NULL)`,
+    [staffId, section, role]
+  );
+
+  return findMemberById(memberId);
+}
+
 /**
  * Revoke: removes the member from the board and resets the linked application
  * back to assigned=false so they re-appear in the assignment queue,

@@ -82,6 +82,22 @@ export const addMember = asyncHandler(async (req: Request, res: Response) => {
   res.status(201).json(member);
 });
 
+/** PATCH /api/editorial-boards/:boardId/members/:memberId
+ *  Body: { section: string, role: string }
+ */
+export const updateMember = asyncHandler(async (req: Request, res: Response) => {
+  const { boardId, memberId } = req.params as { boardId: string; memberId: string };
+  const { section, role } = req.body as { section?: string; role?: string };
+
+  if (!section || !role) {
+    res.status(400).json({ error: "section and role are required" });
+    return;
+  }
+
+  const member = await service.updateBoardMember(boardId, memberId, section, role);
+  res.json(member);
+});
+
 /** DELETE /api/editorial-boards/:boardId/members/:memberId */
 export const removeMember = asyncHandler(async (req: Request, res: Response) => {
   const memberId = req.params["memberId"] as string;
