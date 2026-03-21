@@ -1,0 +1,420 @@
+<section class="space-y-8">
+
+  <!-- Header -->
+  <div class="flex flex-col gap-6">
+
+    <!-- Top Row -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+      <div class="space-y-2">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+          Special Issues
+        </h2>
+        <p class="text-base text-gray-600">
+          Manage and organize publication issues
+        </p>
+      </div>
+
+      <!-- CTA Button -->
+      <a
+        routerLink="/admin/create-special-issue"
+        class="inline-flex items-center gap-2 px-5 py-2.5
+               text-sm font-semibold text-white
+               bg-[#000035] hover:bg-[#0a1a2e]
+               rounded-lg transition-all duration-200
+               shadow-sm hover:shadow-md"
+      >
+        <span class="text-lg leading-none">+</span>
+        Create Issue
+      </a>
+
+    </div>
+
+    <!-- Search + Status -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+      <!-- Search -->
+      <div class="w-full md:w-80">
+        <input
+          type="text"
+          placeholder="Search by title, type, or year..."
+          [value]="searchQuery()"
+          (input)="onSearch($event)"
+          class="w-full px-4 py-2 border border-gray-200 rounded-lg
+                 focus:ring-2 focus:ring-[#f4b400] focus:outline-none
+                 text-sm"
+        />
+      </div>
+
+      <!-- Status Tabs -->
+      <div class="flex gap-2 flex-wrap">
+        @for (status of statuses; track status) {
+          <button
+            (click)="setStatus(status)"
+            class="px-4 py-2 text-sm font-medium rounded-lg transition capitalize"
+            [class.bg-[#000035]]="statusFilter() === status"
+            [class.text-white]="statusFilter() === status"
+            [class.bg-gray-100]="statusFilter() !== status"
+          >
+            {{ status === 'all' ? 'All' : (status | titlecase) }}
+          </button>
+        }
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Table Section -->
+  <div class="bg-white rounded-xl shadow border border-gray-100">
+
+    @if (filteredIssues().length === 0) {
+
+      <!-- Empty State -->
+      <div class="px-4 sm:px-6 md:px-8 py-12 sm:py-16 text-center">
+        <div class="inline-block p-4 bg-gray-100 rounded-full mb-4">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+          </svg>
+        </div>
+        <p class="text-gray-500 font-medium">No issues found</p>
+      </div>
+
+    } @else {
+
+      <!-- Desktop Table View (hidden on mobile) -->
+      <div class="hidden md:block overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-100">
+
+        <thead class="bg-linear-to-r from-[#000035] to-[#1a3a52]">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+              Cover
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
+              (click)="setSort('title')"
+            >
+              Title
+              <span *ngIf="sortField() === 'title'">
+                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
+              (click)="setSort('type')"
+            >
+              Type
+              <span *ngIf="sortField() === 'type'">
+                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
+              (click)="setSort('academicYear')"
+            >
+              Academic Year
+              <span *ngIf="sortField() === 'academicYear'">
+                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
+              (click)="setSort('status')"
+            >
+              Status
+              <span *ngIf="sortField() === 'status'">
+                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
+              (click)="setSort('publishedAt')"
+            >
+              Published
+              <span *ngIf="sortField() === 'publishedAt'">
+                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="bg-white divide-y divide-gray-50">
+
+          @for (issue of paginatedIssues(); track issue.id) {
+
+            <tr
+              class="hover:bg-[#f4b400]/10 transition-colors group cursor-pointer"
+              (click)="openIssue(issue)"
+            >
+
+              <!-- Cover -->
+              <td class="px-6 py-4">
+                <div class="w-14 aspect-3/4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                  <img
+                    [src]="issue.coverImage"
+                    [alt]="issue.title"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+              </td>
+
+              <!-- Title -->
+              <td class="px-6 py-4 font-semibold text-[#000035] max-w-xs truncate group-hover:text-[#f4b400]">
+                {{ issue.title }}
+              </td>
+
+              <!-- Type -->
+              <td class="px-6 py-4">
+                <span class="inline-block px-3 py-1 text-xs font-bold uppercase rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
+                  {{ issue.type }}
+                </span>
+              </td>
+
+              <!-- Academic Year -->
+              <td class="px-6 py-4 font-semibold text-[#000035]">
+                {{ issue.academicYear }}
+              </td>
+
+              <!-- Status -->
+              <td class="px-6 py-4">
+                <span
+                  class="inline-block px-3 py-1 text-xs font-bold rounded-full"
+                  [class.bg-green-100]="issue.status === 'published'"
+                  [class.text-green-700]="issue.status === 'published'"
+                  [class.bg-blue-100]="issue.status === 'draft'"
+                  [class.text-blue-700]="issue.status === 'draft'"
+                  [class.bg-gray-100]="issue.status === 'archived'"
+                  [class.text-gray-700]="issue.status === 'archived'"
+                >
+                  {{ issue.status | titlecase }}
+                </span>
+              </td>
+
+              <!-- Published -->
+              <td class="px-6 py-4 text-gray-500 text-sm">
+                {{ issue.publishedAt | date:'MMM d, yyyy' }}
+              </td>
+
+              <!-- Actions -->
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+
+                  <button
+                    type="button"
+                    [routerLink]="['/admin/edit-special-issue', issue.slug]"
+                    (click)="$event.stopPropagation()"
+                    class="px-3 py-1.5 text-xs font-semibold text-white bg-[#000035] hover:shadow-md rounded-lg transition"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="$event.stopPropagation(); requestArchive(issue)"
+                    class="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
+                    [class.hidden]="issue.status === 'archived'"
+                  >
+                    Archive
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="$event.stopPropagation(); requestDelete(issue)"
+                    class="px-3 py-1.5 text-xs font-semibold text-white bg-red-700 hover:bg-red-800 rounded-lg transition"
+                    [class.hidden]="issue.status !== 'archived'"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+        </table>
+      </div>
+
+      <!-- Mobile Card View (visible only on mobile) -->
+      <div class="md:hidden divide-y divide-gray-100">
+        @for (issue of paginatedIssues(); track issue.id) {
+          <div
+            class="p-4 hover:bg-[#f4b400]/5 transition-colors cursor-pointer"
+            (click)="openIssue(issue)"
+          >
+
+            <!-- Cover & Title -->
+            <div class="flex gap-3 mb-3">
+              <div class="w-16 aspect-3/4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
+                <img
+                  [src]="issue.coverImage"
+                  [alt]="issue.title"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-semibold text-[#000035] mb-2 text-sm leading-tight">
+                  {{ issue.title }}
+                </h3>
+                <span class="inline-block px-2.5 py-1 text-xs font-bold uppercase rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
+                  {{ issue.type }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Meta Info -->
+            <div class="grid grid-cols-2 gap-3 mb-3 text-sm">
+
+              <div>
+                <span class="text-gray-500 text-xs block mb-1">Academic Year</span>
+                <span class="font-semibold text-[#000035]">{{ issue.academicYear }}</span>
+              </div>
+
+              <div>
+                <span class="text-gray-500 text-xs block mb-1">Status</span>
+                <span
+                  class="inline-block px-2.5 py-1 text-xs font-bold rounded-full"
+                  [class.bg-green-100]="issue.status === 'published'"
+                  [class.text-green-700]="issue.status === 'published'"
+                  [class.bg-blue-100]="issue.status === 'draft'"
+                  [class.text-blue-700]="issue.status === 'draft'"
+                  [class.bg-gray-100]="issue.status === 'archived'"
+                  [class.text-gray-700]="issue.status === 'archived'"
+                >
+                  {{ issue.status | titlecase }}
+                </span>
+              </div>
+
+              <div class="col-span-2">
+                <span class="text-gray-500 text-xs block mb-1">Published</span>
+                <span class="text-gray-600 text-sm">{{ issue.publishedAt | date:'MMM d, yyyy' }}</span>
+              </div>
+
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 pt-2">
+              <button
+                type="button"
+                [routerLink]="['/admin/edit-special-issue', issue.slug]"
+                (click)="$event.stopPropagation()"
+                class="flex-1 px-3 py-2 text-xs font-semibold text-white bg-[#000035] hover:shadow-md rounded-lg transition"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                (click)="$event.stopPropagation(); requestArchive(issue)"
+                class="flex-1 px-3 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
+                [class.hidden]="issue.status === 'archived'"
+              >
+                Archive
+              </button>
+              <button
+                type="button"
+                (click)="$event.stopPropagation(); requestDelete(issue)"
+                class="flex-1 px-3 py-2 text-xs font-semibold text-white bg-red-700 hover:bg-red-800 rounded-lg transition"
+                [class.hidden]="issue.status !== 'archived'"
+              >
+                Delete
+              </button>
+            </div>
+
+          </div>
+        }
+      </div>
+
+    }
+
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex flex-col gap-4 mt-6">
+
+    <!-- Top Row: Page Size + Info -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+      <!-- Left: Page Size Selector -->
+      <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+
+        <span>Show</span>
+
+        <select
+          [value]="pageSize()"
+          (change)="onPageSizeChange($event)"
+          class="px-2 py-1 sm:px-3 sm:py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm
+                 focus:ring-2 focus:ring-[#f4b400] focus:outline-none"
+        >
+        @for (size of pageSizeOptions; track size) {
+          <option [value]="size">
+            {{ size }}
+          </option>
+        }
+        </select>
+
+        <span>entries</span>
+
+      </div>
+
+      <!-- Right: Page Info -->
+      <div class="text-xs sm:text-sm text-gray-500">
+        Showing
+        <span class="font-medium text-gray-800">
+          {{ rangeStart() }}–{{ rangeEnd() }}
+        </span>
+        of
+        <span class="font-medium text-gray-800">
+          {{ totalResults() }}
+        </span>
+      </div>
+
+    </div>
+
+    <!-- Bottom Row: Pagination Controls -->
+    <div class="flex items-center justify-center gap-1 sm:gap-2">
+
+      <button
+        (click)="currentPage.set(currentPage() - 1)"
+        [disabled]="currentPage() === 1"
+        class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg border border-gray-200
+               disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Prev
+      </button>
+
+      @for (page of pageNumbers(); track page) {
+        <button
+          (click)="currentPage.set(page)"
+          class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg min-w-8 sm:min-w-10"
+          [class.bg-[#000035]]="currentPage() === page"
+          [class.text-white]="currentPage() === page"
+          [class.bg-gray-100]="currentPage() !== page"
+        >
+          {{ page }}
+        </button>
+      }
+
+      <button
+        (click)="currentPage.set(currentPage() + 1)"
+        [disabled]="currentPage() === totalPages()"
+        class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg border border-gray-200
+               disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Next
+      </button>
+
+    </div>
+
+  </div>
+</section>
+
+<app-special-issue-view-modal
+  [issue]="selectedIssue()"
+  (close)="selectedIssue.set(null)"
+/>

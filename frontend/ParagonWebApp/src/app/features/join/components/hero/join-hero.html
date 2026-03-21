@@ -1,0 +1,83 @@
+<section class="relative overflow-hidden bg-[#000035] text-white">
+
+  <!-- Animated Background Gradient -->
+  <div class="absolute inset-0 bg-gradient-to-br from-[#000035] via-[#001f5c] to-[#000849] opacity-95"></div>
+
+  <!-- Grid Pattern Overlay -->
+  <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(244, 180, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(244, 180, 0, 0.05) 1px, transparent 1px); background-size: 50px 50px;"></div>
+
+  <!-- Multiple Gold Accent Blurs -->
+  <div class="absolute -top-24 -right-24 w-96 h-96 bg-[#F4B400]/20 rounded-full blur-3xl"></div>
+  <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-[#001f5c]/40 rounded-full blur-3xl"></div>
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#F4B400]/10 rounded-full blur-3xl animate-pulse"></div>
+
+  <!-- Radial Gradient Accent -->
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(244,180,0,0.08),transparent_60%)]"></div>
+
+  <!-- Content -->
+  <div class="relative max-w-6xl mx-auto px-6 py-12 text-center space-y-8">
+
+    <!-- Small Label with Enhanced Badge -->
+    <div class="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 backdrop-blur-md border border-[#F4B400]/30">
+      <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+      </svg>
+      <span class="uppercase tracking-[0.25em] text-xs sm:text-sm text-[#F4B400] font-semibold">
+        Recruitment
+      </span>
+    </div>
+
+    <!-- Main Title with Gradient Text -->
+    <h1 class="text-4xl md:text-6xl font-bold leading-tight tracking-tight">
+      {{ title() }}
+      <br />
+      <span class="bg-gradient-to-r from-[#F4B400] via-[#FFD966] to-[#F4B400] bg-clip-text text-transparent">
+        {{ highlight() }}
+      </span>
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="max-w-2xl mx-auto text-lg md:text-xl text-slate-300 leading-relaxed">
+      {{ subtitle() }}
+    </p>
+
+    <!-- CTA with Enhanced Design -->
+    <div class="pt-6">
+      <a
+        routerLink="/join"
+        fragment="application"
+        class="group relative inline-flex items-center justify-center gap-3
+               px-10 py-5
+               bg-gradient-to-r from-[#F4B400] to-[#FFD966]
+               text-[#000035]
+               font-bold text-base sm:text-lg
+               rounded-xl
+               overflow-hidden
+               transition-all duration-300
+               hover:scale-105
+               hover:shadow-2xl
+               hover:shadow-[#F4B400]/40
+               focus:outline-none focus:ring-4 focus:ring-[#F4B400]/50"
+      >
+        <span class="relative z-10 flex items-center gap-3">
+          Start Your Application
+          <svg
+            class="w-5 h-5 transition-transform duration-300 group-hover:translate-x-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2.5"
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        </span>
+        <!-- Gradient Overlay on Hover -->
+        <div class="absolute inset-0 bg-gradient-to-r from-[#FFD966] to-[#F4B400] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+      </a>
+    </div>
+
+  </div>
+
+</section>

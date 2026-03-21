@@ -1,0 +1,187 @@
+<!-- admin-login.html -->
+<div
+  class="relative flex min-h-screen items-center justify-center bg-slate-950 bg-cover bg-center px-4 py-10 sm:py-16"
+  style="background-image: url('assets/ebheader.png');"
+>
+  <div class="absolute inset-0 bg-linear-to-br from-slate-950/70 via-slate-900/60 to-blue-950/50"></div>
+
+  <div
+    class="relative mx-auto flex w-full max-w-5xl items-stretch overflow-hidden rounded-[2.5rem] border border-white/20 shadow-2xl"
+  >
+    <!-- Left: form -->
+    <div class="flex w-full flex-col justify-center bg-white/10 backdrop-blur-3xl px-6 py-10 sm:px-10 md:w-1/2">
+      <div class="mb-8 flex flex-col items-center gap-4">
+        <div class="flex h-16 w-16 shrink-0 items-center justify-center">
+          <img
+            src="assets/PRG_Logo.png"
+            alt="Paragon Logo"
+            class="h-full w-full object-contain"
+          />
+        </div>
+        <div class="text-center">
+          <h1 class="text-2xl font-bold text-slate-900">Welcome home</h1>
+          <p class="text-sm text-[#000035]">Please enter your details.</p>
+        </div>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+        <div>
+          <div class="group relative">
+            <input
+              type="text"
+              formControlName="username"
+              class="peer h-11 w-full rounded-xl border border-slate-300 bg-white/90 pl-4 pr-11 text-sm text-slate-900 shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-500 focus:bg-white focus:shadow-md focus:ring-2 focus:ring-blue-500/20"
+              placeholder="Username"
+              autocomplete="username"
+            />
+            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors duration-200 peer-focus:text-blue-600">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </span>
+          </div>
+          <p
+            *ngIf="form.controls.username.touched && form.controls.username.invalid"
+            class="mt-1 text-xs font-medium text-red-600"
+          >
+            Username is required.
+          </p>
+        </div>
+
+        <div>
+          <div class="group relative">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              class="peer h-11 w-full rounded-xl border border-slate-300 bg-white/90 pl-4 pr-11 text-sm text-slate-900 shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-500 focus:bg-white focus:shadow-md focus:ring-2 focus:ring-blue-500/20"
+              placeholder="Password"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              (click)="togglePasswordVisibility()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors duration-200 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 peer-focus:text-blue-600"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-pressed]="showPassword()"
+            >
+              <svg
+                *ngIf="!showPassword()"
+                viewBox="0 0 24 24"
+                class="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M2 12s3.636-7 10-7 10 7 10 7-3.636 7-10 7-10-7-10-7z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg
+                *ngIf="showPassword()"
+                viewBox="0 0 24 24"
+                class="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M3 3l18 18" />
+                <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                <path d="M9.88 4.24A10.94 10.94 0 0 1 12 5c6.364 0 10 7 10 7a20.29 20.29 0 0 1-4.2 5.1" />
+                <path d="M6.11 6.11C3.73 7.72 2 12 2 12s3.636 7 10 7a10.83 10.83 0 0 0 4.12-.79" />
+              </svg>
+            </button>
+          </div>
+          <p
+            *ngIf="form.controls.password.touched && form.controls.password.invalid"
+            class="mt-1 text-xs font-medium text-red-600"
+          >
+            Password is required.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <label class="flex cursor-pointer items-center gap-2 text-xs text-slate-700 transition-colors hover:text-slate-900">
+            <input type="checkbox" class="h-4 w-4 cursor-pointer rounded border-slate-300 accent-blue-600" />
+            Remember for 30 days
+          </label>
+          <button type="button" class="text-xs font-semibold text-[#f4b400]/50 transition-colors hover:text-[#f4b400] cursor-pointer">Forgot password?</button>
+        </div>
+
+        <div *ngIf="error()" class="flex items-center gap-2 rounded-xl border border-red-300 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700 shadow-sm">
+          <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+          <span>{{ error() }}</span>
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="loading()"
+          class="group relative h-11 w-full overflow-hidden rounded-xl bg-[#000035] text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-600/40 disabled:opacity-60 disabled:shadow-none cursor-pointer"
+        >
+          <span class="relative z-10">{{ loading() ? 'Signing in…' : 'Login' }}</span>
+          <div class="absolute inset-0 bg-[#f4b400] opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-disabled:opacity-0"></div>
+        </button>
+
+        <div class="relative py-2">
+          <div class="absolute inset-0 flex items-center">
+          </div>
+          <div class="relative flex justify-center">
+            <span class="px-3 text-xs font-medium uppercase tracking-wider text-[#000035] hover:text-[#f4b400]">Or continue with</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            class="group flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-600 shadow-sm transition-all duration-200 hover:scale-105 hover:border-slate-400 hover:bg-slate-50 hover:shadow-md"
+            aria-label="Continue with Google"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5 transition-transform duration-200 group-hover:scale-110" fill="currentColor">
+              <path
+                d="M21.6 12.23c0-.7-.06-1.22-.2-1.76H12v3.33h5.52c-.11.83-.73 2.08-2.1 2.92l-.02.11 2.97 2.3.21.02c1.93-1.78 3.04-4.4 3.04-6.92z"
+              />
+              <path
+                d="M12 22c2.76 0 5.08-.91 6.78-2.48l-3.23-2.51c-.87.61-2.04 1.03-3.55 1.03-2.7 0-4.98-1.78-5.79-4.24l-.1.01-3.07 2.38-.03.1C4.68 19.55 8.06 22 12 22z"
+              />
+              <path
+                d="M6.21 13.8A6.83 6.83 0 0 1 5.84 12c0-.63.11-1.24.35-1.8l-.01-.12-3.11-2.42-.1.05A10 10 0 0 0 2 12c0 1.6.38 3.1 1.06 4.43l3.15-2.44z"
+              />
+              <path
+                d="M12 5.96c1.93 0 3.23.83 3.97 1.52l2.9-2.83C17.07 3.02 14.76 2 12 2 8.06 2 4.68 4.45 3.01 7.57l3.17 2.47C7.02 7.73 9.3 5.96 12 5.96z"
+              />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="group flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-600 shadow-sm transition-all duration-200 hover:scale-105 hover:border-slate-400 hover:bg-slate-50 hover:shadow-md"
+            aria-label="Continue with Facebook"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5 transition-transform duration-200 group-hover:scale-110" fill="currentColor">
+              <path
+                d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.46h-1.26c-1.24 0-1.62.77-1.62 1.56V12h2.76l-.44 2.89h-2.32v6.99A10 10 0 0 0 22 12z"
+              />
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right: decorative panel -->
+    <div class="relative hidden md:block md:w-1/2 bg-white p-6">
+      <div class="relative h-full min-h-130 w-full overflow-hidden rounded-[2.25rem] bg-linear-to-br from-blue-950 via-blue-900 to-indigo-950 shadow-inner">
+        <img
+          src="assets/image.jpg"
+          alt=""
+          aria-hidden="true"
+          class="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
+          draggable="false"
+        />
+        <div class="absolute inset-0 bg-linear-to-br from-blue-950/35 via-indigo-950/15 to-slate-950/35"></div>
+      </div>
+    </div>
+  </div>
+</div>

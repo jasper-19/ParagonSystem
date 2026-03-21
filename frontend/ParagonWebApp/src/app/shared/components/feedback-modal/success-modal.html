@@ -1,0 +1,66 @@
+<ng-container *ngIf="isOpen()">
+
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
+       (click)="close()">
+
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative"
+         (click)="$event.stopPropagation()">
+
+      <!-- Decorative Top Bar -->
+      <div class="h-2 bg-linear-to-r from-green-400 via-emerald-500 to-green-400"></div>
+
+      <!-- Content -->
+      <div class="p-10 space-y-6 text-center relative">
+
+        <!-- Success Icon -->
+        <div class="relative inline-flex">
+
+          <!-- Icon Container -->
+          <div class="relative w-20 h-20 mx-auto rounded-2xl bg-linear-to-br from-green-400 to-emerald-500
+                      flex items-center justify-center shadow-xl shadow-green-500/30
+                      transform rotate-3 transition-transform duration-500">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="relative space-y-2">
+          <h3 class="text-2xl md:text-3xl font-bold text-[#000035]">
+            {{ title() }}
+          </h3>
+
+        </div>
+
+        <!-- Message -->
+        <p class="relative text-slate-600 leading-relaxed max-w-sm mx-auto">
+          {{ message() }}
+        </p>
+
+        <!-- Button -->
+        <div class="relative pt-2">
+          <button
+            (click)="close()"
+            class="w-full bg-linear-to-r from-[#000035] to-[#001f5c] text-white
+                   py-4 rounded-xl font-bold text-base
+                   shadow-lg shadow-[#000035]/20
+                   hover:shadow-xl hover:shadow-[#000035]/30
+                   hover:-translate-y-0.5
+                   transition-all duration-300
+                   flex items-center justify-center gap-2 group"
+          >
+            <span>{{ buttonText() }}</span>
+            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</ng-container>

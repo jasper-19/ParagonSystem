@@ -1,0 +1,141 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-0 divide-y divide-[#000035]/6">
+
+  <!-- ── AUTHENTICATION SECURITY ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/>
+        </svg>
+        <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Authentication</h2>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Login attempt limits and session controls.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">
+          Max Login Attempts
+        </label>
+        <input
+          type="number"
+          formControlName="maxLoginAttempts"
+          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/50 transition-all duration-200"
+        />
+      </div>
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">
+          Lockout Duration <span class="normal-case tracking-normal font-semibold">(min)</span>
+        </label>
+        <input
+          type="number"
+          formControlName="lockoutDuration"
+          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/50 transition-all duration-200"
+        />
+      </div>
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">
+          Session Timeout <span class="normal-case tracking-normal font-semibold">(min)</span>
+        </label>
+        <input
+          type="number"
+          formControlName="sessionTimeout"
+          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/50 transition-all duration-200"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PASSWORD & ACCESS CONTROL ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+        </svg>
+        <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Password & Access</h2>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Password policy and authentication factors.</p>
+    </div>
+
+    <div class="flex flex-col gap-3">
+
+      <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+        <input type="checkbox" formControlName="requireStrongPassword" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+        <div>
+          <p class="text-sm font-bold text-[#000035] group-hover:text-[#000035] transition-colors duration-200">
+            Require Strong Passwords
+          </p>
+          <p class="text-[11px] text-[#000035]/35 mt-0.5">
+            Enforce minimum length, symbols, and mixed case.
+          </p>
+        </div>
+      </label>
+
+      <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+        <input type="checkbox" formControlName="enable2FA" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+        <div>
+          <p class="text-sm font-bold text-[#000035] transition-colors duration-200">
+            Enable Two-Factor Authentication
+          </p>
+          <p class="text-[11px] text-[#000035]/35 mt-0.5">
+            Require a second verification step on login.
+          </p>
+        </div>
+      </label>
+
+    </div>
+  </div>
+
+  <!-- ── MONITORING & LOGS ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125z"/>
+        </svg>
+        <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Monitoring & Logs</h2>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Track user activity and system events.</p>
+    </div>
+
+    <div>
+      <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+        <input type="checkbox" formControlName="enableActivityLogs" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+        <div>
+          <p class="text-sm font-bold text-[#000035] transition-colors duration-200">
+            Enable Activity Logs
+          </p>
+          <p class="text-[11px] text-[#000035]/35 mt-0.5">
+            Record login events, edits, and admin actions for auditing.
+          </p>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── SUBMIT ── -->
+  <div class="pt-6 flex items-center justify-between gap-4">
+    <p class="text-[10px] text-[#000035]/25 font-semibold uppercase tracking-widest hidden sm:block">
+      Changes apply on next login session
+    </p>
+    <button
+      type="submit"
+      [disabled]="isSubmitting"
+      class="flex items-center gap-2.5 bg-[#000035] hover:bg-[#000035]/90 disabled:opacity-40 text-white text-[11px] font-black uppercase tracking-[0.18em] px-6 py-3 rounded-lg transition-all duration-200 cursor-pointer disabled:cursor-not-allowed ml-auto"
+    >
+      <svg
+        *ngIf="isSubmitting"
+        class="animate-spin size-3.5 text-white/60"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v8z"></path>
+      </svg>
+      {{ isSubmitting ? 'Saving…' : 'Save Changes' }}
+    </button>
+  </div>
+
+</form>

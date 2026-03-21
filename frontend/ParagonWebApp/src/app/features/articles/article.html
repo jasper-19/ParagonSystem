@@ -1,0 +1,83 @@
+  <!-- HERO (reused from home) -->
+ <app-welcome-banner></app-welcome-banner>
+
+<ng-container *ngIf="article$ | async as article; else loading">
+
+
+  <!-- META -->
+  <app-article-meta
+  [title]="article.title"
+  [excerpt]="article.excerpt"
+  [author]="article.author"
+  [publishedAt]="article.publishedAt || undefined"
+  [category]="article.category"
+  [views]="article.views"
+  [photoby]="article.photoby"
+  [graphicby]="article.graphicby"
+  [illusrationby]="article.illusrationby"
+  [readingTime]="'1 min read'">
+</app-article-meta>
+
+  <!-- IMAGE  -->
+   <div class="max-w-4xl mx-auto px-4 mt-8 mb-2">
+      <div class="relative overflow-hidden rounded-lg shadow-sm group">
+        <img
+          [src]="article.image"
+          [alt]="article.title"
+          class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.02]"/>
+        <div class="absolute inset-0 ring-1 ring-inset ring-gray-900/10 rounded-lg pointer-events-none"></div>
+      </div>
+    </div>
+
+  <!-- BODY -->
+  <section class="max-w-3xl mx-auto px-4 py-10"
+           *ngIf="articleView$ | async as view">
+
+    <app-article-section
+      *ngFor="let section of view.sections"
+      [section]="section">
+    </app-article-section>
+
+  </section>
+
+<!-- TAGS -->
+<div *ngIf="article.tags.length"
+     class="max-w-3xl mx-auto px-4 pb-16">
+
+  <hr class="border-gray-200 mb-6" />
+
+  <h3 class="text-lg font-semibold text-gray-700 mb-4">
+    Tags
+  </h3>
+
+  <div class="flex flex-wrap gap-3">
+    <a
+      *ngFor="let tag of article.tags"
+      class="px-4 py-2 bg-[#f4b400] text-white rounded-full text-sm hover:bg-[#f4b400]/50 transition"
+    >
+      #{{ tag }}
+    </a>
+  </div>
+
+</div>
+
+<!-- STAFF APPLICATION -->
+<app-staff-application></app-staff-application>
+
+<!-- RELATED ARTICLES -->
+<app-related
+  *ngIf="related$ | async as related"
+  [articles]="related">
+</app-related>
+
+<!-- OTHER STORIES -->
+<app-other-stories
+  *ngIf="otherStories$ | async as other"
+  [articles]="other">
+</app-other-stories>
+
+</ng-container>
+
+<ng-template #loading>
+  <app-article-skeleton></app-article-skeleton>
+</ng-template>

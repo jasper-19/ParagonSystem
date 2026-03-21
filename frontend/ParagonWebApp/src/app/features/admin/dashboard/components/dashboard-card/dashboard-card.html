@@ -1,0 +1,30 @@
+<div
+  class="bg-none rounded-xl  p-6
+         transition-all duration-300 hover:-translate-y-1"
+>
+
+  <!-- Title -->
+  <p class="text-xs uppercase tracking-wider text-gray-500 font-medium">
+    {{ title }}
+  </p>
+
+  <!-- Value -->
+  <p
+    class="text-4xl font-bold mt-3"
+    [ngClass]="colorClasses().value"
+  >
+    {{ value }}
+  </p>
+
+  <!-- Optional Subtitle -->
+  @if (subtitle) {
+    <div
+      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+             text-xs font-medium mt-3"
+      [ngClass]="colorClasses().accent"
+    >
+      {{ subtitle }}
+    </div>
+  }
+
+</div>

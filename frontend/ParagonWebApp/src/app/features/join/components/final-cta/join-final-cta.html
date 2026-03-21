@@ -1,0 +1,63 @@
+<section class="relative py-12 bg-gradient-to-br from-[#000035] via-[#001f5c] to-[#000035] text-white overflow-hidden">
+
+  <!-- Subtle Background Elements -->
+  <div class="absolute inset-0 opacity-30">
+    <div class="absolute top-1/4 right-1/4 w-96 h-96 bg-[#F4B400]/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-1/4 left-1/4 w-96 h-96 bg-[#F4B400]/10 rounded-full blur-3xl"></div>
+  </div>
+
+  <!-- Grid Pattern Overlay -->
+  <div class="absolute inset-0 opacity-[0.02]"
+       style="background-image: linear-gradient(rgba(244, 180, 0, 0.3) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(244, 180, 0, 0.3) 1px, transparent 1px);
+              background-size: 60px 60px;">
+  </div>
+
+  <div class="relative max-w-5xl mx-auto px-6 text-center space-y-10">
+
+    <!-- Headline -->
+    <h2 class="text-3xl md:text-5xl font-bold tracking-tight leading-tight">
+      {{ title() }}
+    </h2>
+
+    <!-- Subtitle -->
+    <p class="text-lg md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-light">
+      {{ subtitle() }}
+    </p>
+
+    <!-- CTA Button -->
+    <div class="pt-8">
+      <a
+        routerLink="/join"
+        fragment="application"
+        class="group inline-flex items-center gap-3
+               px-12 py-5
+               bg-[#F4B400]
+               text-[#000035]
+               text-lg
+               font-bold
+               rounded-xl
+               shadow-lg shadow-[#F4B400]/20
+               transition-all duration-300
+               hover:shadow-2xl hover:shadow-[#F4B400]/40
+               hover:-translate-y-1"
+      >
+        <span>Apply Now</span>
+
+        <svg
+          class="w-5 h-5 transition-transform duration-300 group-hover:translate-x-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          stroke-width="2.5"
+        >
+          <path stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+      </a>
+    </div>
+
+  </div>
+
+</section>

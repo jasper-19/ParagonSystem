@@ -1,0 +1,254 @@
+<ng-container *ngIf="application as app">
+
+  <div
+    class="fixed inset-0 bg-black/70 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
+    (click)="close.emit()"
+  >
+
+    <div
+      class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden relative"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- Header with Background -->
+      <div class="relative bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035] px-8 py-6">
+
+        <div class="relative flex items-start justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
+              Application Review
+            </h3>
+
+            <div class="flex flex-wrap items-center gap-2">
+
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-xl
+                       bg-white/10 text-slate-200 border border-white/10 backdrop-blur-sm"
+              >
+                <div class="w-1.5 h-1.5 bg-[#F4B400] rounded-full"></div>
+                <span class="text-sm font-medium">Status:</span>
+                <span class="text-sm font-semibold text-white">
+                  {{ app.status ?? 'Pending' }}
+                </span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Close Button -->
+          <button
+            (click)="close.emit()"
+            class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl
+                   bg-white/10 hover:bg-white/20 text-white
+                   transition-all duration-300 backdrop-blur-sm
+                   border border-white/10 hover:border-white/20"
+            aria-label="Close"
+            type="button"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Content -->
+      <div class="p-8 space-y-6 max-h-[calc(100vh-12rem)] overflow-y-auto">
+
+
+        <!-- Applicant Info -->
+        <div class="space-y-4">
+
+          <div class="flex items-center gap-2">
+            <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+            <h4 class="text-lg font-bold text-[#000035]">
+              Applicant
+            </h4>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
+              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Name</div>
+              <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ app.fullName }}</div>
+            </div>
+
+            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
+              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</div>
+              <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ app.email }}</div>
+            </div>
+
+            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
+              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Student ID</div>
+              <div class="text-sm font-medium text-slate-700">{{ app.studentId }}</div>
+            </div>
+
+            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
+              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Year Level</div>
+              <div class="text-sm font-medium text-slate-700">{{ yearLevelLabel(app.yearLevel) }}</div>
+            </div>
+
+            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
+              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Position</div>
+              <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ positionTitle || app.positionId }}</div>
+            </div>
+
+            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
+              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Subrole</div>
+              <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ subRoleLabel || (app.subRole ?? '—') }}</div>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Motivation -->
+        <div class="space-y-4">
+
+          <div class="flex items-center gap-2">
+            <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+            <h4 class="text-lg font-bold text-[#000035]">
+              Motivation
+            </h4>
+          </div>
+
+          <p class="text-slate-700 leading-relaxed text-base">
+            {{ app.motivation }}
+          </p>
+
+        </div>
+
+
+    <!-- ========================= -->
+    <!-- Pending → Schedule Interview -->
+    <!-- ========================= -->
+
+    <div *ngIf="isPending(app)" class="p-6 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200 space-y-4">
+
+      <div class="flex items-center gap-2">
+        <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+        <h4 class="text-lg font-bold text-[#000035]">
+          Schedule Interview
+        </h4>
+      </div>
+
+      <input
+        type="datetime-local"
+        [(ngModel)]="interviewDate"
+        class="border-2 border-slate-200 rounded-xl p-3 w-full focus:outline-none focus:border-[#F4B400]/40"
+      />
+
+      <button
+        class="px-6 py-3 rounded-xl bg-[#000035] text-white font-bold
+               shadow-lg shadow-[#000035]/20
+               hover:shadow-xl hover:shadow-[#000035]/30
+               hover:-translate-y-0.5
+               transition-all duration-300"
+        (click)="scheduleInterview(app)"
+      >
+        Schedule Interview
+      </button>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- Interview Scheduled -->
+    <!-- ========================= -->
+
+    <div *ngIf="isScheduled(app)" class="p-6 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200 space-y-4">
+
+      <div class="flex items-center gap-2">
+        <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+        <h4 class="text-lg font-bold text-[#000035]">
+          Interview Scheduled
+        </h4>
+      </div>
+
+      <div class="text-sm text-slate-700">
+        <span class="font-semibold">Date:</span>
+        {{ app.interviewDate }}
+      </div>
+
+      <button
+        class="px-6 py-3 rounded-xl bg-[#000035] text-white font-bold
+               shadow-lg shadow-[#000035]/20
+               hover:shadow-xl hover:shadow-[#000035]/30
+               hover:-translate-y-0.5
+               transition-all duration-300"
+        (click)="interviewed.emit(app)"
+      >
+        Mark Interviewed
+      </button>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- Interview Completed -->
+    <!-- ========================= -->
+
+    <div *ngIf="isInterviewed(app)" class="p-6 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200 space-y-4">
+
+      <div class="flex items-center gap-2">
+        <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+        <h4 class="text-lg font-bold text-[#000035]">
+          Interview Notes
+        </h4>
+      </div>
+
+      <textarea
+        [(ngModel)]="notesText"
+        rows="4"
+        class="border-2 border-slate-200 rounded-xl w-full p-3 focus:outline-none focus:border-[#F4B400]/40"
+      ></textarea>
+
+      <p class="text-sm text-slate-600">
+        Notes will be saved when you Accept or Reject.
+      </p>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- Decision Section -->
+    <!-- ========================= -->
+
+    <div
+      *ngIf="isInterviewed(app)"
+      class="flex flex-col sm:flex-row gap-3 border-t border-slate-200 pt-4"
+    >
+
+      <button
+        class="px-6 py-3 rounded-xl bg-green-600 text-white font-bold
+               shadow-lg shadow-green-600/20
+               hover:shadow-xl hover:shadow-green-600/30
+               hover:-translate-y-0.5
+               transition-all duration-300"
+        (click)="acceptWithNotes(app)"
+      >
+        Accept
+      </button>
+
+      <button
+        class="px-6 py-3 rounded-xl bg-red-600 text-white font-bold
+               shadow-lg shadow-red-600/20
+               hover:shadow-xl hover:shadow-red-600/30
+               hover:-translate-y-0.5
+               transition-all duration-300"
+        (click)="rejectWithNotes(app)"
+      >
+        Reject
+      </button>
+
+    </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</ng-container>

@@ -1,0 +1,174 @@
+<ng-container *ngIf="issue as i">
+  <div
+    class="fixed inset-0 bg-black/70 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
+    (click)="close.emit()"
+  >
+    <div
+      class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden relative"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Header -->
+      <div class="relative bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035] px-8 py-6">
+        <div class="relative flex items-start justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2 truncate">
+              {{ i.title }}
+            </h3>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-xl
+                       bg-white/10 text-slate-200 border border-white/10 backdrop-blur-sm"
+              >
+                <div class="w-1.5 h-1.5 bg-[#F4B400] rounded-full"></div>
+                <span class="text-sm font-medium">Status:</span>
+                <span class="text-sm font-semibold text-white">{{ i.status | titlecase }}</span>
+              </div>
+
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-xl
+                       bg-white/10 text-slate-200 border border-white/10 backdrop-blur-sm"
+              >
+                <span class="text-sm font-medium">Type:</span>
+                <span class="text-sm font-semibold text-white">{{ i.type }}</span>
+              </div>
+
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-xl
+                       bg-white/10 text-slate-200 border border-white/10 backdrop-blur-sm"
+              >
+                <span class="text-sm font-medium">Year:</span>
+                <span class="text-sm font-semibold text-white">{{ i.academicYear }}</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            (click)="close.emit()"
+            class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl
+                   bg-white/10 hover:bg-white/20 text-white
+                   transition-all duration-300 backdrop-blur-sm
+                   border border-white/10 hover:border-white/20"
+            aria-label="Close"
+            type="button"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="p-8 space-y-6 max-h-[calc(100vh-12rem)] overflow-y-auto">
+        <!-- Cover + (Overview stacked with PDF) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <!-- Cover -->
+          <div class="space-y-4 lg:col-span-1">
+            <div class="flex items-center gap-2">
+              <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+              <h4 class="text-lg font-bold text-[#000035]">Cover</h4>
+            </div>
+
+            <div class="rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm aspect-3/4 bg-slate-50">
+              <img [src]="i.coverImage" [alt]="i.title" class="w-full h-full object-cover" />
+            </div>
+          </div>
+
+          <!-- Right column: Overview + PDF (vertical alignment) -->
+          <div class="space-y-6 lg:col-span-2">
+            <!-- Overview -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+                <h4 class="text-lg font-bold text-[#000035]">Overview</h4>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Slug</div>
+                  <div class="text-sm font-medium text-slate-700 break-words">{{ i.slug }}</div>
+                </div>
+
+                <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Published</div>
+                  <div class="text-sm font-medium text-slate-700">
+                    {{ i.publishedAt ? (i.publishedAt | date:'medium') : '-' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PDF -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+                <h4 class="text-lg font-bold text-[#000035]">PDF</h4>
+              </div>
+
+              <div class="rounded-2xl border-2 border-slate-200 p-5 bg-linear-to-br from-slate-50 to-white">
+                <div class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">File</div>
+                <div class="text-sm font-medium text-slate-700 break-words">
+                  {{ i.pdfUrl.startsWith('data:') ? 'Uploaded PDF' : i.pdfUrl }}
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-slate-200 flex flex-wrap gap-2">
+                  <a
+                    [href]="i.pdfUrl"
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#000035] text-white font-bold
+                           shadow-lg shadow-[#000035]/20 hover:shadow-xl hover:shadow-[#000035]/30
+                           hover:-translate-y-0.5 transition-all duration-300"
+                  >
+                    Open PDF
+                  </a>
+
+                  <a
+                    [href]="i.pdfUrl"
+                    [attr.download]="pdfFilename(i)"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-[#000035] font-bold
+                           border-2 border-slate-200 hover:border-[#f4b400] hover:bg-[#f4b400]/10
+                           transition-all duration-300"
+                  >
+                    Download
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="space-y-4" *ngIf="i.description">
+          <div class="flex items-center gap-2">
+            <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+            <h4 class="text-lg font-bold text-[#000035]">Description</h4>
+          </div>
+
+          <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
+            <div *ngIf="!showFullDescription" class="text-slate-800 leading-relaxed text-base whitespace-pre-wrap">
+              {{ descriptionPreview(i.description) }}
+            </div>
+
+            <div *ngIf="showFullDescription" class="text-slate-800 leading-relaxed text-base whitespace-pre-wrap">
+              {{ i.description }}
+            </div>
+
+            <div class="pt-4 border-t border-slate-200 mt-4 flex justify-end">
+              <button
+                type="button"
+                (click)="toggleDescription()"
+                class="px-5 py-2.5 rounded-xl bg-[#000035] text-white font-bold
+                       shadow-lg shadow-[#000035]/20 hover:shadow-xl hover:shadow-[#000035]/30
+                       hover:-translate-y-0.5 transition-all duration-300"
+              >
+                {{ showFullDescription ? 'See less' : 'See more' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

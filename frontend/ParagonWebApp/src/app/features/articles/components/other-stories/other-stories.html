@@ -1,0 +1,84 @@
+<section
+  *ngIf="articles.length"
+  class="w-full bg-white py-20"
+  aria-labelledby="other-stories-title"
+>
+
+  <div class="max-w-7xl mx-auto px-6">
+
+    <!-- Section Title -->
+    <div class="mb-12">
+      <h3
+        id="other-stories-title"
+        class="text-3xl font-bold text-gray-900 tracking-tight"
+      >
+        Other Articles
+      </h3>
+    </div>
+
+    <!-- Grid Layout -->
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+      <a
+        *ngFor="let a of articles"
+        [routerLink]="['/article', a.slug]"
+        class="bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 group hover:-translate-y-1 block"
+      >
+
+        <!-- Image -->
+        <div class="aspect-16/10 overflow-hidden bg-gray-100 relative">
+          <img
+            [src]="a.image"
+            [alt]="a.title"
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div class="absolute inset-0 ring-1 ring-inset ring-gray-900/5 pointer-events-none"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-4">
+
+          <!-- Category -->
+          <span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f4b400] text-[#000035] uppercase tracking-wider mb-2">
+            {{ a.category }}
+          </span>
+
+          <!-- Title -->
+          <h4 class="text-base font-bold leading-snug mb-1.5 text-gray-900 group-hover:text-[#000035] transition-colors duration-200 line-clamp-2">
+            {{ a.title }}
+          </h4>
+
+          <!-- Excerpt -->
+          <p class="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2 font-light">
+            {{ (a.excerpt | slice:0:100) + '...' }}
+          </p>
+
+          <!-- Author + Date -->
+          <div class="flex items-center gap-2 text-[11px] text-gray-500 pt-2 border-t border-gray-50">
+
+            <!-- Avatar -->
+            <div class="w-6 h-6 rounded-full bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center text-[9px] font-semibold text-gray-600 shrink-0 border border-gray-200">
+              {{ a.author.charAt(0) }}
+            </div>
+
+            <div class="flex items-center leading-none truncate">
+              <span class="font-semibold text-gray-700 truncate max-w-22.5">
+                {{ a.author }}
+              </span>
+              <span class="mx-1.5 text-gray-300">•</span>
+              <span class="text-gray-500 font-medium">
+                {{ a.publishedAt | date:'MMM d, yyyy' }}
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </a>
+
+    </div>
+
+  </div>
+
+</section>

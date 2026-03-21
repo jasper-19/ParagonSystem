@@ -1,0 +1,90 @@
+<section class="bg-[#000035] py-20 relative overflow-hidden">
+  <!-- Subtle background texture -->
+  <div class="absolute inset-0 opacity-[0.03]"
+    style="background-image: repeating-linear-gradient(0deg, #fff 0px, #fff 1px, transparent 1px, transparent 40px), repeating-linear-gradient(90deg, #fff 0px, #fff 1px, transparent 1px, transparent 40px);">
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+
+    <!-- Section Header -->
+    <div class="flex items-end justify-between mb-12 pb-6 border-b border-white/10">
+      <div>
+        <p class="text-[#F4B400] text-xs font-bold uppercase tracking-[0.3em] mb-3">
+          Top Stories
+        </p>
+        <h2 class="text-4xl font-black text-white tracking-tight leading-none">
+          Most Viewed <span class="text-[#F4B400]">Articles</span>
+        </h2>
+      </div>
+      <a class="group flex items-center gap-2 text-white/50 hover:text-[#F4B400] text-sm font-semibold uppercase tracking-widest transition-all duration-300 cursor-pointer">
+        <span>View All</span>
+        <span class="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+      </a>
+    </div>
+
+    <!-- Articles Grid -->
+    <div class="grid md:grid-cols-2 gap-px bg-white/5 rounded-xl overflow-hidden">
+
+      <a
+        *ngFor="let a of articles; let i = index"
+        [routerLink]="['/article', a.slug]"
+        class="group relative flex gap-5 p-6 bg-[#000035] hover:bg-[#00003f] transition-all duration-300 cursor-pointer"
+      >
+        <!-- Rank Number -->
+        <span class="absolute top-5 left-5 text-[#F4B400]/10 font-black text-6xl leading-none select-none pointer-events-none" style="font-variant-numeric: tabular-nums;">
+          {{ i + 1 | number:'2.0' }}
+        </span>
+
+        <!-- Thumbnail -->
+        <div class="relative w-28 h-36 shrink-0 overflow-hidden rounded-lg shadow-lg mt-1">
+          <img
+            [src]="a.image"
+            class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+          />
+          <!-- Gold tint overlay on hover -->
+          <div class="absolute inset-0 bg-[#F4B400]/0 group-hover:bg-[#F4B400]/10 transition-all duration-300 rounded-lg"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="flex flex-col justify-between flex-1 min-w-0 relative z-10">
+          <div>
+            <!-- Category + Date -->
+            <div class="flex items-center gap-2 mb-3 flex-wrap">
+              <span class="bg-[#F4B400] text-[#000035] text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm">
+                {{ a.category }}
+              </span>
+              <span class="text-white/30 text-[11px]">
+                {{ a.publishedAt | date:'MMM d, yyyy' }}
+              </span>
+            </div>
+
+            <!-- Title -->
+            <h3 class="text-white font-bold text-lg leading-snug group-hover:text-[#F4B400] transition-colors duration-300 line-clamp-3">
+              {{ a.title }}
+            </h3>
+          </div>
+
+          <!-- Credits -->
+          <div class="mt-4 flex flex-col gap-0.5 border-t border-white/5 pt-3">
+            <p *ngIf="a.author" class="text-white/40 text-[11px]">
+              <span class="text-white/25 uppercase tracking-wider text-[9px] font-semibold mr-1">Written by</span>{{ a.author }}
+            </p>
+            <p *ngIf="a.graphicby" class="text-white/40 text-[11px]">
+              <span class="text-white/25 uppercase tracking-wider text-[9px] font-semibold mr-1">Graphics</span>{{ a.graphicby }}
+            </p>
+            <p *ngIf="a.photoby" class="text-white/40 text-[11px]">
+              <span class="text-white/25 uppercase tracking-wider text-[9px] font-semibold mr-1">Photo</span>{{ a.photoby }}
+            </p>
+            <p *ngIf="a.illusrationby" class="text-white/40 text-[11px]">
+              <span class="text-white/25 uppercase tracking-wider text-[9px] font-semibold mr-1">Illustration</span>{{ a.illusrationby }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom accent line on hover -->
+        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#F4B400] group-hover:w-full transition-all duration-500"></span>
+      </a>
+    </div>
+
+  </div>
+</section>

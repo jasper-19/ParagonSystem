@@ -1,0 +1,70 @@
+<section
+  class="w-full bg-gradient-to-br from-[#000035] via-[#000045] to-[#000035] text-white pt-10 pb-12 md:pt-12 md:pb-12 relative overflow-hidden"
+  aria-labelledby="staff-application-title"
+>
+
+  <!-- Decorative Elements -->
+  <div class="absolute inset-0 opacity-10">
+    <div class="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-x-1/2 translate-y-1/2"></div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 text-center relative z-10">
+
+    <!-- Badge -->
+    <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-sm font-medium mb-6">
+      <span>Official Student Publication of Cagayan State University Gonzaga</span>
+    </div>
+
+    <!-- Headline -->
+    <h2
+      id="staff-application-title"
+      class="text-4xl md:text-3xl font-bold mb-6 tracking-tight uppercase"
+    >
+      Join Paragon 
+      <br>
+      <span class="text-[#F4B400] font-black text-5xl">Now</span>
+    </h2>
+
+    <!-- Description -->
+    <p class="text-white/80 text-lg md:text-m max-w-3xl mx-auto mb-10 leading-relaxed font-light">
+      Help liberate voices and amplify the truth on campus.
+      <br>
+      Paragon invites students who are passionate about journalism, storytelling, photography, or design to become part of CSU Gonzaga's official student publication and contribute to stories that matter.
+    </p>
+
+    <!-- CTA Buttons -->
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+      
+      <!-- Apply Now Button with Enhanced Shine Effect -->
+      <a
+        routerLink="/join"
+        class="group relative inline-flex items-center gap-2 px-8 py-4 bg-[#F4B400] text-[#000035] font-semibold rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#F4B400]/30"
+      >
+        <!-- Animated Shine Effect -->
+        <div class="absolute inset-0 w-full h-full">
+          <div class="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"></div>
+        </div>
+        
+        <!-- Subtle Glow on Hover -->
+        <div class="absolute inset-0 bg-gradient-to-r from-[#F4B400] to-[#FFD700] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        
+        <span class="relative z-10">Apply Now</span>
+        <svg class="relative z-10 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+      </a>
+
+      <!-- Learn More Button  -->
+      <a
+        routerLink="/about"
+        class="relative border border-white/20 hover:border-[#F4B400] duration-500 group cursor-pointer text-white overflow-hidden h-14 px-8 rounded-lg bg-white/10 backdrop-blur-sm flex justify-center items-center font-semibold transition-all"
+      >
+       <span class="text-lg">Learn More</span>
+      </a>
+
+    </div>
+
+  </div>
+
+</section>

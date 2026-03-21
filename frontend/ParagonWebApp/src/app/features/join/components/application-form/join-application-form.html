@@ -1,0 +1,398 @@
+<section id="application" class="py-20 bg-linear-to-b from-slate-50 via-white to-slate-50 relative overflow-hidden">
+
+  <div class="max-w-4xl mx-auto px-6 space-y-12 relative">
+
+    <!-- Section Header -->
+    <div class="text-center space-y-4">
+
+      <h2 class="text-3xl md:text-4xl font-bold text-[#000035] tracking-tight">
+        Application Form
+      </h2>
+
+      <p class="text-slate-600 max-w-xl mx-auto">
+        Complete the form below to begin your application journey with us.
+      </p>
+
+    </div>
+
+    <!-- Form -->
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      class="bg-white p-8 md:p-10 rounded-3xl border-2 border-slate-200 shadow-xl space-y-8"
+    >
+
+      <!-- Personal Information Section -->
+      <div class="space-y-6">
+        <div class="flex items-center gap-3 pb-4 border-b-2 border-slate-100">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-[#000035]">Personal Information</h3>
+        </div>
+
+        <!-- Name & Email Grid -->
+        <div class="grid md:grid-cols-2 gap-6">
+
+          <!-- Full Name -->
+          <div>
+            <label class="block text-sm font-bold text-[#000035] mb-2">
+              Full Name <span class="text-red-500">*</span>
+            </label>
+
+            <input
+              type="text"
+              formControlName="fullName"
+              placeholder="John Emerson"
+              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
+                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
+                     transition-all duration-200 bg-slate-50/50
+                     placeholder:text-slate-400"
+            />
+
+            <p *ngIf="form.controls.fullName.touched && form.controls.fullName.invalid"
+               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Please enter your full name.
+            </p>
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block text-sm font-bold text-[#000035] mb-2">
+              Email Address <span class="text-red-500">*</span>
+            </label>
+
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="john@example.com"
+              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
+                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
+                     transition-all duration-200 bg-slate-50/50
+                     placeholder:text-slate-400"
+            />
+
+            <p *ngIf="form.controls.email.touched && form.controls.email.invalid"
+               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Please enter a valid email.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Student ID -->
+        <div>
+          <label class="block text-sm font-bold text-[#000035] mb-2">
+            Student ID <span class="text-red-500">*</span>
+          </label>
+
+          <input
+            type="text"
+            formControlName="studentId"
+            placeholder="01-00001"
+            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
+                   focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
+                   transition-all duration-200 bg-slate-50/50
+                   placeholder:text-slate-400"
+          />
+
+          <p *ngIf="form.controls.studentId.touched && form.controls.studentId.invalid"
+            class="text-red-500 text-xs mt-2">
+
+            <ng-container *ngIf="form.controls.studentId.errors?.['required']">
+              Student ID is required.
+            </ng-container>
+
+            <ng-container *ngIf="form.controls.studentId.errors?.['pattern']">
+              Format must be YY-12345 (e.g. 01-00001).
+            </ng-container>
+
+          </p>
+        </div>
+
+        <!-- Year Level -->
+        <div>
+          <label class="block text-sm font-bold text-[#000035] mb-2">
+            Year Level <span class="text-red-500">*</span>
+          </label>
+
+          <select
+            formControlName="yearLevel"
+            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
+                   focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
+                   transition-all duration-200 bg-slate-50/50 cursor-pointer"
+          >
+            <option value="">Select Year Level</option>
+            <ng-container *ngFor="let level of YEAR_LEVEL_OPTIONS">
+              <option [value]="level.value">{{ level.label }}</option>
+            </ng-container>
+          </select>
+
+          <p *ngIf="form.controls.yearLevel.touched && form.controls.yearLevel.invalid"
+             class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            Please select your year level.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Academic Information Section -->
+      <div class="space-y-6">
+        <div class="flex items-center gap-3 pb-4 border-b-2 border-slate-100">
+          <div class="w-8 h-8  rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-[#000035]">Academic Information</h3>
+        </div>
+
+        <!-- College & Program Grid -->
+        <div class="grid md:grid-cols-2 gap-6">
+
+          <!-- College -->
+          <div>
+            <label class="block text-sm font-bold text-[#000035] mb-2">
+              College <span class="text-red-500">*</span>
+            </label>
+
+            <select
+              formControlName="collegeId"
+              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
+                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
+                     transition-all duration-200 bg-slate-50/50 cursor-pointer"
+            >
+              <option value="">Select College</option>
+
+              <ng-container *ngFor="let college of colleges()">
+                <option [value]="college.id">
+                  {{ college.name }}
+                </option>
+              </ng-container>
+            </select>
+
+            <p *ngIf="form.controls.collegeId.touched && form.controls.collegeId.invalid"
+               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Please select a college.
+            </p>
+          </div>
+
+          <!-- Program -->
+          <div>
+            <label class="block text-sm font-bold text-[#000035] mb-2">
+              Course / Program <span class="text-red-500">*</span>
+            </label>
+
+            <select
+              formControlName="programId"
+              [disabled]="availablePrograms().length === 0"
+              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
+                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
+                     transition-all duration-200 bg-slate-50/50 cursor-pointer
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">Select Program</option>
+
+              <ng-container *ngFor="let program of availablePrograms()">
+                <option [value]="program.id">
+                  {{ program.name }}
+                </option>
+              </ng-container>
+            </select>
+
+            <p *ngIf="form.controls.programId.touched && form.controls.programId.invalid"
+               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Please select a program.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Position Section -->
+      <div class="space-y-6">
+        <div class="flex items-center gap-3 pb-4 border-b-2 border-slate-100">
+          <div class="w-8 h-8  rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/>
+              <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-[#000035]">Position Details</h3>
+        </div>
+
+        <!-- Position & Category Grid -->
+        <div class="grid md:grid-cols-2 gap-6">
+
+          <!-- Position -->
+          <div>
+            <label class="block text-sm font-bold text-[#000035] mb-2">
+              Position <span class="text-red-500">*</span>
+            </label>
+
+            <select
+              formControlName="positionId"
+              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
+                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
+                     transition-all duration-200 bg-slate-50/50 cursor-pointer"
+            >
+              <option value="">Select a position</option>
+
+              <ng-container *ngFor="let position of positions">
+                <option [value]="position.id">
+                  {{ position.title }}
+                </option>
+              </ng-container>
+            </select>
+
+            <p *ngIf="form.controls.positionId.touched && form.controls.positionId.invalid"
+               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Please select a position.
+            </p>
+          </div>
+
+          <!-- Sub Role / Category -->
+          <div [class.invisible]="subRoleOptions().length === 0">
+            <label class="block text-sm font-bold text-[#000035] mb-2">
+              Category  <span class="text-red-500">*</span>
+            </label>
+
+            <select
+              formControlName="subRole"
+              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
+                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
+                     transition-all duration-200 bg-slate-50/50 cursor-pointer"
+              [disabled]="subRoleOptions().length === 0"
+            >
+              <option value="">Select category</option>
+
+              <ng-container *ngFor="let option of subRoleOptions()">
+                <option [value]="option">
+                  {{ option }}
+                </option>
+              </ng-container>
+            </select>
+
+            <p *ngIf="form.controls.subRole.touched && form.controls.subRole.invalid"
+               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Please select a category.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Motivation -->
+        <div>
+          <label class="block text-sm font-bold text-[#000035] mb-2">
+            Why do you want to join? <span class="text-red-500">*</span>
+          </label>
+
+          <textarea
+            rows="5"
+            formControlName="motivation"
+            placeholder="Tell us about your interest and what you hope to contribute..."
+            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
+                   focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
+                   transition-all duration-200 resize-none bg-slate-50/50
+                   placeholder:text-slate-400"
+          ></textarea>
+
+          <div class="flex justify-between items-center mt-2">
+            <p *ngIf="form.controls.motivation.touched && form.controls.motivation.invalid"
+               class="text-red-500 text-xs flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Please provide at least 30 characters.
+            </p>
+            <p class="text-xs text-slate-500 ml-auto font-medium">
+              Minimum 30 characters
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        [disabled]="isSubmitting()"
+        class="w-full bg-linear-to-r from-[#000035] to-[#001f5c] text-white py-4 rounded-xl font-bold text-base
+               shadow-lg shadow-[#000035]/20
+               hover:shadow-xl hover:shadow-[#000035]/30
+               hover:-translate-y-0.5
+               active:translate-y-0
+               transition-all duration-300
+               disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+               flex items-center justify-center gap-3 group"
+      >
+        <ng-container *ngIf="!isSubmitting(); else loading">
+          <span>Submit Application</span>
+          <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+          </svg>
+        </ng-container>
+
+        <ng-template #loading>
+          <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Submitting...</span>
+        </ng-template>
+      </button>
+
+    </form>
+
+    <!-- Modals -->
+    <app-confirmation-modal
+      [isOpen]="showConfirmModal()"
+      title="Submit Application?"
+      message="You will not be able to edit this after submission."
+      confirmText="Submit"
+      cancelText="Review"
+      (confirmed)="confirmSubmission()"
+      (cancelled)="showConfirmModal.set(false)"
+    ></app-confirmation-modal>
+
+    <app-success-modal
+      [isOpen]="showSuccessModal()"
+      title="Application Submitted"
+      message="Our editorial board will review your application."
+      (closed)="showSuccessModal.set(false)"
+    ></app-success-modal>
+
+    <app-error-modal
+      [isOpen]="showErrorModal()"
+      title="Submission Failed"
+      message="Something went wrong. Please try again."
+      (closed)="showErrorModal.set(false)"
+    ></app-error-modal>
+
+  </div>
+
+</section>

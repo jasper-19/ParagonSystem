@@ -1,0 +1,156 @@
+<header
+  class="sticky top-0 z-50 bg-white/85 backdrop-blur-md backdrop-saturate-150 border-b border-white/40 shadow-[0_6px_20px_-12px_rgba(0,0,0,0.35)]">
+  <div class="max-w-7xl mx-auto px-4">
+
+    <!-- ========================= -->
+    <!-- TOP ROW -->
+    <!-- ========================= -->
+    <div class="grid grid-cols-[auto_1fr_auto] items-center h-16 relative">
+
+      <!-- MOBILE MENU BUTTON -->
+      <button type="button" aria-label="Open mobile menu" class="md:hidden flex items-center justify-center p-2 rounded-md text-[#F4B400] hover:text-[#e0a800] hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[#F4B400] transition cursor-pointer" (click)="toggleMobileMenu()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+
+      <!-- LEFT NAV -->
+      <nav class="hidden md:flex items-center space-x-6 text-sm font-semibold uppercase tracking-wide">
+        <a routerLink="/"
+           routerLinkActive="active-link"
+           [routerLinkActiveOptions]="{exact: true}"
+           #homeActive="routerLinkActive"
+           [ngClass]="{
+             'text-[#F4B400] border-b-2 border-[#F4B400] scale-105': homeActive.isActive,
+             'text-gray-700 border-b-2 border-transparent hover:border-gray-300': !homeActive.isActive
+           }"
+           class="pb-1 hover:text-[#e0a800] transition-all duration-300 ease-in-out transform">
+          Home
+        </a>
+        <a routerLink="/top-stories"
+           routerLinkActive="active-link"
+           #topStoriesActive="routerLinkActive"
+           [ngClass]="{
+             'text-[#F4B400] border-b-2 border-[#F4B400] scale-105': topStoriesActive.isActive,
+             'text-gray-700 border-b-2 border-transparent hover:border-gray-300': !topStoriesActive.isActive
+           }"
+           class="pb-1 hover:text-[#e0a800] transition-all duration-300 ease-in-out transform">
+          Top Stories
+        </a>
+        <a routerLink="/special-issues"
+           routerLinkActive="active-link"
+           #specialIssuesActive="routerLinkActive"
+           [ngClass]="{
+             'text-[#F4B400] border-b-2 border-[#F4B400] scale-105': specialIssuesActive.isActive,
+             'text-gray-700 border-b-2 border-transparent hover:border-gray-300': !specialIssuesActive.isActive
+           }"
+           class="pb-1 hover:text-[#e0a800] transition-all duration-300 ease-in-out transform">
+          Special Issues
+        </a>
+      </nav>
+
+      <!-- CENTER LOGO -->
+      <div class="flex items-center space-x-2 select-none absolute left-1/2 -translate-x-1/2 md:absolute md:left-1/2 md:-translate-x-1/2">
+        <img src="assets/PRG_Logo.png" alt="Paragon Logo" class="h-8 w-auto object-contain"/>
+      </div>
+
+      <!-- RIGHT ACTIONS -->
+      <div class="flex justify-end items-center gap-0">
+
+        <!-- DATE + TIME + WEATHER (Desktop Only) -->
+        <div class="hidden lg:flex items-stretch divide-x divide-[#000035]/8 border-x border-[#000035]/8">
+
+          <!-- Weather + City -->
+          <div class="flex items-center gap-2.5 px-4 py-0">
+            <div class="flex flex-col leading-none gap-0.75">
+              <span class="text-[10px] font-black text-[#000035]/80 tabular-nums tracking-tight">
+                {{ temperature() ?? '--' }}°C
+              </span>
+              <span class="text-[9px] font-semibold text-[#000035]/35 tracking-wide truncate max-w-20">
+                {{ city() ?? 'Detecting…' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Date + Clock -->
+          <div class="flex items-center gap-2.5 px-4 py-0">
+            <div class="flex flex-col leading-none gap-0.75">
+              <span class="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#000035]/35">
+                {{ now() | date:'EEE, MMM d, y' }}
+              </span>
+              <span class="text-[13px] font-black text-[#000035] tabular-nums tracking-tight leading-none">
+                {{ now() | date:'h:mm:ss a' }}
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SEARCH BUTTON -->
+        <button
+          type="button"
+          aria-label="Search"
+          (click)="openSearch()"
+          class="flex items-center justify-center w-10 h-10 ml-1 text-[#f4B400] hover:text-[#000035] transition-all duration-150 cursor-pointer"
+        >
+          <svg class="w-4.5 h-4.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
+          </svg>
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+</header>
+
+<!-- ========================= -->
+<!-- MOBILE HEADER EXTENSION NAV (Outside header for proper glassmorphism) -->
+<!-- ========================= -->
+<div *ngIf="mobileMenuOpen" class="md:hidden sticky top-16 z-40 bg-white/85 backdrop-blur-md backdrop-saturate-150 border-b border-white/40 shadow-[0_6px_20px_-12px_rgba(0,0,0,0.35)]">
+  <nav class="max-w-7xl mx-auto px-4 flex flex-col text-sm font-semibold uppercase">
+    <a routerLink="/"
+       (click)="closeMobileMenu()"
+       routerLinkActive="active-mobile-link"
+       [routerLinkActiveOptions]="{exact: true}"
+       #homeMobileActive="routerLinkActive"
+       [ngClass]="{
+         'bg-linear-to-r from-[#F4B400]/15 to-transparent text-[#F4B400] border-l-4 border-[#F4B400] font-bold': homeMobileActive.isActive,
+         'text-gray-700 border-l-4 border-transparent hover:border-gray-300': !homeMobileActive.isActive
+       }"
+       class="block px-4 py-3 transition-all duration-300 ease-in-out hover:bg-white/20 hover:pl-6">
+      Home
+    </a>
+
+    <a routerLink="/top-stories"
+       (click)="closeMobileMenu()"
+       routerLinkActive="active-mobile-link"
+       #topStoriesMobileActive="routerLinkActive"
+       [ngClass]="{
+         'bg-linear-to-r from-[#F4B400]/15 to-transparent text-[#F4B400] border-l-4 border-[#F4B400] font-bold': topStoriesMobileActive.isActive,
+         'text-gray-700 border-l-4 border-transparent hover:border-gray-300': !topStoriesMobileActive.isActive
+       }"
+       class="block px-4 py-3 transition-all duration-300 ease-in-out hover:bg-white/20 hover:pl-6">
+      Top Stories
+    </a>
+
+    <a routerLink="/special-issues"
+       (click)="closeMobileMenu()"
+       routerLinkActive="active-mobile-link"
+       #specialIssuesMobileActive="routerLinkActive"
+       [ngClass]="{
+         'bg-linear-to-r from-[#F4B400]/15 to-transparent text-[#F4B400] border-l-4 border-[#F4B400] font-bold': specialIssuesMobileActive.isActive,
+         'text-gray-700 border-l-4 border-transparent hover:border-gray-300': !specialIssuesMobileActive.isActive
+       }"
+       class="block px-4 py-3 transition-all duration-300 ease-in-out hover:bg-white/20 hover:pl-6">
+      Special Issues
+    </a>
+  </nav>
+</div>
+
+<!-- ========================= -->
+<!-- SEARCH MODAL -->
+<!-- ========================= -->
+<app-search-modal *ngIf="searchOpen" (close)="closeSearch()"></app-search-modal>

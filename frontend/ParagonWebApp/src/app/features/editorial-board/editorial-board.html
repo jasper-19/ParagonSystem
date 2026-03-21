@@ -1,0 +1,121 @@
+<section class="bg-white">
+
+  <!-- ================= HERO SECTION ================= -->
+  <div class="relative overflow-hidden bg-linear-to-b from-[#0b1c2d] via-[#0d2438] to-white">
+
+<!-- BACKGROUND IMAGE -->
+<div class="absolute inset-0 bg-cover bg-center bg-no-repeat">
+  <img src="assets/ebheader.png" alt="Paragon Header" class="w-full h-full object-cover">
+</div>
+
+<!-- GRADIENT OVERLAY (keeps text readable) -->
+<div class="absolute inset-0 bg-linear-to-b from-[#0b1c2d]/90 via-[#0d2438]/80 to-white"></div>
+
+
+    <div class="relative z-10 max-w-7xl mx-auto px-6 py-20 md:py-28 text-center">
+
+      <!-- Accent Line -->
+      <div class="flex items-center justify-center gap-4 mb-8">
+        <div class="h-px w-12 bg-linear-to-r from-transparent to-[#F4B400]"></div>
+        <span class="text-3xl md:text-sm uppercase tracking-[0.2em] text-[#F4B400] font-semibold">Paragon </span>
+        <div class="h-px w-12 bg-ntnt-to-l from-transparent to-[#F4B400]"></div>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-white mb-4">
+        Editorial Board
+      </h1>
+
+      <!-- Academic Year Badge -->
+      <div class="inline-block mt-6 px-6 py-2 bg-[#F4B400]/10 border border-[#F4B400]/40 rounded-full">
+        <p class="text-sm font-semibold text-[#F4B400] tracking-wide uppercase">
+          Academic Year {{ academicYear }}
+        </p>
+      </div>
+
+      <!-- Description -->
+      <p class="mt-8 text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
+       Meet the campus journalists leading <span class="text-[#F4B400] font-bold">Paragon's</span> mission of liberating voices and amplifying the truth
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ================= BOARD SECTIONS ================= -->
+  <div *ngIf="loading" class="flex justify-center items-center py-40">
+    <div class="w-10 h-10 rounded-full border-4 border-[#F4B400] border-t-transparent animate-spin"></div>
+  </div>
+
+  <section *ngFor="let section of sections" class="mb-28 mt-16">
+
+    <!-- Section Header -->
+    <div class="mb-12 flex flex-col items-center text-center">
+      <h2 class="text-2xl md:text-3xl font-bold text-[#0b1c2d] tracking-tight">
+        {{ section.title }}
+      </h2>
+      <span class="mt-3 w-12 h-1 bg-linear-to-r from-[#F4B400] to-[#FFD86B] rounded-full"></span>
+    </div>
+
+    <!-- Members -->
+    <div class="flex justify-center">
+      <div class="flex flex-wrap justify-center gap-12 max-w-6xl">
+
+        <div *ngFor="let member of section.members" class="group w-65 text-center transition-all duration-300 cursor-pointer"
+        >
+
+          <!-- Avatar / Initials -->
+          <div class="mx-auto mb-5 w-28 h-28 rounded-2xl bg-linear-to-br from-[#F4B400]/15 to-[#FFD86B]/10 flex items-center justify-center text-sm font-bold uppercase tracking-wider text-[#F4B400] ring-2 ring-[#F4B400]/30 group-hover:ring-[#F4B400] group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-[#F4B400]/20 transition-all duration-300">
+            {{ member.initials || '—' }}
+          </div>
+
+          <!-- Name -->
+          <h3 class="text-lg font-bold text-[#0b1c2d] group-hover:text-[#F4B400] transition-colors duration-300">
+            {{ member.name }}
+          </h3>
+
+          <!-- Role -->
+          <p class="mt-1 text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
+            {{ member.position }}
+          </p>
+
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ================= ADVISER ================= -->
+  <section *ngIf="adviser" class="mt-32 mb-32 text-center">
+
+    <div class="mb-14 flex flex-col items-center">
+      <h2 class="text-2xl md:text-3xl font-bold text-[#0b1c2d] tracking-tight">
+        Adviser
+      </h2>
+      <span class="mt-3 w-12 h-1 bg-linear-to-r from-[#F4B400] to-[#FFD86B] rounded-full"></span>
+    </div>
+
+    <div class="flex justify-center">
+      <div class="group bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl hover:border-[#F4B400]/50 transition-all duration-300 max-w-md border border-gray-200">
+
+        <!-- Adviser Avatar -->
+        <div class="mx-auto mb-8 w-36 h-36 rounded-2xl bg-linear-to-br from-[#F4B400]/15 to-[#FFD86B]/10 flex items-center justify-center text-sm font-bold uppercase tracking-wider text-[#F4B400] ring-2 ring-[#F4B400]/40 group-hover:ring-[#F4B400] group-hover:scale-105 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[#F4B400]/20">
+          {{ adviser.initials || '—' }}
+        </div>
+
+        <!-- Name -->
+        <h3 class="text-xl font-bold text-[#0b1c2d] group-hover:text-[#F4B400] transition-colors duration-300">
+          {{ adviser.name }}
+        </h3>
+
+        <!-- Role -->
+        <p class="mt-2 text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
+          {{ adviser.position }}
+        </p>
+
+      </div>
+    </div>
+
+  </section>
+
+</section>

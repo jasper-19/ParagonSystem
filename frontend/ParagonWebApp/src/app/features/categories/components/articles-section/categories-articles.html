@@ -1,0 +1,120 @@
+<section class="max-w-7xl mx-auto px-6 py-20">
+
+  <!-- Grid -->
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <article
+      *ngFor="let article of articles"
+      class="group bg-white rounded-2xl border-2 border-slate-200 hover:border-[#F4B400]
+             hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+    >
+
+      <!-- Image -->
+      <div class="relative overflow-hidden bg-slate-100">
+        <img
+          [src]="article.image"
+          [alt]="article.title"
+          class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <!-- Category Badge on Image -->
+        <div class="absolute top-4 left-4">
+          <span class="px-3 py-1.5 bg-[#000035] text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg">
+            {{ article.category }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 flex flex-col flex-1">
+
+        <!-- Title -->
+        <h3 class="text-xl font-bold mb-3 text-[#000035] line-clamp-2 group-hover:text-[#F4B400] transition-colors">
+          {{ article.title }}
+        </h3>
+
+        <!-- Excerpt -->
+        <p class="text-slate-600 leading-relaxed line-clamp-3 mb-6">
+          {{ article.excerpt }}
+        </p>
+
+        <!-- Spacer pushes meta to bottom -->
+        <div class="mt-auto pt-4 border-t-2 border-slate-100">
+
+          <!-- Author + Date + Views -->
+          <div class="flex items-center justify-between gap-4">
+
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-8 h-8 bg-[#F4B400] rounded-full flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4 text-[#000035]" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <span class="font-semibold text-sm text-[#000035] truncate">
+                {{ article.author || 'Staff Writer' }}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-3 text-xs text-slate-500 shrink-0">
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                <span class="font-medium">{{ article.views }}</span>
+              </div>
+              <span>•</span>
+              <span class="font-medium">{{ article.publishedAt | date:'MMM d' }}</span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </article>
+
+  </div>
+
+    <!-- Infinite Scroll Loader -->
+    <div *ngIf="!initialLoading && !loading" class="text-center py-10 text-gray-500">
+    </div>
+
+  <!-- Loading -->
+  <div
+    *ngIf="loading"
+    class="text-center py-12"
+  >
+    <div class="inline-flex items-center gap-3 px-6 py-3 bg-whitel">
+      <svg class="animate-spin h-5 w-5 text-[#F4B400]" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span class="text-slate-700 font-medium">Loading more articles...</span>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div
+    *ngIf="!initialLoading && !loading && articles.length === 0"
+    class="text-center py-20"
+  >
+    <div class="inline-flex flex-col items-center gap-4 max-w-md mx-auto">
+      <div class="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center">
+        <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-2xl font-bold text-[#000035] mb-2">
+          No articles found
+        </h3>
+        <p class="text-slate-600">Try adjusting your filters to see more results.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Infinite Scroll Anchor -->
+  <div #anchor class="h-1"></div>
+
+</section>

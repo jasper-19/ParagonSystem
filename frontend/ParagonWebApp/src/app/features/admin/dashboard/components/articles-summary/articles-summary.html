@@ -1,0 +1,46 @@
+<section class="space-y-6">
+
+  <!-- Section Header -->
+  <div class="space-y-2">
+    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+      Articles Overview
+    </h2>
+    <p class="text-sm text-gray-600">
+      Summary of all article statuses
+    </p>
+  </div>
+
+  <!-- Responsive Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+    <app-dashboard-card
+      title="Total Articles"
+      [value]="totalArticles"
+      variant="default"
+      class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-gray-300"
+    />
+
+    <app-dashboard-card
+      title="Published"
+      [value]="publishedArticles"
+      variant="success"
+      class="bg-linear-to-br from-emerald-50 via-emerald-25 to-white border border-emerald-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-emerald-300"
+    />
+
+    <app-dashboard-card
+      title="Drafts"
+      [value]="draftArticles"
+      variant="info"
+      class="bg-linear-to-br from-blue-50 via-blue-25 to-white border border-blue-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-blue-300"
+    />
+
+    <app-dashboard-card
+      title="Archived"
+      [value]="archivedArticles"
+      variant="neutral"
+      class="bg-linear-to-br from-slate-50 via-slate-25 to-white border border-slate-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-slate-300"
+    />
+
+  </div>
+
+</section>

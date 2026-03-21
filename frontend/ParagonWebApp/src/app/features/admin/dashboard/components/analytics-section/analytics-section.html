@@ -1,0 +1,60 @@
+<section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-800">
+        Activity Overview
+      </h2>
+      <p class="text-sm text-gray-500">
+        Last {{ selectedMode }} performance
+      </p>
+    </div>
+
+    <div class="flex gap-2">
+      @for (mode of modes; track mode) {
+        <button
+          (click)="modeChange.emit(mode)"
+          class="px-3 py-1.5 text-sm rounded-lg transition capitalize"
+          [class.bg-yellow-500]="selectedMode === mode"
+          [class.text-white]="selectedMode === mode"
+          [class.bg-gray-100]="selectedMode !== mode"
+        >
+          {{ mode }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    @for (metric of metrics; track metric.label) {
+      <div class="bg-gray-50 rounded-xl p-4 space-y-2">
+        <p class="text-xs uppercase tracking-widest text-gray-400 font-semibold">
+          {{ metric.label }}
+        </p>
+        <div class="flex items-end justify-between">
+          <p class="text-3xl font-bold text-gray-800">
+            {{ metric.value }}
+          </p>
+          @if (metric.change !== undefined) {
+            <span
+              class="text-sm font-medium"
+              [class.text-green-600]="metric.change > 0"
+              [class.text-red-600]="metric.change < 0"
+              [class.text-gray-500]="metric.change === 0"
+            >
+              {{ metric.change > 0 ? '+' : '' }}{{ metric.change }}%
+            </span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Chart -->
+  <div class="h-72">
+    <canvas #chartCanvas></canvas>
+  </div>
+
+</section>

@@ -1,0 +1,20 @@
+<nav class="flex pl-6 md:pl-10" aria-label="Breadcrumb">
+  <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+    <li *ngFor="let crumb of breadcrumbs; let last = last; let i = index" [attr.aria-current]="last ? 'page' : null" class="inline-flex items-center">
+      <ng-container *ngIf="i === 0">
+        <a [routerLink]="crumb.url" class="inline-flex items-center text-xl font-medium text-[#f4b400] hover:text-[#ffd86b]">
+          <svg class="w-4 h-4 me-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4 12 8-8 8 8M6 10.5V19a1 1 0 0 0 1 1h3v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h3a1 1 0 0 0 1-1v-8.5"/></svg>
+          {{ crumb.label }}
+        </a>
+      </ng-container>
+      <ng-container *ngIf="i !== 0">
+        <div class="flex items-center space-x-1.5">
+          <svg class="w-3.5 h-3.5 rtl:rotate-180 text-[#f4b400]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+          <a *ngIf="!last" [routerLink]="crumb.url" class="inline-flex items-center text-sm font-medium text-[#f4b400] hover:text-[#ffd86b]">{{ crumb.label }}</a>
+          <span *ngIf="last" class="inline-flex items-center text-xl font-medium text-[#ffd86b]">{{ crumb.label }}</span>
+        </div>
+      </ng-container>
+    </li>
+  </ol>
+</nav>
+

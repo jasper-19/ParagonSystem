@@ -1,0 +1,38 @@
+<div class="min-h-screen bg-slate-50">
+
+  <!-- Loading State -->
+  <ng-container *ngIf="openPositions().length === 0; else content">
+
+    <div class="flex items-center justify-center py-32">
+      <p class="text-slate-500 text-sm tracking-wide">
+        Loading opportunities...
+      </p>
+    </div>
+
+  </ng-container>
+
+  <!-- Main Content -->
+  <ng-template #content>
+    <ng-container>
+
+      <!-- <app-welcome-banner> </app-welcome-banner> -->
+
+      <app-join-hero> </app-join-hero>
+
+      <app-join-why></app-join-why>
+
+      <app-join-positions [positions]="openPositions()"> </app-join-positions>
+
+      <app-join-application-form
+      [positions]="openPositions()"
+      [preselectedPosition]="selectedPositionId()"
+      ></app-join-application-form>
+
+      <app-join-faq></app-join-faq>
+
+      <app-join-final-cta></app-join-final-cta>
+
+    </ng-container>
+  </ng-template>
+
+</div>

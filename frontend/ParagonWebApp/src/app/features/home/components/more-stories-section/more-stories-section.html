@@ -1,0 +1,77 @@
+<section class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+
+    <!-- Section Header -->
+    <div class="flex items-end justify-between mb-12 pb-6 border-b border-white/10">
+      <div>
+        <h2 class="text-4xl font-black text-[#000035] tracking-tight leading-none">
+          More <span class="text-[#F4B400]">Stories</span>
+        </h2>
+      </div>
+      <a class="group flex items-center gap-2 text-[#000035] hover:text-[#F4B400] text-sm font-semibold uppercase tracking-widest transition-all duration-300 cursor-pointer">
+        <span>View All</span>
+        <span class="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+      </a>
+    </div>
+
+    <!-- ── STORIES GRID ── -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10">
+
+      <article
+        *ngFor="let story of stories"
+        class="relative overflow-hidden group cursor-pointer bg-[#000035]"
+      >
+        <a [routerLink]="['/article', story.slug]" class="block">
+
+          <!-- IMAGE -->
+          <div class="w-full aspect-4/3 overflow-hidden">
+            <img
+              [src]="story.image"
+              [alt]="story.title"
+              class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
+            />
+          </div>
+
+          <!-- CARD BODY -->
+          <div class="p-5 ">
+
+            <!-- Meta row -->
+            <div class="flex items-center gap-2 mb-3">
+              <span class="bg-[#F4B400] text-[#000035] text-[9px] font-black uppercase tracking-widest px-2 py-0.5">
+                {{ story.category }}
+              </span>
+              <span class="text-white/30 text-[9px] font-bold uppercase tracking-widest">
+                {{ story.publishedAt | date:'MMM d, yyyy' }}
+              </span>
+            </div>
+
+            <!-- Title -->
+            <h3 class="text-white font-black text-base leading-snug group-hover:text-[#F4B400] transition-colors duration-300 line-clamp-2 mb-4">
+              {{ story.title }}
+            </h3>
+
+            <!-- Credits -->
+            <div class="pt-3 flex flex-col gap-0.5">
+              <p *ngIf="story.author" class="text-white/35 text-[10px]">
+                <span class="text-white/20 font-bold uppercase tracking-wider">Written by </span>{{ story.author }}
+              </p>
+              <p *ngIf="story.graphicby" class="text-white/35 text-[10px]">
+                <span class="text-white/20 font-bold uppercase tracking-wider">Graphics </span>{{ story.graphicby }}
+              </p>
+              <p *ngIf="story.photoby" class="text-white/35 text-[10px]">
+                <span class="text-white/20 font-bold uppercase tracking-wider">Photo </span>{{ story.photoby }}
+              </p>
+              <p *ngIf="story.illusrationby" class="text-white/35 text-[10px]">
+                <span class="text-white/20 font-bold uppercase tracking-wider">Illustration </span>{{ story.illusrationby }}
+              </p>
+            </div>
+
+          </div>
+
+        </a>
+      </article>
+
+    </div>
+
+  </div>
+</section>

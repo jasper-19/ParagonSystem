@@ -1,0 +1,210 @@
+<!-- ========================================= -->
+<!-- HERO SECTION -->
+<!-- ========================================= -->
+
+<app-categories-hero
+  [title]="selectedCategory() ?? 'ALL STORIES'"
+  label="CURATED CONTENT">
+</app-categories-hero>
+
+<!-- ========================================= -->
+<!-- SEARCH SECTION (Overlapping Hero) -->
+<!-- ========================================= -->
+
+<section class="relative -mt-20 z-10">
+
+  <div class="max-w-7xl mx-auto px-6">
+
+    <div class="bg-white rounded-3xl shadow-2xl border-2 border-slate-200 p-8 md:p-10 backdrop-blur-sm">
+
+      <!-- Top Row -->
+      <div class="flex flex-col lg:flex-row gap-4 lg:items-center">
+
+        <!-- 🔎 Search Input -->
+        <div class="flex-1 relative group">
+          <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+            <svg class="w-5 h-5 text-slate-400 group-focus-within:text-[#F4B400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <input
+            #searchInput
+            type="text"
+            placeholder="Search articles..."
+            class="w-full border-2 border-slate-200 rounded-xl pl-12 pr-4 py-3.5
+                   focus:outline-none focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10
+                   transition-all duration-200 bg-slate-50/50 placeholder:text-slate-400"
+            [value]="search()"
+            (input)="search.set(searchInput.value)"
+          />
+        </div>
+
+        <!-- 🔄 Sort Dropdown -->
+        <div class="w-full lg:w-64 relative">
+          <select
+            #sortSelect
+            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3.5
+                   focus:outline-none focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10
+                   transition-all duration-200 bg-slate-50/50 appearance-none cursor-pointer
+                   font-medium text-[#000035]"
+            [value]="sort()"
+            (change)="setSort(sortSelect.value)"
+          >
+            <option value="latest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="mostViewed">Most Viewed</option>
+          </select>
+          <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- ❌ Clear Filters -->
+        <button
+          class="px-6 py-3.5 border-2 border-slate-200 rounded-xl font-semibold text-slate-700
+                 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200
+                 flex items-center justify-center gap-2"
+          (click)="selectedCategory.set(undefined); search.set(''); sort.set('latest')"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          <span>Clear</span>
+        </button>
+
+      </div>
+
+      <!-- Divider -->
+      <div class="relative my-8">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t-2 border-slate-100"></div>
+        </div>
+      </div>
+
+      <!-- 📂 Category Section -->
+      <div class="space-y-4">
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+            </svg>
+            <span class="text-sm font-bold text-[#000035] uppercase tracking-wider">
+              Categories
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+
+          <!-- ALL STORIES -->
+          <button
+            class="px-5 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 shadow-sm"
+            [class.bg-gradient-to-r]="!selectedCategory()"
+            [class.from-[#000035]]="!selectedCategory()"
+            [class.to-[#001f5c]]="!selectedCategory()"
+            [class.text-white]="!selectedCategory()"
+            [class.shadow-lg]="!selectedCategory()"
+            [class.shadow-[#000035]/20]="!selectedCategory()"
+            [class.bg-white]="selectedCategory()"
+            [class.border-2]="selectedCategory()"
+            [class.border-slate-200]="selectedCategory()"
+            [class.text-slate-700]="selectedCategory()"
+            [class.hover:border-slate-300]="selectedCategory()"
+            [class.hover:bg-slate-50]="selectedCategory()"
+            (click)="selectedCategory.set(undefined)"
+          >
+            ALL STORIES
+          </button>
+
+          <!-- Dynamic Categories -->
+          <button
+            *ngFor="let cat of categories()"
+            class="px-5 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 shadow-sm"
+            [class.bg-gradient-to-r]="selectedCategory() === cat"
+            [class.from-[#000035]]="selectedCategory() === cat"
+            [class.to-[#001f5c]]="selectedCategory() === cat"
+            [class.text-white]="selectedCategory() === cat"
+            [class.shadow-lg]="selectedCategory() === cat"
+            [class.shadow-[#000035]/20]="selectedCategory() === cat"
+            [class.bg-white]="selectedCategory() !== cat"
+            [class.border-2]="selectedCategory() !== cat"
+            [class.border-slate-200]="selectedCategory() !== cat"
+            [class.text-slate-700]="selectedCategory() !== cat"
+            [class.hover:border-slate-300]="selectedCategory() !== cat"
+            [class.hover:bg-slate-50]="selectedCategory() !== cat"
+            (click)="selectedCategory.set(cat)"
+          >
+            {{ cat }}
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- Divider -->
+      <div class="relative my-8">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t-2 border-slate-100"></div>
+        </div>
+      </div>
+
+      <!-- 🏷 Tags Section -->
+      <div class="space-y-4">
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-sm font-bold text-[#000035] uppercase tracking-wider">
+              Tags
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+
+          <button
+            *ngFor="let tag of tags()"
+            class="px-5 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 shadow-sm"
+            [class.bg-[#F4B400]]="selectedTags().includes(tag)"
+            [class.text-[#000035]]="selectedTags().includes(tag)"
+            [class.shadow-lg]="selectedTags().includes(tag)"
+            [class.shadow-[#F4B400]/30]="selectedTags().includes(tag)"
+            [class.bg-white]="!selectedTags().includes(tag)"
+            [class.border-2]="!selectedTags().includes(tag)"
+            [class.border-slate-200]="!selectedTags().includes(tag)"
+            [class.text-slate-700]="!selectedTags().includes(tag)"
+            [class.hover:border-slate-300]="!selectedTags().includes(tag)"
+            [class.hover:bg-slate-50]="!selectedTags().includes(tag)"
+            (click)="toggleTag(tag)"
+          >
+            {{ tag }}
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ========================================= -->
+<!-- ARTICLES SECTION -->
+<!-- ========================================= -->
+
+ <section class="max-w-7xl mx-auto px-6 py-16">
+  <app-categories-articles
+    [articles]="articles()"
+    [loading]="loading()"
+    [initialLoading]="initialLoading()"
+    [hasMore]="hasMore()"
+    (loadMore)="onLoadMore()">
+  </app-categories-articles>
+</section>

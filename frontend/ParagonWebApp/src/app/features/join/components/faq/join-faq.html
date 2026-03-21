@@ -1,0 +1,99 @@
+<section class="py-12 bg-linear-to-b from-slate-50 to-white">
+
+  <div class="max-w-4xl mx-auto px-6 space-y-12">
+
+    <!-- Section Header -->
+    <div class="text-center space-y-4">
+
+      <h2 class="text-3xl md:text-4xl font-bold text-[#000035] tracking-tight">
+        {{ sectionTitle() }}
+      </h2>
+
+    </div>
+
+    <!-- FAQ List -->
+    <div class="space-y-3">
+
+      <ng-container *ngFor="let faq of faqs(); let i = index">
+
+        <div
+          class="bg-white border-2 rounded-2xl overflow-hidden shadow-sm"
+          [class.border-[#F4B400]]="activeIndex() === i"
+          [class.border-slate-200]="activeIndex() !== i"
+        >
+
+          <!-- Question -->
+          <button
+            type="button"
+            (click)="toggle(i)"
+            class="w-full flex items-center justify-between gap-4
+                   px-8 py-6
+                   text-left"
+          >
+
+            <div class="flex items-center gap-4 flex-1">
+              <!-- Number Badge -->
+              <div
+                class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+                [class.bg-[#F4B400]]="activeIndex() === i"
+                [class.text-white]="activeIndex() === i"
+                [class.bg-slate-100]="activeIndex() !== i"
+                [class.text-slate-500]="activeIndex() !== i"
+              >
+                {{ i + 1 }}
+              </div>
+
+              <span
+                class="font-semibold text-lg"
+                [class.text-[#000035]]="activeIndex() === i"
+                [class.text-slate-700]="activeIndex() !== i"
+              >
+                {{ faq.question }}
+              </span>
+            </div>
+
+            <!-- Toggle Icon -->
+            <div
+              class="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+              [class.bg-[#F4B400]]="activeIndex() === i"
+              [class.bg-slate-100]="activeIndex() !== i"
+            >
+              <svg
+                class="w-5 h-5 transition-transform duration-300"
+                [class.rotate-180]="activeIndex() === i"
+                [class.text-white]="activeIndex() === i"
+                [class.text-slate-500]="activeIndex() !== i"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2.5"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </button>
+
+          <!-- Answer -->
+          <ng-container *ngIf="activeIndex() === i">
+            <div class="px-8 pb-6 pt-2">
+              <div class="pl-12 border-l-2 border-[#F4B400]/20 ml-4">
+                <p class="text-slate-600 leading-relaxed">
+                  {{ faq.answer }}
+                </p>
+              </div>
+            </div>
+          </ng-container>
+
+        </div>
+
+      </ng-container>
+
+    </div>
+
+  </div>
+
+</section>

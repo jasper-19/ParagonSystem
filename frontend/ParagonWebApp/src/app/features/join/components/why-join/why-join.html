@@ -1,0 +1,50 @@
+<section class="relative py-12 bg-white overflow-hidden">
+
+  <!-- Grid Pattern Overlay -->
+  <div class="absolute inset-0 opacity-[0.02]" style="background-image: linear-gradient(#000035 1px, transparent 1px), linear-gradient(90deg, #000035 1px, transparent 1px); background-size: 40px 40px;"></div>
+
+  <div class="relative max-w-6xl mx-auto px-6 space-y-12">
+
+    <!-- Section Header -->
+    <div class="text-center space-y-4">
+
+      <h2 class="text-3xl md:text-4xl font-bold text-[#000035] tracking-tight">
+        {{ sectionTitle() }}
+      </h2>
+
+    </div>
+
+    <!-- Benefits Grid -->
+    <div class="grid md:grid-cols-3 gap-10">
+
+      <ng-container *ngFor="let benefit of benefits(); let i = index">
+
+        <div
+          class="group relative p-8 rounded-2xl bg-white border border-slate-200
+                 hover:border-[#F4B400]/50
+                 hover:shadow-2xl hover:shadow-[#000035]/10
+                 transition-all duration-500
+                 hover:-translate-y-2"
+        >
+
+          <h3 class="text-xl font-bold text-[#000035] mb-4 group-hover:text-[#F4B400] transition-colors duration-300">
+            {{ benefit.title }}
+          </h3>
+
+          <p class="text-slate-600 leading-relaxed">
+            {{ benefit.description }}
+          </p>
+
+          <!-- Corner Decoration -->
+          <div class="absolute top-4 right-4 w-20 h-20 bg-linear-to-br from-[#F4B400]/5 to-transparent rounded-full blur-2xl
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+        </div>
+
+      </ng-container>
+
+    </div>
+
+  </div>
+
+</section>

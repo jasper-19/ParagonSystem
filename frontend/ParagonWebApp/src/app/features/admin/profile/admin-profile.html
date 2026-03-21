@@ -1,0 +1,24 @@
+<div class="space-y-8">
+
+  <!-- Page Title -->
+
+      <div class="space-y-2">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+            Profile
+          </h2>
+        <p class="text-base text-gray-600">
+          Manage your account and information settings
+        </p>
+      </div>
+
+  <!-- Profile Overview Card -->
+  <app-profile-overview [staff]="staffMember()" (openEdit)="openPersonalInfoModal()"></app-profile-overview>
+
+  <!-- Personal Information -->
+  <app-personal-information [staff]="staffMember()"></app-personal-information>
+
+  <!-- Security Settings-->
+  <app-security-settings></app-security-settings>
+
+</div>
+

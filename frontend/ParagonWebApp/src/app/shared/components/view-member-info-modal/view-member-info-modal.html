@@ -1,0 +1,150 @@
+<ng-container *ngIf="isOpen() && member()">
+
+  <div
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
+    (click)="close()"
+  >
+
+    <div
+      class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- ==================== -->
+      <!-- Header               -->
+      <!-- ==================== -->
+
+      <div class="bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035] px-8 pt-10 pb-8 flex flex-col items-center gap-4 relative">
+
+        <!-- Close Button -->
+        <button
+          type="button"
+          (click)="close()"
+          class="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-xl
+                 bg-white/10 hover:bg-white/20 text-white
+                 border border-white/10 hover:border-white/20
+                 transition-all duration-200"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+
+        <!-- Avatar -->
+        <div
+          class="w-20 h-20 rounded-full border-[3px] border-white/30
+                 flex items-center justify-center shrink-0 overflow-hidden shadow-lg"
+          [class]="member()!.image ? '' : 'bg-white/15 text-3xl font-extrabold text-white'"
+        >
+          <ng-container *ngIf="member()!.image; else initialsAvatar">
+            <img
+              [src]="member()!.image"
+              [alt]="member()!.name"
+              class="w-full h-full object-cover"
+            />
+          </ng-container>
+          <ng-template #initialsAvatar>
+            {{ member()!.initials || member()!.name.charAt(0) }}
+          </ng-template>
+        </div>
+
+        <!-- Name -->
+        <div class="text-center">
+          <h3 class="text-xl font-bold text-white leading-tight">{{ member()!.name }}</h3>
+        </div>
+
+      </div>
+
+      <!-- ==================== -->
+      <!-- Body                 -->
+      <!-- ==================== -->
+
+      <div class="p-6 space-y-5">
+
+        <!-- Info Rows -->
+        <div class="space-y-3">
+
+          <!-- Section Row -->
+          <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+            <div class="w-8 h-8 rounded-lg bg-[#000035]/10 flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4 text-[#000035]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857
+                     M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857
+                     m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Section</p>
+              <p class="text-sm font-semibold text-gray-800 truncate">{{ sectionTitle() }}</p>
+            </div>
+          </div>
+
+          <!-- Role Row -->
+          <div class="flex items-center gap-3 bg-[#f4b400]/5 rounded-xl px-4 py-3 border border-[#f4b400]/20">
+            <div class="w-8 h-8 rounded-lg bg-[#f4b400]/20 flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4 text-[#000035]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0
+                     3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946
+                     3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138
+                     3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806
+                     3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438
+                     3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Role</p>
+              <p class="text-sm font-semibold text-[#000035] truncate">{{ member()!.position }}</p>
+            </div>
+          </div>
+
+          <!-- Year Level Row -->
+          <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 14l9-5-9-5-9 5 9 5z"/>
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 14l6.16-3.422A12.083 12.083 0 0121 17c0 2.5-1.5 4-9 4S3 19.5 3 17a12.083 12.083 0 012.84-6.422L12 14z"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Year Level</p>
+              <p class="text-sm font-semibold text-gray-800">{{ getYearLevelLabel(member()!.yearLevel) }}</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-1">
+
+          <button
+            type="button"
+            (click)="close()"
+            class="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold text-sm
+                   hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
+          >
+            Close
+          </button>
+
+          <button
+            type="button"
+            (click)="requestEdit()"
+            class="flex-1 py-2.5 rounded-xl font-bold text-sm text-white shadow
+                   bg-[#000035] hover:bg-[#0a1a2e] hover:shadow-md
+                   transition-all duration-200"
+          >
+            Edit Role
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</ng-container>

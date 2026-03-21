@@ -1,0 +1,14 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import "tailwindcss";
+@import 'quill/dist/quill.snow.css';
+
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE & Edge */
+  scrollbar-width: none;     /* Firefox */
+}

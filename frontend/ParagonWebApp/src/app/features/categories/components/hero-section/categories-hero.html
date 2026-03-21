@@ -1,0 +1,36 @@
+<section
+  class="relative bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000849] text-white pb-32 pt-24 overflow-hidden"
+  aria-labelledby="categories-hero-title"
+>
+
+  <!-- Grid Pattern Overlay -->
+  <div class="absolute inset-0 opacity-[0.02]"></div>
+
+  <!-- Background Big Text (Subtle Overlay Effect) -->
+  <div class="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+    <h2 class="text-[120px] sm:text-[150px] md:text-[180px] lg:text-[200px] font-bold opacity-[0.05] select-none tracking-tight text-white">
+      {{ title() }}
+    </h2>
+  </div>
+
+  <div class="relative max-w-7xl mx-auto px-6 space-y-8">
+
+    <!-- Small Label with Enhanced Design -->
+    <div class="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-[#F4B400]/30 shadow-lg shadow-[#F4B400]/10">
+      <span class="text-[#F4B400] text-xs font-bold tracking-[0.2em] uppercase">
+        {{ label() }}
+      </span>
+    </div>
+
+    <!-- Main Title with Enhanced Typography -->
+    <h1
+      id="categories-hero-title"
+      class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.1] tracking-tight
+             text-white drop-shadow-2xl"
+    >
+      {{ title() }}
+    </h1>
+
+  </div>
+
+</section>

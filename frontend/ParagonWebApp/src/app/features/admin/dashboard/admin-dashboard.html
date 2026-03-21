@@ -1,0 +1,45 @@
+<section class="space-y-6 sm:space-y-8 lg:space-y-12">
+
+  <div class="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-10">
+    @if (facade.totalArticles() !== null) {
+      <ng-container>
+        <app-articles-summary
+          [totalArticles]="facade.totalArticles()"
+          [publishedArticles]="facade.publishedArticles()"
+          [draftArticles]="facade.draftArticles()"
+          [archivedArticles]="facade.archivedArticles()"
+        />
+      </ng-container>
+    }
+
+    <app-special-issues-summary
+      [totalIssues]="facade.totalIssues()"
+      [publishedIssues]="facade.publishedIssues()"
+      [draftIssues]="facade.draftIssues()"
+      [archivedIssues]="facade.archivedIssues()"
+    />
+  </div>
+
+  <app-analytics-section
+    [metrics]="facade.analyticsMetrics()"
+    [trendData]="facade.analyticsTrend()"
+    [selectedMode]="facade.selectedMode()"
+    (modeChange)="facade.setMode($event)"
+  />
+
+  <app-applications-overview
+    [totalApplications]="facade.totalApplications()"
+    [pendingApplications]="facade.pendingApplications()"
+    [acceptedApplications]="facade.acceptedApplications()"
+    [recentApplications]="facade.recentApplications()"
+  />
+
+  <app-quick-actions
+    [actions]="quickActions"
+  />
+
+  <app-activity-feed
+    [activities]="facade.activityFeed()"
+  />
+
+</section>

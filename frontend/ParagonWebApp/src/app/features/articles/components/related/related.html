@@ -1,0 +1,65 @@
+<section
+  *ngIf="articles.length"
+  class="w-full bg-[#f4b400]/10 py-16"
+  aria-labelledby="related-stories-title"
+>
+
+  <!-- Inner Container -->
+  <div class="max-w-7xl mx-auto px-6">
+
+    <!-- Section Title -->
+    <h3
+      id="related-stories-title"
+      class="text-3xl font-bold mb-12"
+    >
+      Related Stories
+    </h3>
+
+    <!-- Cards Grid -->
+    <div class="grid md:grid-cols-3 gap-10">
+
+      <a
+        *ngFor="let r of articles"
+        [routerLink]="['/article', r.slug]"
+        class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group hover:-translate-y-1 block"
+      >
+
+        <!-- Image -->
+        <div class="aspect-3/2 overflow-hidden">
+          <img
+            [src]="r.image"
+            [alt]="r.title"
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+
+          <span class="inline-block text-xs font-semibold px-3 py-1 rounded-full bg-[#000035] text-[#f4b400] uppercase tracking-wide mb-4">
+            {{ r.category }}
+          </span>
+
+          <h4 class="text-xl font-bold mb-3 leading-snug group-hover:text-[#F4B400] transition">
+            {{ r.title }}
+          </h4>
+
+          <p *ngIf="r.excerpt"
+             class="text-gray-600 text-sm mb-6">
+            {{ r.excerpt }}
+          </p>
+
+          <div class="flex items-center justify-between text-xs text-gray-500">
+            <span>{{ r.author }}</span>
+            <span>{{ r.publishedAt | date:'MMM d, yyyy' }}</span>
+          </div>
+
+        </div>
+
+      </a>
+
+    </div>
+
+  </div>
+
+</section>

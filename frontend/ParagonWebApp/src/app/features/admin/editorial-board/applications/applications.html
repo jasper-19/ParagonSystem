@@ -1,0 +1,404 @@
+@if (applications$ | async; as apps) {
+
+  @let filtered = filteredApplications(apps);
+  @let totalPages = getTotalPages(filtered.length);
+  @let paginated = paginatedApplications(filtered);
+
+  <section class="space-y-8">
+
+    <!-- Header -->
+    <div class="flex flex-col gap-6">
+
+      <!-- Top Row -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+        <div class="space-y-2">
+          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+            Applications
+          </h2>
+          <p class="text-base text-gray-600">
+            Review and manage editorial board applicants
+          </p>
+        </div>
+
+        <!-- CTA Button -->
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-5 py-2.5
+                 text-sm font-semibold text-white
+                 bg-[#000035] hover:bg-[#0a1a2e]
+                 rounded-lg transition-all duration-200
+                 shadow-sm hover:shadow-md"
+          (click)="exportApplications(filtered)"
+        >
+          Export CSV
+        </button>
+
+      </div>
+
+      <!-- Search + Status -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+        <!-- Search -->
+        <div class="w-full md:w-80">
+          <input
+            type="text"
+            placeholder="Search by name, email, or student ID..."
+            [value]="searchTerm"
+            (input)="onSearch($event)"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg
+                   focus:ring-2 focus:ring-[#f4b400] focus:outline-none
+                   text-sm"
+          />
+        </div>
+
+        <!-- Status Tabs -->
+        <div class="flex gap-2 flex-wrap">
+          @for (status of statuses; track status) {
+            <button
+              type="button"
+              (click)="setFilter(status)"
+              class="px-4 py-2 text-sm font-medium rounded-lg transition"
+              [class.bg-[#000035]]="currentFilter === status"
+              [class.text-white]="currentFilter === status"
+              [class.bg-gray-100]="currentFilter !== status"
+            >
+              {{ status === 'interview_scheduled' ? 'Scheduled'
+                : status === 'interview_completed' ? 'Interviewed'
+                : status }}
+            </button>
+          }
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Upcoming Interviews -->
+    <div class="bg-white rounded-xl shadow border border-gray-100">
+
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">
+          Upcoming Interviews
+        </h3>
+      </div>
+
+      <div class="px-6 py-4 text-sm">
+
+        @if (getUpcomingInterviews(apps).length === 0) {
+          <div class="text-gray-500">No upcoming interviews</div>
+        } @else {
+          <div class="space-y-2">
+            @for (interview of getUpcomingInterviews(apps); track interview.id) {
+              <div class="flex flex-wrap gap-x-2">
+                <span class="font-semibold text-[#000035]">
+                  {{ interview.fullName }}
+                </span>
+                <span class="text-gray-600">— {{ interview.interviewDate }}</span>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+
+    </div>
+
+    <!-- Table Section -->
+    <div class="bg-white rounded-xl shadow border border-gray-100">
+
+      @if (filtered.length === 0) {
+
+        <!-- Empty State -->
+        <div class="px-4 sm:px-6 md:px-8 py-12 sm:py-16 text-center">
+          <div class="inline-block p-4 bg-gray-100 rounded-full mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+          </div>
+          <p class="text-gray-500 font-medium">No applications found</p>
+        </div>
+
+      } @else {
+
+        <!-- Desktop Table View (hidden on mobile) -->
+        <div class="hidden md:block overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-100">
+
+            <thead class="bg-linear-to-r from-[#000035] to-[#1a3a52]">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Applicant</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Position</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Subrole</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Interview</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody class="bg-white divide-y divide-gray-50">
+              @for (app of paginated; track app.id) {
+                <tr
+                  class="hover:bg-[#f4b400]/10 transition-colors group cursor-pointer"
+                  (click)="openApplication(app)"
+                >
+
+                  <td class="px-6 py-4">
+                    <div class="font-semibold text-[#000035] group-hover:text-[#f4b400]">
+                      {{ app.fullName }}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      {{ app.email }}
+                    </div>
+                  </td>
+
+                  <td class="px-6 py-4 font-medium text-gray-800">
+                    {{ getPositionTitle(app.positionId) }}
+                  </td>
+
+                  <td class="px-6 py-4 font-medium text-gray-800">
+                    {{ getSubRoleLabel(app) }}
+                  </td>
+
+                  <td class="px-6 py-4">
+                    <span
+                      class="inline-block px-3 py-1 text-xs font-bold rounded-full"
+                      [ngClass]="{
+                        'bg-yellow-100 text-yellow-700': app.status === 'pending',
+                        'bg-blue-100 text-blue-700': app.status === 'interview_scheduled',
+                        'bg-purple-100 text-purple-700': app.status === 'interview_completed',
+                        'bg-green-100 text-green-700': app.status === 'accepted',
+                        'bg-red-100 text-red-700': app.status === 'rejected',
+                        'bg-gray-100 text-gray-700': !app.status
+                      }"
+                    >
+                      {{ app.status || '—' }}
+                    </span>
+                  </td>
+
+                  <td class="px-6 py-4 text-sm text-gray-700">
+                    {{ app.interviewDate || 'Not scheduled' }}
+                  </td>
+
+                  <td class="px-6 py-4" (click)="$event.stopPropagation()">
+                    <button
+                      type="button"
+                      (click)="requestDelete(app, $event)"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold
+                             text-red-600 bg-red-50 hover:bg-red-100 border border-red-200
+                             rounded-lg transition-colors"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                      Remove
+                    </button>
+                  </td>
+
+                </tr>
+              }
+            </tbody>
+
+          </table>
+        </div>
+
+        <!-- Mobile Card View (visible only on mobile) -->
+        <div class="md:hidden divide-y divide-gray-100">
+          @for (app of paginated; track app.id) {
+            <div
+              class="p-4 hover:bg-[#f4b400]/5 transition-colors cursor-pointer"
+              (click)="openApplication(app)"
+            >
+
+              <!-- Name -->
+              <h3 class="font-semibold text-[#000035] mb-3 text-base">
+                {{ app.fullName }}
+              </h3>
+
+              <!-- Meta Info Grid -->
+              <div class="grid grid-cols-2 gap-3 mb-3 text-sm">
+
+                <div>
+                  <span class="text-gray-500 text-xs block mb-1">Email</span>
+                  <span class="text-gray-700 wrap-break-word">{{ app.email }}</span>
+                </div>
+
+                <div>
+                  <span class="text-gray-500 text-xs block mb-1">Student ID</span>
+                  <span class="text-gray-700">{{ app.studentId }}</span>
+                </div>
+
+                <div>
+                  <span class="text-gray-500 text-xs block mb-1">Year Level</span>
+                  <span class="text-gray-700">{{ getYearLevelLabel(app.yearLevel) }}</span>
+                </div>
+
+                <div>
+                  <span class="text-gray-500 text-xs block mb-1">Position</span>
+                  <span class="text-gray-700">{{ getPositionTitle(app.positionId) }}</span>
+                </div>
+
+                <div>
+                  <span class="text-gray-500 text-xs block mb-1">Subrole</span>
+                  <span class="text-gray-700">{{ getSubRoleLabel(app) }}</span>
+                </div>
+
+                <div>
+                  <span class="text-gray-500 text-xs block mb-1">Status</span>
+                  <span
+                    class="inline-block px-2.5 py-1 text-xs font-bold rounded-full"
+                    [ngClass]="{
+                      'bg-yellow-100 text-yellow-700': app.status === 'pending',
+                      'bg-blue-100 text-blue-700': app.status === 'interview_scheduled',
+                      'bg-purple-100 text-purple-700': app.status === 'interview_completed',
+                      'bg-green-100 text-green-700': app.status === 'accepted',
+                      'bg-red-100 text-red-700': app.status === 'rejected',
+                      'bg-gray-100 text-gray-700': !app.status
+                    }"
+                  >
+                    {{ app.status || '—' }}
+                  </span>
+                </div>
+
+                <div class="col-span-2">
+                  <span class="text-gray-500 text-xs block mb-1">Interview</span>
+                  <span class="text-gray-700">{{ app.interviewDate || 'Not scheduled' }}</span>
+                </div>
+
+              </div>
+
+              <!-- Remove button -->
+              <div class="flex justify-end mt-3" (click)="$event.stopPropagation()">
+                <button
+                  type="button"
+                  (click)="requestDelete(app, $event)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold
+                         text-red-600 bg-red-50 hover:bg-red-100 border border-red-200
+                         rounded-lg transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                  Remove
+                </button>
+              </div>
+
+            </div>
+          }
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex flex-col gap-4 mt-6 px-4 sm:px-6 pb-6">
+
+          <!-- Top Row: Page Size + Info -->
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+            <!-- Left: Page Size Selector -->
+            <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+              <span>Show</span>
+
+              <select
+                [value]="pageSize"
+                (change)="onPageSizeChange($event)"
+                class="px-3 py-1.5 border border-gray-200 rounded-lg
+                       focus:ring-2 focus:ring-[#f4b400] focus:outline-none"
+              >
+                @for (size of pageSizeOptions; track size) {
+                  <option [value]="size">{{ size }}</option>
+                }
+              </select>
+
+              <span>entries</span>
+            </div>
+
+            <!-- Right: Page Info -->
+            <div class="text-xs sm:text-sm text-gray-500">
+              Showing
+              <span class="font-medium text-gray-800">
+                {{ getRangeStart(filtered.length) }}–{{ getRangeEnd(filtered.length) }}
+              </span>
+              of
+              <span class="font-medium text-gray-800">
+                {{ filtered.length }}
+              </span>
+            </div>
+
+          </div>
+
+          <!-- Bottom Row: Pagination Controls -->
+          <div class="flex items-center justify-center gap-1 sm:gap-2">
+
+            <button
+              (click)="prevPage()"
+              [disabled]="currentPage === 1"
+              class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg border border-gray-200
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+
+            @for (page of getPageNumbers(totalPages); track page) {
+              <button
+                (click)="setPage(page)"
+                class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg min-w-8 sm:min-w-10"
+                [class.bg-[#000035]]="currentPage === page"
+                [class.text-white]="currentPage === page"
+                [class.bg-gray-100]="currentPage !== page"
+              >
+                {{ page }}
+              </button>
+            }
+
+            <button
+              (click)="nextPage(totalPages)"
+              [disabled]="currentPage === totalPages"
+              class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg border border-gray-200
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+
+          </div>
+
+        </div>
+
+      }
+
+    </div>
+
+  </section>
+
+}
+
+<!-- Reusable Modal -->
+
+<application-review-modal
+  [application]="selectedApplication"
+  [positionTitle]="selectedApplication ? getPositionTitle(selectedApplication.positionId) : null"
+  [subRoleLabel]="selectedApplication ? getSubRoleLabel(selectedApplication) : null"
+  (close)="closeModal()"
+
+  (schedule)="scheduleInterview($event.app, $event.date)"
+
+  (notes)="addNotes($event.app, $event.notes)"
+
+  (interviewed)="markInterviewed($event)"
+
+  (accept)="accept($event)"
+
+  (reject)="reject($event)"
+>
+</application-review-modal>
+
+<!-- Delete Confirmation Modal -->
+<app-confirmation-modal
+  [isOpen]="showDeleteConfirm"
+  [title]="'Remove Application'"
+  [message]="deleteMessage"
+  [confirmText]="'Remove'"
+  [cancelText]="'Cancel'"
+  [variant]="'danger'"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></app-confirmation-modal>

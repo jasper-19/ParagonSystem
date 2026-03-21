@@ -1,0 +1,124 @@
+<section class="w-full bg-white py-8 sm:py-10 lg:py-12 mb-10 sm:mb-14 lg:mb-20 overflow-x-hidden" *ngIf="featured.length > 0">
+
+  <!-- Section Header
+  <div class="flex items-center gap-3 px-6 sm:px-10 mb-6 sm:mb-8">
+    <span class="text-[11px] font-black text-[#000035]/40 tabular-nums">{{ currentIndex + 1 }}&nbsp;/&nbsp;{{ featured.length }}</span>
+  </div>
+  -->
+  <!-- ========================= -->
+  <!-- STACKED CAROUSEL -->
+  <!-- ========================= -->
+  <div class="relative" style="height: clamp(260px, 46vw, 560px)">
+
+    <!-- Slides -->
+    <div
+      *ngFor="let a of featured; let i = index; trackBy: trackById"
+      class="absolute top-0 h-full overflow-hidden transition-all duration-500 ease-in-out group"
+      style="aspect-ratio: 1 / 1"
+      [ngStyle]="slideStyles[i]"
+    >
+      <!-- Click-to-navigate overlay for non-active (peeking) slides -->
+      <div
+        *ngIf="Math.abs(offsets[i]) === 1"
+        class="absolute inset-0 z-10 cursor-pointer"
+        (click)="goTo(i)"
+      ></div>
+
+      <!-- Background Image -->
+      <img
+        [src]="a.image"
+        [alt]="a.title"
+        class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+      />
+
+      <!-- Gradient Overlays -->
+      <div class="absolute inset-0 bg-linear-to-t from-[#000035] via-[#000035]/50 to-[#000035]/10"></div>
+      <div class="absolute inset-0 bg-linear-to-r from-[#000035]/60 via-transparent to-transparent"></div>
+
+      <!-- Slide Content (active slide only) -->
+      <a
+        [routerLink]="['/article', a.slug]"
+        class="absolute inset-0 flex flex-col justify-end px-6 sm:px-10 lg:px-12 pb-7 sm:pb-10 text-white transition-opacity duration-300"
+        [style.opacity]="offsets[i] === 0 ? '1' : '0'"
+        [style.pointer-events]="offsets[i] === 0 ? 'auto' : 'none'"
+      >
+        <div class="flex items-center gap-3 mb-3 sm:mb-4">
+          <span class="bg-[#F4B400] text-[#000035] text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3 py-1.5">
+            {{ a.category }}
+          </span>
+          <span class="text-[10px] sm:text-xs text-white/70 uppercase tracking-wider font-semibold">
+            {{ a.publishedAt | date:'MMM d, yyyy' }}
+          </span>
+        </div>
+
+        <h2 class="text-xl sm:text-3xl lg:text-5xl font-black leading-tight mb-3 sm:mb-4 line-clamp-3 max-w-2xl lg:max-w-4xl hover:text-[#F4B400] transition-colors duration-200">
+          {{ a.title }}
+        </h2>
+
+        <p class="hidden sm:block text-xs sm:text-sm text-white/70 leading-relaxed line-clamp-2 mb-4 max-w-xl lg:max-w-2xl">
+          {{ a.excerpt }}
+        </p>
+
+        <div class="flex flex-wrap gap-x-4 gap-y-0.5 text-[10px] text-white/50 uppercase tracking-wider">
+          <p *ngIf="a.author"><span class="text-white/70 font-bold">Written By:</span> {{ a.author }}</p>
+          <p *ngIf="a.photoby"><span class="text-white/70 font-bold">Photo By:</span> {{ a.photoby }}</p>
+          <p *ngIf="a.graphicby"><span class="text-white/70 font-bold">Graphics By:</span> {{ a.graphicby }}</p>
+          <p *ngIf="a.illusrationby"><span class="text-white/70 font-bold">Illustration By:</span> {{ a.illusrationby }}</p>
+        </div>
+      </a>
+
+      <!-- Category badge on peeking slides -->
+      <div
+        *ngIf="offsets[i] !== 0"
+        class="absolute bottom-4 left-4 z-20 transition-opacity duration-300"
+      >
+        <span class="bg-[#F4B400] text-[#000035] text-[9px] font-black uppercase tracking-widest px-2.5 py-1">
+          {{ a.category }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Prev Button -->
+    <button
+      (click)="prev(); $event.stopPropagation()"
+      aria-label="Previous story"
+      class="absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 z-40
+             w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center
+             bg-black/40 hover:bg-[#F4B400] text-white hover:text-[#000035]
+             border border-white/20 hover:border-[#F4B400]
+             transition-all duration-200"
+    >
+      <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </button>
+
+    <!-- Next Button -->
+    <button
+      (click)="next(); $event.stopPropagation()"
+      aria-label="Next story"
+      class="absolute right-1 sm:right-3 top-1/2 -translate-y-1/2 z-40
+             w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center
+             bg-black/40 hover:bg-[#F4B400] text-white hover:text-[#000035]
+             border border-white/20 hover:border-[#F4B400]
+             transition-all duration-200"
+    >
+      <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
+
+  </div>
+
+  <!-- Dot Indicators -->
+  <div class="flex items-center justify-center gap-2 mt-5 sm:mt-6">
+    <button
+      *ngFor="let a of featured; let i = index"
+      (click)="goTo(i)"
+      class="h-2 rounded-full transition-all duration-300"
+      [ngClass]="i === currentIndex ? 'w-6 bg-[#F4B400]' : 'w-2 bg-[#000035]/20 hover:bg-[#000035]/40'"
+    ></button>
+  </div>
+
+</section>
+

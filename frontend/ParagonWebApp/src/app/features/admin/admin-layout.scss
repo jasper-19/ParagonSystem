@@ -1,0 +1,90 @@
+/* Admin route loader (Uiverse.io - Ashon-G) */
+.admin-page-shell {
+  position: relative;
+  min-height: 240px;
+}
+
+.admin-page-content--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-loader-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 10;
+  background: rgba(245, 245, 248, 0.65);
+  backdrop-filter: blur(2px);
+}
+
+.admin-route-loader {
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  background: rgba(245, 245, 248, 0.45);
+  border: 1px dashed rgba(0, 0, 53, 0.12);
+  border-radius: 24px;
+}
+
+.loader {
+  --size: 72px;
+  --border: 8px;
+  --speed: 1s;
+  --blur: var(--border);
+}
+
+.loader {
+  width: var(--border);
+  aspect-ratio: 1;
+  background: #f4b400;
+  border-radius: 50%;
+  position: relative;
+  --y: calc((var(--size) * -0.5) + (var(--border) * 0.5));
+  transform: rotate(0deg) translateY(var(--y));
+  animation: spin var(--speed) infinite linear;
+}
+
+.loader::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--border) * -0.5);
+  border-radius: 50%;
+  background: #f4b400;
+  filter: blur(var(--blur));
+  z-index: -1;
+}
+
+.loader::after {
+  content: "";
+  width: var(--size);
+  aspect-ratio: 1;
+  position: absolute;
+  top: 0%;
+  left: 50%;
+  translate: -50% 0;
+  background: conic-gradient(
+    #f4b400,
+    #000035,
+    transparent 65%
+  );
+  border-radius: 50%;
+  -webkit-mask: radial-gradient(
+    transparent calc(((var(--size) * 0.5) - var(--border)) - 1px),
+    #fff calc((var(--size) * 0.5) - var(--border))
+  );
+  mask: radial-gradient(
+    transparent calc(((var(--size) * 0.5) - var(--border)) - 1px),
+    #fff calc((var(--size) * 0.5) - var(--border))
+  );
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(-360deg) translateY(var(--y));
+  }
+}

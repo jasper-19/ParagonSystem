@@ -1,0 +1,36 @@
+<!-- Paragraph -->
+<div *ngIf="isParagraph(section)"
+     class="mb-6 leading-relaxed text-lg text-gray-800 text-justify"
+     [innerHTML]="section.content">
+</div>
+
+<!-- Image -->
+<figure *ngIf="isImage(section)" class="my-8">
+  <img [src]="section.src"
+       class="w-full rounded-xl shadow-sm" />
+
+  <figcaption *ngIf="section.caption"
+              class="text-sm text-gray-500 mt-2">
+    {{ section.caption }}
+  </figcaption>
+</figure>
+
+<!-- Quote -->
+<blockquote *ngIf="isQuote(section)"
+            class="border-l-4 border-gray-300 pl-6 italic my-10 text-xl">
+  {{ section.text }}
+</blockquote>
+
+<!-- Heading -->
+<h2 *ngIf="isHeading(section)"
+    class="text-2xl font-bold my-8">
+  {{ section.text }}
+</h2>
+
+<!-- Embed -->
+<div *ngIf="isEmbed(section)" class="my-10">
+  <iframe [src]="section.url"
+          class="w-full h-96 rounded-lg"
+          frameborder="0">
+  </iframe>
+</div>
