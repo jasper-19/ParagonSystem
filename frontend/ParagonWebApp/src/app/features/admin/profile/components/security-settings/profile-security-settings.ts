@@ -11,9 +11,9 @@ import { ErrorModal } from '../../../../../shared/components/feedback-modal/erro
   selector: 'app-security-settings',
   standalone: true,
   imports: [CommonModule, FormsModule, ConfirmationModal, SuccessModal, ErrorModal],
-  templateUrl: './security-settings.html'
+  templateUrl: './profile-security-settings.html'
 })
-export class SecuritySettings implements OnInit {
+export class ProfileSecuritySettings implements OnInit {
   private readonly auth = inject(AdminAuthService);
 
   currentPassword = '';

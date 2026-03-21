@@ -13,13 +13,13 @@ interface SecuritySettings {
 }
 
 @Component({
-  selector: 'app-security-settings',
+  selector: 'app-site-security-settings',
   standalone: true,
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
-  templateUrl: './security-settings.html',
+  templateUrl: './site-security-settings.html',
 })
 
-export class SecuritySettingsComponent implements OnInit {
+export class SiteSecuritySettingsComponent implements OnInit {
 
   form!: FormGroup;
   isSubmitting = false;

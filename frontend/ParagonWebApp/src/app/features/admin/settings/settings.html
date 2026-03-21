@@ -32,7 +32,11 @@
             <ng-container [ngSwitch]="activeTab">
               <app-general-settings *ngSwitchCase="'general'"></app-general-settings>
               <app-users-settings   *ngSwitchCase="'users'"></app-users-settings>
-              <app-security-settings *ngSwitchCase="'security'"></app-security-settings>
+              <app-site-security-settings *ngSwitchCase="'security'"></app-site-security-settings>
+              <app-content-settings *ngSwitchCase="'content'"></app-content-settings>
+              <app-appearance-settings *ngSwitchCase="'appearance'"></app-appearance-settings>
+              <app-notification-settings *ngSwitchCase="'notifications'"></app-notification-settings>
+              <app-maintenance-settings *ngSwitchCase="'maintenance'"></app-maintenance-settings>
 
               <div *ngSwitchDefault class="flex flex-col items-center justify-center py-16 text-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-[#000035]/5 flex items-center justify-center">

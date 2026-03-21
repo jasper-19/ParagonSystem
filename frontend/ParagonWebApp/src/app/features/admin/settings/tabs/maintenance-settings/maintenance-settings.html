@@ -1,0 +1,253 @@
+<div class="space-y-0 divide-y divide-[#000035]/6">
+
+  <!-- ── HEADER ── -->
+  <div class="py-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Maintenance Settings</h2>
+      <p class="text-[11px] text-[#000035]/35 mt-0.5">Manage system maintenance, backups, and system health.</p>
+    </div>
+  </div>
+
+  <!-- ── MAINTENANCE MODE ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l5.653-4.655m5.833-4.62a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0z"/>
+        </svg>
+        <h3 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Maintenance Mode</h3>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Take the site offline for scheduled maintenance.</p>
+    </div>
+
+    <div class="flex flex-col gap-3">
+
+      <!-- Enable toggle -->
+      <label class="flex items-center justify-between gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200"
+        [ngClass]="{ 'border-red-200 bg-red-50/50': settings.maintenanceMode }">
+        <div class="flex items-center gap-3">
+          <svg class="size-4 shrink-0 transition-colors duration-200"
+            [ngClass]="settings.maintenanceMode ? 'text-red-400' : 'text-[#000035]/30'"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+          </svg>
+          <div>
+            <p class="text-sm font-bold transition-colors duration-200"
+              [ngClass]="settings.maintenanceMode ? 'text-red-600' : 'text-[#000035]'">
+              Enable Maintenance Mode
+            </p>
+            <p class="text-[11px] mt-0.5"
+              [ngClass]="settings.maintenanceMode ? 'text-red-400' : 'text-[#000035]/35'">
+              {{ settings.maintenanceMode ? 'Site is currently offline for visitors.' : 'Site is live and accessible to the public.' }}
+            </p>
+          </div>
+        </div>
+        <input type="checkbox" [(ngModel)]="settings.maintenanceMode" (change)="updateSettings()" class="size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+      </label>
+
+      <!-- Maintenance message -->
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Maintenance Message</label>
+        <textarea
+          [(ngModel)]="settings.maintenanceMessage"
+          (blur)="updateSettings()"
+          rows="3"
+          placeholder="We're currently performing scheduled maintenance. Be back soon."
+          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] placeholder:text-[#000035]/20 focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/50 resize-none transition-all duration-200"
+        ></textarea>
+      </div>
+
+      <!-- Allow admin bypass -->
+      <label class="flex items-center justify-between gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <svg class="size-4 text-[#000035]/30 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25z"/>
+          </svg>
+          <div>
+            <p class="text-sm font-bold text-[#000035]">Allow Admin Access</p>
+            <p class="text-[11px] text-[#000035]/35 mt-0.5">Admins can still access the site during maintenance.</p>
+          </div>
+        </div>
+        <input type="checkbox" [(ngModel)]="settings.allowAdminBypass" (change)="updateSettings()" class="size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+      </label>
+
+    </div>
+  </div>
+
+  <!-- ── BACKUP & RESTORE ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 8.485-7.5 11.25-7.5 11.25S5.25 14.86 5.25 6.375a7.5 7.5 0 0 1 15 0z"/>
+        </svg>
+        <h3 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Backup & Restore</h3>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Configure automatic backups and run manual snapshots.</p>
+    </div>
+
+    <div class="flex flex-col gap-4">
+
+      <!-- Auto backup toggle -->
+      <label class="flex items-center justify-between gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <svg class="size-4 text-[#000035]/30 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+          </svg>
+          <div>
+            <p class="text-sm font-bold text-[#000035]">Auto Backup</p>
+            <p class="text-[11px] text-[#000035]/35 mt-0.5">Automatically back up the system on a set schedule.</p>
+          </div>
+        </div>
+        <input type="checkbox" [(ngModel)]="settings.autoBackupEnabled" (change)="updateSettings()" class="size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+      </label>
+
+      <!-- Backup frequency -->
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Backup Frequency</label>
+        <div class="grid grid-cols-3 gap-3">
+          <label
+            *ngFor="let option of backupOptions"
+            class="flex flex-col items-center justify-center gap-1.5 border border-[#000035]/8 rounded-lg px-3 py-3.5 cursor-pointer transition-all duration-200"
+            [ngClass]="{
+              'border-[#F4B400] bg-[#F4B400]/5': settings.backupFrequency === option.value,
+              'hover:border-[#000035]/20 hover:bg-[#000035]/2': settings.backupFrequency !== option.value
+            }"
+            (click)="settings.backupFrequency = option.value; updateSettings()"
+          >
+            <span class="text-[10px] font-black uppercase tracking-[0.15em]"
+              [ngClass]="settings.backupFrequency === option.value ? 'text-[#000035]' : 'text-[#000035]/40'">
+              {{ option.label }}
+            </span>
+            <span class="size-1.5 rounded-full transition-all duration-200"
+              [ngClass]="settings.backupFrequency === option.value ? 'bg-[#F4B400]' : 'bg-[#000035]/10'">
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Last backup + run now -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#000035]/8 rounded-lg px-4 py-3.5 bg-[#000035]/2">
+        <div>
+          <p class="text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/30 mb-0.5">Last Backup</p>
+          <p class="text-sm font-bold text-[#000035]">{{ settings.lastBackupDate || 'Never' }}</p>
+        </div>
+        <button
+          (click)="triggerBackup()"
+          class="flex items-center gap-2 bg-[#000035] hover:bg-[#000035]/85 text-white text-[10px] font-black uppercase tracking-[0.18em] px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer shrink-0"
+        >
+          <svg class="size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+          </svg>
+          Run Backup Now
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SYSTEM LOGS ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75z"/>
+        </svg>
+        <h3 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">System Logs</h3>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Control log collection and set retention windows.</p>
+    </div>
+
+    <div class="flex flex-col gap-4">
+
+      <!-- Enable logging -->
+      <label class="flex items-center justify-between gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <svg class="size-4 text-[#000035]/30 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776"/>
+          </svg>
+          <div>
+            <p class="text-sm font-bold text-[#000035]">Enable Logging</p>
+            <p class="text-[11px] text-[#000035]/35 mt-0.5">Record system events, errors, and user actions.</p>
+          </div>
+        </div>
+        <input type="checkbox" [(ngModel)]="settings.loggingEnabled" (change)="updateSettings()" class="size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+      </label>
+
+      <!-- Retention + clear -->
+      <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+        <div class="flex-1">
+          <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">
+            Log Retention <span class="normal-case tracking-normal font-semibold">(days)</span>
+          </label>
+          <input
+            type="number"
+            [(ngModel)]="settings.logRetentionDays"
+            (change)="updateSettings()"
+            placeholder="e.g. 30"
+            class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] placeholder:text-[#000035]/20 focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/50 transition-all duration-200"
+          />
+        </div>
+        <button
+          (click)="clearLogs()"
+          class="flex items-center gap-2 border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 text-[10px] font-black uppercase tracking-[0.18em] px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer shrink-0"
+        >
+          <svg class="size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/>
+          </svg>
+          Clear Logs
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── CACHE MANAGEMENT ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+        </svg>
+        <h3 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Cache Management</h3>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Control cached data to improve performance.</p>
+    </div>
+
+    <div class="flex flex-col gap-4">
+
+      <!-- Auto clear cache -->
+      <label class="flex items-center justify-between gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <svg class="size-4 text-[#000035]/30 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+          </svg>
+          <div>
+            <p class="text-sm font-bold text-[#000035]">Auto Clear Cache</p>
+            <p class="text-[11px] text-[#000035]/35 mt-0.5">Automatically flush cached data on a regular cycle.</p>
+          </div>
+        </div>
+        <input type="checkbox" [(ngModel)]="settings.autoClearCache" (change)="updateSettings()" class="size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+      </label>
+
+      <!-- Manual clear -->
+      <div class="flex items-center justify-between gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 bg-[#000035]/2">
+        <div>
+          <p class="text-sm font-bold text-[#000035]">Manual Cache Clear</p>
+          <p class="text-[11px] text-[#000035]/35 mt-0.5">Immediately flush all cached data from the system.</p>
+        </div>
+        <button
+          (click)="clearCache()"
+          class="flex items-center gap-2 border border-[#000035]/15 hover:border-[#000035]/30 text-[#000035]/60 hover:text-[#000035] hover:bg-white text-[10px] font-black uppercase tracking-[0.18em] px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer shrink-0"
+        >
+          <svg class="size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+          </svg>
+          Clear Cache Now
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>

@@ -1,5 +1,13 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-0 divide-y divide-[#000035]/6">
 
+  <!-- ── HEADER ── -->
+  <div class="py-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Security Settings</h2>
+      <p class="text-[11px] text-[#000035]/35 mt-0.5">Manage authentication, password policy, and monitoring.</p>
+    </div>
+  </div>
+
   <!-- ── AUTHENTICATION SECURITY ── -->
   <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
     <div>
@@ -124,6 +132,7 @@
       [disabled]="isSubmitting"
       class="flex items-center gap-2.5 bg-[#000035] hover:bg-[#000035]/90 disabled:opacity-40 text-white text-[11px] font-black uppercase tracking-[0.18em] px-6 py-3 rounded-lg transition-all duration-200 cursor-pointer disabled:cursor-not-allowed ml-auto"
     >
+    Save Changes
       <svg
         *ngIf="isSubmitting"
         class="animate-spin size-3.5 text-white/60"

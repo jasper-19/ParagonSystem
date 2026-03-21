@@ -1,18 +1,18 @@
 import { ChangeDetectionStrategy, Component, ViewChild, computed, inject } from '@angular/core';
 import { ProfileOverview } from './components/profile-overview/profile-overview';
-import { SecuritySettings } from './components/security-settings/security-settings';
 import { CommonModule } from '@angular/common';
 import { PersonalInformation } from './components/personal-information/personal-information';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ProfileSecuritySettings } from './components/security-settings/profile-security-settings';
 
 @Component({
   selector: 'app-admin-profile',
   standalone: true,
   imports: [
     CommonModule,
-    ProfileOverview, 
-    SecuritySettings,
+    ProfileOverview,
+    ProfileSecuritySettings,
     PersonalInformation,
   ],
   templateUrl: './admin-profile.html',

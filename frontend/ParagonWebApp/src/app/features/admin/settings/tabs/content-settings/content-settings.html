@@ -1,0 +1,206 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-0 divide-y divide-[#000035]/6">
+
+  <!-- ── HEADER ── -->
+  <div class="py-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Content Settings</h2>
+      <p class="text-[11px] text-[#000035]/35 mt-0.5">Publishing rules, scheduling, and media options.</p>
+    </div>
+  </div>
+
+  <!-- ── PUBLISHING RULES ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3z"/>
+        </svg>
+        <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Publishing Rules</h2>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Control how and when content goes live.</p>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+        <input type="checkbox" formControlName="autoPublish" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+        <div>
+          <p class="text-sm font-bold text-[#000035]">Enable Auto Publishing</p>
+          <p class="text-[11px] text-[#000035]/35 mt-0.5">Automatically publish content without manual intervention.</p>
+        </div>
+      </label>
+
+      <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+        <input type="checkbox" formControlName="requiredApproval" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+        <div>
+          <p class="text-sm font-bold text-[#000035]">Require Admin Approval</p>
+          <p class="text-[11px] text-[#000035]/35 mt-0.5">All submissions must be reviewed before publishing.</p>
+        </div>
+      </label>
+
+      <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+        <input type="checkbox" formControlName="allowDrafts" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+        <div>
+          <p class="text-sm font-bold text-[#000035]">Allow Draft Saving</p>
+          <p class="text-[11px] text-[#000035]/35 mt-0.5">Let editors save unpublished drafts for later review.</p>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── SCHEDULING ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
+        </svg>
+        <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Scheduling</h2>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Set publish delays and content expiration windows.</p>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">
+            Publish Delay <span class="normal-case tracking-normal font-semibold">(min)</span>
+          </label>
+          <input type="number" formControlName="defaultPublishDelayMinutes"
+            class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/50 transition-all duration-200"/>
+        </div>
+        <div>
+          <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">
+            Content Expiration <span class="normal-case tracking-normal font-semibold">(days)</span>
+          </label>
+          <input type="number" formControlName="contentExpirationDays"
+            class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/50 transition-all duration-200"/>
+        </div>
+      </div>
+
+      <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+        <input type="checkbox" formControlName="schedulingEnabled" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+        <div>
+          <p class="text-sm font-bold text-[#000035]">Enable Scheduled Publishing</p>
+          <p class="text-[11px] text-[#000035]/35 mt-0.5">Allow content to be queued and published at a future date and time.</p>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── CONTENT RULES ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
+        </svg>
+        <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Content Rules</h2>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Define structure and metadata requirements.</p>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3">
+        <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+          <input type="checkbox" formControlName="requiredFeatureImage" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+          <div>
+            <p class="text-sm font-bold text-[#000035]">Require Featured Image</p>
+            <p class="text-[11px] text-[#000035]/35 mt-0.5">Articles cannot be published without a cover image.</p>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+          <input type="checkbox" formControlName="allowMultipleCategories" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+          <div>
+            <p class="text-sm font-bold text-[#000035]">Allow Multiple Categories</p>
+            <p class="text-[11px] text-[#000035]/35 mt-0.5">Enable articles to be filed under more than one category.</p>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+          <input type="checkbox" formControlName="allowTags" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+          <div>
+            <p class="text-sm font-bold text-[#000035]">Enable Tags</p>
+            <p class="text-[11px] text-[#000035]/35 mt-0.5">Allow tagging of articles for better discoverability.</p>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+          <input type="checkbox" formControlName="enableRevisionHistory" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+          <div>
+            <p class="text-sm font-bold text-[#000035]">Enable Revision History</p>
+            <p class="text-[11px] text-[#000035]/35 mt-0.5">Track and restore previous versions of published content.</p>
+          </div>
+        </label>
+      </div>
+
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Max Word Count</label>
+        <input type="number" formControlName="maxWordCount"
+          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/50 transition-all duration-200"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MEDIA SETTINGS ── -->
+  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <svg class="size-3.5 text-[#000035]/40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z"/>
+        </svg>
+        <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Media Settings</h2>
+      </div>
+      <p class="text-[11px] text-[#000035]/35 leading-relaxed">Image upload limits, compression, and allowed file types.</p>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">
+            Max Image Size <span class="normal-case tracking-normal font-semibold">(MB)</span>
+          </label>
+          <input type="number" formControlName="maxImageSizeMB"
+            class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/50 transition-all duration-200"/>
+        </div>
+        <div>
+          <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Allowed File Types</label>
+          <div class="flex items-center gap-2 flex-wrap border border-[#000035]/10 rounded-lg px-3 py-2.5 bg-[#000035]/2 min-h-10.5">
+            <span *ngFor="let type of form.get('allowedFileTypes')?.value"
+              class="inline-flex items-center bg-[#000035]/8 text-[#000035]/60 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded">
+              {{ type }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <label class="flex items-start gap-4 border border-[#000035]/8 rounded-lg px-4 py-3.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
+        <input type="checkbox" formControlName="enableMediaCompression" class="mt-0.5 size-4 accent-[#F4B400] cursor-pointer shrink-0"/>
+        <div>
+          <p class="text-sm font-bold text-[#000035]">Enable Image Compression</p>
+          <p class="text-[11px] text-[#000035]/35 mt-0.5">Automatically compress uploaded images to reduce storage usage.</p>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── SUBMIT ── -->
+  <div class="pt-6 flex items-center justify-between gap-4">
+    <p class="text-[10px] text-[#000035]/25 font-semibold uppercase tracking-widest hidden sm:block">
+      Changes apply to all future content submissions
+    </p>
+    <button
+      type="submit"
+      [disabled]="saving"
+      class="flex items-center gap-2.5 bg-[#000035] hover:bg-[#000035]/90 disabled:opacity-40 text-white text-[11px] font-black uppercase tracking-[0.18em] px-6 py-3 rounded-lg transition-all duration-200 cursor-pointer disabled:cursor-not-allowed ml-auto"
+    >
+    Save Changes
+      <svg *ngIf="saving" class="animate-spin size-3.5 text-white/60" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v8z"></path>
+      </svg>
+      {{ saving ? 'Saving…' : 'Save Changes' }}
+    </button>
+  </div>
+
+</form>
