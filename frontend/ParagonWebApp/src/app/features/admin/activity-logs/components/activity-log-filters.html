@@ -1,0 +1,84 @@
+<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center;">
+
+  <!-- Module filter -->
+  <div style="position: relative; display: flex; align-items: center;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      style="position: absolute; left: 10px; pointer-events: none; opacity: 0.45;">
+      <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+    </svg>
+    <select
+      style="appearance: none; padding: 8px 32px 8px 30px; font-size: 13px; font-weight: 500; color: #000035; background: var(--color-background-primary); border: 0.5px solid rgba(0,0,53,0.25); border-radius: var(--border-radius-md); cursor: pointer; outline: none; min-width: 140px; transition: border-color 0.15s;"
+      onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
+      onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';">
+      <option value="">All modules</option>
+      <option value="ARTICLES">Articles</option>
+      <option value="USERS">Users</option>
+      <option value="SETTINGS">Settings</option>
+    </select>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+      style="position: absolute; right: 10px; pointer-events: none; opacity: 0.4;">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </div>
+
+  <!-- Action filter -->
+  <div style="position: relative; display: flex; align-items: center;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      style="position: absolute; left: 10px; pointer-events: none; opacity: 0.45;">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+    <select
+      style="appearance: none; padding: 8px 32px 8px 30px; font-size: 13px; font-weight: 500; color: #000035; background: var(--color-background-primary); border: 0.5px solid rgba(0,0,53,0.25); border-radius: var(--border-radius-md); cursor: pointer; outline: none; min-width: 140px; transition: border-color 0.15s;"
+      onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
+      onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';">
+      <option value="">All actions</option>
+      <option value="CREATE">Create</option>
+      <option value="UPDATE">Update</option>
+      <option value="DELETE">Delete</option>
+    </select>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+      style="position: absolute; right: 10px; pointer-events: none; opacity: 0.4;">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </div>
+
+  <!-- Date picker -->
+  <div style="position: relative; display: flex; align-items: center;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      style="position: absolute; left: 10px; pointer-events: none; opacity: 0.45; z-index: 1;">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+    <input
+      type="date"
+      style="padding: 8px 12px 8px 30px; font-size: 13px; font-weight: 500; color: #000035; background: var(--color-background-primary); border: 0.5px solid rgba(0,0,53,0.25); border-radius: var(--border-radius-md); outline: none; min-width: 150px; transition: border-color 0.15s; cursor: pointer;"
+      onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
+      onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';" />
+  </div>
+
+  <!-- Search — grows to fill remaining space -->
+  <div style="position: relative; display: flex; align-items: center; flex: 1; min-width: 180px;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      style="position: absolute; left: 10px; pointer-events: none; opacity: 0.45;">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input
+      type="text"
+      placeholder="Search logs..."
+      style="width: 100%; padding: 8px 12px 8px 30px; font-size: 13px; color: #000035; background: var(--color-background-primary); border: 0.5px solid rgba(0,0,53,0.25); border-radius: var(--border-radius-md); outline: none; transition: border-color 0.15s;"
+      onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
+      onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';" />
+  </div>
+
+  <!-- Reset filters button — visible utility action -->
+  <button
+    type="button"
+    style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 500; color: rgba(0,0,53,0.5); background: transparent; border: 0.5px solid rgba(0,0,53,0.2); border-radius: var(--border-radius-md); cursor: pointer; white-space: nowrap; transition: all 0.15s;"
+    onmouseenter="this.style.background='rgba(0,0,53,0.05)'; this.style.color='#000035'; this.style.borderColor='rgba(0,0,53,0.35)';"
+    onmouseleave="this.style.background='transparent'; this.style.color='rgba(0,0,53,0.5)'; this.style.borderColor='rgba(0,0,53,0.2)';">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/>
+    </svg>
+    Reset
+  </button>
+
+</div>

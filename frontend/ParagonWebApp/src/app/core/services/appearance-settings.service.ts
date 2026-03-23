@@ -1,3 +1,9 @@
+/**
+ * AppearanceSettingsService
+ * - Purpose: store and apply UI appearance preferences for the application.
+ * - Notes: Only formatting and explanatory comments were added. No logic changes.
+ */
+
 import { Injectable } from "@angular/core";
 
 export interface AppearanceSettings {
@@ -17,8 +23,8 @@ export interface AppearanceSettings {
 @Injectable({
   providedIn: 'root'
 })
-
 export class AppearanceSettingsService {
+  // Default settings used until user overrides them (or when localStorage is empty)
   private settings: AppearanceSettings = {
     theme: 'light',
     primaryColor: '#f4bd00',
@@ -33,14 +39,17 @@ export class AppearanceSettingsService {
   };
 
   constructor() {
+    // Load any persisted user settings, then apply appearance to the document
     this.loadSettings();
-    this.applyAppearance()
+    this.applyAppearance();
   }
 
+  // Return the current in-memory settings object
   getSettings(): AppearanceSettings {
     return this.settings;
   }
 
+  // Merge partial updates into current settings, persist, and apply immediately
   updateSettings(newSettings: Partial<AppearanceSettings>) {
     this.settings = {
       ...this.settings,
@@ -51,28 +60,34 @@ export class AppearanceSettingsService {
     this.applyAppearance();
   }
 
+  // Apply visual values (CSS variables, classes) based on current settings
   private applyAppearance() {
     const root = document.documentElement;
+
+    // Update CSS custom properties used throughout the app styles
     root.style.setProperty('--primary-color', this.settings.primaryColor);
     root.style.setProperty('--accent-color', this.settings.accentColor);
 
+    // Toggle dark class on body for theme switching
     document.body.classList.toggle(
       'dark',
       this.settings.theme === 'dark'
     );
   }
 
+  // Persist current settings to localStorage
   private saveSettings() {
     localStorage.setItem('appearanceSettings', JSON.stringify(this.settings));
   }
 
+  // Load persisted settings from localStorage (if present) and merge them in
   private loadSettings() {
     const saved = localStorage.getItem('appearanceSettings');
     if (saved) {
       this.settings = {
-      ...this.settings,
-      ...JSON.parse(saved)
-      }
-    };
+        ...this.settings,
+        ...JSON.parse(saved)
+      };
+    }
   }
 }

@@ -1,3 +1,9 @@
+/*
+  ArticleService
+  - Purpose: encapsulate API interactions for articles (admin and public).
+  - Notes: only formatting, spacing, and explanatory comments were added.
+*/
+
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -6,6 +12,7 @@ import { catchError, map } from 'rxjs/operators';
 import { Article, ArticleCategory, CreateArticleDto } from '../../models/article.model';
 import { GetArticlesParams } from '../../models/article-query.model';
 
+// API representation where date fields may be strings (or Date objects)
 type ApiArticle = Omit<Article, 'createdAt' | 'publishedAt'> & {
   createdAt?: string | Date;
   publishedAt?: string | Date | null;
@@ -17,6 +24,7 @@ export class ArticleService {
 
   constructor(private http: HttpClient) {}
 
+  // Convert API article into client-side Article with proper Date objects
   private normalizeArticle(a: ApiArticle): Article {
     return {
       ...a,
@@ -29,6 +37,7 @@ export class ArticleService {
     return (list ?? []).map((a) => this.normalizeArticle(a));
   }
 
+  // Build HttpParams from a plain object, handling arrays and skipping empty values
   private buildParams(obj: Record<string, unknown>): HttpParams {
     let params = new HttpParams();
     for (const [key, value] of Object.entries(obj)) {
@@ -91,6 +100,7 @@ export class ArticleService {
     return this.getBySlug(slug).pipe(
       map((a) => (ignoreId ? a.id !== ignoreId : true)),
       catchError((err) => {
+        // If 404, slug is not taken; otherwise conservatively return false
         if (err?.status === 404) return of(false);
         return of(false);
       })

@@ -5,12 +5,14 @@ import { catchError, map, tap } from 'rxjs/operators';
 
 import { SpecialIssue, SpecialIssueType } from '../../models/special-issue.model';
 
+// API payload type: matches server shape but keeps flexibility for date fields
 type ApiSpecialIssue = Omit<SpecialIssue, 'publishedAt'> & {
   publishedAt?: string | Date | null;
   createdAt?: string | Date | null;
   updatedAt?: string | Date | null;
 };
 
+// Shorthand for status and upsert DTO shape used for create/update requests
 type IssueStatus = SpecialIssue['status'];
 type UpsertIssueDto = {
   title: string;
@@ -24,17 +26,30 @@ type UpsertIssueDto = {
   status: IssueStatus;
 };
 
+// =====================================================
+// SpecialIssueService
+// - Responsible for fetching, caching and transforming special issues
+// - Exposes an observable `issues$` for UI consumption
+// =====================================================
 @Injectable({ providedIn: 'root' })
 export class SpecialIssueService {
   private readonly api = '/api/issues';
 
+  // ----- In-memory subject + public observable -----
   private readonly issuesSubject = new BehaviorSubject<SpecialIssue[]>([]);
   readonly issues$ = this.issuesSubject.asObservable();
 
   constructor(private http: HttpClient) {
+    // Initialize by loading the list and populating the subject
     this.refresh().subscribe({ error: () => {} });
   }
 
+  // =====================================================
+  // Remote API actions
+  // - refresh: loads list (optionally filtered by status)
+  // - getIssueBySlug / getIssuesByType: single endpoints
+  // - create/update/delete: CRUD operations that update in-memory cache
+  // =====================================================
   refresh(status?: IssueStatus): Observable<SpecialIssue[]> {
     const params = this.buildParams({ status });
     return this.http.get<ApiSpecialIssue[]>(this.api, { params }).pipe(
@@ -60,7 +75,9 @@ export class SpecialIssueService {
   }
 
   getIssuesByType(type: SpecialIssueType): Observable<SpecialIssue[]> {
-    return this.http.get<ApiSpecialIssue[]>(`${this.api}/type/${encodeURIComponent(type)}`).pipe(map((a) => this.normalizeIssues(a)));
+    return this.http.get<ApiSpecialIssue[]>(`${this.api}/type/${encodeURIComponent(type)}`).pipe(
+      map((a) => this.normalizeIssues(a))
+    );
   }
 
   /** For async validators. */

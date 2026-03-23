@@ -45,8 +45,11 @@ export const routes: Routes = [
     children: [
       { path: '', loadComponent: () => import('./features/admin/dashboard/admin-dashboard').then(m => m.AdminDashboard), data: { breadcrumb: 'Dashboard' } },
       { path: 'profile', loadComponent: () => import('./features/admin/profile/admin-profile').then(m => m.AdminProfile),data: { breadcrumb: 'Profile' }},
+
+      //System Management
       { path: 'settings',loadComponent: () => import('./features/admin/settings/settings').then(m => m.SettingsComponent),data: { breadcrumb: 'Settings' }},
       { path: 'settings/:tab',loadComponent: () => import('./features/admin/settings/settings').then(m => m.SettingsComponent),data: { breadcrumb: 'Settings' }},
+      { path: 'activity-logs',loadComponent: () => import('./features/admin/activity-logs/activity-logs').then(m => m.ActivityLogsComponent),data: { breadcrumb: 'Activity Logs' }},
 
       // Articles Management
       { path: 'all-articles', loadComponent: () => import('./features/admin/content-management/articles/all-articles/all-articles').then(m => m.AllArticlesComponent), data: { breadcrumb: 'All Articles' } },

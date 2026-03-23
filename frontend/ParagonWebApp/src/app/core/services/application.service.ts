@@ -1,3 +1,9 @@
+/*
+  ApplicationService
+  - Purpose: manage application data for the frontend (loading, submitting,
+    and admin-side operations). Only comments/formatting changed; logic intact.
+*/
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
@@ -10,15 +16,19 @@ import { Application } from '../../models/application.model';
 })
 export class ApplicationService {
 
+  // Base API endpoint for application-related calls
   private readonly apiUrl = '/api/applications';
 
+  // Internal subject holding the current list of applications
   private applicationsSubject = new BehaviorSubject<Application[]>([]);
   readonly applications$ = this.applicationsSubject.asObservable();
 
   constructor(private http: HttpClient) {
+    // Load initial data when service is instantiated
     this.loadApplications();
   }
 
+  // Convert plain objects from the API into Application instances with Date fields
   private parseDates(app: any): Application {
     return {
       ...app,
@@ -50,6 +60,7 @@ export class ApplicationService {
     return this.http.post<any>(this.apiUrl, application).pipe(
       tap(newApp => {
         const parsed = this.parseDates(newApp);
+        // Prepend the newly created application to the current list
         this.applicationsSubject.next([parsed, ...this.applicationsSubject.value]);
       })
     );

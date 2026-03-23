@@ -3,6 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { StaffMember } from '../../models/staff-member.model';
 
+// =====================================================
+// StaffService
+// - Loads and caches staff members
+// - Tracks staff eligible for board assignment separately
+// - Provides create/update/delete helpers that keep in-memory cache in sync
+// =====================================================
 @Injectable({
   providedIn: 'root'
 })
@@ -11,10 +17,11 @@ export class StaffService {
   private readonly apiUrl = '/api/staff';
   private http = inject(HttpClient);
 
+  // ----- All staff members observable/cache -----
   private staffSubject = new BehaviorSubject<StaffMember[]>([]);
   readonly staff$ = this.staffSubject.asObservable();
 
-  /** Staff members eligible for board assignment (year_level !== '4th_year'). */
+  // ----- Staff eligible for board assignment (year_level !== '4th_year') -----
   private eligibleSubject = new BehaviorSubject<StaffMember[]>([]);
   readonly eligibleForBoard$ = this.eligibleSubject.asObservable();
 
@@ -23,6 +30,7 @@ export class StaffService {
     this.loadEligibleForBoard();
   }
 
+  // Parse date-like fields returned from API into proper Date objects
   private parseDates(member: any): StaffMember {
     return {
       ...member,
@@ -33,7 +41,6 @@ export class StaffService {
   // ====================================
   // Data Loading
   // ====================================
-
   private loadStaff(): void {
     this.http.get<any[]>(this.apiUrl).subscribe({
       next: members => this.staffSubject.next(members.map(m => this.parseDates(m))),
@@ -61,7 +68,6 @@ export class StaffService {
   // Create from Application
   // Persists to staff_members table and also marks the application as assigned.
   // ====================================
-
   createFromApplication(
     applicationId: string,
     section: string,

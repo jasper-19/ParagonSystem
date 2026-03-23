@@ -4,6 +4,7 @@ import { RouterModule, NavigationEnd, Router } from '@angular/router';
 import { SidebarService } from '../../services/sidebar.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
+// ----- Navigation item shape -----
 interface NavItem {
   label: string;
   route?: string;
@@ -20,10 +21,14 @@ interface NavItem {
   templateUrl: './sidebar.html',
 })
 export class Sidebar implements OnInit {
-@Output() logoutRequested = new EventEmitter<void>();
 
+  // ----- Outputs -----
+  @Output() logoutRequested = new EventEmitter<void>();
+
+  // ----- UI state -----
   isSidebarOpen = true;
 
+  // ----- Navigation definitions -----
   navItems: NavItem[] = [
     { label: 'Dashboard', route: '/admin', icon: 'dashboard' },
 
@@ -63,7 +68,7 @@ export class Sidebar implements OnInit {
       open: false,
       children: [
         { label: 'Site Settings', route: '/admin/settings', icon: 'settings' },
-        { label: 'Activity Logs', route: '/admin/logs', icon: 'logs' },
+        { label: 'Activity Logs', route: '/admin/activity-logs', icon: 'logs' },
       ]
     },
   ];
@@ -73,10 +78,12 @@ export class Sidebar implements OnInit {
     { label: 'Logout',  icon: 'logout', action: 'logout' }
   ];
 
+  // ----- Injected services -----
   private sidebarService = inject(SidebarService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
 
+  // ----- Icon map (SVG strings) -----
   iconMap: Record<string, string> = {
     dashboard: `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
       <rect x="3" y="3" width="7" height="7" rx="1.5"/>
@@ -140,30 +147,34 @@ export class Sidebar implements OnInit {
     </svg>`,
   };
 
+  // ===== Lifecycle =====
   ngOnInit(): void {
 
-  this.sidebarService.sidebarOpen$
-    .subscribe(open => {
-      this.isSidebarOpen = open;
-    });
-
-  this.router.events.subscribe(event => {
-    if (event instanceof NavigationEnd) {
-      this.navItems.forEach(i => {
-        if (i.children) {
-          i.open = i.children.some(c =>
-            event.urlAfterRedirects.startsWith(c.route!)
-          );
-        }
+    // Subscribe to sidebar open state observable
+    this.sidebarService.sidebarOpen$
+      .subscribe(open => {
+        this.isSidebarOpen = open;
       });
-    }
-  });
-}
+
+    // Keep dropdowns in sync with navigation on route change
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        this.navItems.forEach(i => {
+          if (i.children) {
+            i.open = i.children.some(c =>
+              event.urlAfterRedirects.startsWith(c.route!)
+            );
+          }
+        });
+      }
+    });
+  }
 
 
+  // ===== Actions =====
   toggleSidebar(): void {
-  this.sidebarService.toggleSidebar();
-}
+    this.sidebarService.toggleSidebar();
+  }
 
 
   toggleItem(item: NavItem): void {

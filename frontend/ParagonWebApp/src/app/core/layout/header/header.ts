@@ -15,6 +15,10 @@ import { TemperatureService } from '../../services/temperature.service';
 import { LocationService } from '../../services/location.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 
+// ===== Header Component =====
+// Responsible for rendering the top navigation, search modal, and
+// lightweight UI state (mobile menu, search open) as well as exposing
+// clock, temperature, and location data used by the template.
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -24,26 +28,36 @@ import { toSignal } from '@angular/core/rxjs-interop';
 })
 export class Header implements OnInit, OnDestroy {
 
+  // ----- Injected services (functional `inject` to keep constructor-less) -----
   private tempService = inject(TemperatureService);
   private locationService = inject(LocationService);
   private ngZone = inject(NgZone);
   private cdr = inject(ChangeDetectorRef);
 
+  // ----- UI state -----
+  // Mobile menu visibility flag
   mobileMenuOpen = false;
+  // Search modal visibility flag
   searchOpen = false;
 
+  // ----- Reactive signals / derived state -----
+  // Live date/time signal updated on an interval
   readonly now = signal(new Date());
 
+  // City signal provided by the LocationService
   readonly city = this.locationService.city;
 
-  private timer?: ReturnType<typeof setInterval>;
-  private destroyed = false;
-
+  // Temperature signal created from a cold observable via toSignal
   readonly temperature = toSignal(
     this.tempService.getTemperature(),
     { initialValue: null }
   );
 
+  // ----- Internal timer and lifecycle flags -----
+  private timer?: ReturnType<typeof setInterval>;
+  private destroyed = false;
+
+  // ===== UI actions (preserve original logic) =====
   toggleMobileMenu(): void {
     this.mobileMenuOpen = !this.mobileMenuOpen;
   }
@@ -62,7 +76,10 @@ export class Header implements OnInit, OnDestroy {
     document.body.style.overflow = '';
   }
 
+  // ===== Lifecycle hooks =====
   ngOnInit(): void {
+    // Keep the clock update outside Angular's zone to avoid unnecessary
+    // change detection cycles; we manually trigger detection when needed.
     this.ngZone.runOutsideAngular(() => {
       this.timer = setInterval(() => {
         if (this.destroyed) return;
@@ -71,6 +88,7 @@ export class Header implements OnInit, OnDestroy {
       }, 1000);
     });
 
+    // Start location detection (may update `city` signal)
     this.locationService.detectLocation();
   }
 

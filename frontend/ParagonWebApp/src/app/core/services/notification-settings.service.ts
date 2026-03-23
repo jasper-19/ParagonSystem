@@ -1,12 +1,19 @@
 import { Injectable } from "@angular/core";
 import { NotificationSettings } from "../../models/notification-settings.model";
 
+// =====================================================
+// NotificationSettingsService
+// - Holds notification preferences in-memory
+// - Persists preferences to localStorage under key 'notificationSettings'
+// - Provides accessor and update helper for application use
+// =====================================================
+
 @Injectable({
   providedIn: 'root'
 })
-
 export class NotificationSettingsService {
 
+  // ----- Default notification settings -----
   private settings: NotificationSettings = {
     emailNotifications: true,
     pushNotifications: true,
@@ -29,15 +36,21 @@ export class NotificationSettingsService {
     quietHoursEnd: '06:00'
    };
 
-   constructor() {
+  // ----- Lifecycle -----
+  constructor() {
+    // Merge persisted settings (if any) into defaults
     this.loadSettings();
-   }
+  }
 
-   getSettings(): NotificationSettings {
+  // =====================================================
+  // Public API - Access
+  // =====================================================
+  getSettings(): NotificationSettings {
     return this.settings;
    }
 
-   updateSettings(data:  Partial<NotificationSettings>) {
+  // Update provided fields and persist
+  updateSettings(data:  Partial<NotificationSettings>) {
     this.settings = {
       ...this.settings,
       ...data
@@ -46,6 +59,9 @@ export class NotificationSettingsService {
     this.saveSettings();
    }
 
+  // =====================================================
+  // Persistence helpers
+  // =====================================================
     private saveSettings()
   {
     localStorage.setItem(

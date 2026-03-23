@@ -1,13 +1,36 @@
-import { BehaviorSubject, Observable, EMPTY, catchError, map, distinctUntilChanged } from 'rxjs';
+/*
+  EditorialBoardService
+  - Purpose: manage the in-memory editorial board state and provide API
+    operations for fetching and mutating editorial boards and their members.
+  - Changes: only formatting, grouping, and explanatory comments added.
+*/
+
+import {
+  BehaviorSubject,
+  Observable,
+  EMPTY,
+  catchError,
+  map,
+  distinctUntilChanged,
+} from 'rxjs';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EditorialBoardData, BoardMember, BoardSection, ApiActiveBoard, ApiBoardMember, ApiBoard } from '../../models/editorial-board.model';
+import {
+  EditorialBoardData,
+  BoardMember,
+  BoardSection,
+  ApiActiveBoard,
+  ApiBoardMember,
+  ApiBoard,
+} from '../../models/editorial-board.model';
 
 @Injectable({ providedIn: 'root' })
 export class EditorialBoardService {
 
+  // Use constructor-less injection for compact service instantiation
   private http = inject(HttpClient);
 
+  // ===== Canonical ordering for roles within a section =====
   /** Canonical role order used for sorting members within each section. */
   private readonly ROLE_ORDER: Record<string, string[]> = {
     'Executive Editors': [
@@ -19,27 +42,46 @@ export class EditorialBoardService {
       'Managing Editor',
     ],
     'Section Editors': [
-      'News Editor', 'Column Editor', 'DevCom Editor',
-      'Feature Editor', 'Sports Editor', 'Literary Editor',
+      'News Editor',
+      'Column Editor',
+      'DevCom Editor',
+      'Feature Editor',
+      'Sports Editor',
+      'Literary Editor',
     ],
     'Staff Writers': [
-      'News Writer', 'Column Writer', 'Feature Writer',
-      'DevCom Writer', 'Sports Writer', 'Literary Writer',
+      'News Writer',
+      'Column Writer',
+      'Feature Writer',
+      'DevCom Writer',
+      'Sports Writer',
+      'Literary Writer',
     ],
     'Senior Creative Producers': [
-      'Cartoonist', 'Photojournalist', 'Video Journalist', 'Layout Artist',
+      'Cartoonist',
+      'Photojournalist',
+      'Video Journalist',
+      'Layout Artist',
     ],
     'Junior Creative Producers': [
-      'Cartoonist', 'Contributor', 'Photojournalist', 'Video Journalist', 'Layout Artist',
+      'Cartoonist',
+      'Contributor',
+      'Photojournalist',
+      'Video Journalist',
+      'Layout Artist',
     ],
     'Broadcasters': ['Senior Broadcaster', 'Junior Broadcaster'],
   };
 
+  // ===== Active board tracking =====
   /** ID of the board currently loaded from the API */
   private _activeBoardId = new BehaviorSubject<string | null>(null);
-  get activeBoardId() { return this._activeBoardId.value; }
+  get activeBoardId() {
+    return this._activeBoardId.value;
+  }
+
   readonly hasActiveBoard$ = this._activeBoardId.pipe(
-    map(id => id !== null),
+    map((id) => id !== null),
     distinctUntilChanged()
   );
 
@@ -54,17 +96,19 @@ export class EditorialBoardService {
    */
   private _boardSatisfied = new BehaviorSubject<boolean>(false);
   readonly boardSatisfied$ = this._boardSatisfied.asObservable();
-  get isBoardSatisfied() { return this._boardSatisfied.value; }
+  get isBoardSatisfied() {
+    return this._boardSatisfied.value;
+  }
 
   // ====================================
-// Internal Board Store
-// ====================================
+  // Internal Board Store
+  // ====================================
 
-private boardSubject = new BehaviorSubject<EditorialBoardData>({
-  academicYear: '',
-  sections: [],
-  adviser: { name: '', position: 'Publication Adviser', initials: '' },
-});
+  private boardSubject = new BehaviorSubject<EditorialBoardData>({
+    academicYear: '',
+    sections: [],
+    adviser: { name: '', position: 'Publication Adviser', initials: '' },
+  });
 
   readonly board$ = this.boardSubject.asObservable();
 
@@ -72,6 +116,7 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
     return this.boardSubject.value;
   }
 
+  // Canonical section ordering used when creating new sections
   private readonly SECTION_ORDER = [
     'Executive Editors',
     'Section Editors',
@@ -81,15 +126,16 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
     'Broadcasters',
   ];
 
+  // ----- Mutators for in-memory board -----
   addMember(sectionTitle: string, member: BoardMember): void {
     const board = this.boardSubject.value;
 
-    const sectionExists = board.sections.some(s => s.title === sectionTitle);
+    const sectionExists = board.sections.some((s) => s.title === sectionTitle);
 
     let updatedSections: BoardSection[];
 
     if (sectionExists) {
-      updatedSections = board.sections.map(section => {
+      updatedSections = board.sections.map((section) => {
         if (section.title !== sectionTitle) return section;
         const members = [...section.members, member];
         // Keep members in canonical role order for known sections
@@ -118,11 +164,11 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
 
   updateMemberRole(sectionTitle: string, memberName: string, newRole: string): void {
     const board = this.boardSubject.value;
-    const updatedSections = board.sections.map(section => {
+    const updatedSections = board.sections.map((section) => {
       if (section.title !== sectionTitle) return section;
       return {
         ...section,
-        members: section.members.map(m =>
+        members: section.members.map((m) =>
           m.name === memberName ? { ...m, position: newRole } : m
         ),
       };
@@ -130,15 +176,20 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
     this.boardSubject.next({ ...board, sections: updatedSections });
   }
 
-  updateMember(fromSection: string, memberName: string, toSection: string, newRole: string): void {
+  updateMember(
+    fromSection: string,
+    memberName: string,
+    toSection: string,
+    newRole: string
+  ): void {
     const board = this.boardSubject.value;
 
     if (fromSection === toSection) {
-      const sections = board.sections.map(section => {
+      const sections = board.sections.map((section) => {
         if (section.title !== fromSection) return section;
         return {
           ...section,
-          members: section.members.map(m =>
+          members: section.members.map((m) =>
             m.name === memberName ? { ...m, position: newRole } : m
           ),
         };
@@ -148,13 +199,13 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
     }
 
     let memberToMove: BoardMember | undefined;
-    const afterRemove = board.sections.map(section => {
+    const afterRemove = board.sections.map((section) => {
       if (section.title !== fromSection) return section;
-      const member = section.members.find(m => m.name === memberName);
+      const member = section.members.find((m) => m.name === memberName);
       if (member) memberToMove = { ...member, position: newRole };
-      return { ...section, members: section.members.filter(m => m.name !== memberName) };
+      return { ...section, members: section.members.filter((m) => m.name !== memberName) };
     });
-    const afterAdd = afterRemove.map(section => {
+    const afterAdd = afterRemove.map((section) => {
       if (section.title === toSection && memberToMove) {
         return { ...section, members: [...section.members, memberToMove] };
       }
@@ -174,11 +225,11 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
 
   removeMember(sectionTitle: string, memberName: string): void {
     const board = this.boardSubject.value;
-    const updatedSections = board.sections.map(section => {
+    const updatedSections = board.sections.map((section) => {
       if (section.title !== sectionTitle) return section;
       return {
         ...section,
-        members: section.members.filter(m => m.name !== memberName),
+        members: section.members.filter((m) => m.name !== memberName),
       };
     });
     this.boardSubject.next({ ...board, sections: updatedSections });
@@ -194,7 +245,7 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
    */
   loadActiveBoard(): Observable<void> {
     return this.http.get<ApiActiveBoard>('/api/editorial-boards/active').pipe(
-      map(apiBoard => {
+      map((apiBoard) => {
         this._activeBoardId.next(apiBoard.id);
         this._boardLoaded.next(true);
         this._boardSatisfied.next(apiBoard.isSatisfied ?? false);
@@ -250,8 +301,8 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
           },
         });
       }),
-      catchError(err => {
-        this._boardLoaded.next(true);  // loaded (but empty)
+      catchError((err) => {
+        this._boardLoaded.next(true); // loaded (but empty)
         if (err.status !== 404) console.error('Failed to load active board:', err);
         return EMPTY;
       })
@@ -269,7 +320,7 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
    */
   activateBoard(boardId: string): Observable<void> {
     return this.http.put<ApiActiveBoard>(`/api/editorial-boards/${boardId}/activate`, {}).pipe(
-      map(board => {
+      map((board) => {
         this._activeBoardId.next(board.id);
         this._boardLoaded.next(true);
         // Reload full board with members
@@ -286,7 +337,7 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
    */
   createBoard(academicYear: string, adviserName: string): Observable<ApiBoard> {
     return this.http.post<ApiActiveBoard>('/api/editorial-boards', { academicYear, adviserName }).pipe(
-      map(board => ({
+      map((board) => ({
         id: board.id,
         academicYear: board.academicYear,
         adviserName: board.adviserName,
@@ -310,7 +361,7 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
     const boardId = this._activeBoardId.value;
     if (!boardId) return EMPTY;
     return this.http.put<ApiBoard>(`/api/editorial-boards/${boardId}/satisfy`, { satisfied }).pipe(
-      map(board => {
+      map((board) => {
         this._boardSatisfied.next(board.isSatisfied ?? satisfied);
       })
     );
@@ -336,9 +387,7 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
   }
 
   revokeMember(boardId: string, boardMemberId: string): Observable<void> {
-    return this.http.post<void>(
-      `/api/editorial-boards/${boardId}/members/${boardMemberId}/revoke`, {}
-    );
+    return this.http.post<void>(`/api/editorial-boards/${boardId}/members/${boardMemberId}/revoke`, {});
   }
 
   /** Removes a member from the board only — does NOT delete the staff_member record. */
@@ -349,14 +398,12 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
   /** Sets boardMemberId (and optionally staffId) on an already-added in-memory member. */
   patchMemberBoardId(sectionTitle: string, memberName: string, boardMemberId: string, staffId?: string): void {
     const board = this.boardSubject.value;
-    const updatedSections = board.sections.map(section => {
+    const updatedSections = board.sections.map((section) => {
       if (section.title !== sectionTitle) return section;
       return {
         ...section,
-        members: section.members.map(m =>
-          m.name === memberName
-            ? { ...m, boardMemberId, ...(staffId ? { staffId } : {}) }
-            : m
+        members: section.members.map((m) =>
+          m.name === memberName ? { ...m, boardMemberId, ...(staffId ? { staffId } : {}) } : m
         ),
       };
     });
@@ -364,6 +411,6 @@ private boardSubject = new BehaviorSubject<EditorialBoardData>({
   }
 
   private toInitials(name: string): string {
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    return name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase();
   }
 }

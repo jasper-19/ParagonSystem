@@ -1,0 +1,119 @@
+<div class="mt-4" style="border-radius: var(--border-radius-lg); overflow: hidden; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary);">
+
+  <!-- Header Bar -->
+  <div style="background: #000035; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #f4b400;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f4b400" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      <span style="font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #f4b400;">Activity logs</span>
+    </div>
+    <span style="font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: rgba(244,180,0,0.15); color: #f4b400; border: 0.5px solid rgba(244,180,0,0.4);">
+      {{ logs.length }} entries
+    </span>
+  </div>
+
+  <!-- Scrollable Table Wrapper for responsiveness -->
+  <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+    <table style="width: 100%; text-align: left; border-collapse: collapse; min-width: 700px;">
+
+      <!-- Column Headers with clear visual weight -->
+      <thead>
+        <tr style="background: rgba(0,0,53,0.035); border-bottom: 0.5px solid var(--color-border-tertiary);">
+          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">User</th>
+          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">Action</th>
+          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">Module</th>
+          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">Description</th>
+          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">Date</th>
+          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">IP address</th>
+          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap; text-align: center; width: 80px;">Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr
+          *ngFor="let log of logs; let even = even"
+          class="log-row"
+          [style.background]="even ? 'transparent' : 'rgba(0,0,53,0.018)'"
+          style="border-bottom: 0.5px solid var(--color-border-tertiary); transition: background 0.15s ease; cursor: default;">
+
+          <!-- User — primary info, strongest weight -->
+          <td style="padding: 12px 16px; white-space: nowrap;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <!-- Avatar with accessible aria-hidden -->
+              <div
+                aria-hidden="true"
+                style="width: 30px; height: 30px; border-radius: 50%; background: #000035; border: 1.5px solid rgba(244,180,0,0.35); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <span style="font-size: 11px; font-weight: 500; color: #f4b400; line-height: 1;">
+                  {{ getInitial(log) }}
+                </span>
+              </div>
+              <span style="font-size: 13px; font-weight: 500; color: var(--color-text-primary);">{{ log.userName }}</span>
+            </div>
+          </td>
+
+          <!-- Action — semantic badge with consistent sizing -->
+          <td style="padding: 12px 16px; white-space: nowrap;">
+            <span style="display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; background: rgba(244,180,0,0.1); color: #000035; border: 0.5px solid rgba(244,180,0,0.45); letter-spacing: 0.02em;">
+              {{ log.action }}
+            </span>
+          </td>
+
+          <!-- Module — secondary info -->
+          <td style="padding: 12px 16px; white-space: nowrap;">
+            <span style="font-size: 13px; color: var(--color-text-primary);">{{ log.module }}</span>
+          </td>
+
+          <!-- Description — tertiary, truncated with full tooltip -->
+          <td style="padding: 12px 16px; max-width: 220px;">
+            <span
+              title="{{ log.description }}"
+              style="font-size: 13px; color: var(--color-text-secondary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              {{ log.description }}
+            </span>
+          </td>
+
+          <!-- Date — tabular nums for alignment -->
+          <td style="padding: 12px 16px; white-space: nowrap;">
+            <span style="font-size: 12px; color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">
+              {{ log.createdAt | date:'MMM d, y, h:mm a' }}
+            </span>
+          </td>
+
+          <!-- IP — monospace, lowest hierarchy -->
+          <td style="padding: 12px 16px; white-space: nowrap;">
+            <span style="font-size: 12px; font-family: var(--font-mono); color: var(--color-text-tertiary);">
+              {{ log.ipAddress || '—' }}
+            </span>
+          </td>
+
+          <!-- CTA — clear affordance, accessible label -->
+          <td style="padding: 12px 16px; text-align: center;">
+            <button
+              (click)="onView(log)"
+              class="action-button"
+              [attr.aria-label]="'View details for ' + getInitial(log) + ' ' + log.userName + ' on ' + (log.createdAt | date:'MMM d, y, h:mm a')"
+              title="View details">
+              Details
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </td>
+
+        </tr>
+      </tbody>
+
+    </table>
+  </div>
+
+  <!-- Empty state — feedback when no data -->
+  <div *ngIf="!logs || logs.length === 0" style="padding: 48px 24px; text-align: center;">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,53,0.25)" stroke-width="1.5" style="margin: 0 auto 12px; display: block;">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <p style="font-size: 14px; font-weight: 500; color: var(--color-text-secondary); margin: 0 0 4px;">No logs found</p>
+    <p style="font-size: 13px; color: var(--color-text-tertiary); margin: 0;">Activity will appear here once actions are recorded.</p>
+  </div>
+
+</div>
