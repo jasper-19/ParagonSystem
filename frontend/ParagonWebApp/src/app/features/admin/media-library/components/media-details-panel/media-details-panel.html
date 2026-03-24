@@ -1,0 +1,159 @@
+<div class="h-full">
+  <ng-container *ngIf="media; else noSelectionState">
+    <div class="flex flex-col gap-4">
+
+      <!-- Preview -->
+      <div class="relative overflow-hidden rounded-(--border-radius-lg) bg-(--color-background-secondary)">
+        <ng-container *ngIf="isImage(); else nonImagePreview">
+          <img
+            [src]="getPreviewUrl()"
+            [alt]="media.altText || media.fileName"
+            class="w-full h-44 object-cover block" />
+          <div class="absolute inset-0 flex flex-col justify-end px-3 pb-3 pt-10"
+            style="background: linear-gradient(to top, rgba(0,0,53,0.72) 0%, rgba(0,0,53,0.2) 60%, transparent 100%);">
+            <p class="text-[11px] font-medium truncate m-0" style="color: rgba(244,180,0,0.95); letter-spacing: 0.03em;">
+              {{ media.fileName }}
+            </p>
+            <p class="text-[10px] m-0 mt-0.5" style="color: rgba(255,255,255,0.45); font-family: var(--font-mono);">
+              {{ media.mimeType }}
+            </p>
+          </div>
+        </ng-container>
+        <ng-template #nonImagePreview>
+          <div class="h-36 flex flex-col items-center justify-center gap-2">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: rgba(0,0,53,0.05);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                <polyline points="13 2 13 9 20 9"/>
+              </svg>
+            </div>
+            <div class="text-center">
+              <p class="text-xs font-medium text-(--color-text-secondary) mb-0.5">{{ media.fileType | titlecase }}</p>
+              <p class="text-[11px] text-(--color-text-tertiary)">Preview not available</p>
+            </div>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Metadata grid -->
+      <div class="grid grid-cols-2 gap-1.5">
+        <div class="rounded-(--border-radius-md) px-3 py-2.5 bg-(--color-background-secondary)">
+          <p class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary) mb-1">Type</p>
+          <p class="text-sm font-medium text-(--color-text-primary) truncate">{{ media.fileType || '—' }}</p>
+        </div>
+        <div class="rounded-(--border-radius-md) px-3 py-2.5 bg-(--color-background-secondary)">
+          <p class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary) mb-1">Size</p>
+          <p class="text-sm font-medium text-(--color-text-primary) truncate">{{ getReadableSize(media.size) }}</p>
+        </div>
+        <div class="rounded-(--border-radius-md) px-3 py-2.5 bg-(--color-background-secondary)">
+          <p class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary) mb-1">Dimensions</p>
+          <p class="text-sm font-medium text-(--color-text-primary) truncate">{{ getDimensions() }}</p>
+        </div>
+        <div class="rounded-(--border-radius-md) px-3 py-2.5 bg-(--color-background-secondary)">
+          <p class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary) mb-1">Created</p>
+          <p class="text-sm font-medium text-(--color-text-primary) truncate">{{ media.createdAt | date:'mediumDate' }}</p>
+        </div>
+      </div>
+
+      <!-- File identity -->
+      <div class="px-0.5">
+        <h2 class="text-sm font-medium text-(--color-text-primary) break-all leading-snug mb-0.5">
+          {{ media.fileName }}
+        </h2>
+        <p class="text-[11px] text-(--color-text-tertiary)" style="font-family: var(--font-mono);">
+          {{ media.mimeType }}
+        </p>
+      </div>
+
+      <!-- Section divider -->
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary) whitespace-nowrap">Metadata</span>
+        <div class="flex-1 h-px bg-(--color-border-tertiary)"></div>
+      </div>
+
+      <!-- Editable fields -->
+      <div class="flex flex-col gap-3">
+
+        <!-- Alt Text -->
+        <div class="rounded-(--border-radius-md) overflow-hidden bg-(--color-background-secondary)" [attr.data-field]="'altText'">
+          <div class="flex items-center gap-1.5 px-3 py-2" style="border-bottom: 1px solid var(--color-border-tertiary);">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-(--color-text-tertiary) shrink-0">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary)">Alt text</span>
+          </div>
+          <input
+            type="text"
+            [(ngModel)]="media!.altText"
+            (blur)="onSave()"
+            (focus)="onFieldFocus($event)"
+            (blur)="onFieldBlur($event)"
+            placeholder="Describe the image for accessibility"
+            class="w-full px-3 py-2.5 text-sm text-(--color-text-primary) bg-(--color-background-primary) outline-none transition-colors duration-150 box-border"
+            style="border: none;" />
+        </div>
+
+        <!-- Caption -->
+        <div class="rounded-(--border-radius-md) overflow-hidden bg-(--color-background-secondary)">
+          <div class="flex items-center gap-1.5 px-3 py-2" style="border-bottom: 1px solid var(--color-border-tertiary);">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-(--color-text-tertiary) shrink-0">
+              <line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/>
+              <line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/>
+            </svg>
+            <span class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary)">Caption</span>
+          </div>
+          <textarea
+            rows="3"
+            [(ngModel)]="media!.caption"
+            (blur)="onSave()"
+            placeholder="Add a caption"
+            class="w-full px-3 py-2.5 text-sm text-(--color-text-primary) bg-(--color-background-primary) outline-none transition-colors duration-150 resize-y leading-relaxed box-border"
+            style="border: none; font-family: var(--font-sans);"
+            onfocus="this.closest('.rounded-\\(--border-radius-md\\)').style.outline='2px solid rgba(244,180,0,0.5)'; this.closest('.rounded-\\(--border-radius-md\\)').style.outlineOffset='-1px';"
+            onblur="this.closest('.rounded-\\(--border-radius-md\\)').style.outline='none';">
+          </textarea>
+        </div>
+
+      </div>
+
+      <!-- Save status -->
+      <div class="flex items-center justify-between pt-0.5">
+        <p class="text-[11px] text-(--color-text-tertiary) flex items-center gap-1.5 m-0">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Auto-saves on blur
+        </p>
+        <span *ngIf="isSaving" class="text-[11px] font-medium flex items-center gap-1.5" style="color: #000035;">
+          <div class="w-2 h-2 rounded-full shrink-0" style="border: 1.5px solid rgba(0,0,53,0.15); border-top-color: #000035; animation: spin 0.8s linear infinite;"></div>
+          Saving...
+        </span>
+        <span *ngIf="!isSaving" class="text-[11px] font-medium text-(--color-text-tertiary) flex items-center gap-1">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Saved
+        </span>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- No selection state -->
+  <ng-template #noSelectionState>
+    <div class="flex h-full min-h-80 flex-col items-center justify-center text-center p-8">
+      <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background: rgba(0,0,53,0.04);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+      <h3 class="text-sm font-medium text-(--color-text-primary) mb-1.5">No media selected</h3>
+      <p class="text-xs text-(--color-text-secondary) max-w-48 leading-relaxed">
+        Select a file from the grid to view details and edit metadata.
+      </p>
+    </div>
+  </ng-template>
+
+</div>

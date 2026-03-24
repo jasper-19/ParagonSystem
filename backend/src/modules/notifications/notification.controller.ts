@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import * as service from "./notification.service";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { auditLog } from "../activity-logs/activity-log.audit";
 
 /** GET /api/notifications */
 export const getNotifications = asyncHandler(async (_req: Request, res: Response) => {
@@ -10,8 +11,9 @@ export const getNotifications = asyncHandler(async (_req: Request, res: Response
 });
 
 /** PATCH /api/notifications/read-all */
-export const markAllRead = asyncHandler(async (_req: Request, res: Response) => {
+export const markAllRead = asyncHandler(async (req: Request, res: Response) => {
   await service.markAllRead();
+  auditLog(req, "READ_ALL", "NOTIFICATIONS", "Marked all notifications as read");
   res.status(204).send();
 });
 

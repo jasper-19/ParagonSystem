@@ -51,6 +51,9 @@ export const routes: Routes = [
       { path: 'settings/:tab',loadComponent: () => import('./features/admin/settings/settings').then(m => m.SettingsComponent),data: { breadcrumb: 'Settings' }},
       { path: 'activity-logs',loadComponent: () => import('./features/admin/activity-logs/activity-logs').then(m => m.ActivityLogsComponent),data: { breadcrumb: 'Activity Logs' }},
 
+      // Media Library
+      { path: 'media-library', loadComponent: () => import('./features/admin/media-library/media-library').then(m => m.MediaLibraryComponent), data: { breadcrumb: 'Media Library' } },
+
       // Articles Management
       { path: 'all-articles', loadComponent: () => import('./features/admin/content-management/articles/all-articles/all-articles').then(m => m.AllArticlesComponent), data: { breadcrumb: 'All Articles' } },
       { path: 'create-article', loadComponent: () => import('./features/admin/content-management/articles/create-article/create-article').then(m => m.CreateArticleComponent), data: { breadcrumb: 'Create Article' } },

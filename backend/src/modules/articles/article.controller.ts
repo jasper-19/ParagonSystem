@@ -1,6 +1,7 @@
 import { Request, Response, } from "express";
 import * as service from "./article.service"
 import * as notificationService from "../notifications/notification.service";
+import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
 
@@ -120,6 +121,16 @@ export const createArticle = asyncHandler(
             `New Article created: ${(article as any).title ?? "Untitled"}.`,
             "article"
         ).catch(() => {});
+        auditLog(
+            req,
+            "CREATE",
+            "ARTICLES",
+            `Created article: ${(article as any).title ?? "Untitled"}`,
+            {
+                resourceId: String((article as any).id ?? ""),
+                details: { title: (article as any).title, slug: (article as any).slug },
+            }
+        );
 
         res.status(201).json(article);
     }
@@ -132,6 +143,16 @@ export const updateArticle = asyncHandler(
         const id = sanitizeValue(req.params["id"]) as string;
 
         const article = await service.updateArticle(id, req.body);
+        auditLog(
+            req,
+            "UPDATE",
+            "ARTICLES",
+            `Updated article: ${(article as any)?.title ?? id}`,
+            {
+                resourceId: id,
+                details: { title: (article as any)?.title, slug: (article as any)?.slug },
+            }
+        );
 
         res.json(article);
     }
@@ -149,6 +170,16 @@ export const publishArticle = asyncHandler(
             `Article published: ${(article as any).title ?? id}.`,
             "article",
         ).catch(() => {});
+        auditLog(
+            req,
+            "PUBLISH",
+            "ARTICLES",
+            `Published article: ${(article as any).title ?? id}`,
+            {
+                resourceId: id,
+                details: { title: (article as any).title, slug: (article as any).slug },
+            }
+        );
 
         res.json(article);
     }
@@ -161,6 +192,16 @@ export const archiveArticle = asyncHandler(
         const id = sanitizeValue(req.params["id"]) as string;
 
         const article = await service.archiveArticle(id);
+        auditLog(
+            req,
+            "ARCHIVE",
+            "ARTICLES",
+            `Archived article: ${(article as any).title ?? id}`,
+            {
+                resourceId: id,
+                details: { title: (article as any).title, slug: (article as any).slug },
+            }
+        );
 
         res.json(article);
     }
@@ -185,6 +226,13 @@ export const deleteArticle = asyncHandler(
         const id = sanitizeValue(req.params["id"]) as string;
 
         await service.deleteArticle(id);
+        auditLog(
+            req,
+            "DELETE",
+            "ARTICLES",
+            `Deleted article: ${id}`,
+            { resourceId: id }
+        );
 
         res.status(204).send();
     }

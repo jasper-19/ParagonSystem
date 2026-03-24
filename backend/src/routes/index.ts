@@ -8,6 +8,7 @@ import articlesRoutes from "../modules/articles/article.routes";
 import specialIssueRoutes from "../modules/special-issues/special-issue.routes";
 import userRoutes from "../modules/users/user.routes";
 import collegeRoutes from "../modules/colleges/college.routes";
+import activityLogRoutes from "../modules/activity-logs/activity-log.routes";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.use("/notifications", notificationRoutes);
 router.use("/articles", articlesRoutes);
 router.use("/issues", specialIssueRoutes);
 router.use("/colleges", collegeRoutes);
+router.use("/activity-logs", activityLogRoutes);
 
 
 export default router;

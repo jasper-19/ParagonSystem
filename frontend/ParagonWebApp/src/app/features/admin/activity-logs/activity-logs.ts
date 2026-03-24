@@ -1,10 +1,10 @@
 import { Component, OnInit } from "@angular/core";
 import { ActivityLogsService } from "../../../core/services/activity-logs.service";
-import { ActivityLog } from "../../../models/activity-log.model";
+import { ActivityLog, ActivityLogFilters } from "../../../models/activity-log.model";
 import { RouterModule } from "@angular/router";
 import { CommonModule } from "@angular/common";
 import { ActivityLogTableComponent } from "./components/activity-log-table";
-import { ActivityLogFiltersComponent } from "./components/activity-log-filters";
+import { ActivityLogFiltersComponent, ActivityLogFilters as ActivityLogFiltersEvent } from "./components/activity-log-filters";
 import { ActivityLogDetailsModalComponent } from "../../../shared/components/activity-log-details-modal/activity-log-details-modal";
 
 @Component({
@@ -20,6 +20,9 @@ import { ActivityLogDetailsModalComponent } from "../../../shared/components/act
 export class ActivityLogsComponent implements OnInit {
   logs: ActivityLog[] = [];
   selectedLog: ActivityLog | null = null;
+  isLoading = false;
+  errorMessage = '';
+  private filters: ActivityLogFilters = {};
 
   // Pagination state
   pageSizeOptions: number[] = [10, 25, 50];
@@ -33,10 +36,31 @@ export class ActivityLogsComponent implements OnInit {
   }
 
   loadLogs(): void {
-    this.activityLogsService.getLogs().subscribe(data => {
-      this.logs = data;
-      this.currentPage = 1;
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.activityLogsService.getLogs(this.filters).subscribe({
+      next: (data) => {
+        this.logs = data;
+        this.currentPage = 1;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.logs = [];
+        this.errorMessage = 'Unable to load activity logs.';
+        this.isLoading = false;
+      }
     });
+  }
+
+  onFiltersChange(filters: ActivityLogFiltersEvent): void {
+    this.filters = {
+      module: filters.module?.trim() || undefined,
+      action: filters.action?.trim() || undefined,
+      dateFrom: filters.dateFrom?.trim() || undefined,
+      search: filters.search?.trim() || undefined,
+    };
+    this.loadLogs();
   }
 
   // Derived values / helpers

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as service from "./editorial-board.service";
 import * as notificationService from "../notifications/notification.service";
+import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 
 /** GET /api/editorial-boards */
@@ -42,6 +43,10 @@ export const createBoard = asyncHandler(async (req: Request, res: Response) => {
     `New editorial board created for ${academicYear}.`,
     "board"
   ).catch(() => {});
+  auditLog(req, "CREATE", "EDITORIAL_BOARDS", `Created editorial board for ${academicYear}`, {
+    resourceId: String((board as any).id ?? ""),
+    details: { academicYear, adviserName },
+  });
   res.status(201).json(board);
 });
 
@@ -49,6 +54,9 @@ export const createBoard = asyncHandler(async (req: Request, res: Response) => {
 export const activateBoard = asyncHandler(async (req: Request, res: Response) => {
   const boardId = req.params["boardId"] as string;
   const board = await service.activateBoard(boardId);
+  auditLog(req, "ACTIVATE", "EDITORIAL_BOARDS", `Activated editorial board: ${boardId}`, {
+    resourceId: boardId,
+  });
   res.json(board);
 });
 
@@ -56,6 +64,9 @@ export const activateBoard = asyncHandler(async (req: Request, res: Response) =>
 export const deleteBoard = asyncHandler(async (req: Request, res: Response) => {
   const boardId = req.params["boardId"] as string;
   await service.deleteBoard(boardId);
+  auditLog(req, "DELETE", "EDITORIAL_BOARDS", `Deleted editorial board: ${boardId}`, {
+    resourceId: boardId,
+  });
   res.status(204).send();
 });
 
@@ -79,6 +90,10 @@ export const addMember = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const member = await service.addBoardMember(boardId, staffId, section, role);
+  auditLog(req, "ADD_MEMBER", "EDITORIAL_BOARDS", `Added board member to board ${boardId}`, {
+    resourceId: String((member as any).id ?? boardId),
+    details: { boardId, staffId, section, role },
+  });
   res.status(201).json(member);
 });
 
@@ -95,13 +110,22 @@ export const updateMember = asyncHandler(async (req: Request, res: Response) => 
   }
 
   const member = await service.updateBoardMember(boardId, memberId, section, role);
+  auditLog(req, "UPDATE_MEMBER", "EDITORIAL_BOARDS", `Updated board member ${memberId} in board ${boardId}`, {
+    resourceId: memberId,
+    details: { boardId, section, role },
+  });
   res.json(member);
 });
 
 /** DELETE /api/editorial-boards/:boardId/members/:memberId */
 export const removeMember = asyncHandler(async (req: Request, res: Response) => {
   const memberId = req.params["memberId"] as string;
+  const boardId = req.params["boardId"] as string;
   await service.removeBoardMember(memberId);
+  auditLog(req, "REMOVE_MEMBER", "EDITORIAL_BOARDS", `Removed board member ${memberId}`, {
+    resourceId: memberId,
+    details: { boardId },
+  });
   res.status(204).send();
 });
 
@@ -111,6 +135,10 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
 export const revokeMember = asyncHandler(async (req: Request, res: Response) => {
   const { boardId, memberId } = req.params as { boardId: string; memberId: string };
   await service.revokeBoardMember(boardId, memberId);
+  auditLog(req, "REVOKE_MEMBER", "EDITORIAL_BOARDS", `Revoked board member ${memberId}`, {
+    resourceId: memberId,
+    details: { boardId },
+  });
   res.status(204).send();
 });
 
@@ -127,5 +155,9 @@ export const satisfyBoard = asyncHandler(async (req: Request, res: Response) => 
     return;
   }
   const board = await service.satisfyBoard(boardId, satisfied);
+  auditLog(req, "SATISFY", "EDITORIAL_BOARDS", `Set board satisfaction for ${boardId} to ${satisfied}`, {
+    resourceId: boardId,
+    details: { satisfied },
+  });
   res.json(board);
 });

@@ -1,85 +1,90 @@
 <!-- HEADER SECTION -->
-<section class="relative z-50 bg-linear-to-r from-[#f4b400] via-[#ffc107] to-[#ffb300] shadow-lg border-b border-[#f4b400]/20">
+<section class="relative z-50">
 
-  <!-- Subtle Grid Pattern Background -->
-  <div class="absolute inset-0 opacity-5 pointer-events-none">
-    <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-      <defs>
-        <pattern id="grid" width="4" height="4" patternUnits="userSpaceOnUse">
-          <path d="M 4 0 L 0 0 0 4" fill="none" stroke="#000035" stroke-width="0.25"/>
-        </pattern>
-      </defs>
-      <rect width="100" height="100" fill="url(#grid)" />
-    </svg>
-  </div>
+  <div class="max-w-full px-3 sm:px-5 lg:px-8">
+    <div class="flex items-center justify-between gap-3 h-14 bg-none">
 
-  <!-- Refined Background Gradient Orbs -->
-  <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/3"></div>
-  <div class="absolute bottom-0 left-0 w-48 h-48 bg-[#000035]/5 rounded-full blur-2xl translate-y-1/3"></div>
+      <!-- LEFT: Menu Button + Title Breadcrumb -->
+      <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
 
-  <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 lg:py-6 relative z-10">
-    <div class="flex items-center justify-between gap-2 sm:gap-4 lg:gap-6">
-
-      <!-- LEFT SIDE: Menu Button + Title & Welcome Message -->
-      <div class="flex-1 min-w-0 flex items-center gap-2 sm:gap-3">
-
-        <!-- Mobile Menu Toggle Button (beside title) -->
+        <!-- Mobile Menu Toggle (original sidebar icon) -->
         <button
           *ngIf="isMobileView"
           (click)="menuToggle.emit()"
-          class="md:hidden shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg
-                 text-[#000035] hover:bg-white/30
-                 border border-[#000035]/20 hover:border-[#000035]/40
-                 transition-all duration-200"
+          class="md:hidden w-8 h-8 flex items-center justify-center rounded-lg border border-[#000035]/20
+                 text-[#000035] hover:bg-[#000035]/6 hover:border-[#000035]/30
+                 transition-all duration-150 shrink-0"
           aria-label="Toggle menu"
         >
-          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M13 21h6c1.1046 0 2-.8954 2-2V5c0-1.10457-.8954-2-2-2h-6v18Z"/>
             <path fill-rule="evenodd" d="M11 3H5c-1.10457 0-2 .89543-2 2v14c0 1.1046.89543 2 2 2h6V3Zm-5.70711 7.7071c-.39052-.3905-.39052-1.02368 0-1.41421.39053-.39052 1.02369-.39052 1.41422 0l1.99994 1.99991c.39052.3906.39052 1.0237 0 1.4142l-1.99994 2c-.39053.3905-1.02369.3905-1.41422 0-.39052-.3905-.39052-1.0237 0-1.4142l1.29284-1.2929-1.29284-1.2928Z" clip-rule="evenodd"/>
           </svg>
         </button>
 
-        <!-- Title & Welcome -->
-        <div class="flex-1 min-w-0">
-          <h1 class="text-lg sm:text-2xl lg:text-3xl font-bold text-[#000035] leading-tight tracking-tight">
+        <!-- Divider (only when menu button is visible) -->
+        <div *ngIf="isMobileView" class="md:hidden w-px h-5 bg-[#000035]/10 shrink-0"></div>
+
+        <!-- Title + Breadcrumb -->
+        <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <h1 class="text-[13px] sm:text-[15px] font-bold text-[#000035] tracking-tight whitespace-nowrap leading-none">
             <span class="hidden sm:inline">Publication Dashboard</span>
             <span class="sm:hidden">Dashboard</span>
           </h1>
-          <p class="hidden sm:block text-sm lg:text-base text-[#000035]/75 truncate mt-0.5 lg:mt-1.5">
-            Welcome back, <span class="font-semibold">{{ adminName() }}</span>
-          </p>
         </div>
       </div>
 
-      <!-- RIGHT SIDE: Actions & Profile -->
-      <div class="flex items-center gap-1.5 sm:gap-3 lg:gap-4 shrink-0">
-
-        <!-- DATE + TIME CARD (Desktop Only) -->
-        <div class="hidden lg:flex flex-col items-end bg-white/40 backdrop-blur-sm px-4 py-2.5 rounded-lg border border-white/50 shadow-sm">
-          <div class="text-xs font-semibold text-[#000035]/90 uppercase tracking-wide">
+      <!-- CENTER: Date + Time Pill (Desktop Only) -->
+      <div class="hidden lg:flex items-center justify-center flex-1">
+        <div class="flex items-center gap-2 bg-[#000035]/4 border border-[#000035]/7 rounded-lg px-3 py-1.5">
+          <span class="text-[11px] font-semibold text-[#000035]/50 uppercase tracking-wide whitespace-nowrap">
             {{ now() | date:'EEE, MMM d' }}
-          </div>
-          <div class="text-lg font-bold text-[#000035] tabular-nums leading-tight">
+          </span>
+          <div class="w-1 h-1 rounded-full bg-[#000035]/20"></div>
+          <span class="text-[13px] font-medium text-[#000035] tracking-wide tabular-nums whitespace-nowrap">
             {{ now() | date:'h:mm:ss a' }}
-          </div>
+          </span>
+        </div>
+      </div>
+
+      <!-- RIGHT: Welcome + Notifications + Profile -->
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+
+        <!-- Welcome Pill (Desktop Only) -->
+        <div class="hidden lg:flex items-center gap-1.5 px-3 py-1.5">
+          <div class="w-1.5 h-1.5 rounded-full bg-[#f4b400]"></div>
+          <span class="text-xs font-semibold text-[#b8860b] whitespace-nowrap">
+            Welcome back, <span class="font-bold">{{ adminName() }}</span>
+          </span>
+        </div>
+
+        <!-- Tablet: Date pill (md only, not lg) -->
+        <div class="hidden md:flex lg:hidden items-center gap-1.5 bg-[#000035]/4 border border-[#000035]/7 rounded-lg px-2.5 py-1.5">
+          <span class="text-[12px] font-medium text-[#000035] tabular-nums whitespace-nowrap">
+            {{ now() | date:'h:mm a' }}
+          </span>
         </div>
 
         <!-- NOTIFICATION BELL -->
         <div class="relative">
           <button
             (click)="toggleNotifications()"
-            class="relative p-2 sm:p-2.5 lg:p-3 rounded-lg sm:rounded-xl bg-white/40 backdrop-blur-sm border border-white/50 hover:bg-white/60 hover:shadow-md transition-all duration-200 group"
+            class="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-[9px]
+                   border border-[#000035]/10 text-[#000035]
+                   hover:bg-[#000035]/5 hover:border-[#000035]/18
+                   transition-all duration-150 cursor-pointer"
             aria-label="Toggle notifications"
             [attr.aria-expanded]="dropdownOpen()"
           >
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[#000035] transition-transform group-hover:scale-110"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:w-4.25 sm:h-4.25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
             </svg>
 
             @if (notifications().length > 0) {
-              <span class="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 min-w-4 h-4 sm:min-w-5 sm:h-5 flex items-center justify-center bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-1 sm:px-1.5 rounded-full shadow-lg animate-pulse">
+              <span class="absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center
+                           bg-red-500 text-white text-[9px] font-bold px-1 rounded-full
+                           border-[1.5px] border-white shadow-sm">
                 {{ notifications().length }}
               </span>
             }
@@ -88,60 +93,60 @@
           <!-- Notification Dropdown -->
           @if (dropdownOpen()) {
             <div
-              class="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+              class="absolute right-0 top-full mt-2 w-[calc(100vw-24px)] sm:w-80 max-w-sm bg-white rounded-2xl shadow-2xl
+                     border border-[#000035]/10 z-50 overflow-hidden"
               role="menu"
               aria-label="Notifications"
             >
               <!-- Header -->
-              <div class="px-4 py-3 bg-linear-to-r from-[#000035] to-[#1a1a4d] border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-sm font-bold text-white">Notifications</h3>
-                  @if (notifications().length > 0) {
-                    <span class="text-xs text-white/70">{{ notifications().length }} new</span>
-                  }
-                </div>
+              <div class="px-4 py-3 border-b border-[#000035]/7 flex items-center justify-between">
+                <span class="text-[13px] font-bold text-[#000035]">Notifications</span>
+                @if (notifications().length > 0) {
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#f4b400]/15 text-[#b8860b]">
+                    {{ notifications().length }} new
+                  </span>
+                }
               </div>
 
               <!-- Notification List -->
-              <div class="max-h-96 overflow-y-auto">
+              <div class="max-h-72 sm:max-h-80 overflow-y-auto">
                 @for (n of notifications(); track n.id) {
-                  <div class="px-4 py-3 hover:bg-[#f4b400]/5 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0 group">
-                    <div class="flex items-start gap-3">
-                      <div class="shrink-0 w-2 h-2 rounded-full bg-[#f4b400] mt-1.5 group-hover:scale-125 transition-transform"></div>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm text-[#000035] font-medium leading-snug mb-1">
-                          {{ n.message }}
-                        </p>
-                        <p class="text-xs text-gray-500 flex items-center gap-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                          </svg>
-                          {{ n.createdAt | date:'MMM d, h:mm a' }}
-                        </p>
-                      </div>
+                  <div class="px-4 py-3 flex items-start gap-3 border-b border-[#000035]/5
+                               last:border-b-0 hover:bg-[#f4b400]/4 cursor-pointer transition-colors">
+                    <div class="w-1.5 h-1.5 rounded-full bg-[#f4b400] mt-1.5 shrink-0"></div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-[13px] font-medium text-[#000035] leading-snug">{{ n.message }}</p>
+                      <p class="text-[11px] text-[#000035]/40 mt-1 flex items-center gap-1">
+                        <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ n.createdAt | date:'MMM d, h:mm a' }}
+                      </p>
                     </div>
                   </div>
                 }
 
                 @if (notifications().length === 0) {
-                  <div class="p-8 text-center">
-                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
-                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                  <div class="py-10 text-center">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#000035]/5 mb-3">
+                      <svg class="w-5 h-5 text-[#000035]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                       </svg>
                     </div>
-                    <p class="text-sm text-gray-500 font-medium">No new notifications</p>
-                    <p class="text-xs text-gray-400 mt-1">You're all caught up!</p>
+                    <p class="text-[13px] font-semibold text-[#000035]/50">No new notifications</p>
+                    <p class="text-[11px] text-[#000035]/30 mt-0.5">You're all caught up!</p>
                   </div>
                 }
               </div>
 
               <!-- Footer -->
               @if (notifications().length > 0) {
-                <div class="px-4 py-2.5 bg-gray-50 border-t border-gray-100">
+                <div class="px-4 py-2.5 bg-[#000035]/2 border-t border-[#000035]/6 text-center">
                   <button
                     (click)="markAllAsRead()"
-                    class="w-full text-xs font-semibold text-[#000035] hover:text-[#f4b400] transition-colors py-1"
+                    class="text-[12px] font-semibold text-[#000035] hover:text-[#f4b400] transition-colors py-0.5"
                   >
                     Mark all as read
                   </button>
@@ -152,19 +157,24 @@
         </div>
 
         <!-- ADMIN PROFILE -->
-        <div class="flex items-center gap-2 sm:gap-2.5 lg:gap-3 bg-white/40 backdrop-blur-sm px-2 py-2 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 rounded-lg sm:rounded-xl border border-white/50 hover:bg-white/60 hover:shadow-md transition-all duration-200 cursor-pointer group">
+        <div class="flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-2 pr-2 sm:pr-3 py-1 rounded-[10px]
+                    border border-[#000035]/10 cursor-pointer
+                    hover:bg-[#000035]/4 hover:border-[#000035]/18
+                    transition-all duration-150">
 
-          <!-- Avatar -->
-          <div class="w-7 h-7 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full bg-linear-to-br from-[#000035] to-[#1a1a4d] text-white flex items-center justify-center font-bold text-xs sm:text-sm lg:text-base shadow-md group-hover:scale-105 transition-transform">
+          <!-- Square Avatar -->
+          <div class="w-7 h-7 rounded-[7px] bg-linear-to-br from-[#000035] to-[#1a1a5e]
+                      text-white flex items-center justify-center
+                      text-[12px] font-bold tracking-wide shrink-0">
             {{ adminName().charAt(0) }}
           </div>
 
-          <!-- Name & Role (Hidden on Mobile) -->
-          <div class="leading-tight hidden lg:block">
-            <p class="text-sm font-bold text-[#000035] leading-tight">
+          <!-- Name & Role: hidden on mobile, shown sm+ -->
+          <div class="hidden sm:block leading-tight">
+            <p class="text-[13px] font-bold text-[#000035] whitespace-nowrap leading-none">
               {{ adminName() }}
             </p>
-            <p class="text-xs text-[#000035]/70 leading-tight">
+            <p class="text-[11px] text-[#000035]/45 font-medium whitespace-nowrap leading-none mt-0.5">
               {{ adminRole() }}
             </p>
           </div>

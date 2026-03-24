@@ -18,7 +18,7 @@
               *ngFor="let tab of tabs"
               (click)="setTab(tab)"
               [ngClass]="{
-                'text-[#000035] border-b-2 border-[#F4B400] bg-[#f4b400] font-[#000035]': activeTab === tab,
+                'text-[#000035] border-b-2 border-[#F4B400] bg-[#f4b400]': activeTab === tab,
                 'text-[#000035]/40 border-b-2 border-transparent hover:text-[#000035] hover:bg-white/60': activeTab !== tab
               }"
               class="shrink-0 px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 cursor-pointer whitespace-nowrap"

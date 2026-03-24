@@ -1,0 +1,61 @@
+<div
+  class="relative"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)">
+
+  <!-- Upload Button -->
+  <label
+    class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium cursor-pointer select-none whitespace-nowrap rounded-(--border-radius-md) transition-all duration-150 group"
+    style="background: #000035; color: #f4b400; border: 0.5px solid rgba(244,180,0,0.35);"
+    onmouseenter="this.style.background='#f4b400'; this.style.color='#000035'; this.style.borderColor='#f4b400';"
+    onmouseleave="this.style.background='#000035'; this.style.color='#f4b400'; this.style.borderColor='rgba(244,180,0,0.35)';">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+    </svg>
+    Upload media
+    <input type="file" multiple class="hidden" (change)="onFileInputChange($event)" />
+  </label>
+
+  <!-- Drag Overlay -->
+  <div
+    *ngIf="isDragging"
+    class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+    style="background: rgba(0,0,53,0.55); backdrop-filter: blur(2px);">
+    <div
+      class="flex flex-col items-center gap-4 px-14 py-12 rounded-(--border-radius-lg) bg-(--color-background-primary)"
+      style="border: 2px dashed #f4b400;">
+
+      <!-- Icon -->
+      <div
+        class="w-14 h-14 rounded-full flex items-center justify-center"
+        style="background: rgba(244,180,0,0.1); border: 0.5px solid rgba(244,180,0,0.35);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f4b400" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+        </svg>
+      </div>
+
+      <!-- Text -->
+      <div class="text-center">
+        <p class="text-base font-medium text-(--color-text-primary) mb-1">Drop files to upload</p>
+        <p class="text-sm text-(--color-text-secondary)">Release to add them to your media library</p>
+      </div>
+
+      <!-- Supported formats pill -->
+      <div
+        class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full"
+        style="background: rgba(244,180,0,0.08); border: 0.5px solid rgba(244,180,0,0.25);">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f4b400" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span class="text-xs font-medium tracking-wide" style="color: #000035;">
+          Images, videos, documents supported
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+</div>

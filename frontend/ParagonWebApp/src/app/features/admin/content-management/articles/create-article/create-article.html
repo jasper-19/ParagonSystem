@@ -98,7 +98,7 @@
           placeholder="article-url-slug"
           class="w-full px-4 py-3 border-2 rounded-xl
                  focus:ring-4 focus:ring-[#f4b400]/10 focus:outline-none
-                 transition-all duration-200 font-mono text-sm placeholder:text-slate-400"
+                 transition-all duration-200 text-sm placeholder:text-slate-400"
           [class.border-red-300]="form.controls.slug.errors?.['slugTaken']"
           [class.border-slate-200]="!form.controls.slug.errors?.['slugTaken']"
           [class.focus:border-red-400]="form.controls.slug.errors?.['slugTaken']"

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as service from "./user.service";
+import { auditLog } from "../activity-logs/activity-log.audit";
 
 /** GET /api/users (admin) */
 export const listUsers = asyncHandler(async (_req: Request, res: Response) => {
@@ -23,6 +24,10 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
   const { username, password, role, staffId } = req.body as any;
   const user = await service.createUser({ username, password, role, staffId });
+  auditLog(req, "CREATE", "USERS", `Created user: ${user.username}`, {
+    resourceId: user.id,
+    details: { username: user.username, role: user.role, staffId: user.staffId ?? null },
+  });
   res.status(201).json(service.toPublicUser(user));
 });
 
@@ -36,5 +41,9 @@ export const patchUser = asyncHandler(async (req: Request, res: Response) => {
     res.status(404).json({ error: "User not found" });
     return;
   }
+  auditLog(req, "UPDATE", "USERS", `Updated user: ${updated.username}`, {
+    resourceId: updated.id,
+    details: { fields: Object.keys(req.body as Record<string, unknown>) },
+  });
   res.json(service.toPublicUser(updated));
 });

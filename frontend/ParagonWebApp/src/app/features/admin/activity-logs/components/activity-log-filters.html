@@ -7,6 +7,8 @@
       <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
     </svg>
     <select
+      [(ngModel)]="filters.module"
+      (change)="onFilterChange()"
       style="appearance: none; padding: 8px 32px 8px 30px; font-size: 13px; font-weight: 500; color: #000035; background: var(--color-background-primary); border: 0.5px solid rgba(0,0,53,0.25); border-radius: var(--border-radius-md); cursor: pointer; outline: none; min-width: 140px; transition: border-color 0.15s;"
       onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
       onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';">
@@ -28,6 +30,8 @@
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
     </svg>
     <select
+      [(ngModel)]="filters.action"
+      (change)="onFilterChange()"
       style="appearance: none; padding: 8px 32px 8px 30px; font-size: 13px; font-weight: 500; color: #000035; background: var(--color-background-primary); border: 0.5px solid rgba(0,0,53,0.25); border-radius: var(--border-radius-md); cursor: pointer; outline: none; min-width: 140px; transition: border-color 0.15s;"
       onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
       onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';">
@@ -50,6 +54,8 @@
     </svg>
     <input
       type="date"
+      [(ngModel)]="filters.dateFrom"
+      (change)="onFilterChange()"
       style="padding: 8px 12px 8px 30px; font-size: 13px; font-weight: 500; color: #000035; background: var(--color-background-primary); border: 0.5px solid rgba(0,0,53,0.25); border-radius: var(--border-radius-md); outline: none; min-width: 150px; transition: border-color 0.15s; cursor: pointer;"
       onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
       onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';" />
@@ -64,6 +70,8 @@
     <input
       type="text"
       placeholder="Search logs..."
+      [(ngModel)]="filters.search"
+      (input)="onFilterChange()"
       style="width: 100%; padding: 8px 12px 8px 30px; font-size: 13px; color: #000035; background: var(--color-background-primary); border: 0.5px solid rgba(0,0,53,0.25); border-radius: var(--border-radius-md); outline: none; transition: border-color 0.15s;"
       onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
       onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';" />
@@ -72,6 +80,7 @@
   <!-- Reset filters button — visible utility action -->
   <button
     type="button"
+    (click)="clearFilters()"
     style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 500; color: rgba(0,0,53,0.5); background: transparent; border: 0.5px solid rgba(0,0,53,0.2); border-radius: var(--border-radius-md); cursor: pointer; white-space: nowrap; transition: all 0.15s;"
     onmouseenter="this.style.background='rgba(0,0,53,0.05)'; this.style.color='#000035'; this.style.borderColor='rgba(0,0,53,0.35)';"
     onmouseleave="this.style.background='transparent'; this.style.color='rgba(0,0,53,0.5)'; this.style.borderColor='rgba(0,0,53,0.2)';">

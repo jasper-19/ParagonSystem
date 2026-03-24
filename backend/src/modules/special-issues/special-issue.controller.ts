@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as service from "./special-issue.service";
+import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
 
@@ -52,6 +53,10 @@ export const createIssue = asyncHandler(
   async (req: Request, res: Response) => {
 
     const issue = await service.createIssue(req.body);
+    auditLog(req, "CREATE", "SPECIAL_ISSUES", `Created special issue: ${(issue as any).title ?? "Untitled"}`, {
+      resourceId: String((issue as any).id ?? ""),
+      details: { title: (issue as any).title, slug: (issue as any).slug, type: (issue as any).type },
+    });
 
     res.status(201).json(issue);
   }
@@ -64,6 +69,10 @@ export const updateIssue = asyncHandler(
     const id = sanitizeValue(req.params["id"]) as string;
 
     const issue = await service.updateIssue(id, req.body);
+    auditLog(req, "UPDATE", "SPECIAL_ISSUES", `Updated special issue: ${(issue as any).title ?? id}`, {
+      resourceId: id,
+      details: { fields: Object.keys(req.body as Record<string, unknown>) },
+    });
 
     res.json(issue);
   }
@@ -76,6 +85,10 @@ export const updateIssueStatus = asyncHandler(
     const status = (req.body as { status: string }).status;
 
     const issue = await service.updateIssueStatus(id, status);
+    auditLog(req, "UPDATE_STATUS", "SPECIAL_ISSUES", `Updated special issue status to ${status}: ${id}`, {
+      resourceId: id,
+      details: { status },
+    });
 
     res.json(issue);
   }
@@ -88,6 +101,9 @@ export const deleteIssue = asyncHandler(
     const id = sanitizeValue(req.params["id"]) as string;
 
     await service.deleteIssue(id);
+    auditLog(req, "DELETE", "SPECIAL_ISSUES", `Deleted special issue: ${id}`, {
+      resourceId: id,
+    });
 
     res.status(204).send();
   }

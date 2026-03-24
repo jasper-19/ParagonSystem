@@ -5,6 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import * as userService from "../users/user.service";
 import * as staffRepository from "../staff/staff.repository";
 import * as sessionRepository from "./session.repository";
+import { auditLog } from "../activity-logs/activity-log.audit";
 
 /**
  * POST /api/auth/login
@@ -46,6 +47,11 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       jwtSecret,
       { subject: dbUser.id, expiresIn: "8h" }
     );
+    auditLog(req, "LOGIN", "AUTH", `User login: ${dbUser.username}`, {
+      resourceId: dbUser.id,
+      userId: dbUser.id,
+      details: { role: dbUser.role, sessionId: session.id },
+    });
     res.json({ token });
     return;
   }
@@ -74,6 +80,9 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     jwtSecret,
     { subject: "env-admin", expiresIn: "8h" }
   );
+  auditLog(req, "LOGIN", "AUTH", `Env admin login: ${adminUsername}`, {
+    details: { username: adminUsername, role: "admin" },
+  });
 
   res.json({ token });
 });
@@ -123,6 +132,10 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   }
 
   await userService.updateUser(subject, { password: newPassword });
+  auditLog(req, "CHANGE_PASSWORD", "AUTH", `Changed password for user ${subject}`, {
+    resourceId: subject,
+    userId: subject,
+  });
 
   // Revoke all other sessions as a safety measure after a password change.
   await sessionRepository.revokeAllOtherSessions(subject, sessionId);
@@ -161,6 +174,11 @@ export const setTwoFaEnabled = asyncHandler(async (req: Request, res: Response) 
     res.status(401).json({ error: "Invalid token" });
     return;
   }
+  auditLog(req, "SET_2FA", "AUTH", `Updated 2FA setting for user ${subject}`, {
+    resourceId: subject,
+    userId: subject,
+    details: { enabled },
+  });
 
   res.json({ twoFaEnabled: updated.twoFaEnabled ?? enabled });
 });
@@ -221,6 +239,11 @@ export const logoutSession = asyncHandler(async (req: Request, res: Response) =>
   }
 
   await sessionRepository.revokeSession(subject, sessionId);
+  auditLog(req, "LOGOUT_SESSION", "AUTH", `Logged out session ${sessionId}`, {
+    resourceId: sessionId,
+    userId: subject,
+    details: { sessionId },
+  });
   res.json({ ok: true });
 });
 

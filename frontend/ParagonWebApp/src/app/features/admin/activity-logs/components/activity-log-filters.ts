@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Output, EventEmitter } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 export interface ActivityLogFilters {
   module?: string;
@@ -11,7 +12,7 @@ export interface ActivityLogFilters {
 @Component({
   selector: 'app-activity-log-filters',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './activity-log-filters.html'
 })
 export class ActivityLogFiltersComponent {

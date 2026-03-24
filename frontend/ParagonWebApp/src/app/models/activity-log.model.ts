@@ -1,31 +1,43 @@
+export type ActivityAction =
+  | 'CREATE'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'LOGIN'
+  | 'LOGOUT'
+  | 'PUBLISH'
+  | string;
+
+export type ActivityModule =
+  | 'ARTICLES'
+  | 'USERS'
+  | 'SETTINGS'
+  | 'APPLICATIONS'
+  | 'NOTIFICATIONS'
+  | 'SPECIAL_ISSUES'
+  | string;
+
 export interface ActivityLog {
   id: string;
   userId: string;
   userName?: string;
-
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'PUBLISH';
-
-  module:
-    | 'ARTICLES'
-    | 'USERS'
-    | 'SETTINGS'
-    | 'APPLICATIONS'
-    | 'NOTIFICATIONS'
-    | 'SPECIAL_ISSUES';
-
-
+  action: ActivityAction;
+  module: ActivityModule;
   description: string;
-
   entityId: string;
   entityType: string;
-
   metadata?: {
-    before?: any;
-    after?: any;
+    before?: unknown;
+    after?: unknown;
+    [key: string]: unknown;
   };
-
   ipAddress: string;
-  userAgent?:  string;
-
+  userAgent?: string;
   createdAt: string;
+}
+
+export interface ActivityLogFilters {
+  module?: string;
+  action?: string;
+  dateFrom?: string;
+  search?: string;
 }

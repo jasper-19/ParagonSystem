@@ -47,7 +47,7 @@ export class Sidebar implements OnInit {
       icon: 'camera',
       open: false,
       children: [
-        { label: 'Media Library', route: '/admin/media', icon: 'media' },
+        { label: 'Media Library', route: '/admin/media-library', icon: 'media' },
       ]
     },
 
