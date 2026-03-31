@@ -1,0 +1,191 @@
+<div class="flex flex-col gap-3">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <svg class="w-4 h-4 text-[#F4B400]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      <label [class]="labelClass">
+        {{ label }}<span *ngIf="required" class="text-red-400 ml-1">*</span>
+      </label>
+    </div>
+
+    <span
+      *ngIf="isUploading"
+      class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600
+             bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1"
+    >
+      <span class="h-2 w-2 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin shrink-0"></span>
+      Uploading…
+    </span>
+  </div>
+
+
+  <!-- ─── EMPTY STATE ─── -->
+  <div
+    *ngIf="!hasImage"
+    class="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/80
+           hover:border-[#F4B400]/50 hover:bg-[#F4B400]/[0.03]
+           transition-colors duration-200 cursor-default"
+  >
+    <div class="flex flex-col items-center justify-center gap-5 text-center px-6 py-10">
+
+      <!-- Icon -->
+      <div class="relative">
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl
+                    bg-white border-2 border-slate-200 shadow-sm text-slate-400">
+          <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+          </svg>
+        </div>
+        <!-- Decorative dot -->
+        <span class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#F4B400] border-2 border-white flex items-center justify-center">
+          <svg class="w-2 h-2 text-[#000035]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+        </span>
+      </div>
+
+      <div class="space-y-1.5">
+        <p class="text-sm font-bold text-[#000035]">No image selected</p>
+        <p class="text-xs text-slate-400 leading-relaxed max-w-[220px]">{{ helperText }}</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row items-center gap-2 w-full">
+
+        <label
+          class="group relative flex-1 w-full inline-flex cursor-pointer items-center justify-center gap-2
+                 rounded-xl bg-[#000035] px-4 py-2.5 text-sm font-bold text-white
+                 hover:bg-[#001040] active:scale-[0.99]
+                 transition-all duration-150 shadow-sm"
+        >
+          <svg class="h-4 w-4 text-[#F4B400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Upload Image
+          <input type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)"/>
+        </label>
+
+        <button
+          type="button"
+          (click)="openPicker()"
+          class="flex-1 w-full inline-flex items-center justify-center gap-2
+                 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5
+                 text-sm font-bold text-slate-600
+                 hover:border-[#F4B400]/50 hover:bg-[#F4B400]/5 hover:text-[#000035]
+                 active:scale-[0.99] transition-all duration-150"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3l14 9-14 9V3z"/>
+          </svg>
+          From Library
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ─── SELECTED STATE ─── -->
+  <div
+    *ngIf="hasImage"
+    class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+  >
+
+    <!-- Image preview with hover overlay -->
+    <div class="relative group">
+      <div [class]="'w-full overflow-hidden bg-slate-100 ' + aspectClass">
+        <img
+          [src]="previewUrl"
+          [alt]="selectedMedia?.altText || selectedMedia?.fileName || 'Cover image'"
+          class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        />
+      </div>
+
+      <!-- Overlay -->
+      <div class="absolute inset-0 bg-[#000035]/60 opacity-0 group-hover:opacity-100
+                  transition-opacity duration-200 flex items-center justify-center gap-2 p-4">
+        <label
+          class="inline-flex cursor-pointer items-center gap-1.5 rounded-xl
+                 bg-white/95 px-3.5 py-2 text-xs font-bold text-[#000035]
+                 hover:bg-white shadow-lg transition-colors"
+        >
+          <svg class="w-3.5 h-3.5 text-[#F4B400]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Replace
+          <input type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)"/>
+        </label>
+
+        <button
+          type="button"
+          (click)="openPicker()"
+          class="inline-flex items-center gap-1.5 rounded-xl
+                 bg-white/95 px-3.5 py-2 text-xs font-bold text-[#000035]
+                 hover:bg-white shadow-lg transition-colors"
+        >
+          <svg class="w-3.5 h-3.5 text-[#F4B400]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3l14 9-14 9V3z"/>
+          </svg>
+          Library
+        </button>
+
+        <button
+          type="button"
+          (click)="removeImage()"
+          class="inline-flex items-center gap-1.5 rounded-xl
+                 bg-red-500 px-3.5 py-2 text-xs font-bold text-white
+                 hover:bg-red-600 shadow-lg transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Remove
+        </button>
+      </div>
+    </div>
+
+    <!-- File info footer -->
+    <div
+      *ngIf="showFileInfo"
+      class="flex items-center gap-3 px-4 py-3 border-t border-slate-100 bg-slate-50/60"
+    >
+      <!-- File icon -->
+      <div class="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg bg-[#000035]/5 text-[#000035]">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5M21 6.75V18a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18V6.75"/>
+        </svg>
+      </div>
+
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-xs font-bold text-[#000035] leading-tight">{{ selectedMedia?.fileName }}</p>
+        <p class="text-[10px] text-slate-400 font-medium mt-0.5 uppercase tracking-wide">{{ selectedMedia?.mimeType }}</p>
+      </div>
+
+      <button
+        type="button"
+        (click)="openPicker()"
+        class="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5
+               text-xs font-bold text-slate-600
+               hover:border-[#F4B400]/50 hover:text-[#000035] hover:bg-[#F4B400]/5
+               transition-all duration-150"
+      >
+        Change
+      </button>
+    </div>
+
+  </div>
+
+
+  <!-- Modal -->
+  <app-media-picker-modal
+    [isOpen]="isPickerOpen"
+    title="Select Cover Image"
+    allowedType="image"
+    (close)="closePicker()"
+    (selectMedia)="onMediaSelected($event)"
+  ></app-media-picker-modal>
+
+</div>

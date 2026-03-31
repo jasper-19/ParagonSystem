@@ -9,6 +9,7 @@ import specialIssueRoutes from "../modules/special-issues/special-issue.routes";
 import userRoutes from "../modules/users/user.routes";
 import collegeRoutes from "../modules/colleges/college.routes";
 import activityLogRoutes from "../modules/activity-logs/activity-log.routes";
+import mediaRoutes from "../modules/media/media.routes";
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use("/articles", articlesRoutes);
 router.use("/issues", specialIssueRoutes);
 router.use("/colleges", collegeRoutes);
 router.use("/activity-logs", activityLogRoutes);
+router.use("/media", mediaRoutes);
 
 
 export default router;

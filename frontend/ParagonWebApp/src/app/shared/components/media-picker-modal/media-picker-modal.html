@@ -1,0 +1,185 @@
+<div
+  *ngIf="isOpen"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+>
+  <div class="flex h-[90vh] w-full max-w-7xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+
+    <!-- Header -->
+    <div class="border-b border-slate-200 px-6 py-4">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-900">
+            {{ title }}
+          </h2>
+          <p class="mt-1 text-sm text-slate-500">
+            Browse your media library and select a file to use.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          (click)="onClose()"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="border-b border-slate-200 px-6 py-4">
+      <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+
+        <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            type="text"
+            [ngModel]="searchTerm"
+            (ngModelChange)="onSearchChange($event)"
+            placeholder="Search media..."
+            class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 sm:max-w-sm"
+          />
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              (click)="onTypeChange('all')"
+              [ngClass]="activeType === 'all'
+                ? 'bg-slate-900 text-white'
+                : 'border border-slate-300 bg-white text-slate-600 hover:bg-slate-100'"
+              class="rounded-full px-4 py-2 text-sm font-medium transition"
+            >
+              All
+            </button>
+
+            <button
+              type="button"
+              (click)="onTypeChange('image')"
+              [ngClass]="activeType === 'image'
+                ? 'bg-slate-900 text-white'
+                : 'border border-slate-300 bg-white text-slate-600 hover:bg-slate-100'"
+              class="rounded-full px-4 py-2 text-sm font-medium transition"
+            >
+              Images
+            </button>
+
+            <button
+              type="button"
+              (click)="onTypeChange('video')"
+              [ngClass]="activeType === 'video'
+                ? 'bg-slate-900 text-white'
+                : 'border border-slate-300 bg-white text-slate-600 hover:bg-slate-100'"
+              class="rounded-full px-4 py-2 text-sm font-medium transition"
+            >
+              Videos
+            </button>
+
+            <button
+              type="button"
+              (click)="onTypeChange('document')"
+              [ngClass]="activeType === 'document'
+                ? 'bg-slate-900 text-white'
+                : 'border border-slate-300 bg-white text-slate-600 hover:bg-slate-100'"
+              class="rounded-full px-4 py-2 text-sm font-medium transition"
+            >
+              Documents
+            </button>
+
+            <button
+              type="button"
+              (click)="onTypeChange('audio')"
+              [ngClass]="activeType === 'audio'
+                ? 'bg-slate-900 text-white'
+                : 'border border-slate-300 bg-white text-slate-600 hover:bg-slate-100'"
+              class="rounded-full px-4 py-2 text-sm font-medium transition"
+            >
+              Audio
+            </button>
+          </div>
+        </div>
+
+        <app-media-uploader
+          (filesSelected)="onUploadFiles($event)"
+        ></app-media-uploader>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex min-h-0 flex-1 overflow-hidden">
+      <!-- Grid -->
+      <div class="min-h-0 flex-1 overflow-y-auto p-6">
+        <div
+          *ngIf="isLoading"
+          class="flex h-64 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50"
+        >
+          <p class="text-sm text-slate-500">Loading media...</p>
+        </div>
+
+        <div
+          *ngIf="!isLoading && !mediaList.length"
+          class="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-center"
+        >
+          <h3 class="text-base font-semibold text-slate-800">No media found</h3>
+          <p class="mt-2 max-w-md text-sm text-slate-500">
+            Try adjusting the search or upload a new file.
+          </p>
+        </div>
+
+        <app-media-grid
+          *ngIf="!isLoading && mediaList.length"
+          [mediaList]="mediaList"
+          [selectedIds]="selectedMedia ? [selectedMedia.id] : []"
+          (toggleSelection)="onToggleSelection($event)"
+          (openDetails)="onOpenDetails($event)"
+        ></app-media-grid>
+      </div>
+
+      <!-- Side panel -->
+      <aside class="hidden w-90 shrink-0 border-l border-slate-200 bg-white xl:block">
+        <div class="h-full overflow-y-auto p-6">
+          <app-media-details-panel
+            [media]="selectedMedia"
+            [isSaving]="false"
+          ></app-media-details-panel>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Footer -->
+    <div class="border-t border-slate-200 px-6 py-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="text-sm text-slate-500">
+          <span *ngIf="selectedMedia; else noSelectionText">
+            Selected: <span class="font-medium text-slate-700">{{ selectedMedia.fileName }}</span>
+          </span>
+
+          <ng-template #noSelectionText>
+            No media selected
+          </ng-template>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            (click)="onClose()"
+            class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            (click)="onConfirmSelection()"
+            [disabled]="!selectedMedia || isSubmitting"
+            class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            Select Media
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+

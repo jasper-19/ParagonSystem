@@ -96,20 +96,21 @@ export class MediaLibraryComponent implements OnInit {
   onUploadFiles(files: File[]): void {
     if (!files.length) return;
 
-    // Frontend-first implementation.
-    // Later, this method remains the same even when backend is ready.
     let completed = 0;
 
     files.forEach(file => {
       this.mediaService.uploadMedia(file).subscribe({
-        next: () => {
+        next: (result) => {
+          if (typeof result === 'number') return;
+        },
+        error: () => {
           completed++;
 
           if (completed === files.length) {
             this.loadMedia();
           }
         },
-        error: () => {
+        complete: () => {
           completed++;
 
           if (completed === files.length) {

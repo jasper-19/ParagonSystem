@@ -1,5 +1,5 @@
 import { ConfirmationModal } from '../../../../../shared/components/confirmation-modal/confirmation-modal';
-import { ChangeDetectorRef, Component, computed, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AsyncValidatorFn, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,13 +7,15 @@ import { SpecialIssue, SpecialIssueType } from '../../../../../models/special-is
 import { SpecialIssueService } from '../../../../../core/services/special-issue.service';
 import { of, timer } from 'rxjs';
 import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
+import { CoverImagSelectorComponent } from '../../../media-library/components/cover-image-selector/cover-image-selector';
+import { Media } from '../../../../../models/media.model';
 
 type IssueStatus = SpecialIssue['status'];
 
 @Component({
 	selector: 'app-create-special-issue',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, ConfirmationModal],
+	imports: [CommonModule, ReactiveFormsModule, ConfirmationModal, CoverImagSelectorComponent],
 	templateUrl: './create-special-issue.component.html'
 })
 export class CreateSpecialIssueComponent {
@@ -22,17 +24,13 @@ export class CreateSpecialIssueComponent {
 	private router = inject(Router);
 	private route = inject(ActivatedRoute);
 	private issueService = inject(SpecialIssueService);
-	private cdr = inject(ChangeDetectorRef);
-
-	@ViewChild('coverInput')
-	private coverInput?: ElementRef<HTMLInputElement>;
 
 	readonly editingId = signal<string | null>(null);
 	readonly isEditMode = computed(() => this.editingId() !== null);
 
 	readonly isSubmitting = signal(false);
 	readonly slugManuallyEdited = signal(false);
-	readonly selectedCoverName = signal<string | null>(null);
+	readonly selectedCoverMedia = signal<Media | null>(null);
 	readonly selectedPdfName = signal<string | null>(null);
 
 	readonly types: SpecialIssueType[] = ['Tabloid', 'Newsletter', 'Literary Folio'];
@@ -121,8 +119,6 @@ export class CreateSpecialIssueComponent {
 		status: ['draft' as IssueStatus, Validators.required]
 	});
 
-	readonly coverDisplayUrl = signal<string | null>(null);
-
 	readonly pdfDisplayText  = signal<string | null>(null);
 
 	constructor() {
@@ -193,7 +189,7 @@ export class CreateSpecialIssueComponent {
 			status: issue.status
 		}, { emitEvent: false });
 
-		this.coverDisplayUrl.set(issue.coverImage || null);
+		this.selectedCoverMedia.set(this.buildMediaFromUrl(issue.coverImage));
 		this.pdfDisplayText.set(this.fileLabel(issue.pdfUrl));
 		this.setMinPublishDateForAcademicYear(issue.academicYear);
 	}
@@ -287,36 +283,14 @@ export class CreateSpecialIssueComponent {
   this.showConfirmModal.set(false);
 }
 
-	private coverObjectUrl: string | null = null;
 	private pdfObjectUrl: string | null = null;
 
-  onCoverSelected(event: Event): void {
-  const input = event.target as HTMLInputElement | null;
-  const file = input?.files?.[0];
-  if (!file) return;
-
-  this.selectedCoverName.set(file.name);
-
-	const reader = new FileReader();
-	reader.onload = () => {
-		const result = reader.result as string;
-		this.coverDisplayUrl.set(result);
-		this.form.controls.coverImage.setValue(result);
+	onCoverMediaChange(media: Media | null): void {
+		this.selectedCoverMedia.set(media);
+		this.form.controls.coverImage.setValue(media?.fileUrl || media?.filePath || '');
 		this.form.controls.coverImage.markAsDirty();
-	};
+	}
 
-	reader.readAsDataURL(file);
-
-  if (input) input.value = '';
-}
-
-	removeCoverImage(): void {
-  this.coverObjectUrl = null;
-  this.coverDisplayUrl.set(null);
-	this.selectedCoverName.set(null);
-
-  this.form.controls.coverImage.setValue('');
-}
 	onPdfSelected(event: Event): void {
   const input = event.target as HTMLInputElement | null;
   const file = input?.files?.[0];
@@ -383,5 +357,24 @@ export class CreateSpecialIssueComponent {
 		if (raw.startsWith('data:')) return 'Uploaded file';
 		const name = raw.split('/').pop() ?? raw;
 		return decodeURIComponent(name);
+	}
+
+	private buildMediaFromUrl(url: string | null | undefined): Media | null {
+		const imageUrl = String(url ?? '').trim();
+		if (!imageUrl) return null;
+
+		const fileName = imageUrl.split('/').pop() || 'cover-image';
+		const fallbackType = fileName.includes('.') ? fileName.split('.').pop() : 'image';
+
+		return {
+			id: `cover-${imageUrl}`,
+			fileName,
+			filePath: imageUrl,
+			fileUrl: imageUrl,
+			fileType: 'image',
+			mimeType: `image/${fallbackType}`,
+			size: 0,
+			createdAt: new Date().toISOString(),
+		};
 	}
 }

@@ -71,49 +71,42 @@
         <div class="flex-1 h-px bg-(--color-border-tertiary)"></div>
       </div>
 
-      <!-- Editable fields -->
-      <div class="flex flex-col gap-3">
-
-        <!-- Alt Text -->
-        <div class="rounded-(--border-radius-md) overflow-hidden bg-(--color-background-secondary)" [attr.data-field]="'altText'">
-          <div class="flex items-center gap-1.5 px-3 py-2" style="border-bottom: 1px solid var(--color-border-tertiary);">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-(--color-text-tertiary) shrink-0">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <span class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary)">Alt text</span>
-          </div>
+      <div *ngIf="editable" class="space-y-4">
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">
+            Alt Text
+          </label>
           <input
             type="text"
             [(ngModel)]="media!.altText"
             (blur)="onSave()"
-            (focus)="onFieldFocus($event)"
-            (blur)="onFieldBlur($event)"
+            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
             placeholder="Describe the image for accessibility"
-            class="w-full px-3 py-2.5 text-sm text-(--color-text-primary) bg-(--color-background-primary) outline-none transition-colors duration-150 box-border"
-            style="border: none;" />
+          />
         </div>
 
-        <!-- Caption -->
-        <div class="rounded-(--border-radius-md) overflow-hidden bg-(--color-background-secondary)">
-          <div class="flex items-center gap-1.5 px-3 py-2" style="border-bottom: 1px solid var(--color-border-tertiary);">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-(--color-text-tertiary) shrink-0">
-              <line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/>
-              <line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/>
-            </svg>
-            <span class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary)">Caption</span>
-          </div>
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">
+            Caption
+          </label>
           <textarea
-            rows="3"
+            rows="4"
             [(ngModel)]="media!.caption"
             (blur)="onSave()"
+            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
             placeholder="Add a caption"
-            class="w-full px-3 py-2.5 text-sm text-(--color-text-primary) bg-(--color-background-primary) outline-none transition-colors duration-150 resize-y leading-relaxed box-border"
-            style="border: none; font-family: var(--font-sans);"
-            onfocus="this.closest('.rounded-\\(--border-radius-md\\)').style.outline='2px solid rgba(244,180,0,0.5)'; this.closest('.rounded-\\(--border-radius-md\\)').style.outlineOffset='-1px';"
-            onblur="this.closest('.rounded-\\(--border-radius-md\\)').style.outline='none';">
-          </textarea>
+          ></textarea>
         </div>
 
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-slate-400">
+            Metadata saves on field blur
+          </p>
+
+          <span *ngIf="isSaving" class="text-xs font-medium text-blue-600">
+            Saving...
+          </span>
+        </div>
       </div>
 
       <!-- Save status -->

@@ -340,3 +340,36 @@ CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created
 CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_resource ON activity_logs(resource_type, resource_id);
+
+-- ============================================================
+-- media_files table (media library)
+-- ============================================================
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type WHERE typname = 'media_type'
+  ) THEN
+    CREATE TYPE media_type AS ENUM ('image', 'video', 'document', 'audio');
+  END IF;
+END
+$$;
+
+CREATE TABLE IF NOT EXISTS media_files (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  file_name    TEXT NOT NULL,
+  disk_name    TEXT NOT NULL UNIQUE,
+  storage_path TEXT NOT NULL,
+  file_type    media_type NOT NULL,
+  mime_type    TEXT NOT NULL,
+  size         BIGINT NOT NULL DEFAULT 0,
+  width        INTEGER,
+  height       INTEGER,
+  alt_text     TEXT,
+  caption      TEXT,
+  tags         TEXT[] NOT NULL DEFAULT '{}',
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_media_files_created_at ON media_files(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_media_files_file_type ON media_files(file_type);

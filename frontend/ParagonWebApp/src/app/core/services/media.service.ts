@@ -1,116 +1,88 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
+import { HttpClient, HttpEventType } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 
 import { Media, MediaQuery, PaginatedMediaResponse } from '../../models/media.model';
+
+type ApiMedia = Omit<Media, 'createdAt' | 'updatedAt'> & {
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type UploadProgressOrMedia = number | Media;
+
 @Injectable({
   providedIn: 'root'
 })
 export class MediaService {
+  private readonly api = '/api/media';
 
-  // 🔹 TEMP STORAGE (replace later with API)
-  private mediaList: Media[] = this.generateMockData();
+  constructor(private http: HttpClient) {}
 
-  // ===============================
-  // GET MEDIA
-  // ===============================
-  getMedia(query?: MediaQuery): Observable<PaginatedMediaResponse> {
-    let data = [...this.mediaList];
-
-    // 🔍 Search
-    if (query?.search) {
-      data = data.filter(m =>
-        m.fileName.toLowerCase().includes(query.search!.toLowerCase())
-      );
-    }
-
-    // 🗂 Filter by type
-    if (query?.type) {
-      data = data.filter(m => m.fileType === query.type);
-    }
-
-    // 📄 Pagination
-    const page = query?.page || 1;
-    const limit = query?.limit || 20;
-    const start = (page - 1) * limit;
-    const paginated = data.slice(start, start + limit);
-
-    return of({
-      data: paginated,
-      total: data.length,
-      page,
-      limit
-    });
+  private normalizeMedia(media: ApiMedia): Media {
+    return {
+      ...media,
+      createdAt: media.createdAt || new Date().toISOString(),
+      updatedAt: media.updatedAt || undefined,
+    };
   }
 
-  // ===============================
-  // UPLOAD MEDIA (FAKE BUT REALISTIC)
-  // ===============================
-  uploadMedia(file: File): Observable<Media> {
-    const newMedia: Media = {
-      id: uuidv4(),
-      fileName: file.name,
-      filePath: URL.createObjectURL(file),
-      fileUrl: URL.createObjectURL(file),
+  getMedia(query?: MediaQuery): Observable<PaginatedMediaResponse> {
+    const params: Record<string, string> = {};
 
-      fileType: this.detectType(file.type),
-      mimeType: file.type,
-      size: file.size,
+    if (query?.search) params['search'] = query.search;
+    if (query?.type) params['type'] = query.type;
+    if (query?.page) params['page'] = String(query.page);
+    if (query?.limit) params['limit'] = String(query.limit);
 
-      createdAt: new Date().toISOString()
+    return this.http.get<PaginatedMediaResponse & { data: ApiMedia[] }>(this.api, { params }).pipe(
+      map((response) => ({
+        ...response,
+        data: (response.data || []).map((item) => this.normalizeMedia(item)),
+      }))
+    );
+  }
+
+  uploadMedia(file: File): Observable<UploadProgressOrMedia> {
+    const body = new FormData();
+    body.append('file', file);
+
+    return this.http.post<ApiMedia>(`${this.api}/upload`, body, {
+      observe: 'events',
+      reportProgress: true,
+    }).pipe(
+      map((event): UploadProgressOrMedia | null => {
+        if (event.type === HttpEventType.UploadProgress) {
+          const total = event.total ?? file.size;
+          const progress = total > 0 ? Math.round((event.loaded / total) * 100) : 0;
+          return progress;
+        }
+
+        if (event.type === HttpEventType.Response && event.body) {
+          return this.normalizeMedia(event.body);
+        }
+
+        return null;
+      }),
+      filter((event): event is UploadProgressOrMedia => event !== null)
+    );
+  }
+
+  deleteMedia(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${id}`);
+  }
+
+  updateMedia(id: string, data: Partial<Media>): Observable<Media> {
+    const payload = {
+      altText: data.altText,
+      caption: data.caption,
+      tags: data.tags,
     };
 
-    this.mediaList.unshift(newMedia);
-
-    return of(newMedia);
-  }
-
-  // ===============================
-  // DELETE
-  // ===============================
-  deleteMedia(id: string): Observable<void> {
-    this.mediaList = this.mediaList.filter(m => m.id !== id);
-    return of(void 0);
-  }
-
-  // ===============================
-  // UPDATE (metadata only)
-  // ===============================
-  updateMedia(id: string, data: Partial<Media>): Observable<Media> {
-    const index = this.mediaList.findIndex(m => m.id === id);
-
-    if (index !== -1) {
-      this.mediaList[index] = {
-        ...this.mediaList[index],
-        ...data,
-        updatedAt: new Date().toISOString()
-      };
-    }
-
-    return of(this.mediaList[index]);
-  }
-
-  // ===============================
-  // HELPERS
-  // ===============================
-
-  private detectType(mime: string): Media['fileType'] {
-    if (mime.startsWith('image')) return 'image';
-    if (mime.startsWith('video')) return 'video';
-    if (mime.startsWith('audio')) return 'audio';
-    return 'document';
-  }
-
-  private generateMockData(): Media[] {
-    return Array.from({ length: 15 }).map((_, i) => ({
-      id: uuidv4(),
-      fileName: `image_${i}.jpg`,
-      filePath: `https://picsum.photos/300/200?random=${i}`,
-      fileUrl: `https://picsum.photos/300/200?random=${i}`,
-      fileType: 'image',
-      mimeType: 'image/jpeg',
-      size: 200000,
-      createdAt: new Date().toISOString()
-    }));
+    return this.http.patch<ApiMedia>(`${this.api}/${id}`, payload).pipe(
+      map((response) => this.normalizeMedia(response))
+    );
   }
 }
+

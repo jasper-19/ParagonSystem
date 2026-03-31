@@ -1,4 +1,4 @@
-import { Component, inject, signal, ElementRef, HostListener, ViewChild, computed, effect } from '@angular/core';
+import { Component, inject, signal, ElementRef, HostListener, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -17,6 +17,8 @@ import { Observable, combineLatest, startWith, of, timer } from 'rxjs';
 import { BoardMember, EditorialBoardData } from '../../../../../models/editorial-board.model';
 import { catchError, debounceTime, distinctUntilChanged, first, map, switchMap } from 'rxjs/operators';
 import { ConfirmationModal } from '../../../../../shared/components/confirmation-modal/confirmation-modal';
+import { CoverImagSelectorComponent } from '../../../media-library/components/cover-image-selector/cover-image-selector';
+import { Media } from '../../../../../models/media.model';
 
 interface CreateArticleForm {
   title: string;
@@ -31,7 +33,7 @@ type CreditField = 'author' | 'photoby' | 'graphicby' | 'illusrationby';
 @Component({
   selector: 'app-create-article',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RichTextEditorComponent, ConfirmationModal],
+  imports: [CommonModule, ReactiveFormsModule, RichTextEditorComponent, ConfirmationModal, CoverImagSelectorComponent],
   templateUrl: './create-article.html'
 })
 export class CreateArticleComponent {
@@ -45,9 +47,6 @@ export class CreateArticleComponent {
   readonly editingId = signal<string | null>(null);
   readonly isEditMode = computed(() => this.editingId() !== null);
   readonly originalArticle = signal<Article | null>(null);
-
-  @ViewChild('imageInput')
-  private imageInput?: ElementRef<HTMLInputElement>;
 
   //EB Data
   private allMembers: BoardMember[] = [];
@@ -100,7 +99,7 @@ export class CreateArticleComponent {
 ];
 
   //Image State
-  readonly imagePreview = signal<string | null>(null);
+  readonly selectedImageMedia = signal<Media | null>(null);
 
   //Confirm Modal
   readonly showConfirmModal = signal(false);
@@ -208,7 +207,7 @@ private loadArticleForEdit(article: Article): void {
   this.selectedCredits.set({ author: [], photoby: [], graphicby: [], illusrationby: [] });
   this.hydrateSelectedCreditsFromForm();
 
-  this.imagePreview.set(article.image || null);
+  this.selectedImageMedia.set(this.buildMediaFromUrl(article.image));
 }
 private setupSlugAutoGeneration(): void {
 
@@ -347,36 +346,9 @@ removeTag(tag: string): void {
   this.form.controls.tags.setValue(updated);
 }
 
-//Image Handler
-onImageSelected(event: Event): void {
-
-  const input = event.target as HTMLInputElement;
-
-  if (!input.files || input.files.length === 0) return;
-
-  const file = input.files[0];
-
-  // Basic validation
-  if (!file.type.startsWith('image/')) {
-    alert('Only image files are allowed.');
-    return;
-  }
-
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    const result = reader.result as string;
-
-    this.imagePreview.set(result);
-    this.form.controls.image.setValue(result);
-  };
-
-  reader.readAsDataURL(file);
-}
-
-removeImage(): void {
-  this.imagePreview.set(null);
-  this.form.controls.image.setValue('');
+onCoverMediaChange(media: Media | null): void {
+  this.selectedImageMedia.set(media);
+  this.form.controls.image.setValue(media?.fileUrl || media?.filePath || '');
 }
 
   //Initialize Members for Author AutoComplete — fetch staff from backend
@@ -530,6 +502,7 @@ private restoreDraft(): void {
 
   this.form.patchValue(parsed);
   this.hydrateSelectedCreditsFromForm();
+  this.selectedImageMedia.set(this.buildMediaFromUrl(this.form.controls.image.value));
 
   this.isRestoredDraft.set(true);
   this.lastSavedAt.set(new Date());
@@ -685,10 +658,6 @@ cancel(): void {
     this.activeCreditField.set(null);
     this.highlightedIndex.set(-1);
 
-    if (this.imageInput?.nativeElement) {
-      this.imageInput.nativeElement.value = '';
-    }
-
     const original = this.originalArticle();
     if (original) {
       this.loadArticleForEdit(original);
@@ -727,10 +696,7 @@ private clearFormState(): void {
   this.activeCreditField.set(null);
   this.highlightedIndex.set(-1);
 
-  this.imagePreview.set(null);
-  if (this.imageInput?.nativeElement) {
-    this.imageInput.nativeElement.value = '';
-  }
+  this.selectedImageMedia.set(null);
 
   this.isRestoredDraft.set(false);
   this.lastSavedAt.set(null);
@@ -756,6 +722,25 @@ private clearFormState(): void {
     status: 'Draft' as ArticleStatus,
     featured: false
   }, { emitEvent: false });
+}
+
+private buildMediaFromUrl(url: string | null | undefined): Media | null {
+  const imageUrl = String(url ?? '').trim();
+  if (!imageUrl) return null;
+
+  const fileName = imageUrl.split('/').pop() || 'cover-image';
+  const fallbackType = fileName.includes('.') ? fileName.split('.').pop() : 'image';
+
+  return {
+    id: `cover-${imageUrl}`,
+    fileName,
+    filePath: imageUrl,
+    fileUrl: imageUrl,
+    fileType: 'image',
+    mimeType: `image/${fallbackType}`,
+    size: 0,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 //Keyboard navigation for credit suggestions

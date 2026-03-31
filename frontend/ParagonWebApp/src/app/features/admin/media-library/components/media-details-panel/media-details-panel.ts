@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 export class MediaDetailsPanelComponent {
   @Input() media: Media | null = null;
   @Input() isSaving = false;
+  @Input() editable = true;
 
   @Output() metadataSave = new EventEmitter<void>();
 

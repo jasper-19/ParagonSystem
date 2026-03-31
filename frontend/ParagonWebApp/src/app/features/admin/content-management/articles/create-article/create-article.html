@@ -245,74 +245,15 @@
 
       <!-- ================= IMAGE UPLOAD ================= -->
       <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-6 space-y-4">
-
-        <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
-          </svg>
-          <h2 class="text-sm font-bold text-[#000035] uppercase tracking-wider">
-            Featured Image
-          </h2>
-        </div>
-
-        <!-- Preview -->
-        @if (imagePreview()) {
-
-          <div class="relative group">
-
-            <img
-              [src]="imagePreview()!"
-              class="w-full h-64 object-cover rounded-xl border-2 border-slate-200"
-            />
-
-            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100
-                        transition-opacity duration-200 rounded-xl flex items-center justify-center">
-              <button
-                type="button"
-                (click)="removeImage()"
-                class="px-4 py-2 bg-red-600 text-white rounded-xl font-semibold text-sm
-                       hover:bg-red-700 transition-colors flex items-center gap-2"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-                Remove Image
-              </button>
-            </div>
-
-          </div>
-
-        } @else {
-
-          <!-- Upload Button -->
-          <label
-            class="group flex flex-col items-center justify-center h-48
-                   border-2 border-dashed border-slate-300
-                   rounded-xl cursor-pointer
-                   hover:border-[#f4b400] hover:bg-[#f4b400]/5 transition-all duration-200"
-          >
-            <svg class="w-12 h-12 text-slate-400 group-hover:text-[#F4B400] transition-colors mb-3"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-            </svg>
-            <span class="text-sm font-semibold text-slate-600 group-hover:text-[#000035]">
-              Click to upload image
-            </span>
-            <span class="text-xs text-slate-500 mt-1">
-              PNG, JPG up to 10MB
-            </span>
-
-            <input
-              #imageInput
-              type="file"
-              accept="image/*"
-              (change)="onImageSelected($event)"
-              class="hidden"
-            />
-          </label>
-
-        }
+        <app-cover-image-selector
+          label="Featured Image"
+          [labelClass]="'text-sm font-bold text-[#000035]'"
+          [selectedMedia]="selectedImageMedia()"
+          [helperText]="'Upload a new image or choose one from the media library.'"
+          [aspectClass]="'aspect-square'"
+          [showFileInfo]="false"
+          (mediaChange)="onCoverMediaChange($event)"
+        ></app-cover-image-selector>
 
       </div>
 
