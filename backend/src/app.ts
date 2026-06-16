@@ -3,8 +3,10 @@ import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import routes from "./routes";
+import pool from "./config/db";
 import { xssSanitize } from "./middlewares/sanitize";
 import { errorHandler } from "./middlewares/errorHandler";
+
 
 const app = express();
 
@@ -40,6 +42,18 @@ const apiLimiter = rateLimit({
   message: { error: "Too many requests, please try again later." },
 });
 app.use("/api", apiLimiter);
+
+// Health check endpoint for load balancers and uptime monitoring
+app.get("/health", (_req, res) => res.status(200).json({ ok: true }));
+
+app.get("/ready", async (_req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.status(200).json({ ready: true });
+  } catch {
+    res.status(503).json({ ready: false });
+  }
+});
 
 // Mount all versioned API routes
 app.use("/api", routes);
