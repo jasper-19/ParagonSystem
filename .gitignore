@@ -46,4 +46,6 @@ node_modules/
 
 # Angular build
 dist/
-.angular/
+.angular/backend/src/config/seed.sql
+.env
+backend/uploads/
