@@ -50,8 +50,13 @@ app.get("/ready", async (_req, res) => {
   try {
     await pool.query("SELECT 1");
     res.status(200).json({ ready: true });
-  } catch {
-    res.status(503).json({ ready: false });
+  } catch (error: any) {
+    console.error("Database readiness check failed:", error.message);
+
+    res.status(503).json({
+      ready: false,
+      error: error.message,
+    });
   }
 });
 
