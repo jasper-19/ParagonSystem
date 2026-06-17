@@ -10,7 +10,8 @@
     "target": "ES2020",
     "lib": ["ES2020"],
     "types": ["node"],
-    "typeRoots": ["src/types", "node_modules/@types"],
+    "ignoreDeprecations": "6.0",
+    "typeRoots": ["./src/types", "./node_modules/@types"],
 
     /* Module Resolution */
     "moduleResolution": "node",
