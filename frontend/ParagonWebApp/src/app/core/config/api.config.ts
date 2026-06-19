@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
   editorialBoard: `${environment.apiUrl}/editorial-board`,
   media: `${environment.apiUrl}/media`,
   notifications: `${environment.apiUrl}/notifications`,
-  specialIssues: `${environment.apiUrl}/issues`,
+  specialIssues: `${environment.apiUrl}/special-issues`,
   staff: `${environment.apiUrl}/staff`,
   colleges: `${environment.apiUrl}/colleges`,
   users: `${environment.apiUrl}/users`,
