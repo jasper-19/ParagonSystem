@@ -12,6 +12,9 @@ import { catchError, map } from 'rxjs/operators';
 import { Article, ArticleCategory, CreateArticleDto } from '../../models/article.model';
 import { GetArticlesParams } from '../../models/article-query.model';
 
+// API endpoints are defined in a central config for maintainability and environment-based switching
+import { API_ENDPOINTS } from '../config/api.config';
+
 // API representation where date fields may be strings (or Date objects)
 type ApiArticle = Omit<Article, 'createdAt' | 'publishedAt'> & {
   createdAt?: string | Date;
@@ -20,7 +23,7 @@ type ApiArticle = Omit<Article, 'createdAt' | 'publishedAt'> & {
 
 @Injectable({ providedIn: 'root' })
 export class ArticleService {
-  private api = '/api/articles';
+  private api = API_ENDPOINTS.articles;
 
   constructor(private http: HttpClient) {}
 
