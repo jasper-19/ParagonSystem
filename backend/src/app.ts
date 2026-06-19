@@ -14,9 +14,19 @@ const app = express();
 app.use(helmet());
 
 // Restrict CORS to the Angular frontend origin only
+const allowedOrigins: string[] = [
+  "http://localhost:4200",
+  "http://localhost:3000",
+  "https://paragon-system-gvlg.vercel.app",
+];
+
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:4200",
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
