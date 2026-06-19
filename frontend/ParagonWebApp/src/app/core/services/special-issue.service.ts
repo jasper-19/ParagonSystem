@@ -5,6 +5,8 @@ import { catchError, map, tap } from 'rxjs/operators';
 
 import { SpecialIssue, SpecialIssueType } from '../../models/special-issue.model';
 
+import { API_ENDPOINTS } from '../config/api.config';
+
 // API payload type: matches server shape but keeps flexibility for date fields
 type ApiSpecialIssue = Omit<SpecialIssue, 'publishedAt'> & {
   publishedAt?: string | Date | null;
@@ -33,7 +35,7 @@ type UpsertIssueDto = {
 // =====================================================
 @Injectable({ providedIn: 'root' })
 export class SpecialIssueService {
-  private readonly api = '/api/issues';
+  private readonly api = API_ENDPOINTS.specialIssues;
 
   // ----- In-memory subject + public observable -----
   private readonly issuesSubject = new BehaviorSubject<SpecialIssue[]>([]);
