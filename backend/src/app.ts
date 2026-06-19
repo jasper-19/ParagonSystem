@@ -27,11 +27,13 @@ if (process.env.FRONTEND_URL) {
 app.use(
   cors({
     origin: allowedOrigins,
-    methods: ["GET", "POST", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
+
+app.options("*", cors()); // Enable pre-flight requests for all routes
 
 // Increase JSON body size to allow image/PDF uploads as base64 (short-term fix).
 // Consider switching to multipart uploads for files + smaller JSON payloads.
