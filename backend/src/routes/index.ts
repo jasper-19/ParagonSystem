@@ -17,7 +17,7 @@ router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/applications", applicationRoutes);
 router.use("/staff", staffRoutes);
-router.use("/editorial-boards", editorialBoardRoutes);
+router.use("/editorial-board", editorialBoardRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/articles", articlesRoutes);
 router.use("/special-issues", specialIssueRoutes);
