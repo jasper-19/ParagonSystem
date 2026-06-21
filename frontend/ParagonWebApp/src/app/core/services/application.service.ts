@@ -11,13 +11,14 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { JoinApplication } from '../../features/join/models/join-application.model';
 import { Application } from '../../models/application.model';
 
+import { API_ENDPOINTS } from '../config/api.config';
 @Injectable({
   providedIn: 'root'
 })
 export class ApplicationService {
 
   // Base API endpoint for application-related calls
-  private readonly apiUrl = '/api/applications';
+  private readonly apiUrl = API_ENDPOINTS.applications;
 
   // Internal subject holding the current list of applications
   private applicationsSubject = new BehaviorSubject<Application[]>([]);
