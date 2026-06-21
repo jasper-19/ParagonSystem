@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -15,12 +15,16 @@ import { JoinPosition } from '../../../join/models/join-position.model';
   imports: [CommonModule, ApplicationReviewModal, ConfirmationModal],
   templateUrl: './applications.html',
 })
-export class ApplicationsComponent {
+export class ApplicationsComponent implements OnInit {
 
   private applicationService = inject(ApplicationService);
   private joinService = inject(JoinService);
 
   applications$ = this.applicationService.applications$;
+
+  ngOnInit(): void {
+    this.applicationService.refresh();
+  }
 
   readonly positions = toSignal(this.joinService.getOpenPositions(), {
     initialValue: [] as JoinPosition[],
