@@ -33,8 +33,6 @@ app.use(
   })
 );
 
-app.options("*", cors()); // Enable pre-flight requests for all routes
-
 // Increase JSON body size to allow image/PDF uploads as base64 (short-term fix).
 // Consider switching to multipart uploads for files + smaller JSON payloads.
 // NOTE: base64 increases payload size by ~33% over the original file size.
