@@ -5,6 +5,8 @@ import { filter, map } from 'rxjs/operators';
 
 import { Media, MediaQuery, PaginatedMediaResponse } from '../../models/media.model';
 
+import { API_ENDPOINTS } from '../config/api.config';
+
 type ApiMedia = Omit<Media, 'createdAt' | 'updatedAt'> & {
   createdAt?: string;
   updatedAt?: string;
@@ -16,7 +18,7 @@ type UploadProgressOrMedia = number | Media;
   providedIn: 'root'
 })
 export class MediaService {
-  private readonly api = '/api/media';
+  private readonly api = API_ENDPOINTS.media
 
   constructor(private http: HttpClient) {}
 
