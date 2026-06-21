@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { StaffMember } from '../../models/staff-member.model';
 
+import { API_ENDPOINTS } from '../config/api.config';
+
 // =====================================================
 // StaffService
 // - Loads and caches staff members
@@ -14,7 +16,7 @@ import { StaffMember } from '../../models/staff-member.model';
 })
 export class StaffService {
 
-  private readonly apiUrl = '/api/staff';
+  private readonly apiUrl = API_ENDPOINTS.staff;
   private http = inject(HttpClient);
 
   // ----- All staff members observable/cache -----
