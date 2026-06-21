@@ -20,7 +20,7 @@ router.use("/staff", staffRoutes);
 router.use("/editorial-boards", editorialBoardRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/articles", articlesRoutes);
-router.use("/issues", specialIssueRoutes);
+router.use("/special-issues", specialIssueRoutes);
 router.use("/colleges", collegeRoutes);
 router.use("/activity-logs", activityLogRoutes);
 router.use("/media", mediaRoutes);
