@@ -4,12 +4,14 @@ import { Observable, shareReplay } from 'rxjs';
 
 import { College } from '../models/college.model';
 
+import { API_ENDPOINTS } from '../../../core/config/api.config';
+
 @Injectable({
   providedIn: 'root'
 })
 export class CollegeService {
 
-  private readonly apiUrl = '/api/colleges';
+  private readonly apiUrl = API_ENDPOINTS.colleges;
   private http = inject(HttpClient);
   private colleges$?: Observable<College[]>;
 

@@ -12,6 +12,7 @@ import { JoinApplication } from '../../features/join/models/join-application.mod
 import { Application } from '../../models/application.model';
 
 import { API_ENDPOINTS } from '../config/api.config';
+
 @Injectable({
   providedIn: 'root'
 })
