@@ -24,8 +24,13 @@ import {
   ApiBoard,
 } from '../../models/editorial-board.model';
 
+import { API_ENDPOINTS } from '../config/api.config';
+
 @Injectable({ providedIn: 'root' })
 export class EditorialBoardService {
+
+// API endpoint constants for editorial board operations
+private readonly apiUrl = API_ENDPOINTS.editorialBoard;
 
   // Use constructor-less injection for compact service instantiation
   private http = inject(HttpClient);
@@ -244,7 +249,7 @@ export class EditorialBoardService {
    * the in-memory BehaviorSubject. Falls back silently on 404 (no board yet).
    */
   loadActiveBoard(): Observable<void> {
-    return this.http.get<ApiActiveBoard>('/api/editorial-boards/active').pipe(
+    return this.http.get<ApiActiveBoard>(`${this.apiUrl}/active`).pipe(
       map((apiBoard) => {
         this._activeBoardId.next(apiBoard.id);
         this._boardLoaded.next(true);
@@ -311,7 +316,7 @@ export class EditorialBoardService {
 
   /** Fetches all boards (for the board-selector dropdown). */
   getAllBoards(): Observable<ApiBoard[]> {
-    return this.http.get<ApiBoard[]>('/api/editorial-boards');
+    return this.http.get<ApiBoard[]>(this.apiUrl);
   }
 
   /**
@@ -319,7 +324,7 @@ export class EditorialBoardService {
    * then reloads it as the current active board.
    */
   activateBoard(boardId: string): Observable<void> {
-    return this.http.put<ApiActiveBoard>(`/api/editorial-boards/${boardId}/activate`, {}).pipe(
+    return this.http.put<ApiActiveBoard>(`${this.apiUrl}/${boardId}/activate`, {}).pipe(
       map((board) => {
         this._activeBoardId.next(board.id);
         this._boardLoaded.next(true);
@@ -336,7 +341,7 @@ export class EditorialBoardService {
    * without an extra round-trip.
    */
   createBoard(academicYear: string, adviserName: string): Observable<ApiBoard> {
-    return this.http.post<ApiActiveBoard>('/api/editorial-boards', { academicYear, adviserName }).pipe(
+    return this.http.post<ApiActiveBoard>(this.apiUrl, { academicYear, adviserName }).pipe(
       map((board) => ({
         id: board.id,
         academicYear: board.academicYear,
@@ -349,7 +354,7 @@ export class EditorialBoardService {
   }
 
   deleteBoard(boardId: string): Observable<void> {
-    return this.http.delete<void>(`/api/editorial-boards/${boardId}`);
+    return this.http.delete<void>(`${this.apiUrl}/${boardId}`);
   }
 
   /**
@@ -360,7 +365,7 @@ export class EditorialBoardService {
   satisfyBoard(satisfied: boolean): Observable<void> {
     const boardId = this._activeBoardId.value;
     if (!boardId) return EMPTY;
-    return this.http.put<ApiBoard>(`/api/editorial-boards/${boardId}/satisfy`, { satisfied }).pipe(
+    return this.http.put<ApiBoard>(`${this.apiUrl}/${boardId}/satisfy`, { satisfied }).pipe(
       map((board) => {
         this._boardSatisfied.next(board.isSatisfied ?? satisfied);
       })
@@ -374,25 +379,25 @@ export class EditorialBoardService {
   addMemberToBoard(staffId: string, section: string, role: string): Observable<ApiBoardMember> {
     if (!this._activeBoardId.value) return EMPTY as Observable<ApiBoardMember>;
     return this.http.post<ApiBoardMember>(
-      `/api/editorial-boards/${this._activeBoardId.value}/members`,
+      `${this.apiUrl}/${this._activeBoardId.value}/members`,
       { staffId, section, role }
     );
   }
 
   updateMemberOnBoard(boardId: string, memberId: string, section: string, role: string): Observable<ApiBoardMember> {
     return this.http.patch<ApiBoardMember>(
-      `/api/editorial-boards/${boardId}/members/${memberId}`,
+      `/${this.apiUrl}/${boardId}/members/${memberId}`,
       { section, role }
     );
   }
 
   revokeMember(boardId: string, boardMemberId: string): Observable<void> {
-    return this.http.post<void>(`/api/editorial-boards/${boardId}/members/${boardMemberId}/revoke`, {});
+    return this.http.post<void>(`${this.apiUrl}/${boardId}/members/${boardMemberId}/revoke`, {});
   }
 
   /** Removes a member from the board only — does NOT delete the staff_member record. */
   removeMemberFromBoard(boardId: string, memberId: string): Observable<void> {
-    return this.http.delete<void>(`/api/editorial-boards/${boardId}/members/${memberId}`);
+    return this.http.delete<void>(`${this.apiUrl}/${boardId}/members/${memberId}`);
   }
 
   /** Sets boardMemberId (and optionally staffId) on an already-added in-memory member. */
