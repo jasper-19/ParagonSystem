@@ -25,10 +25,7 @@ export class ApplicationService {
   private applicationsSubject = new BehaviorSubject<Application[]>([]);
   readonly applications$ = this.applicationsSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    // Load initial data when service is instantiated
-    this.loadApplications();
-  }
+  constructor(private http: HttpClient) {}
 
   // Convert plain objects from the API into Application instances with Date fields
   private parseDates(app: any): Application {
