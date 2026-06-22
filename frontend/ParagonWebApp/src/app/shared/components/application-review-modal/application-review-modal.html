@@ -137,12 +137,15 @@
       <input
         type="datetime-local"
         name="interviewDate"
-        [value]="interviewDate"
-        (input)="onInterviewDateInput($event)"
+        [(ngModel)]="interviewDate"
+        step="60"
+        required
         class="border-2 border-slate-200 rounded-xl p-3 w-full focus:outline-none focus:border-[#F4B400]/40"
       />
 
       <button
+        type="button"
+        [disabled]="!interviewDate"
         class="px-6 py-3 rounded-xl bg-[#000035] text-white font-bold
                shadow-lg shadow-[#000035]/20
                hover:shadow-xl hover:shadow-[#000035]/30
