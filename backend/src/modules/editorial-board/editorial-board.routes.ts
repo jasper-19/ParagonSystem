@@ -5,7 +5,7 @@ import { authenticate } from "../../middlewares/authenticate";
 const router = Router();
 
 // Board routes
-router.get("/active", authenticate, controller.getActiveBoard);
+router.get("/active", controller.getActiveBoard);
 router.get("/", authenticate, controller.getBoards);
 router.get("/:boardId", authenticate, controller.getBoardById);
 router.post("/", authenticate, controller.createBoard);
