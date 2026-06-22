@@ -183,7 +183,7 @@
                hover:shadow-xl hover:shadow-[#000035]/30
                hover:-translate-y-0.5
                transition-all duration-300"
-        (click)="interviewed.emit(app)"
+        (click)="interviewed.emit(app); close.emit()"
       >
         Mark Interviewed
       </button>

@@ -153,4 +153,8 @@ export class ApplicationReviewModal implements OnChanges, OnDestroy {
     console.log('Interview date input changed:', this.interviewDate);
   }
 
+  markInterviewedAndClose(app: Application) {
+    this.interviewed.emit(app);
+    this.close.emit();
+  }
 }
