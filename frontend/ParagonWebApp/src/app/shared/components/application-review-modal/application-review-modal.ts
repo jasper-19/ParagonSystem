@@ -119,8 +119,15 @@ export class ApplicationReviewModal implements OnChanges, OnDestroy {
   }
 
   scheduleInterview(app: Application) {
+    console.log('Modal schedule clicked', {
+      app,
+      interviewDate: this.interviewDate,
+    });
 
-    if (!this.interviewDate) return;
+    if (!this.interviewDate) {
+      console.error('No interview date selected');
+      return;
+    }
 
     this.schedule.emit({
       app,

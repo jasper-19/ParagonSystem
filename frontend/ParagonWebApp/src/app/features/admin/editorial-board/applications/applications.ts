@@ -78,8 +78,12 @@ export class ApplicationsComponent implements OnInit {
   // ========================
 
   scheduleInterview(app: Application, date: string) {
+    console.log('Parent received schedule event', { app, date });
 
-    if (!app.id) return;
+    if (!app.id){
+      console.log('No application ID found for scheduling interview');
+      return;
+       }
 
     this.applicationService.scheduleInterview(app.id, date);
 
