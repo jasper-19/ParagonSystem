@@ -2,6 +2,8 @@ import { Injectable, inject, signal, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AdminAuthService } from './admin-auth.service';
 
+import { API_ENDPOINTS } from '../config/api.config';
+
 // =====================================================
 // Notification service
 // - Loads existing notifications from the API
@@ -24,6 +26,9 @@ export class NotificationService implements OnDestroy {
   private http = inject(HttpClient);
   private auth = inject(AdminAuthService);
 
+  // ----- API endpoints -----
+  private readonly apiUrl = API_ENDPOINTS.notifications;
+
   // ----- Public state (signal) exposed to consumers -----
   readonly notifications = signal<NotificationItem[]>([]);
 
@@ -41,7 +46,7 @@ export class NotificationService implements OnDestroy {
   // - Fetch current notifications from backend API
   // =====================================================
   private load(): void {
-    this.http.get<NotificationItem[]>('/api/notifications').subscribe({
+    this.http.get<NotificationItem[]>(this.apiUrl).subscribe({
       next: items => this.notifications.set(items),
       error: () => {},
     });
@@ -57,7 +62,7 @@ export class NotificationService implements OnDestroy {
     const token = this.auth.getToken();
     if (!token) return;
 
-    this.eventSource = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`);
+    this.eventSource = new EventSource(`${this.apiUrl}/stream?token=${encodeURIComponent(token)}`);
 
     // Handle incoming message frames
     this.eventSource.onmessage = (event: MessageEvent) => {
@@ -88,7 +93,7 @@ export class NotificationService implements OnDestroy {
   // - markAllRead: mark notifications read server-side and clear local list
   // =====================================================
   markAllRead(): void {
-    this.http.patch('/api/notifications/read-all', {}).subscribe({
+    this.http.patch(`${this.apiUrl}/read-all`, {}).subscribe({
       next: () => this.notifications.set([]),
       error: () => {},
     });
