@@ -135,4 +135,9 @@ export class ApplicationReviewModal implements OnChanges, OnDestroy {
     });
   }
 
+  onInterviewDateChange(value: string): void {
+    console.log('ngModel changed:', value);
+    this.interviewDate = value;
+  }
+
 }

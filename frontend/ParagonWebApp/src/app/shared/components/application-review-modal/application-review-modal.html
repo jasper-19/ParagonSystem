@@ -136,7 +136,9 @@
 
       <input
         type="datetime-local"
-        [(ngModel)]="interviewDate"
+        name="interviewDate"
+        [ngModel]="interviewDate"
+        (ngModelChange)="onInterviewDateChange($event)"
         class="border-2 border-slate-200 rounded-xl p-3 w-full focus:outline-none focus:border-[#F4B400]/40"
       />
 
