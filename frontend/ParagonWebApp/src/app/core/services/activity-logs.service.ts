@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from "@angular/common/http";
 import { map, Observable } from "rxjs";
 import { ActivityLog, ActivityLogFilters } from "../../models/activity-log.model";
 
+import { API_ENDPOINTS } from "../config/api.config";
+
 type ApiActivityLog = {
   id?: string;
   userId?: string;
@@ -35,7 +37,7 @@ type ApiActivityLog = {
   providedIn: 'root'
 })
 export class ActivityLogsService {
-  private readonly apiUrl = '/api/activity-logs';
+  private readonly apiUrl = API_ENDPOINTS.activityLogs;
 
   constructor(private http: HttpClient) { }
 
