@@ -38,6 +38,11 @@ export class DashboardFacade {
   private articleService = inject(ArticleService);
   private applicationService = inject(ApplicationService);
   private specialIssueService = inject(SpecialIssueService);
+
+  constructor() {
+    this.applicationService.refresh();
+  }
+
   private applications = toSignal(
     this.applicationService.applications$,
     { initialValue: [] }
