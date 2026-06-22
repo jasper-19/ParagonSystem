@@ -144,11 +144,14 @@
       <button
         type="button"
         [disabled]="!interviewDate"
+        [class.opacity-50]="!interviewDate"
+        [class.cursor-not-allowed]="!interviewDate"
         class="px-6 py-3 rounded-xl bg-[#000035] text-white font-bold
                shadow-lg shadow-[#000035]/20
                hover:shadow-xl hover:shadow-[#000035]/30
                hover:-translate-y-0.5
-               transition-all duration-300"
+               transition-all duration-300
+               disabled:hover:shadow-lg disabled:hover:-translate-y-0"
         (click)="scheduleInterview(app)"
       >
         Schedule Interview

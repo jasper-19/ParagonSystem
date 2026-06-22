@@ -74,9 +74,14 @@ export class ApplicationReviewModal implements OnChanges, OnDestroy {
 
     const isOpen = !!this.application;
     if (isOpen) {
+      // Reset local state when opening modal
+      this.interviewDate = '';
+      this.notesText = '';
       this.lockBodyScroll();
+      console.log('Modal opened for application:', this.application?.id);
     } else {
       this.unlockBodyScroll();
+      console.log('Modal closed');
     }
   }
 
@@ -119,16 +124,23 @@ export class ApplicationReviewModal implements OnChanges, OnDestroy {
   }
 
   scheduleInterview(app: Application) {
-    console.log('Modal schedule clicked', {
-      app,
+    console.log('Modal scheduleInterview method called', {
+      appId: app?.id,
       interviewDate: this.interviewDate,
+      interviewDateLength: this.interviewDate?.length,
     });
 
-    if (!this.interviewDate) {
-      console.error('No interview date selected');
+    if (!app?.id) {
+      console.error('Application ID missing');
       return;
     }
 
+    if (!this.interviewDate || this.interviewDate.trim() === '') {
+      console.error('No interview date selected', { interviewDate: this.interviewDate });
+      return;
+    }
+
+    console.log('Emitting schedule event with:', { appId: app.id, date: this.interviewDate });
     this.schedule.emit({
       app,
       date: this.interviewDate
