@@ -8,69 +8,76 @@
       class="group bg-white rounded-2xl border-2 border-slate-200 hover:border-[#F4B400]
              hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
     >
+      <a
+        href="/article/{{article.slug}}"
+        class="block h-full flex flex-col"
+        aria-label="{{ article.title }}"
+      >
 
-      <!-- Image -->
-      <div class="relative overflow-hidden bg-slate-100">
-        <img
-          [src]="article.image"
-          [alt]="article.title"
-          class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        <!-- Category Badge on Image -->
-        <div class="absolute top-4 left-4">
-          <span class="px-3 py-1.5 bg-[#000035] text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg">
-            {{ article.category }}
-          </span>
+        <!-- Image -->
+        <div class="relative overflow-hidden bg-slate-100">
+          <img
+            [src]="article.image"
+            [alt]="article.title"
+            class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <!-- Category Badge on Image -->
+          <div class="absolute top-4 left-4">
+            <span class="px-3 py-1.5 bg-[#000035] text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg">
+              {{ article.category }}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <!-- Content -->
-      <div class="p-6 flex flex-col flex-1">
+        <!-- Content -->
+        <div class="p-6 flex flex-col flex-1">
 
-        <!-- Title -->
-        <h3 class="text-xl font-bold mb-3 text-[#000035] line-clamp-2 group-hover:text-[#F4B400] transition-colors">
-          {{ article.title }}
-        </h3>
+          <!-- Title -->
+          <h3 class="text-xl font-bold mb-3 text-[#000035] line-clamp-2 group-hover:text-[#F4B400] transition-colors">
+            {{ article.title }}
+          </h3>
 
-        <!-- Excerpt -->
-        <p class="text-slate-600 leading-relaxed line-clamp-3 mb-6">
-          {{ article.excerpt }}
-        </p>
+          <!-- Excerpt -->
+          <p class="text-slate-600 leading-relaxed line-clamp-3 mb-6">
+            {{ article.excerpt }}
+          </p>
 
-        <!-- Spacer pushes meta to bottom -->
-        <div class="mt-auto pt-4 border-t-2 border-slate-100">
+          <!-- Spacer pushes meta to bottom -->
+          <div class="mt-auto pt-4 border-t-2 border-slate-100">
 
-          <!-- Author + Date + Views -->
-          <div class="flex items-center justify-between gap-4">
+            <!-- Author + Date + Views -->
+            <div class="flex items-center justify-between gap-4">
 
-            <div class="flex items-center gap-2 min-w-0">
-              <div class="w-8 h-8 bg-[#F4B400] rounded-full flex items-center justify-center shrink-0">
-                <svg class="w-4 h-4 text-[#000035]" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                </svg>
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-8 h-8 bg-[#F4B400] rounded-full flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4 text-[#000035]" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <span class="font-semibold text-sm text-[#000035] truncate">
+                  {{ article.author || 'Staff Writer' }}
+                </span>
               </div>
-              <span class="font-semibold text-sm text-[#000035] truncate">
-                {{ article.author || 'Staff Writer' }}
-              </span>
-            </div>
 
-            <div class="flex items-center gap-3 text-xs text-slate-500 shrink-0">
-              <div class="flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-                <span class="font-medium">{{ article.views }}</span>
+              <div class="flex items-center gap-3 text-xs text-slate-500 shrink-0">
+                <div class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  <span class="font-medium">{{ article.views }}</span>
+                </div>
+                <span>•</span>
+                <span class="font-medium">{{ article.publishedAt | date:'MMM d' }}</span>
               </div>
-              <span>•</span>
-              <span class="font-medium">{{ article.publishedAt | date:'MMM d' }}</span>
+
             </div>
 
           </div>
 
         </div>
 
-      </div>
+      </a>
 
     </article>
 
