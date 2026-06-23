@@ -11,7 +11,13 @@ import { errorHandler } from "./middlewares/errorHandler";
 const app = express();
 
 // Secure HTTP response headers (XSS protection, clickjacking, etc.)
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+  })
+);
 
 // Restrict CORS to the Angular frontend origin only
 const allowedOrigins: string[] = [
