@@ -61,8 +61,6 @@ export class CoverImagSelectorComponent {
       next: (result) => {
         if (typeof result !== 'number') {
 
-          console.log('Selected media:', result);
-
           this.selectedMedia = result;
           this.mediaChange.emit(result);
           this.isUploading = false;

@@ -23,8 +23,14 @@ export class MediaService {
   constructor(private http: HttpClient) {}
 
   private normalizeMedia(media: ApiMedia): Media {
+    const fileUrl = media.fileUrl?.startsWith('http')
+    ? media.fileUrl
+    : `${API_ENDPOINTS.base}${media.fileUrl?.replace('/api','')}`;
+
     return {
       ...media,
+      fileUrl,
+      filePath: fileUrl,
       createdAt: media.createdAt || new Date().toISOString(),
       updatedAt: media.updatedAt || undefined,
     };
@@ -62,7 +68,6 @@ export class MediaService {
         }
 
         if (event.type === HttpEventType.Response && event.body) {
-          console.log('Upload response:', event.body);
           return this.normalizeMedia(event.body);
         }
 
