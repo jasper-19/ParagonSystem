@@ -48,6 +48,7 @@ export class MediaLibraryComponent implements OnInit {
       limit: 100
     }).subscribe({
       next: (response: PaginatedMediaResponse) => {
+        console.log("Media response:", response.data);
         this.mediaList = response.data;
         this.filteredMedia = response.data;
         this.reconcileSelectionAfterReload();
