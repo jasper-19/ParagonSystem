@@ -13,9 +13,9 @@
       onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
       onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';">
       <option value="">All modules</option>
-      <option value="ARTICLES">Articles</option>
-      <option value="USERS">Users</option>
-      <option value="SETTINGS">Settings</option>
+      <option *ngFor="let module of modules" [value]="module">
+        {{ module }}
+      </option>
     </select>
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
       style="position: absolute; right: 10px; pointer-events: none; opacity: 0.4;">
@@ -36,9 +36,9 @@
       onfocus="this.style.borderColor='#f4b400'; this.style.boxShadow='0 0 0 3px rgba(244,180,0,0.15)';"
       onblur="this.style.borderColor='rgba(0,0,53,0.25)'; this.style.boxShadow='none';">
       <option value="">All actions</option>
-      <option value="CREATE">Create</option>
-      <option value="UPDATE">Update</option>
-      <option value="DELETE">Delete</option>
+      <option *ngFor="let action of actions" [value]="action">
+        {{ action }}
+      </option>
     </select>
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
       style="position: absolute; right: 10px; pointer-events: none; opacity: 0.4;">

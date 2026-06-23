@@ -26,6 +26,38 @@ export class ActivityLogFiltersComponent {
     search: ''
   };
 
+  modules = [
+    'ARTICLES',
+    'MEDIA',
+    'APPLICATIONS',
+    'SPECIAL_ISSUES',
+    'EDITORIAL_BOARD',
+    'STAFF',
+    'AUTH',
+    'SETTINGS',
+    'USERS',
+    'NOTIFICATIONS',
+    'SYSTEM',
+  ];
+
+  actions = [
+    'CREATE',
+    'UPDATE',
+    'UPDATE_STATUS',
+    'DELETE',
+    'LOGIN',
+    'LOGOUT',
+    'PUBLISH',
+    'ARCHIVE',
+    'UPLOAD',
+    'ACCEPT',
+    'REJECT',
+    'ASSIGN',
+    'SCHEDULE_INTERVIEW',
+    'MARK_INTERVIEWED',
+    'ADD_NOTES'
+  ];
+
   constructor() {}
 
   onFilterChange() {
