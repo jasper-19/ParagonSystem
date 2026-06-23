@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
 import { Media, PaginatedMediaResponse } from "../../../models/media.model";
 import { MediaService } from "../../../core/services/media.service";
 import { CommonModule } from "@angular/common";
@@ -29,7 +29,10 @@ export class MediaLibraryComponent implements OnInit {
   isLoading = false
   isSavingMetadata = false
 
-  constructor(private mediaService: MediaService) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private mediaService: MediaService
+  ) {}
 
   ngOnInit(): void {
     this.loadMedia();
@@ -49,10 +52,12 @@ export class MediaLibraryComponent implements OnInit {
         this.filteredMedia = response.data;
         this.reconcileSelectionAfterReload();
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err: unknown) => {
         console.error('Error loading media:', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
