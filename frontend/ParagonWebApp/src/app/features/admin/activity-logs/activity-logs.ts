@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
 import { ActivityLogsService } from "../../../core/services/activity-logs.service";
 import { ActivityLog, ActivityLogFilters } from "../../../models/activity-log.model";
 import { RouterModule } from "@angular/router";
@@ -29,7 +29,10 @@ export class ActivityLogsComponent implements OnInit {
   pageSize = 10;
   currentPage = 1;
 
-  constructor(private activityLogsService: ActivityLogsService) { }
+  constructor(
+    private activityLogsService: ActivityLogsService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
     this.loadLogs();
@@ -44,11 +47,13 @@ export class ActivityLogsComponent implements OnInit {
         this.logs = data;
         this.currentPage = 1;
         this.isLoading = false;
+        this.cdr.detectChanges(); // Ensure the view updates after data load
       },
       error: () => {
         this.logs = [];
         this.errorMessage = 'Unable to load activity logs.';
         this.isLoading = false;
+        this.cdr.detectChanges(); // Ensure the view updates after error
       }
     });
   }
