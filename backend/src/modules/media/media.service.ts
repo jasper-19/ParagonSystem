@@ -1,7 +1,7 @@
-import fs from "fs/promises";
-import path from "path";
+import { randomUUID } from "crypto";
 import * as repository from "./media.repository";
 import { MEDIA_TYPE_VALUES, MediaType } from "./media.schema";
+import { supabase, storageBucket } from "../../config/storage";
 
 export type GetMediaFilters = {
   search?: string;
@@ -18,32 +18,23 @@ function detectMediaType(mimeType: string): MediaType {
   return "document";
 }
 
-function toSafeAbsolutePath(rawPath: string): string {
-  const absolute = path.resolve(rawPath);
-  const uploadsRoot = path.resolve(process.cwd(), "uploads");
-
-  if (!absolute.startsWith(uploadsRoot)) {
-    const err = Object.assign(new Error("Invalid media storage path"), { statusCode: 500 });
-    throw err;
+  function safeFilename(name: string) {
+    return name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9.-]/g, "");
   }
 
-  return absolute;
-}
-
 export async function getMedia(filters: GetMediaFilters = {}) {
-  const parsedType = filters.type && (MEDIA_TYPE_VALUES as readonly string[]).includes(filters.type)
+  const parsedType = 
+  filters.type && (MEDIA_TYPE_VALUES as readonly string[]).includes(filters.type)
     ? (filters.type as MediaType)
     : undefined;
 
-  const parsedPage = Number.isFinite(filters.page) ? Number(filters.page) : undefined;
-  const parsedLimit = Number.isFinite(filters.limit) ? Number(filters.limit) : undefined;
-
   const repositoryFilters: repository.FindAllFilters = {};
   const search = filters.search?.trim();
+
   if (search) repositoryFilters.search = search;
   if (parsedType) repositoryFilters.type = parsedType;
-  if (parsedPage !== undefined) repositoryFilters.page = parsedPage;
-  if (parsedLimit !== undefined) repositoryFilters.limit = parsedLimit;
+  if (filters.page !== undefined) repositoryFilters.page = filters.page;
+  if (filters.limit !== undefined) repositoryFilters.limit = filters.limit;
 
   return repository.findAll(repositoryFilters);
 }
@@ -62,22 +53,29 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
     throw err;
   }
 
-  const storagePath = toSafeAbsolutePath(file.path);
   const fileType = detectMediaType(file.mimetype);
+  const objectKey = `media/${Date.now()}-${randomUUID()}-${safeFilename(file.originalname)}`; 
 
-  try {
-    return repository.create({
-      fileName: file.originalname,
-      diskName: file.filename,
-      storagePath,
-      fileType,
-      mimeType: file.mimetype || "application/octet-stream",
-      size: file.size || 0,
+  const { error } = await supabase.storage
+    .from(storageBucket)
+    .upload(objectKey, file.path, {
+      contentType: file.mimetype || "application/octet-stream",
+      upsert: false,
     });
-  } catch (error) {
-    await fs.unlink(storagePath).catch(() => undefined);
-    throw error;
+
+  if (error) {
+    const err = Object.assign(new Error("Failed to upload file"), { statusCode: 500 });
+    throw err;
   }
+
+  return repository.create({
+    fileName: file.originalname,
+    diskName: file.filename,
+    storagePath: objectKey,
+    fileType,
+    mimeType: file.mimetype || "application/octet-stream",
+    size: file.size || 0,
+  });
 }
 
 export async function updateMedia(id: string, data: unknown) {
@@ -104,14 +102,17 @@ export async function updateMedia(id: string, data: unknown) {
 
 export async function deleteMedia(id: string) {
   const deleted = await repository.remove(id);
+
   if (!deleted) {
     const err = Object.assign(new Error("Media not found"), { statusCode: 404 });
     throw err;
   }
 
-  const absolutePath = toSafeAbsolutePath(deleted.storagePath);
-  await fs.unlink(absolutePath).catch((error: NodeJS.ErrnoException) => {
-    if (error.code !== "ENOENT") throw error;
+  await supabase.storage
+  .from(storageBucket)
+  .remove([deleted.storagePath])
+  .catch((error) => {
+    console.error("Failed to delete file from storage:", error);
   });
 }
 
@@ -122,9 +123,12 @@ export async function getMediaFile(id: string) {
     throw err;
   }
 
-  const absolutePath = toSafeAbsolutePath(media.storagePath);
+ const { data }= supabase.storage
+  .from(storageBucket)
+  .getPublicUrl(media.storagePath);
+
   return {
-    path: absolutePath,
+    url: data.publicUrl,
     mimeType: media.mimeType,
   };
 }

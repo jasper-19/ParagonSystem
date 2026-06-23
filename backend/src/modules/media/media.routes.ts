@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { Router } from "express";
 import multer from "multer";
 import { authenticate } from "../../middlewares/authenticate";
@@ -10,17 +8,7 @@ import * as controller from "./media.controller";
 
 const router = Router();
 
-const mediaUploadDir = path.resolve(process.cwd(), "uploads", "media");
-fs.mkdirSync(mediaUploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_req: any, _file: any, cb: any) => cb(null, mediaUploadDir),
-  filename: (_req: any, file: any, cb: any) => {
-    const safeOriginal = path.basename(file.originalname).replace(/\s+/g, "-");
-    const uniquePrefix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${uniquePrefix}-${safeOriginal}`);
-  },
-});
+const storage = multer.memoryStorage()
 
 const maxSizeMb = Number(process.env.MEDIA_MAX_FILE_SIZE_MB || "25");
 const upload = multer({

@@ -44,8 +44,6 @@ export const deleteMedia = asyncHandler(async (req: Request, res: Response) => {
 
 export const getMediaFile = asyncHandler(async (req: Request, res: Response) => {
   const id = String(sanitizeValue(req.params["id"]) || "");
-  const media = await service.getMediaFile(id);
-
-  res.setHeader("Content-Type", media.mimeType || "application/octet-stream");
-  res.sendFile(media.path);
+  const mediaFile = await service.getMediaFile(id);
+  res.redirect(mediaFile.url);
 });
