@@ -107,6 +107,11 @@ export class MediaLibraryComponent implements OnInit {
       this.mediaService.uploadMedia(file).subscribe({
         next: (result) => {
           if (typeof result === 'number') return;
+
+          this.mediaList = [result, ...this.mediaList];
+          this.filteredMedia = [result, ...this.filteredMedia];
+
+          this.cdr.detectChanges();
         },
         error: () => {
           completed++;
