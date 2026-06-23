@@ -112,3 +112,25 @@ export async function create(input: CreateActivityLogInput): Promise<ActivityLog
 
   return mapRow(result.rows[0]);
 }
+
+export async function getFilterOptions(): Promise<{
+  modules: string[];
+  actions: string[];
+}> {
+  const modulesResult = await db.query(
+    `SELECT DISTINCT UPPER(COALESCE(resource_type, 'SYSTEM')) AS module
+     FROM activity_logs
+     ORDER BY module ASC`
+  );
+
+  const actionsResult = await db.query(
+    `SELECT DISTINCT UPPER(action) AS action
+     FROM activity_logs
+     ORDER BY action ASC`
+  );
+
+  return {
+    modules: modulesResult.rows.map((row) => String(row.module)),
+    actions: actionsResult.rows.map((row) => String(row.action)),
+  };
+}

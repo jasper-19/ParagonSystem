@@ -55,3 +55,9 @@ export const createActivityLog = asyncHandler(async (req: Request, res: Response
   const created = await service.createActivityLog(input);
   res.status(201).json(created);
 });
+
+/** GET /api/activity-logs/filter-options (admin) */
+export const getActivityLogFilterOptions = asyncHandler(async (_req: Request, res: Response) => {
+  const options = await service.getActivityLogFilterOptions();
+  res.json(options);
+});

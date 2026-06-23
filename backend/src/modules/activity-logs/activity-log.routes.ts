@@ -10,4 +10,7 @@ const router = Router();
 router.get("/", authenticate, requireAdmin, controller.getActivityLogs);
 router.post("/", authenticate, requireAdmin, validate(createActivityLogSchema), controller.createActivityLog);
 
+router.get("/filter-options", authenticate, requireAdmin, controller.getActivityLogFilterOptions);
+router.get("/", authenticate, requireAdmin, controller.getActivityLogs);
+
 export default router;

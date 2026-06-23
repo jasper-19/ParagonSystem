@@ -8,3 +8,10 @@ export async function listActivityLogs(filters: ActivityLogFilters): Promise<Act
 export async function createActivityLog(input: CreateActivityLogInput): Promise<ActivityLog> {
   return repository.create(input);
 }
+
+export async function getActivityLogFilterOptions(): Promise<{
+  modules: string[];
+  actions: string[]; 
+}> {
+  return repository.getFilterOptions();
+}
