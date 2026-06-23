@@ -13,7 +13,11 @@
 
 
       <!-- Filters -->
-      <app-activity-log-filters (filtersChange)="onFiltersChange($event)"></app-activity-log-filters>
+      <app-activity-log-filters 
+      [modules]="modules"
+      [actions]="actions"
+      (filtersChange)="onFiltersChange($event)">
+    </app-activity-log-filters>
 
       <div *ngIf="isLoading" class="text-sm text-gray-500">Loading activity logs...</div>
       <div *ngIf="!isLoading && errorMessage" class="text-sm text-red-600">{{ errorMessage }}</div>

@@ -22,6 +22,8 @@ export class ActivityLogsComponent implements OnInit {
   selectedLog: ActivityLog | null = null;
   isLoading = false;
   errorMessage = '';
+  modules: string[] = [];
+  actions: string[] = [];
   private filters: ActivityLogFilters = {};
 
   // Pagination state
@@ -36,6 +38,19 @@ export class ActivityLogsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadLogs();
+    this.loadFilterOptions();
+  }
+
+  loadFilterOptions(): void {
+    this.activityLogsService.getFilterOptions().subscribe({
+      next: (options) => {
+        this.modules = options.modules;
+        this.actions = options.actions;
+      },
+      error: (err) => {
+        console.error('Unable to load filter options', err);
+      }
+    });
   }
 
   loadLogs(): void {

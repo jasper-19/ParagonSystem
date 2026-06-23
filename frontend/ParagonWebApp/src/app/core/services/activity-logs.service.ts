@@ -33,6 +33,11 @@ type ApiActivityLog = {
   created_at?: string | Date;
 };
 
+export type ActivityLogFilterOptions = {
+  modules: string[];
+  actions: string[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -110,5 +115,9 @@ export class ActivityLogsService {
           return list.map((log) => this.normalizeLog(log));
         })
       );
+  }
+
+  getFilterOptions(): Observable<ActivityLogFilterOptions> {
+    return this.http.get<ActivityLogFilterOptions>(`${this.apiUrl}/filter-options`);
   }
 }

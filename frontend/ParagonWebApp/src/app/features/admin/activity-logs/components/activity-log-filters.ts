@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 export interface ActivityLogFilters {
@@ -17,6 +17,9 @@ export interface ActivityLogFilters {
 })
 export class ActivityLogFiltersComponent {
 
+  @Input() modules: string[] = [];
+  @Input() actions: string[] = [];
+
   @Output() filtersChange = new EventEmitter<ActivityLogFilters>();
 
   filters: ActivityLogFilters = {
@@ -25,38 +28,6 @@ export class ActivityLogFiltersComponent {
     dateFrom: '',
     search: ''
   };
-
-  modules = [
-    'ARTICLES',
-    'MEDIA',
-    'APPLICATIONS',
-    'SPECIAL_ISSUES',
-    'EDITORIAL_BOARD',
-    'STAFF',
-    'AUTH',
-    'SETTINGS',
-    'USERS',
-    'NOTIFICATIONS',
-    'SYSTEM',
-  ];
-
-  actions = [
-    'CREATE',
-    'UPDATE',
-    'UPDATE_STATUS',
-    'DELETE',
-    'LOGIN',
-    'LOGOUT',
-    'PUBLISH',
-    'ARCHIVE',
-    'UPLOAD',
-    'ACCEPT',
-    'REJECT',
-    'ASSIGN',
-    'SCHEDULE_INTERVIEW',
-    'MARK_INTERVIEWED',
-    'ADD_NOTES'
-  ];
 
   constructor() {}
 
