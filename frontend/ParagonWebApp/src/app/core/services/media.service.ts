@@ -62,6 +62,7 @@ export class MediaService {
         }
 
         if (event.type === HttpEventType.Response && event.body) {
+          console.log('Upload response:', event.body);
           return this.normalizeMedia(event.body);
         }
 

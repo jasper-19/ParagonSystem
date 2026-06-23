@@ -60,6 +60,9 @@ export class CoverImagSelectorComponent {
     this.mediaService.uploadMedia(file).subscribe({
       next: (result) => {
         if (typeof result !== 'number') {
+
+          console.log('Selected media:', result);
+
           this.selectedMedia = result;
           this.mediaChange.emit(result);
           this.isUploading = false;
