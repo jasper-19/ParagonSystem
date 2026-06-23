@@ -1,5 +1,5 @@
-<app-loader *ngIf="!isAdminRoute"></app-loader>
+<app-loader *ngIf="!router.url.startsWith('/admin')"></app-loader>
 
-<app-header *ngIf="!isAdminRoute"></app-header>
+<app-header *ngIf="!router.url.startsWith('/admin')"></app-header>
 <router-outlet></router-outlet>
-<app-footer *ngIf="!isAdminRoute"></app-footer>
+<app-footer *ngIf="!router.url.startsWith('/admin')"></app-footer>

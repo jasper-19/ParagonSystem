@@ -16,9 +16,11 @@ import { LoaderComponent } from './shared/components/loader/loader';
 export class App implements OnInit {
 
   protected readonly title = signal('ParagonWebApp');
-  isAdminRoute = false;
+  isAdminRoute: boolean;
 
-  constructor(private router: Router) {}
+  constructor(public router: Router) {
+    this.isAdminRoute = router.url.startsWith('/admin');
+  }
 
 ngOnInit(): void {
 
@@ -29,10 +31,6 @@ ngOnInit(): void {
   } else {
     document.documentElement.classList.remove('dark');
   }
-
-  // 🧭 Detect admin routes + Scroll to top
-  // Detect initial admin route before the first NavigationEnd fires
-  this.isAdminRoute = this.router.url.startsWith('/admin');
 
   this.router.events.subscribe(event => {
     if (event instanceof NavigationEnd) {
