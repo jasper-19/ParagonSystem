@@ -70,7 +70,7 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
 
   return repository.create({
     fileName: file.originalname,
-    diskName: file.filename,
+    diskName: objectKey,
     storagePath: objectKey,
     fileType,
     mimeType: file.mimetype || "application/octet-stream",
