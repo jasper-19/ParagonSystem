@@ -12,30 +12,53 @@ import { EditorialBoard } from './features/editorial-board/editorial-board';
 import { SpecialIssues } from './features/special-issues/special-issues';
 import { SpecialIssueReader } from './features/special-issues/reader/special-issues-reader';
 
+
+import { PublicLayout } from './features/public-layout/public-layout';
+
 // add near the top with other imports
 import { adminAuthGuard, adminLoginRedirectGuard } from './core/guards/admin-auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: Home, data: { breadcrumb: 'Home' } },
-
-  // ✅ Use ArticlePage instead of Article
-  { path: 'article/:slug', component: ArticlePage, data: { breadcrumb: 'Article' } },
-
   {
-    path: 'top-stories',
-    loadComponent: () =>
-      import('./features/categories/categories-page')
-        .then(m => m.CategoriesPage),
-    data: { breadcrumb: 'Top Stories' }
+    path: '',
+    component: PublicLayout,
+    children: [
+      { path: '', component: Home, data: { breadcrumb: 'Home' } },
+
+      { path: 'article/:slug', component: ArticlePage, data: { breadcrumb: 'Article' } },
+
+      {
+        path: 'top-stories',
+        loadComponent: () =>
+          import('./features/categories/categories-page').then(m => m.CategoriesPage),
+        data: { breadcrumb: 'Top Stories' }
+      },
+
+      {
+        path: 'special-issues',
+        data: { breadcrumb: 'Special Issues' },
+        children: [
+          { path: '', component: SpecialIssues, data: { breadcrumb: null } },
+          { path: ':slug', component: SpecialIssueReader, data: { breadcrumb: 'Read Issue' } },
+        ],
+      },
+
+      { path: 'editorial-board', component: EditorialBoard, data: { breadcrumb: 'Editorial Board' } },
+
+      {
+        path: 'join',
+        loadComponent: () => import('./features/join/join').then(m => m.JoinPage),
+      },
+    ],
   },
 
   {
-  path: 'admin/login',
-  loadComponent: () =>
-    import('./features/admin/login/admin-login').then(m => m.AdminLoginComponent),
-  canMatch: [adminLoginRedirectGuard],
-  data: { breadcrumb: 'Admin Login' }
-},
+    path: 'admin/login',
+    loadComponent: () =>
+      import('./features/admin/login/admin-login').then(m => m.AdminLoginComponent),
+    canMatch: [adminLoginRedirectGuard],
+    data: { breadcrumb: 'Admin Login' }
+  },
 
   {
     path: 'admin',
@@ -43,6 +66,7 @@ export const routes: Routes = [
     canMatch: [adminAuthGuard],
     data: { breadcrumb: 'Admin' },
     children: [
+      // keep all your existing admin children here
       { path: '', loadComponent: () => import('./features/admin/dashboard/admin-dashboard').then(m => m.AdminDashboard), data: { breadcrumb: 'Dashboard' } },
       { path: 'profile', loadComponent: () => import('./features/admin/profile/admin-profile').then(m => m.AdminProfile),data: { breadcrumb: 'Profile' }},
 
@@ -71,23 +95,5 @@ export const routes: Routes = [
     ],
   },
 
-  {
-    path: 'special-issues',
-    data: { breadcrumb: 'Special Issues' },
-    children: [
-      { path: '', component: SpecialIssues, data: { breadcrumb: null } },
-      { path: ':slug', component: SpecialIssueReader, data: { breadcrumb: 'Read Issue' } },
-    ],
-  },
-
-  { path: 'editorial-board', component: EditorialBoard, data: { breadcrumb: 'Editorial Board' } },
-
-  {
-    path: 'join',
-    loadComponent: () => import('./features/join/join').then(m => m.JoinPage),
-    },
-
   { path: '**', redirectTo: '' },
-
-
 ];
