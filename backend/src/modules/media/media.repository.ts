@@ -18,12 +18,20 @@ type MediaRow = {
   updated_at: string | null;
 };
 
+function getApiBaseUrl(): string {
+  return process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+}
+
+function buildMediaFileUrl(id: string): string {
+  return `${getApiBaseUrl()}/api/media/${id}/file`;
+}
+
 function mapRow(row: MediaRow) {
   return {
     id: String(row.id),
     fileName: row.file_name,
     filePath: row.storage_path,
-    fileUrl: `/api/media/${row.id}/file`,
+    fileUrl: buildMediaFileUrl(String(row.id)),
     fileType: row.file_type,
     mimeType: row.mime_type,
     size: Number(row.size),
