@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { switchMap, map, tap } from 'rxjs/operators';
+import { switchMap, map, tap, shareReplay } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 import { ArticleService } from '../../core/services/article.service';
@@ -53,7 +53,8 @@ ngOnInit() {
           this.articleService.incrementViews(slug).subscribe({ error: () => {} });
         })
       )
-    )
+    ),
+    shareReplay(1)
   );
 
   this.articleView$ = this.article$.pipe(
