@@ -41,8 +41,7 @@ export async function getMedia(filters: GetMediaFilters = {}) {
 
 export type UploadInput = {
   originalname: string;
-  filename: string;
-  path: string;
+  buffer: Buffer;
   mimetype: string;
   size: number;
 };
@@ -56,9 +55,14 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
   const fileType = detectMediaType(file.mimetype);
   const objectKey = `media/${Date.now()}-${randomUUID()}-${safeFilename(file.originalname)}`; 
 
+  if (!file.buffer || file.buffer.length === 0) {
+    const err = Object.assign(new Error("Uploaded file is empty"), { statusCode: 400 });
+    throw err;
+  }
+
   const { error } = await supabase.storage
     .from(storageBucket)
-    .upload(objectKey, file.path, {
+    .upload(objectKey, file.buffer, {
       contentType: file.mimetype || "application/octet-stream",
       upsert: false,
     });
