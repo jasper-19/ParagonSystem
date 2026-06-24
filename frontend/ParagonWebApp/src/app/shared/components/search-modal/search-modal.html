@@ -67,7 +67,7 @@
       <!-- Search Results -->
       <div *ngIf="!isLoading && query.trim().length >= 2" class="space-y-4">
         <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-          Search Results
+          {{ selectedCategory ? selectedCategory + ' Articles' : 'Search Results' }}
         </h3>
 
         <div *ngIf="results.length; else noResults" class="grid gap-4">
@@ -119,7 +119,7 @@
           <button
             *ngFor="let category of ['Sports', 'News', 'Feature', 'Column', 'Literary', 'Editorial', 'DevCom']"
             type="button"
-            (click)="goToCategory(category)"
+            (click)="selectCategory(category)"
             class="group text-left bg-linear-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:border-[#f4b400] hover:shadow-lg hover:-translate-y-1"
           >
             <div class="w-12 h-12 rounded-xl bg-[#f4b400]/10 flex items-center justify-center mb-4 group-hover:bg-[#f4b400]/20">

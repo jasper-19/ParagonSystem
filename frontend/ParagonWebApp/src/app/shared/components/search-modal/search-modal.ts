@@ -58,6 +58,7 @@ export class SearchModal {
 
   onSearchChange(value: string): void {
     this.query = value;
+    this.selectedCategory = null; // Reset selected category when typing a new query
     this.search$.next(value);
   }
 
@@ -66,10 +67,28 @@ export class SearchModal {
     this.router.navigate(['/article', article.slug]);
   }
 
-  goToCategory(category: string): void {
-    this.close.emit();
-    this.router.navigate(['/top-stories'], {
-      queryParams: { category }
+  selectedCategory: string | null = null;
+
+  selectCategory(category: string): void {
+    this.selectedCategory = category;
+    this.query = category;
+    this.hasSearched = true;
+    this.isLoading = true;
+
+    this.articleService.getArticles({
+      page: 1,
+      limit: 12,
+      category: category as any,
+      sort: 'latest',
+    }).subscribe({
+      next: (articles) => {
+        this.results = articles;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.results = [];
+        this.isLoading = false;
+      }
     });
   }
 
