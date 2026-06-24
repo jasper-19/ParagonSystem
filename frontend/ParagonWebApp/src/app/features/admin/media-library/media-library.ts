@@ -40,6 +40,8 @@ export class MediaLibraryComponent implements OnInit {
   showDeleteConfirm = false;
   deleteMessage = ''
 
+  isSelectionMode = false;
+
   constructor(
     private cdr: ChangeDetectorRef,
     private mediaService: MediaService
@@ -85,25 +87,34 @@ export class MediaLibraryComponent implements OnInit {
   }
 
   onToggleMediaSelection(mediaId: string): void {
+    this.isSelectionMode = true;
+
     const alreadySelected = this.selectedIds.includes(mediaId);
 
-    if (alreadySelected) {
-      this.selectedIds = this.selectedIds.filter((id: string) => id !== mediaId);
-    } else {
-      this.selectedIds = [...this.selectedIds, mediaId];
-    }
+    this.selectedIds = alreadySelected
+      ? this.selectedIds.filter(id => id !== mediaId)
+      : [...this.selectedIds, mediaId];
 
     this.syncSelectedMedia();
+
+    if (!this.selectedIds.length) {
+      this.isSelectionMode = false;
+    }
   }
 
   onSelectSingleMedia(mediaId: string): void {
-    this.selectedIds = [mediaId];
-    this.syncSelectedMedia();
+    this.selectedMedia =
+      this.filteredMedia.find(media => media.id === mediaId) || null;
+
+    if (!this.isSelectionMode) {
+      this.selectedIds = [mediaId];
+    }
   }
 
   clearSelection(): void {
     this.selectedIds = [];
     this.selectedMedia = null;
+    this.isSelectionMode = false;
   }
 
   isSelected(mediaId: string): boolean {
