@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, inject, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,8 +14,11 @@ import { Article } from '../../../models/article.model';
   imports: [CommonModule, FormsModule],
   templateUrl: './search-modal.html'
 })
-export class SearchModal implements OnInit {
+export class SearchModal implements OnInit, AfterViewInit {
   @Output() close = new EventEmitter<void>();
+
+  @ViewChild('searchInput')
+  searchInput!: ElementRef<HTMLInputElement>;
 
   private articleService = inject(ArticleService);
   private router = inject(Router);
@@ -26,6 +29,7 @@ export class SearchModal implements OnInit {
   hasSearched = false;
 
   recentArticles: Article[] = []; // Store recent articles for display when no search query is entered
+
 
   private search$ = new Subject<string>();
 
@@ -60,6 +64,13 @@ export class SearchModal implements OnInit {
 
   ngOnInit(): void {
     this.loadRecentArticles();
+  }
+
+  ngAfterViewInit(): void {
+    // Small delay ensures the modal animation/layout is complete
+    setTimeout(() => {
+      this.searchInput?.nativeElement.focus();
+    });
   }
 
   loadRecentArticles(): void {
