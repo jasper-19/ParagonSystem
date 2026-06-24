@@ -7,11 +7,19 @@ import { MediaUploaderComponent } from "./components/media-uploader/media-upload
 import { MediaGridComponent } from "./components/media-grid/media-grid";
 import { MediaDetailsPanelComponent } from "./components/media-details-panel/media-details-panel";
 import { FormsModule } from "@angular/forms";
+import { ConfirmationModal } from "../../../shared/components/confirmation-modal/confirmation-modal";
 
 @Component ({
   selector: 'app-media-library',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MediaGridComponent, MediaDetailsPanelComponent, MediaUploaderComponent],
+  imports: [CommonModule,
+    RouterModule,
+    FormsModule,
+    MediaGridComponent,
+    MediaDetailsPanelComponent,
+    MediaUploaderComponent,
+    ConfirmationModal
+  ],
   templateUrl: './media-library.html',
 })
 
@@ -28,6 +36,9 @@ export class MediaLibraryComponent implements OnInit {
 
   isLoading = false
   isSavingMetadata = false
+
+  showDeleteConfirm = false;
+  deleteMessage = ''
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -132,32 +143,48 @@ export class MediaLibraryComponent implements OnInit {
     });
   }
 
-  deleteSelected(): void {
+  confirmDeleteSelected(): void {
     if (!this.selectedIds.length) return;
 
     const idsToDelete = [...this.selectedIds];
     let completed = 0;
 
+    const finish = () => {
+      completed++;
+
+      if (completed === idsToDelete.length) {
+        this.showDeleteConfirm = false;
+        this.clearSelection();
+        this.loadMedia();
+      }
+    };
+
     idsToDelete.forEach(id => {
       this.mediaService.deleteMedia(id).subscribe({
-        next: () => {
-          completed++;
-
-          if (completed === idsToDelete.length) {
-            this.clearSelection();
-            this.loadMedia();
-          }
-        },
-        error: () => {
-          completed++;
-
-          if (completed === idsToDelete.length) {
-            this.clearSelection();
-            this.loadMedia();
-          }
+        next: finish,
+        error: (err) => {
+          console.error(`Failed to delete media ${id}:`, err);
+          finish();
         }
       });
     });
+
+    this.showDeleteConfirm = false;
+  }
+
+  requestDeleteSelected(): void {
+    if (!this.selectedIds.length) return;
+
+    this.deleteMessage =
+      this.selectedIds.length === 1
+        ? 'Are you sure you want to delete this media item?'
+        : `Are you sure you want to delete these ${this.selectedIds.length} media files? This action cannot be undone.`;
+
+    this.showDeleteConfirm = true;
+  }
+
+  cancelDelete(): void {
+    this.showDeleteConfirm = false;
   }
 
   saveMetadata(): void {

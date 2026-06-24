@@ -32,8 +32,44 @@
         />
       </div>
 
-      <div class="shrink-0">
-        <app-media-uploader (filesSelected)="onUploadFiles($event)"></app-media-uploader>
+      <div class="shrink-0 flex items-center gap-3">
+
+        <!-- Delete -->
+        <button
+          type="button"
+          (click)="requestDeleteSelected()"
+          [disabled]="!hasSelection"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+                border border-red-200
+                bg-white text-red-600
+                hover:bg-red-50 hover:border-red-300
+                disabled:opacity-50 disabled:cursor-not-allowed">
+
+          <svg width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/>
+            <path d="M14 11v6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+
+          Delete
+
+          <span *ngIf="hasSelection">
+            ({{ selectedIds.length }})
+          </span>
+
+        </button>
+
+        <!-- Upload -->
+        <app-media-uploader
+          (filesSelected)="onUploadFiles($event)">
+        </app-media-uploader>
+
       </div>
     </div>
 
@@ -123,11 +159,51 @@
 
   <!-- Panel Body -->
   <div class="flex-1 overflow-y-auto px-5 py-5">
-    <app-media-details-panel
-      [media]="selectedMedia"
-      [isSaving]="isSavingMetadata"
-      (metadataSave)="saveMetadata()">
-    </app-media-details-panel>
+    <ng-container *ngIf="isSingleSelection; else noEditableSelection">
+
+      <app-media-details-panel
+        [media]="selectedMedia"
+        [isSaving]="isSavingMetadata"
+        (metadataSave)="saveMetadata()">
+      </app-media-details-panel>
+
+    </ng-container>
+
+    <ng-template #noEditableSelection>
+
+      <div class="h-full flex flex-col items-center justify-center text-center px-6">
+
+        <svg
+          width="44"
+          height="44"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#000035"
+          stroke-width="1.5"
+          class="opacity-30 mb-4">
+
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+          <polyline points="13 2 13 9 20 9"/>
+
+        </svg>
+
+        <h3 class="text-sm font-semibold text-(--color-text-primary)">
+          {{ isMultiSelection ? 'Multiple files selected' : 'No media selected' }}
+        </h3>
+
+        <p class="mt-2 text-xs text-(--color-text-secondary) max-w-55 leading-relaxed">
+
+          {{
+            isMultiSelection
+              ? 'Metadata can only be edited one file at a time.'
+              : 'Select a media file from the library to view and edit its details.'
+          }}
+
+        </p>
+
+      </div>
+
+    </ng-template>
   </div>
 
   <!-- Panel Footer -->
@@ -135,28 +211,52 @@
 
     <!-- Save button -->
     <button
+      *ngIf="isSingleSelection"
       type="button"
       (click)="saveMetadata()"
       [disabled]="isSavingMetadata"
-      class="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-medium rounded-(--border-radius-md) cursor-pointer transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-      style="background: #000035; color: #f4b400; border: none;"
-      onmouseenter="if(!this.disabled){ this.style.background='#f4b400'; this.style.color='#000035'; }"
-      onmouseleave="this.style.background='#000035'; this.style.color='#f4b400';">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      class="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-medium rounded-(--border-radius-md)
+            transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+      style="background:#000035;color:#f4b400;border:none;"
+      onmouseenter="if(!this.disabled){this.style.background='#f4b400';this.style.color='#000035';}"
+      onmouseleave="this.style.background='#000035';this.style.color='#f4b400';"
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
         <polyline points="17 21 17 13 7 13 7 21"/>
         <polyline points="7 3 7 8 15 8"/>
       </svg>
-      Save changes
+
+      Save Changes
     </button>
 
     <!-- Keyboard hint -->
-    <p class="text-center text-[10px] text-(--color-text-tertiary) mt-2 mb-0">
-      Changes also save automatically on blur
+    <p
+      *ngIf="isSingleSelection"
+      class="text-center text-[10px] text-(--color-text-tertiary) mt-2 mb-0">
+      Changes also save automatically on blur.
     </p>
 
+    <p
+      *ngIf="!isSingleSelection"
+      class="text-center text-[10px] text-(--color-text-tertiary) mt-2 mb-0">
+      Select a single media file to edit its metadata.
+    </p>
   </div>
 
 </aside>
+
+  <app-confirmation-modal
+    [isOpen]="showDeleteConfirm"
+    [title]="'Delete Media'"
+    [message]="deleteMessage"
+    [confirmText]="'Delete'"
+    [cancelText]="'Cancel'"
+    [variant]="'danger'"
+    (confirmed)="confirmDeleteSelected()"
+    (cancelled)="cancelDelete()">
+  </app-confirmation-modal>
 
 </div>
