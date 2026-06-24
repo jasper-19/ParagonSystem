@@ -12,10 +12,16 @@ function asObject(value: unknown): Record<string, unknown> | undefined {
   return value as Record<string, unknown>;
 }
 
+function cleanIpAddress(value: unknown): string | undefined {
+  if (!value) return undefined;
+  return String(value).replace(/\/\d+$/, "");
+}
+
 function mapRow(row: any): ActivityLog {
   const metadata = asObject(row.details);
   const action = String(row.action ?? "UNKNOWN").toUpperCase();
   const moduleName = String(row.resource_type ?? "SYSTEM").toUpperCase();
+  const ipAddress = cleanIpAddress(row.ip_address);
   const detailsDescription =
     metadata && typeof metadata["description"] === "string"
       ? metadata["description"]
@@ -33,7 +39,7 @@ function mapRow(row: any): ActivityLog {
     ...(row.resource_id ? { entityId: String(row.resource_id) } : {}),
     entityType: moduleName,
     ...(metadata ? { metadata } : {}),
-    ...(row.ip_address ? { ipAddress: String(row.ip_address) } : {}),
+    ...(ipAddress ? { ipAddress } : {}),
     ...(row.user_agent ? { userAgent: String(row.user_agent) } : {}),
     createdAt: toIsoString(row.created_at),
   };
