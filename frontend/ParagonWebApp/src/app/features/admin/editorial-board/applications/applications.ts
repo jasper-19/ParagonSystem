@@ -250,6 +250,38 @@ export class ApplicationsComponent implements OnInit {
     return valid ? raw : '—';
   }
 
+  // Display Formatters
+  formatStatus(status: ApplicationStatus | undefined): string {
+    if (!status) return '—';
+
+    return status
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, char => char.toUpperCase());
+  }
+
+  formatInterviewDate(date: string | Date | null | undefined): string {
+    if (!date) return '—';
+
+    const parsed = date instanceof Date ? date : new Date(date);
+
+    if (Number.isNaN(parsed.getTime())) return '—';
+
+    return parsed.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  formatTabLabel(status: ApplicationStatus | 'All'): string {
+    return status === 'All'
+    ? 'All'
+    : this.formatStatus(status);
+  }
+
   //Interview Calendar Overview
   getUpcomingInterviews(apps: Application[]): Application[] {
 
@@ -280,8 +312,8 @@ export class ApplicationsComponent implements OnInit {
       escapeCsv(app.studentId),
       escapeCsv(this.getPositionTitle(app.positionId)),
       escapeCsv(this.getSubRoleLabel(app)),
-      escapeCsv(app.status ?? ''),
-      escapeCsv(app.interviewDate ?? ''),
+      escapeCsv(this.formatStatus(app.status)),
+      escapeCsv(this.formatInterviewDate(app.interviewDate)),
     ]);
 
     const csvContent = [header.join(','), ...rows.map(r => r.join(','))].join('\n');

@@ -63,9 +63,7 @@
               [class.text-white]="currentFilter === status"
               [class.bg-gray-100]="currentFilter !== status"
             >
-              {{ status === 'interview_scheduled' ? 'Scheduled'
-                : status === 'interview_completed' ? 'Interviewed'
-                : status }}
+              {{ formatTabLabel(status) }}
             </button>
           }
         </div>
@@ -173,12 +171,12 @@
                         'bg-gray-100 text-gray-700': !app.status
                       }"
                     >
-                      {{ app.status || '—' }}
+                      {{ formatStatus(app.status) }}
                     </span>
                   </td>
 
                   <td class="px-6 py-4 text-sm text-gray-700">
-                    {{ app.interviewDate || 'Not scheduled' }}
+                    {{ formatInterviewDate(app.interviewDate) }}
                   </td>
 
                   <td class="px-6 py-4" (click)="$event.stopPropagation()">
@@ -257,13 +255,13 @@
                       'bg-gray-100 text-gray-700': !app.status
                     }"
                   >
-                    {{ app.status || '—' }}
+                    {{ formatStatus(app.status) }}
                   </span>
                 </div>
 
                 <div class="col-span-2">
                   <span class="text-gray-500 text-xs block mb-1">Interview</span>
-                  <span class="text-gray-700">{{ app.interviewDate || 'Not scheduled' }}</span>
+                  <span class="text-gray-700">{{ formatInterviewDate(app.interviewDate) }}</span>
                 </div>
 
               </div>
