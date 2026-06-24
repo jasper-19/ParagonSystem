@@ -35,7 +35,7 @@
 
           <div class="text-white">
             <h3 class="text-lg font-bold leading-tight">{{ log.userName || 'Unknown user' }}</h3>
-            <p class="text-sm text-white/70 mt-0.5">{{ log.module }} &middot; {{ log.action }}</p>
+            <p class="text-sm text-white/70 mt-0.5">{{ formatModule(log.module) }} • {{ formatAction(log.action) }}</p>
           </div>
         </div>
       </div>
@@ -52,28 +52,28 @@
 
           <div class="bg-gray-50 rounded-xl px-4 py-3">
             <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Action</p>
-            <p class="text-sm font-semibold text-gray-800">{{ log.action || '—' }}</p>
+            <p class="text-sm font-semibold text-gray-800">{{ formatAction(log.action) }}</p>
           </div>
 
           <div class="bg-gray-50 rounded-xl px-4 py-3">
             <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Module</p>
-            <p class="text-sm font-semibold text-gray-800">{{ log.module || '—' }}</p>
+            <p class="text-sm font-semibold text-gray-800">{{ formatModule(log.module) }}</p>
           </div>
 
           <div class="bg-gray-50 rounded-xl px-4 py-3">
             <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Date</p>
-            <p class="text-sm font-semibold text-gray-800">{{ log.createdAt | date:'full' }}</p>
+            <p class="text-sm font-semibold text-gray-800">{{ formatDate(log.createdAt) }}</p>
           </div>
 
           <div class="bg-gray-50 rounded-xl px-4 py-3">
             <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">IP</p>
-            <p class="text-sm text-[#000035]">{{ log.ipAddress || '—' }}</p>
+            <p class="text-sm text-[#000035]">{{ formatIp(log.ipAddress) || '—' }}</p>
           </div>
 
           <div class="bg-gray-50 rounded-xl px-4 py-3">
             <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Entity</p>
             <p class="text-sm font-semibold text-gray-800">
-              {{ log.entityType || '—' }}{{ log.entityId ? (' · ' + log.entityId) : '' }}
+              {{ formatEntity() }}
             </p>
           </div>
 
@@ -83,11 +83,48 @@
             <p class="text-sm text-gray-800">{{ log.description || '—' }}</p>
           </div>
 
-          <!-- Metadata full width -->
-          <div class="md:col-span-2 bg-white border rounded-xl p-3">
-            <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">Metadata</p>
-            <pre class="bg-gray-50 p-2 rounded text-xs overflow-auto">{{ log.metadata | json }}</pre>
+        <!-- Additional Details -->
+        <div class="md:col-span-2 bg-white border rounded-xl p-4">
+          <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-3">
+            Additional Details
+          </p>
+
+          <div *ngIf="hasMetadata(); else noMetadata" class="space-y-3">
+
+            <div
+              *ngFor="let item of metadataEntries()"
+              class="flex justify-between items-center border-b border-gray-100 pb-2"
+            >
+              <span class="text-sm text-gray-500">
+                {{ item.key }}
+              </span>
+
+              <span class="text-sm font-medium text-gray-800">
+
+                <ng-container *ngIf="item.value === true">
+                  Yes
+                </ng-container>
+
+                <ng-container *ngIf="item.value === false">
+                  No
+                </ng-container>
+
+                <ng-container *ngIf="item.value !== true && item.value !== false">
+                  {{ item.value }}
+                </ng-container>
+
+              </span>
+            </div>
+
           </div>
+
+          <ng-template #noMetadata>
+            <p class="text-sm text-gray-400 italic">
+              No additional details were recorded for this activity.
+            </p>
+          </ng-template>
+
+        </div>
 
         </div>
 
