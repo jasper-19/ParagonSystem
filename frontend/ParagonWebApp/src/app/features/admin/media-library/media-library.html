@@ -34,6 +34,15 @@
 
       <div class="shrink-0 flex items-center gap-3">
 
+        <button
+          *ngIf="isSelectionMode"
+          type="button"
+          (click)="clearSelection()"
+          class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition"
+        >
+          Clear
+        </button>
+
         <!-- Delete -->
         <button
           type="button"
@@ -63,15 +72,6 @@
             ({{ selectedIds.length }})
           </span>
 
-        </button>
-
-        <button
-          *ngIf="isSelectionMode"
-          type="button"
-          (click)="clearSelection()"
-          class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition"
-        >
-          Clear
         </button>
 
         <!-- Upload -->
