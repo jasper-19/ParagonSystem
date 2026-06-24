@@ -42,17 +42,19 @@
 
     <!-- Checkbox -->
     <div class="absolute top-2.5 left-2.5">
-      <label
+      <button
+        type="button"
         class="flex h-5 w-5 cursor-pointer items-center justify-center rounded transition-all duration-150"
         [ngClass]="selected
           ? 'bg-[#f4b400] shadow-[0_1px_4px_rgba(0,0,53,0.2)]'
           : 'bg-white/90 shadow-[0_1px_3px_rgba(0,0,53,0.15)]'"
-        (click)="onCheckBoxClick($event)">
-        <input type="checkbox" class="hidden" [checked]="selected" />
+        (click)="onCheckBoxClick($event)"
+        aria-label="Select media"
+      >
         <svg *ngIf="selected" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-      </label>
+      </button>
     </div>
 
     <!-- Type badge -->
