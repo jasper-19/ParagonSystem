@@ -54,9 +54,15 @@ export const createBoard = asyncHandler(async (req: Request, res: Response) => {
 export const activateBoard = asyncHandler(async (req: Request, res: Response) => {
   const boardId = req.params["boardId"] as string;
   const board = await service.activateBoard(boardId);
-  auditLog(req, "ACTIVATE", "EDITORIAL_BOARDS", `Activated editorial board: ${boardId}`, {
-    resourceId: boardId,
-  });
+  auditLog(
+    req,
+    "ACTIVATE",
+    "EDITORIAL_BOARDS",
+    "Activated the editorial board.",
+    {
+      resourceId: boardId,
+    }
+  );
   res.json(board);
 });
 
@@ -64,9 +70,15 @@ export const activateBoard = asyncHandler(async (req: Request, res: Response) =>
 export const deleteBoard = asyncHandler(async (req: Request, res: Response) => {
   const boardId = req.params["boardId"] as string;
   await service.deleteBoard(boardId);
-  auditLog(req, "DELETE", "EDITORIAL_BOARDS", `Deleted editorial board: ${boardId}`, {
-    resourceId: boardId,
-  });
+  auditLog(
+    req,
+    "DELETE",
+    "EDITORIAL_BOARDS",
+    "Deleted the editorial board.",
+    {
+      resourceId: boardId,
+    }
+  );
   res.status(204).send();
 });
 
@@ -90,10 +102,21 @@ export const addMember = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const member = await service.addBoardMember(boardId, staffId, section, role);
-  auditLog(req, "ADD_MEMBER", "EDITORIAL_BOARDS", `Added board member to board ${boardId}`, {
-    resourceId: String((member as any).id ?? boardId),
-    details: { boardId, staffId, section, role },
-  });
+  auditLog(
+    req,
+    "ADD_MEMBER",
+    "EDITORIAL_BOARDS",
+    "Added a member to the editorial board.",
+    {
+      resourceId: String((member as any).id ?? boardId),
+      details: {
+        boardId,
+        staffId,
+        section,
+        role,
+      },
+    }
+  );
   res.status(201).json(member);
 });
 
@@ -110,10 +133,20 @@ export const updateMember = asyncHandler(async (req: Request, res: Response) => 
   }
 
   const member = await service.updateBoardMember(boardId, memberId, section, role);
-  auditLog(req, "UPDATE_MEMBER", "EDITORIAL_BOARDS", `Updated board member ${memberId} in board ${boardId}`, {
-    resourceId: memberId,
-    details: { boardId, section, role },
-  });
+  auditLog(
+    req,
+    "UPDATE_MEMBER",
+    "EDITORIAL_BOARDS",
+    "Updated an editorial board member.",
+    {
+      resourceId: memberId,
+      details: {
+        boardId,
+        section,
+        role,
+      },
+    }
+  );
   res.json(member);
 });
 
@@ -122,10 +155,18 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
   const memberId = req.params["memberId"] as string;
   const boardId = req.params["boardId"] as string;
   await service.removeBoardMember(memberId);
-  auditLog(req, "REMOVE_MEMBER", "EDITORIAL_BOARDS", `Removed board member ${memberId}`, {
-    resourceId: memberId,
-    details: { boardId },
-  });
+  auditLog(
+    req,
+    "REMOVE_MEMBER",
+    "EDITORIAL_BOARDS",
+    "Removed a member from the editorial board.",
+    {
+      resourceId: memberId,
+      details: {
+        boardId,
+      },
+    }
+  );
   res.status(204).send();
 });
 
@@ -135,10 +176,18 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
 export const revokeMember = asyncHandler(async (req: Request, res: Response) => {
   const { boardId, memberId } = req.params as { boardId: string; memberId: string };
   await service.revokeBoardMember(boardId, memberId);
-  auditLog(req, "REVOKE_MEMBER", "EDITORIAL_BOARDS", `Revoked board member ${memberId}`, {
-    resourceId: memberId,
-    details: { boardId },
-  });
+  auditLog(
+    req,
+    "REVOKE_MEMBER",
+    "EDITORIAL_BOARDS",
+    "Revoked a member from the editorial board.",
+    {
+      resourceId: memberId,
+      details: {
+        boardId,
+      },
+    }
+  );
   res.status(204).send();
 });
 
@@ -155,9 +204,18 @@ export const satisfyBoard = asyncHandler(async (req: Request, res: Response) => 
     return;
   }
   const board = await service.satisfyBoard(boardId, satisfied);
-  auditLog(req, "SATISFY", "EDITORIAL_BOARDS", `Set board satisfaction for ${boardId} to ${satisfied}`, {
-    resourceId: boardId,
-    details: { satisfied },
-  });
+
+  auditLog(
+    req,
+    "SATISFY",
+    "EDITORIAL_BOARDS",
+    satisfied
+      ? "Marked the editorial board as satisfied."
+      : "Marked the editorial board as not satisfied.",
+    {
+      resourceId: boardId,
+      details: { satisfied },
+    }
+  );
   res.json(board);
 });
