@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Output, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,7 +14,7 @@ import { Article } from '../../../models/article.model';
   imports: [CommonModule, FormsModule],
   templateUrl: './search-modal.html'
 })
-export class SearchModal {
+export class SearchModal implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   private articleService = inject(ArticleService);
@@ -24,6 +24,8 @@ export class SearchModal {
   results: Article[] = [];
   isLoading = false;
   hasSearched = false;
+
+  recentArticles: Article[] = []; // Store recent articles for display when no search query is entered
 
   private search$ = new Subject<string>();
 
@@ -54,6 +56,25 @@ export class SearchModal {
         this.results = articles;
         this.isLoading = false;
       });
+  }
+
+  ngOnInit(): void {
+    this.loadRecentArticles();
+  }
+
+  loadRecentArticles(): void {
+    this.articleService.getArticles({
+      page: 1,
+      limit: 5,
+      sort: 'latest',
+    }).subscribe({
+      next: (articles) => {
+        this.recentArticles = articles;
+      },
+      error: () => {
+        this.recentArticles = [];
+      }
+    });
   }
 
   onSearchChange(value: string): void {

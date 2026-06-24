@@ -109,28 +109,88 @@
         </ng-template>
       </div>
 
-      <!-- Categories -->
-      <div *ngIf="query.trim().length < 2">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-          Browse by Category
+<!-- Categories -->
+<div *ngIf="query.trim().length < 2">
+
+  <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+    Browse by Category
+  </h3>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+
+    <!-- Category Buttons -->
+    <button
+        *ngFor="let category of ['Sports', 'News', 'Feature', 'Column', 'Literary', 'Editorial', 'DevCom']"
+        type="button"
+        (click)="selectCategory(category)"
+        class="group text-left bg-linear-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-300 hover:border-[#f4b400] hover:shadow-lg hover:-translate-y-1"
+      >
+        ...
+      </button>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Recently Published -->
+    <!-- ========================================= -->
+
+    <div *ngIf="recentArticles.length" class="mt-10 pt-8 border-t border-gray-100">
+
+      <div class="flex items-center justify-between mb-5">
+
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          Recently Published
         </h3>
 
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          <button
-            *ngFor="let category of ['Sports', 'News', 'Feature', 'Column', 'Literary', 'Editorial', 'DevCom']"
-            type="button"
-            (click)="selectCategory(category)"
-            class="group text-left bg-linear-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-300 hover:border-[#f4b400] hover:shadow-lg hover:-translate-y-1"
-          >
-            <div class="w-12 h-12 rounded-xl bg-[#f4b400]/10 flex items-center justify-center mb-4 group-hover:bg-[#f4b400]/20">
-              <svg class="w-6 h-6 text-[#f4b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path d="M4 6h16M4 12h12M4 18h8" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h4 class="font-semibold text-[#000035] text-base">{{ category }}</h4>
-          </button>
-        </div>
+        <span class="text-xs text-gray-400">
+          Latest {{ recentArticles.length }} articles
+        </span>
+
       </div>
+
+      <div class="grid gap-3">
+
+        <button
+          *ngFor="let article of recentArticles"
+          type="button"
+          (click)="openArticle(article)"
+          class="group flex items-center gap-4 p-3 rounded-2xl border border-gray-100 bg-white hover:border-[#f4b400] hover:shadow-md transition text-left"
+        >
+
+          <img
+            [src]="article.image"
+            [alt]="article.title"
+            class="w-20 h-16 object-cover rounded-xl bg-gray-100 shrink-0"
+          >
+
+          <div class="min-w-0 flex-1">
+
+            <p class="text-[11px] uppercase font-semibold text-[#f4b400] mb-1">
+              {{ article.category }}
+            </p>
+
+            <h4 class="font-semibold text-[#000035] line-clamp-1">
+              {{ article.title }}
+            </h4>
+
+            <p class="text-xs text-gray-500 line-clamp-2 mt-1">
+              {{ article.excerpt }}
+            </p>
+
+            <p class="text-[11px] text-gray-400 mt-2">
+              {{ article.publishedAt || article.createdAt | date:'MMM d, y' }}
+            </p>
+
+          </div>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
     </div>
 
     <!-- FOOTER -->
