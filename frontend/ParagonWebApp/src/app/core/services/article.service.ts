@@ -78,6 +78,15 @@ export class ArticleService {
       .pipe(map((a) => this.normalizeArticles(a)));
   }
 
+  searchArticles(query: string): Observable<Article[]> {
+    return this.getArticles({
+      page: 1,
+      limit: 8,
+      search: query,
+      sort:  'latest',
+    });
+  }
+
   /** Public: featured + published. */
   getFeaturedArticles(): Observable<Article[]> {
     const params = this.buildParams({
