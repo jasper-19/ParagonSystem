@@ -88,8 +88,6 @@ export class MediaLibraryComponent implements OnInit {
 
   onToggleMediaSelection(mediaId: string): void {
 
-    console.log('Checkbox clicked:', mediaId);
-
     this.isSelectionMode = true;
 
     const alreadySelected = this.selectedIds.includes(mediaId);
@@ -97,9 +95,6 @@ export class MediaLibraryComponent implements OnInit {
     this.selectedIds = alreadySelected
       ? this.selectedIds.filter(id => id !== mediaId)
       : [...this.selectedIds, mediaId];
-
-    console.log('Selected IDs:', this.selectedIds);
-    console.log('Selection mode:', this.isSelectionMode);
 
     this.syncSelectedMedia();
 
