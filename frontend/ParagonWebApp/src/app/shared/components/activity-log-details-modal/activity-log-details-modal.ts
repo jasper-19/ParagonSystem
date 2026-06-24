@@ -48,9 +48,23 @@ export class ActivityLogDetailsModalComponent {
   formatModule(module?: string): string {
     if (!module) return 'System';
 
-    return module
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, c => c.toUpperCase());
+    const modules: Record<string, string> = {
+      ARTICLES: 'Articles',
+      SPECIAL_ISSUES: 'Special Issues',
+      MEDIA: 'Media',
+      APPLICATIONS: 'Applications',
+      STAFF_DIRECTORY: 'Staff Directory',
+      EDITORIAL_BOARDS: 'Editorial Board',
+      SETTINGS: 'Settings',
+      USERS: 'Users',
+      AUTH: 'Authentication',
+      SYSTEM: 'System',
+    };
+
+    return modules[module.toUpperCase()]
+      ?? module
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
   }
 
   formatDate(date?: string): string {
@@ -85,7 +99,11 @@ export class ActivityLogDetailsModalComponent {
   }
 
   hasMetadata(): boolean {
-    return !!this.log.metadata && Object.keys(this.log.metadata).length > 0;
+      if (!this.log.metadata) return false;
+
+    return Object.keys(this.log.metadata)
+      .filter(key => key !== 'description')
+      .length > 0;
   }
 
   metadataEntries(): Array<{ key: string; value: unknown }> {
@@ -100,6 +118,31 @@ export class ActivityLogDetailsModalComponent {
       value,
     }));
   }
+
+  formatDescription(log: ActivityLog): string {
+  const action = log.action?.toUpperCase();
+  const module = log.module?.toUpperCase();
+
+  if (module === 'EDITORIAL_BOARDS' && action === 'SATISFY') {
+    const satisfied = log.metadata?.['satisfied'];
+
+    if (satisfied === true) {
+      return 'Marked the editorial board as satisfied.';
+    }
+
+    if (satisfied === false) {
+      return 'Marked the editorial board as not satisfied.';
+    }
+
+    return 'Updated the editorial board satisfaction status.';
+  }
+
+  return log.description
+    ?.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, 'this record')
+    ?.replace(/\btrue\b/g, 'Yes')
+    ?.replace(/\bfalse\b/g, 'No')
+    || 'No description available.';
+}
 
   // Optional: format JSON nicely for display
   formatJSON(data: any): string {
