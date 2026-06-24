@@ -73,11 +73,11 @@ export class ActivityLogDetailsModalComponent {
     const parsed = new Date(date);
 
     if (Number.isNaN(parsed.getTime())) {
-      return date;
+      return '-';
     }
 
     return parsed.toLocaleString('en-US', {
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: 'numeric',
