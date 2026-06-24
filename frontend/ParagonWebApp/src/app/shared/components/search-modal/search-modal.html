@@ -1,22 +1,22 @@
 <!-- OVERLAY -->
 <div
-  class="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4"
+  class="fixed inset-0 z-50 bg-white sm:bg-black/40 sm:backdrop-blur-md flex sm:items-center sm:justify-center sm:p-4"
   (click)="onBackdropClick()"
 >
   <!-- MODAL -->
   <div
-    class="bg-white w-full max-w-6xl max-h-[90vh] rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,53,0.3)] flex flex-col overflow-hidden"
+    class="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl lg:max-w-6xl sm:rounded-3xl shadow-xl flex flex-col overflow-hidden"
     (click)="$event.stopPropagation()"
   >
 
     <!-- HEADER -->
-    <div class="px-8 py-8 bg-linear-to-br from-[#000035] to-[#000035]/90">
+    <div class="px-4 sm:px-8 py-5 sm:py-8 bg-linear-to-br from-[#000035] to-[#000035]/90">
       <div class="flex items-start justify-between mb-6">
         <div>
-          <h2 class="text-4xl font-bold text-white tracking-tight">
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
             Explore <span class="text-[#f4b400] font-extrabold italic">Paragon</span>
           </h2>
-          <p class="text-m text-white/70 mt-2 font-light">
+          <p class="text-sm sm:text-base text-white/70 mt-2 font-light">
             Search stories, categories, tags, and contributors.
           </p>
         </div>
@@ -37,11 +37,11 @@
           type="text"
           [ngModel]="query"
           (ngModelChange)="onSearchChange($event)"
-          placeholder="Search articles, categories, tags, or people..."
+          placeholder="Search articles..."
           autofocus
-          class="w-full pl-12 pr-4 py-4 border-0 rounded-xl text-sm bg-white/10 text-white backdrop-blur-sm
-                 focus:outline-none focus:ring-2 focus:ring-[#f4b400] focus:bg-white/15
-                 transition-all duration-200 placeholder:text-white/50"
+          class="w-full pl-11 sm:pl-12 pr-4 py-3.5 sm:py-4 border-0 rounded-xl text-sm bg-white/10 text-white backdrop-blur-sm
+                focus:outline-none focus:ring-2 focus:ring-[#f4b400] focus:bg-white/15
+                transition-all duration-200 placeholder:text-white/50"
         />
 
         <svg
@@ -57,7 +57,7 @@
     </div>
 
     <!-- BODY -->
-    <div class="flex-1 overflow-y-auto px-8 py-6">
+    <div class="flex-1 overflow-y-auto px-4 sm:px-8 py-5 sm:py-6">
 
       <!-- Loading -->
       <div *ngIf="isLoading" class="py-12 text-center text-sm text-gray-500">
@@ -81,7 +81,7 @@
               *ngIf="article.image"
               [src]="article.image"
               [alt]="article.title"
-              class="w-24 h-20 object-cover rounded-xl bg-gray-100"
+              class="w-20 h-16 sm:w-24 sm:h-20 object-cover rounded-xl bg-gray-100"
             />
 
             <div class="min-w-0">
@@ -115,12 +115,12 @@
           Browse by Category
         </h3>
 
-        <div class="grid md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           <button
             *ngFor="let category of ['Sports', 'News', 'Feature', 'Column', 'Literary', 'Editorial', 'DevCom']"
             type="button"
             (click)="selectCategory(category)"
-            class="group text-left bg-linear-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:border-[#f4b400] hover:shadow-lg hover:-translate-y-1"
+            class="group text-left bg-linear-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-300 hover:border-[#f4b400] hover:shadow-lg hover:-translate-y-1"
           >
             <div class="w-12 h-12 rounded-xl bg-[#f4b400]/10 flex items-center justify-center mb-4 group-hover:bg-[#f4b400]/20">
               <svg class="w-6 h-6 text-[#f4b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,7 +134,7 @@
     </div>
 
     <!-- FOOTER -->
-    <div class="px-8 py-5 bg-[#f4b400]/40 border-t border-gray-100">
+    <div class="hidden sm:block px-8 py-5 bg-[#f4b400]/40 border-t border-gray-100">
       <span class="text-s text-[#000035] font-light">
         Search by title, tags, author, writer, graphic artist, or copyreader.
       </span>
