@@ -27,6 +27,27 @@ export async function createSession(input: {
   return mapRow(result.rows[0]);
 }
 
+export async function findReusableSession(input: {
+  userId: string;
+  userAgent?: string;
+  ipAddress?: string;
+}): Promise<UserSession | null> {
+  const result = await db.query(
+    `SELECT *
+     FROM user_sessions
+     WHERE user_id = $1
+       AND revoked_at IS NULL
+       AND user_agent IS NOT DISTINCT FROM $2
+       AND ip_address IS NOT DISTINCT FROM $3
+       AND COALESCE(last_active_at, created_at) >= NOW() - INTERVAL '8 hours'
+     ORDER BY COALESCE(last_active_at, created_at) DESC
+     LIMIT 1`,
+    [input.userId, input.userAgent ?? null, input.ipAddress ?? null]
+  );
+
+  return result.rows[0] ? mapRow(result.rows[0]) : null;
+}
+
 export async function listSessionsByUser(
   userId: string,
   currentSessionId?: string
@@ -97,4 +118,6 @@ export async function isSessionActive(sessionId: string): Promise<boolean> {
   );
   return !!result.rows[0];
 }
+
+
 

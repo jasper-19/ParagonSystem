@@ -37,11 +37,21 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     const userAgent = req.get("user-agent") || undefined;
     const ipAddress = (req as any).ip as string | undefined;
 
-    const session = await sessionRepository.createSession({
+    let session = await sessionRepository.findReusableSession({
       userId: dbUser.id,
       ...(userAgent ? { userAgent } : {}),
       ...(ipAddress ? { ipAddress } : {}),
     });
+
+    if (!session) {
+      session = await sessionRepository.createSession({
+        userId: dbUser.id,
+        ...(userAgent ? { userAgent } : {}),
+        ...(ipAddress ? { ipAddress } : {}),
+      });
+    } else {
+      await sessionRepository.touchSession(session.id);
+    }
     const token = jwt.sign(
       { role: dbUser.role, staffId: dbUser.staffId, sid: session.id },
       jwtSecret,
