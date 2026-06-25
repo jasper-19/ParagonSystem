@@ -201,7 +201,7 @@ export const listSessions = asyncHandler(async (req: Request, res: Response) => 
     return;
   }
 
-  const sessions = await sessionRepository.listSessionsByUser(subject);
+  const sessions = await sessionRepository.listSessionsByUser(subject, currentSessionId);
   res.json({
     sessions: sessions.map((s) => ({
       id: s.id,

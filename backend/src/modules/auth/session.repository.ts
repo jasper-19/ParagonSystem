@@ -27,14 +27,22 @@ export async function createSession(input: {
   return mapRow(result.rows[0]);
 }
 
-export async function listSessionsByUser(userId: string): Promise<UserSession[]> {
+export async function listSessionsByUser(
+  userId: string,
+  currentSessionId?: string
+): Promise<UserSession[]> {
   const result = await db.query(
     `SELECT *
      FROM user_sessions
      WHERE user_id = $1
-     ORDER BY COALESCE(last_active_at, created_at) DESC`,
-    [userId]
+       AND revoked_at IS NULL
+       AND COALESCE(last_active_at, created_at) >= NOW() - INTERVAL '8 hours'
+     ORDER BY
+       CASE WHEN id = $2 THEN 0 ELSE 1 END,
+       COALESCE(last_active_at, created_at) DESC`,
+    [userId, currentSessionId ?? null]
   );
+
   return result.rows.map(mapRow);
 }
 
@@ -82,7 +90,9 @@ export async function isSessionActive(sessionId: string): Promise<boolean> {
   const result = await db.query(
     `SELECT 1
      FROM user_sessions
-     WHERE id = $1 AND revoked_at IS NULL`,
+     WHERE id = $1
+      AND revoked_at IS NULL
+      AND COALESCE(last_active_at, created_at) >= NOW() - INTERVAL '8 hours'`,
     [sessionId]
   );
   return !!result.rows[0];
