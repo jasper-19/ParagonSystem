@@ -61,7 +61,12 @@ export async function findAll(filters: ActivityLogFilters = {}): Promise<Activit
   }
 
   if (filters.dateFrom) {
-    where.push(`al.created_at >= $${idx++}::timestamptz`);
+    where.push(
+      `al.created_at >= $${idx++}::date
+      AND al.created_at < ($${idx++}::date + INTERVAL '1 day')`
+    );
+
+    values.push(filters.dateFrom);
     values.push(filters.dateFrom);
   }
 
