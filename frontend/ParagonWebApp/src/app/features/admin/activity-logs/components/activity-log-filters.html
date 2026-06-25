@@ -1,79 +1,95 @@
-<div class="flex flex-wrap gap-2.5 mb-4 items-center">
+<div class="py-4">
+  <div class="flex flex-wrap gap-2 items-center">
 
-  <!-- Module filter -->
-  <div class="relative flex items-center">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-      class="absolute left-2.5 pointer-events-none opacity-45">
-      <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-    </svg>
-    <select
-      [(ngModel)]="filters.module"
-      (change)="onFilterChange()"
-      class="appearance-none pl-7.5 pr-8 py-2 text-[13px] font-medium text-[#000035] bg-(--color-background-primary) border-[rgba(0,0,53,0.25)] border-[0.5px] rounded-(--border-radius-md) cursor-pointer outline-none min-w-35 transition-[border-color] duration-150 focus:border-[#f4b400] focus:ring-2 focus:ring-[rgba(244,180,0,0.15)]">
-      <option value="">All modules</option>
-      <option *ngFor="let module of modules" [value]="module">{{ module }}</option>
-    </select>
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-      class="absolute right-2.5 pointer-events-none opacity-40">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
+    <span class="text-[11px] font-medium tracking-widest uppercase text-[var(--color-text-tertiary)] whitespace-nowrap">
+      Filter by
+    </span>
+
+    <div class="w-px h-[22px] bg-[var(--color-border-tertiary)] mx-0.5 shrink-0"></div>
+
+    <!-- Module filter -->
+    <div class="relative flex items-center">
+      <span class="absolute left-2.5 pointer-events-none flex text-[var(--color-text-secondary)]" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </span>
+      <select
+        [(ngModel)]="filters.module"
+        (change)="onFilterChange()"
+        class="h-9 appearance-none pl-8 pr-7 text-[13px] text-[var(--color-text-primary)] bg-[var(--color-background-primary)] border border-[0.5px] border-[var(--color-border-secondary)] rounded-[var(--border-radius-md)] outline-none min-w-[130px] transition-[border-color,box-shadow] duration-150 hover:border-[var(--color-border-primary)] focus:border-[#7F77DD] focus:ring-[3px] focus:ring-[rgba(127,119,221,0.15)] cursor-pointer">
+        <option value="">All modules</option>
+        <option *ngFor="let module of modules" [value]="module">{{ module }}</option>
+      </select>
+      <span class="absolute right-2.5 pointer-events-none flex text-[var(--color-text-secondary)]" aria-hidden="true">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </span>
+    </div>
+
+    <!-- Action filter -->
+    <div class="relative flex items-center">
+      <span class="absolute left-2.5 pointer-events-none flex text-[var(--color-text-secondary)]" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </span>
+      <select
+        [(ngModel)]="filters.action"
+        (change)="onFilterChange()"
+        class="h-9 appearance-none pl-8 pr-7 text-[13px] text-[var(--color-text-primary)] bg-[var(--color-background-primary)] border border-[0.5px] border-[var(--color-border-secondary)] rounded-[var(--border-radius-md)] outline-none min-w-[130px] transition-[border-color,box-shadow] duration-150 hover:border-[var(--color-border-primary)] focus:border-[#7F77DD] focus:ring-[3px] focus:ring-[rgba(127,119,221,0.15)] cursor-pointer">
+        <option value="">All actions</option>
+        <option *ngFor="let action of actions" [value]="action">{{ action }}</option>
+      </select>
+      <span class="absolute right-2.5 pointer-events-none flex text-[var(--color-text-secondary)]" aria-hidden="true">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </span>
+    </div>
+
+    <!-- Date picker -->
+    <div class="relative flex items-center">
+      <span class="absolute left-2.5 pointer-events-none flex z-10 text-[var(--color-text-secondary)]" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </span>
+      <input
+        type="date"
+        [(ngModel)]="filters.dateFrom"
+        (change)="onFilterChange()"
+        class="h-9 pl-8 pr-2.5 text-[13px] text-[var(--color-text-primary)] bg-[var(--color-background-primary)] border border-[0.5px] border-[var(--color-border-secondary)] rounded-[var(--border-radius-md)] outline-none min-w-[150px] transition-[border-color,box-shadow] duration-150 hover:border-[var(--color-border-primary)] focus:border-[#7F77DD] focus:ring-[3px] focus:ring-[rgba(127,119,221,0.15)] cursor-pointer" />
+    </div>
+
+    <div class="w-px h-[22px] bg-[var(--color-border-tertiary)] mx-0.5 shrink-0"></div>
+
+    <!-- Search -->
+    <div class="relative flex items-center flex-1 min-w-[180px]">
+      <span class="absolute left-2.5 pointer-events-none flex text-[var(--color-text-secondary)]" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input
+        type="text"
+        placeholder="Search logs…"
+        [(ngModel)]="filters.search"
+        (input)="onFilterChange()"
+        class="w-full h-9 pl-8 pr-3 text-[13px] text-[var(--color-text-primary)] bg-[var(--color-background-secondary)] border border-[0.5px] border-transparent rounded-[var(--border-radius-md)] outline-none placeholder:text-[var(--color-text-tertiary)] transition-[border-color,background,box-shadow] duration-150 focus:bg-[var(--color-background-primary)] focus:border-[#7F77DD] focus:ring-[3px] focus:ring-[rgba(127,119,221,0.15)]" />
+    </div>
+
+    <!-- Reset -->
+    <button
+      type="button"
+      (click)="clearFilters()"
+      class="h-9 inline-flex items-center gap-1.5 px-3.5 text-[13px] font-medium text-[var(--color-text-secondary)] bg-transparent border border-[0.5px] border-[var(--color-border-tertiary)] rounded-[var(--border-radius-md)] cursor-pointer whitespace-nowrap transition-all duration-150 hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-secondary)] hover:bg-[var(--color-background-secondary)]">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/>
+      </svg>
+      Reset
+    </button>
+
   </div>
-
-  <!-- Action filter -->
-  <div class="relative flex items-center">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-      class="absolute left-2.5 pointer-events-none opacity-45">
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-    </svg>
-    <select
-      [(ngModel)]="filters.action"
-      (change)="onFilterChange()"
-      class="appearance-none pl-7.5 pr-8 py-2 text-[13px] font-medium text-[#000035] bg-(--color-background-primary)  border-[rgba(0,0,53,0.25)] border-[0.5px] rounded-(--border-radius-md) cursor-pointer outline-none min-w-35 transition-[border-color] duration-150 focus:border-[#f4b400] focus:ring-2 focus:ring-[rgba(244,180,0,0.15)]">
-      <option value="">All actions</option>
-      <option *ngFor="let action of actions" [value]="action">{{ action }}</option>
-    </select>
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-      class="absolute right-2.5 pointer-events-none opacity-40">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
-  </div>
-
-  <!-- Date picker -->
-  <div class="relative flex items-center">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-      class="absolute left-2.5 pointer-events-none opacity-45 z-10">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-    <input
-      type="date"
-      [(ngModel)]="filters.dateFrom"
-      (change)="onFilterChange()"
-      class="pl-7.5 pr-3 py-2 text-[13px] font-medium text-[#000035] bg-(--color-background-primary)  border-[rgba(0,0,53,0.25)] border-[0.5px] rounded-(--border-radius-md) outline-none min-w-37.5 transition-[border-color] duration-150 cursor-pointer focus:border-[#f4b400] focus:ring-2 focus:ring-[rgba(244,180,0,0.15)]" />
-  </div>
-
-  <!-- Search -->
-  <div class="relative flex items-center flex-1 min-w-45">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-      class="absolute left-2.5 pointer-events-none opacity-45">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-    <input
-      type="text"
-      placeholder="Search logs..."
-      [(ngModel)]="filters.search"
-      (input)="onFilterChange()"
-      class="w-full pl-7.5 pr-3 py-2 text-[13px] text-[#000035] bg-(--color-background-primary)  border-[rgba(0,0,53,0.25)] border-[0.5px] rounded-(--border-radius-md) outline-none transition-[border-color] duration-150 focus:border-[#f4b400] focus:ring-2 focus:ring-[rgba(244,180,0,0.15)]" />
-  </div>
-
-  <!-- Reset filters button -->
-  <button
-    type="button"
-    (click)="clearFilters()"
-    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium text-[rgba(0,0,53,0.5)] bg-transparent  border-[0.5px] border-[rgba(0,0,53,0.2)] rounded-(--border-radius-md) cursor-pointer whitespace-nowrap transition-all duration-150 hover:bg-[rgba(0,0,53,0.05)] hover:text-[#000035] hover:border-[rgba(0,0,53,0.35)]">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/>
-    </svg>
-    Reset
-  </button>
-
 </div>
