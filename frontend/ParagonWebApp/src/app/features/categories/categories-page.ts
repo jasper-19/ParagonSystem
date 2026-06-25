@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { Article } from '../../models/article.model';
 import {
@@ -35,6 +36,9 @@ export class CategoriesPage {
 
 private readonly articleService = inject(ArticleService);
 private readonly destroyRef = inject(DestroyRef);
+
+private readonly route = inject(ActivatedRoute);
+private readonly router = inject(Router);
 
 private loader = inject(LoaderService);
 
@@ -91,6 +95,16 @@ private loader = inject(LoaderService);
 private initialized = false;
 
 constructor() {
+
+  this.route.queryParamMap
+  .pipe(takeUntilDestroyed(this.destroyRef))
+  .subscribe(params => {
+    const category = params.get('category');
+
+    this.selectedCategory.set(category || undefined);
+    this.currentPage.set(1);
+  });
+
   effect(() => {
     this.filters();
 
@@ -225,4 +239,31 @@ constructor() {
     this.selectedTags.set([...current, tag]);
   }
 }
+
+  setCategory(category?: string): void {
+    this.selectedCategory.set(category);
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        category: category || null,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  clearFilters(): void {
+    this.search.set('');
+    this.sort.set('latest');
+    this.selectedCategory.set(undefined);
+    this.selectedTags.set([]);
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        category: null,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
 }
