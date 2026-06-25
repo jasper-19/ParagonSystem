@@ -110,11 +110,11 @@ export class AdminAuthService {
         const list = res?.sessions ?? [];
         return list.map((s) => ({
           id: s.id,
-          browser: s.browserLabel,
-          os: s.osLabel,
-          device: s.device,
-          lastActive: new Date(s.lastActiveAt),
-          current: s.current,
+          browser: s.browserLabel ?? s.browser ?? 'Unknown Browser',
+          os: s.osLabel ?? s.os ?? 'Unknown OS',
+          device: s.device ?? 'Desktop',
+          lastActive: s.lastActiveAt ? new Date(s.lastActiveAt) : new Date(),
+          current: !!s.current,
         }));
       })
     );
