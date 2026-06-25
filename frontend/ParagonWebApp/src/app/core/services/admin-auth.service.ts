@@ -19,14 +19,13 @@ import { API_ENDPOINTS } from "../config/api.config";
 export interface ActiveSessionDto {
   id: string;
   browser: string;
-  browserVersion?: string;
+  browserVersion: string;
+  browserLabel: string;
   os: string;
+  osLabel: string;
   device: string;
-  userAgent: string | null;
-  ipAddress: string | null;
-  createdAt: string | Date;
-  lastActiveAt: string | Date;
-  revokedAt: string | Date | null;
+  userAgent?: string;
+  lastActiveAt: string;
   current: boolean;
 }
 
@@ -36,11 +35,8 @@ export interface ActiveSessionDto {
 export interface ActiveSession {
   id: string;
   browser: string;
-  browserVersion?: string;
   os: string;
   device: string;
-  userAgent?: string;
-  ipAddress?: string;
   lastActive: Date;
   current: boolean;
 }
@@ -114,16 +110,11 @@ export class AdminAuthService {
         const list = res?.sessions ?? [];
         return list.map((s) => ({
           id: s.id,
-          browser: s.browser,
-          browserVersion: s.browserVersion,
-          os: s.os,
+          browser: s.browserLabel,
+          os: s.osLabel,
           device: s.device,
-          userAgent: s.userAgent ?? undefined,
-          ipAddress: s.ipAddress ?? undefined,
-          lastActive: s.lastActiveAt
-            ? new Date(s.lastActiveAt)
-            : new Date(),
-          current: !!s.current,
+          lastActive: new Date(s.lastActiveAt),
+          current: s.current,
         }));
       })
     );

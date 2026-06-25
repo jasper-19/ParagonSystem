@@ -212,42 +212,37 @@ export const listSessions = asyncHandler(async (req: Request, res: Response) => 
     return;
   }
 
-  const sessions = await sessionRepository.listSessionsByUser(subject, currentSessionId);
-    res.json({
-      sessions: sessions.map((s) => {
-        const parser = new UAParser(s.userAgent ?? "");
-        const browser = parser.getBrowser();
-        const os = parser.getOS();
-        const device = parser.getDevice();
-        return {
-          id: s.id,
-          browser: browser.name ?? "Unknown Browser",
-          browserVersion: browser.version ?? "",
-          os: os.name ?? "Unknown OS",
-          device:
-            device.type === "mobile"
-              ? "Mobile"
-              : device.type === "tablet"
-              ? "Tablet"
-              : "Desktop",
-
-          userAgent: s.userAgent ?? null,
-
-          ipAddress: s.ipAddress ?? null,
-
-          createdAt: s.createdAt,
-
-          lastActiveAt: s.lastActiveAt,
-
-          revokedAt: s.revokedAt ?? null,
-
-          current: currentSessionId
-            ? s.id === currentSessionId
-            : false,
-        };
-
-      }),
-    });
+const sessions = await sessionRepository.listSessionsByUser(subject);
+  res.json({
+    sessions: sessions.map((s) => {
+      const parser = new UAParser(s.userAgent ?? "");
+      const browser = parser.getBrowser();
+      const os = parser.getOS();
+      const device = parser.getDevice();
+      return {
+        id: s.id,
+        browser: browser.name ?? "Unknown Browser",
+        browserVersion: browser.version ?? "",
+        browserLabel: browser.version
+          ? `${browser.name} ${browser.version.split(".")[0]}`
+          : browser.name ?? "Unknown Browser",
+        os: os.name ?? "Unknown OS",
+        osLabel:
+          os.name && os.version
+            ? `${os.name} ${os.version}`
+            : os.name ?? "Unknown OS",
+        device:
+          device.type === "mobile"
+            ? "Mobile"
+            : device.type === "tablet"
+            ? "Tablet"
+            : "Desktop",
+        userAgent: s.userAgent,
+        lastActiveAt: s.lastActiveAt,
+        current: currentSessionId === s.id,
+      };
+    }),
+  });
 });
 
 /**
