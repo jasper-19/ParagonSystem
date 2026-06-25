@@ -1,3 +1,4 @@
+import { UAParser } from "ua-parser-js";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -212,17 +213,41 @@ export const listSessions = asyncHandler(async (req: Request, res: Response) => 
   }
 
   const sessions = await sessionRepository.listSessionsByUser(subject, currentSessionId);
-  res.json({
-    sessions: sessions.map((s) => ({
-      id: s.id,
-      userAgent: s.userAgent ?? null,
-      ipAddress: s.ipAddress ?? null,
-      createdAt: s.createdAt,
-      lastActiveAt: s.lastActiveAt,
-      revokedAt: s.revokedAt ?? null,
-      current: currentSessionId ? s.id === currentSessionId : false,
-    })),
-  });
+    res.json({
+      sessions: sessions.map((s) => {
+        const parser = new UAParser(s.userAgent ?? "");
+        const browser = parser.getBrowser();
+        const os = parser.getOS();
+        const device = parser.getDevice();
+        return {
+          id: s.id,
+          browser: browser.name ?? "Unknown Browser",
+          browserVersion: browser.version ?? "",
+          os: os.name ?? "Unknown OS",
+          device:
+            device.type === "mobile"
+              ? "Mobile"
+              : device.type === "tablet"
+              ? "Tablet"
+              : "Desktop",
+
+          userAgent: s.userAgent ?? null,
+
+          ipAddress: s.ipAddress ?? null,
+
+          createdAt: s.createdAt,
+
+          lastActiveAt: s.lastActiveAt,
+
+          revokedAt: s.revokedAt ?? null,
+
+          current: currentSessionId
+            ? s.id === currentSessionId
+            : false,
+        };
+
+      }),
+    });
 });
 
 /**
