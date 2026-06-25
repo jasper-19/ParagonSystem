@@ -1,120 +1,197 @@
-<div class="mt-4" style="border-radius: var(--border-radius-lg); overflow: hidden; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary);">
+<div class="bg-white rounded-xl shadow border border-gray-100 mt-4">
 
-  <!-- Header Bar -->
-  <div style="background: #000035; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #f4b400;">
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f4b400" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-      </svg>
-      <span style="font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #f4b400;">Activity logs</span>
+  @if (!logs || logs.length === 0) {
+
+    <!-- Empty State -->
+    <div class="px-4 sm:px-6 md:px-8 py-12 sm:py-16 text-center">
+      <div class="inline-block p-4 bg-gray-100 rounded-full mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+
+      <p class="text-gray-500 font-medium">No logs found</p>
+      <p class="text-sm text-gray-400 mt-1">
+        Activity will appear here once actions are recorded.
+      </p>
     </div>
-    <span style="font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: rgba(244,180,0,0.15); color: #f4b400; border: 0.5px solid rgba(244,180,0,0.4);">
-      {{ logs.length }} entries
-    </span>
-  </div>
 
-  <!-- Scrollable Table Wrapper for responsiveness -->
-  <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-    <table style="width: 100%; text-align: left; border-collapse: collapse; min-width: 700px;">
+  } @else {
 
-      <!-- Column Headers with clear visual weight -->
-      <thead>
-        <tr style="background: rgba(0,0,53,0.035); border-bottom: 0.5px solid var(--color-border-tertiary);">
-          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">User</th>
-          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">Action</th>
-          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">Module</th>
-          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">Description</th>
-          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">Date and Time</th>
-          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap;">IP address</th>
-          <th style="padding: 10px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--color-text-secondary); white-space: nowrap; text-align: center; width: 80px;">See Details</th>
-        </tr>
-      </thead>
+    <!-- Desktop Table -->
+    <div class="hidden md:block overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-100">
 
-      <tbody>
-        <tr
-          *ngFor="let log of logs; let even = even"
-          class="log-row"
-          [style.background]="even ? 'transparent' : 'rgba(0,0,53,0.018)'"
-          style="border-bottom: 0.5px solid var(--color-border-tertiary); transition: background 0.15s ease; cursor: default;">
+        <thead class="bg-linear-to-r from-[#000035] to-[#1a3a52]">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">User</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Action</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Module</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Description</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Date and Time</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">IP Address</th>
+            <th class="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
 
-          <!-- User — primary info, strongest weight -->
-          <td style="padding: 12px 16px; white-space: nowrap;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <!-- Avatar with accessible aria-hidden -->
-              <div
-                aria-hidden="true"
-                style="width: 30px; height: 30px; border-radius: 50%; background: #000035; border: 1.5px solid rgba(244,180,0,0.35); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <span style="font-size: 11px; font-weight: 500; color: #f4b400; line-height: 1;">
+        <tbody class="bg-white divide-y divide-gray-50">
+
+          @for (log of logs; track log.id) {
+
+            <tr class="hover:bg-[#f4b400]/10 transition-colors group">
+
+              <!-- User -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-[#000035] border border-[#f4b400]/40 flex items-center justify-center shrink-0">
+                    <span class="text-xs font-bold text-[#f4b400]">
+                      {{ getInitial(log) }}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p class="text-sm font-semibold text-[#000035]">
+                      {{ log.userName || 'Unknown user' }}
+                    </p>
+                    <p class="text-xs text-gray-400">
+                      {{ log.userId || 'System activity' }}
+                    </p>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Action -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-block px-3 py-1 text-xs font-bold uppercase rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
+                  {{ log.action }}
+                </span>
+              </td>
+
+              <!-- Module -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-block px-3 py-1 text-xs font-bold uppercase rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                  {{ log.module }}
+                </span>
+              </td>
+
+              <!-- Description -->
+              <td class="px-6 py-4 max-w-sm">
+                <p
+                  class="text-sm text-gray-600 line-clamp-2"
+                  [title]="log.description"
+                >
+                  {{ log.description }}
+                </p>
+              </td>
+
+              <!-- Date -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                <p class="text-sm font-medium text-[#000035]">
+                  {{ log.createdAt | date:'MMM d, y' }}
+                </p>
+                <p class="text-xs text-gray-400">
+                  {{ log.createdAt | date:'h:mm a' }}
+                </p>
+              </td>
+
+              <!-- IP -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-xs font-mono text-gray-500">
+                  {{ log.ipAddress || '—' }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-6 py-4 text-center">
+                <button
+                  type="button"
+                  (click)="onView(log)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#000035] hover:shadow-md rounded-lg transition"
+                  [attr.aria-label]="'View details for ' + (log.userName || 'activity log')"
+                >
+                  Details
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="md:hidden divide-y divide-gray-100">
+
+      @for (log of logs; track log.id) {
+
+        <div class="p-4 hover:bg-[#f4b400]/5 transition-colors">
+
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-9 h-9 rounded-full bg-[#000035] border border-[#f4b400]/40 flex items-center justify-center shrink-0">
+                <span class="text-xs font-bold text-[#f4b400]">
                   {{ getInitial(log) }}
                 </span>
               </div>
-              <span style="font-size: 13px; font-weight: 500; color: var(--color-text-primary);">{{ log.userName }}</span>
-            </div>
-          </td>
 
-          <!-- Action — semantic badge with consistent sizing -->
-          <td style="padding: 12px 16px; white-space: nowrap;">
-            <span style="display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; background: rgba(244,180,0,0.1); color: #000035; border: 0.5px solid rgba(244,180,0,0.45); letter-spacing: 0.02em;">
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-[#000035] truncate">
+                  {{ log.userName || 'Unknown user' }}
+                </p>
+                <p class="text-xs text-gray-400">
+                  {{ log.createdAt | date:'MMM d, y, h:mm a' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 mb-3">
+            <span class="inline-block px-2.5 py-1 text-xs font-bold uppercase rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
               {{ log.action }}
             </span>
-          </td>
 
-          <!-- Module — secondary info -->
-          <td style="padding: 12px 16px; white-space: nowrap;">
-            <span style="font-size: 13px; color: var(--color-text-primary);">{{ log.module }}</span>
-          </td>
-
-          <!-- Description — tertiary, truncated with full tooltip -->
-          <td style="padding: 12px 16px; max-width: 220px;">
-            <span
-              title="{{ log.description }}"
-              style="font-size: 13px; color: var(--color-text-secondary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              {{ log.description }}
+            <span class="inline-block px-2.5 py-1 text-xs font-bold uppercase rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+              {{ log.module }}
             </span>
-          </td>
+          </div>
 
-          <!-- Date — tabular nums for alignment -->
-          <td style="padding: 12px 16px; white-space: nowrap;">
-            <span style="font-size: 12px; color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">
-              {{ log.createdAt | date:'MMM d, y, h:mm a' }}
-            </span>
-          </td>
+          <p class="text-sm text-gray-600 line-clamp-2 mb-3">
+            {{ log.description }}
+          </p>
 
-          <!-- IP — monospace, lowest hierarchy -->
-          <td style="padding: 12px 16px; white-space: nowrap;">
-            <span style="font-size: 12px; color: var(--color-text-tertiary);">
-              {{ log.ipAddress || '—' }}
-            </span>
-          </td>
+          <div class="grid grid-cols-2 gap-3 text-xs mb-4">
+            <div>
+              <span class="block text-gray-400 mb-1">IP Address</span>
+              <span class="font-mono text-gray-600">{{ log.ipAddress || '—' }}</span>
+            </div>
 
-          <!-- CTA — clear affordance, accessible label -->
-          <td style="padding: 12px 16px; text-align: center;">
-            <button
-              (click)="onView(log)"
-              class="action-button"
-              [attr.aria-label]="'View details for ' + getInitial(log) + ' ' + log.userName + ' on ' + (log.createdAt | date:'MMM d, y, h:mm a')"
-              title="View details">
-              Details
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </button>
-          </td>
+            <div>
+              <span class="block text-gray-400 mb-1">Entity</span>
+              <span class="text-gray-600">{{ log.entityType || '—' }}</span>
+            </div>
+          </div>
 
-        </tr>
-      </tbody>
+          <button
+            type="button"
+            (click)="onView(log)"
+            class="w-full px-3 py-2 text-xs font-semibold text-white bg-[#000035] hover:shadow-md rounded-lg transition"
+          >
+            View Details
+          </button>
 
-    </table>
-  </div>
+        </div>
 
-  <!-- Empty state — feedback when no data -->
-  <div *ngIf="!logs || logs.length === 0" style="padding: 48px 24px; text-align: center;">
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,53,0.25)" stroke-width="1.5" style="margin: 0 auto 12px; display: block;">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-    <p style="font-size: 14px; font-weight: 500; color: var(--color-text-secondary); margin: 0 0 4px;">No logs found</p>
-    <p style="font-size: 13px; color: var(--color-text-tertiary); margin: 0;">Activity will appear here once actions are recorded.</p>
-  </div>
+      }
+
+    </div>
+
+  }
 
 </div>
-
