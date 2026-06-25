@@ -52,10 +52,10 @@
 
                   <div>
                     <p class="text-sm font-semibold text-[#000035]">
-                      {{ log.userName || 'Unknown user' }}
+                      {{ log.userName || 'System activity' }}
                     </p>
                     <p class="text-xs text-gray-400">
-                      {{ log.userId || 'System activity' }}
+                      {{ log.userName ? 'Administrator' : 'Automated system' }}
                     </p>
                   </div>
                 </div>
@@ -81,7 +81,7 @@
                   class="text-sm text-gray-600 line-clamp-2"
                   [title]="log.description"
                 >
-                  {{ log.description }}
+                  {{ formatDescription(log) }}
                 </p>
               </td>
 
@@ -163,7 +163,7 @@
           </div>
 
           <p class="text-sm text-gray-600 line-clamp-2 mb-3">
-            {{ log.description }}
+            {{ formatDescription(log) }}
           </p>
 
           <div class="grid grid-cols-2 gap-3 text-xs mb-4">

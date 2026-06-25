@@ -45,6 +45,24 @@ export class ActivityLogTableComponent {
   }
 
     getInitial(log: ActivityLog): string {
-    return log.userName ? log.userName.charAt(0).toUpperCase() : '';
+      return log.userName ? log.userName.charAt(0).toUpperCase() : '';
+    }
+
+    formatDescription(log: ActivityLog): string {
+    const description = log.description || '';
+
+    if (log.module === 'EDITORIAL_BOARDS' && log.action === 'SATISFY') {
+      const satisfied = log.metadata?.['satisfied'];
+
+      if (satisfied === true) return 'Marked the editorial board as satisfied.';
+      if (satisfied === false) return 'Marked the editorial board as not satisfied.';
+
+      return 'Updated the editorial board satisfaction status.';
+    }
+
+    return description
+      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, 'this record')
+      .replace(/\btrue\b/g, 'Yes')
+      .replace(/\bfalse\b/g, 'No');
   }
 }
