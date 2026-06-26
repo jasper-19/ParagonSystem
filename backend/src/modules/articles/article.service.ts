@@ -22,7 +22,7 @@ export type GetArticlesFilters = {
 //**Retrieve all articles optionally filtered by status */
 
 export async function getArticles(filters: GetArticlesFilters = {}) {
-    return repository.findAll(filters);
+    return repository.findAllCards(filters);
 }
 
 /** Retrieve an article by its slug (Used for article pages) */

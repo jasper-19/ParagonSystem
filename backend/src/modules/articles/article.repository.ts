@@ -28,6 +28,27 @@ function mapRow(row: any) {
   };
 }
 
+function mapCardRow(row: any) {
+  return {
+    id: String(row.id),
+    title: row.title,
+    slug: row.slug,
+    excerpt: row.excerpt,
+    image: row.image,
+    author: row.author,
+    photoby: row.photo_by ?? "",
+    graphicby: row.graphic_by ?? "",
+    illusrationby: row.illustration_by ?? "",
+    category: row.category,
+    tags: row.tags ?? [],
+    status: row.status,
+    featured: row.featured,
+    views: row.views,
+    createdAt: row.created_at,
+    publishedAt: row.published_at ?? undefined,
+  };
+}
+
 export type FindAllFilters = {
   status?: string;
   category?: string;
@@ -119,6 +140,85 @@ export async function findAll(filters: FindAllFilters = {}) {
   );
 
   return result.rows.map(mapRow);
+}
+
+export async function findAllCards(filters: FindAllFilters = {}) {
+  const where: string[] = [];
+  const values: any[] = [];
+
+  const push = (sqlWithQuestionMark: string, value: any) => {
+    values.push(value);
+    where.push(sqlWithQuestionMark.replace("?", `$${values.length}`));
+  };
+
+  // status/category are Postgres enums in this DB, so cast to text for comparisons.
+  if (filters.status) push("LOWER(status::text) = LOWER(?)", filters.status);
+  if (filters.category) push("LOWER(category::text) = LOWER(?)", filters.category);
+  if (typeof filters.featured === "boolean") push("featured = ?", filters.featured);
+
+  if (filters.search) {
+    values.push(`%${filters.search}%`);
+    const p = `$${values.length}`;
+    where.push(`(title ILIKE ${p} OR excerpt ILIKE ${p} OR author ILIKE ${p})`);
+  }
+
+  if (filters.tags && filters.tags.length > 0) {
+    values.push(filters.tags);
+    const p = `$${values.length}`;
+    // Any overlap with selected tags.
+    where.push(`tags && ${p}::text[]`);
+  }
+
+  const page = Number.isFinite(filters.page) && (filters.page as number) > 0 ? (filters.page as number) : 1;
+  const limit = Number.isFinite(filters.limit) && (filters.limit as number) > 0 ? Math.min(filters.limit as number, 100) : 50;
+  const offset = (page - 1) * limit;
+
+  let orderBy = "published_at DESC NULLS LAST, created_at DESC";
+  switch (filters.sort) {
+    case "oldest":
+      orderBy = "created_at ASC";
+      break;
+    case "mostViewed":
+      orderBy = "views DESC NULLS LAST, created_at DESC";
+      break;
+    case "latest":
+    default:
+      orderBy = "published_at DESC NULLS LAST, created_at DESC";
+      break;
+  }
+
+  values.push(limit, offset);
+  const limitParam = `$${values.length - 1}`;
+  const offsetParam = `$${values.length}`;
+  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+  const result = await db.query(
+    `SELECT
+      id,
+      title,
+      slug,
+      excerpt,
+      image,
+      author,
+      photo_by,
+      graphic_by,
+      illustration_by,
+      category,
+      tags,
+      status,
+      featured,
+      views,
+      created_at,
+      published_at
+  FROM articles
+     ${whereSql}
+     ORDER BY ${orderBy}
+     LIMIT ${limitParam}
+     OFFSET ${offsetParam}`,
+    values
+  );
+
+  return result.rows.map(mapCardRow);
 }
 
 export async function findBySlug(slug: string) {
