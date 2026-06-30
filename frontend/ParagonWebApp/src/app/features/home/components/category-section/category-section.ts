@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 
 import { ArticleService } from '../../../../core/services/article.service';
 import { Article } from './../../../../models/article.model';
+
 @Component({
   selector: 'app-category-section',
   standalone: true,
@@ -26,21 +28,31 @@ export class CategorySection implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.articleService.getArticles({ page: 1, limit: 100, featured: false, sort: 'latest' }).subscribe({
-      next: (all) => {
-        // Defer state updates to avoid NG0100 in dev-mode double-check.
-        setTimeout(() => {
-          this.sports = all.filter((a) => a.category === 'Sports');
-          this.news = all.filter((a) => a.category === 'News');
-          this.feature = all.filter((a) => a.category === 'Feature');
-          this.column = all.filter((a) => a.category === 'Column');
-          this.literary = all.filter((a) => a.category === 'Literary');
-          this.editorial = all.filter((a) => a.category === 'Editorial');
-          this.devcom = all.filter((a) => a.category === 'DevCom');
-          this.cdr.markForCheck();
-        }, 0);
+    forkJoin({
+      sports: this.getCategory('Sports'),
+      news: this.getCategory('News'),
+      feature: this.getCategory('Feature'),
+      column: this.getCategory('Column'),
+      literary: this.getCategory('Literary'),
+      editorial: this.getCategory('Editorial'),
+      devcom: this.getCategory('DevCom'),
+    }).subscribe({
+      next: (data) => {
+        this.sports = data.sports;
+        this.news = data.news;
+        this.feature = data.feature;
+        this.column = data.column;
+        this.literary = data.literary;
+        this.editorial = data.editorial;
+        this.devcom = data.devcom;
+
+        this.cdr.markForCheck();
       },
       error: (err) => console.error('Failed to load category articles', err),
     });
+  }
+
+  private getCategory(category: Article['category']) {
+    return this.articleService.getCategoryArticles(category, 4);
   }
 }

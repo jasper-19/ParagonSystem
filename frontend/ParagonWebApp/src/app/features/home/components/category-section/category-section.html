@@ -16,7 +16,7 @@
 
           <div class="flex items-center justify-between">
             <h3 class="text-white font-black uppercase tracking-[0.3em] text-sm">{{ block.title }}</h3>
-            <span class="block w-8 h-[2px] bg-[#F4B400]"></span>
+            <span class="block w-8 h-0.5 bg-[#F4B400]"></span>
           </div>
 
           <article *ngIf="block.data.length" class="group cursor-pointer">
@@ -90,7 +90,7 @@
 
           <div class="flex items-center justify-between">
             <h3 class="text-white font-black uppercase tracking-[0.3em] text-sm">{{ block.title }}</h3>
-            <span class="block w-8 h-[2px] bg-[#F4B400]"></span>
+            <span class="block w-8 h-0.5 bg-[#F4B400]"></span>
           </div>
 
           <article *ngIf="block.data.length" class="group cursor-pointer">
@@ -152,15 +152,15 @@
 
           <!-- Literary Featured — tall hero -->
           <article class="group cursor-pointer flex-1">
-            <a [routerLink]="['/article', literary[0].slug]" class="block h-full flex flex-col">
-              <div class="w-full aspect-[3/2] overflow-hidden">
+            <a [routerLink]="['/article', literary[0].slug]" class="h-full flex flex-col">
+              <div class="w-full aspect-3/2 overflow-hidden">
                 <img [src]="literary[0].image" [alt]="literary[0].title"
                   class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"/>
               </div>
               <div class="p-6 xl:p-8 flex flex-col gap-4 flex-1">
                 <div class="flex items-center justify-between">
                   <h3 class="text-[#F4B400] font-black uppercase tracking-[0.3em] text-sm">Literary</h3>
-                  <span class="block w-8 h-[2px] bg-white/20"></span>
+                  <span class="block w-8 h-0.5 bg-white/20"></span>
                 </div>
                 <div class="border-b border-white/10 pb-4">
                   <p class="text-[#F4B400] text-[9px] font-bold uppercase tracking-[0.3em] mb-2">
@@ -227,7 +227,7 @@
 
           <div class="flex items-center justify-between">
             <h3 class="text-white font-black uppercase tracking-[0.3em] text-sm">{{ block.title }}</h3>
-            <span class="block w-8 h-[2px] bg-[#F4B400]"></span>
+            <span class="block w-8 h-0.5 bg-[#F4B400]"></span>
           </div>
 
           <article *ngIf="block.data.length" class="group cursor-pointer">
@@ -285,11 +285,11 @@
 
       <!-- Literary on mobile/tablet — full-width bottom cell -->
       <ng-container *ngIf="literary.length">
-        <div class="sm:col-span-2 border-t border-white/10 border-t-2 border-t-[#F4B400] p-6 flex flex-col gap-6">
+        <div class="sm:col-span-2 border-white/10 border-t-2 border-t-[#F4B400] p-6 flex flex-col gap-6">
 
           <div class="flex items-center justify-between">
             <h3 class="text-[#F4B400] font-black uppercase tracking-[0.3em] text-sm">Literary</h3>
-            <span class="block w-8 h-[2px] bg-white/20"></span>
+            <span class="block w-8 h-0.5 bg-white/20"></span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">

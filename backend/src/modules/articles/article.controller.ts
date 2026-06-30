@@ -5,6 +5,12 @@ import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
 
+function setPublicCache(res: Response): void {
+    res.set({
+        "Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+    });
+}
+
 /** GET /api/articles?status=<value> */
 export const getArticles =  asyncHandler(
     async (req: Request, res: Response) => {
@@ -79,6 +85,7 @@ export const getArticles =  asyncHandler(
 
         const articles = await service.getArticles(filters);
         
+        setPublicCache(res);
         res.json(articles);
     }
 );
@@ -95,6 +102,7 @@ export const getArticleBySlug = asyncHandler(
             res.status(404).json({ message: "Article not found" });
             return;
         }
+        setPublicCache(res);
         res.json(article);
     }
 );
@@ -107,6 +115,7 @@ export const getArticlesByCategory = asyncHandler(
 
         const articles = await service.getArticlesByCategory(category);
 
+        setPublicCache(res);
         res.json(articles);
     }
 );

@@ -42,17 +42,8 @@ export class FeaturedSection implements OnInit, OnDestroy {
         setTimeout(() => {
           // Keep only the newest 5 featured articles (by createdAt = "added" time).
           this.featured = articles
-            .filter((a: Article) => a.status === 'Published')
-            .sort((a, b) => {
-              const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-              const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-              return bTime - aTime;
-            })
-            .slice(0, 5);
-
           this.currentIndex = 0;
           this.updateDerivedState();
-
           this.stopAutoplay();
           if (this.featured.length > 1) {
             this.startAutoplay();

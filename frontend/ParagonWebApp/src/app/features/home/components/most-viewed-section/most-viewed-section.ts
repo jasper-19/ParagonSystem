@@ -16,8 +16,8 @@ export class MostViewedSection {
   constructor(private articleService: ArticleService) {}
 
   ngOnInit(): void {
-    this.articleService.getArticles({ page: 1, limit: 50, featured: false, sort: 'mostViewed' }).subscribe({
-      next: (articles) => (this.articles = articles.slice(0, 6)),
+    this.articleService.getMostViewedArticles().subscribe({
+      next: (articles) => (this.articles = articles),
       error: (err) => console.error('Failed to load most viewed articles', err),
     });
   }

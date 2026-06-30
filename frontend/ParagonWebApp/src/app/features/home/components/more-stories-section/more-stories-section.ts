@@ -23,7 +23,7 @@ export class MoreStoriesSection implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.articleService.getArticles({ page: 1, limit: 50, featured: false, sort: 'latest' }).subscribe({
+    this.articleService.getLatestArticles().subscribe({
       next: (articles) => {
         // Defer state updates to avoid NG0100 in dev-mode double-check.
         setTimeout(() => {

@@ -7,7 +7,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 
 import { Article, ArticleCategory, CreateArticleDto } from '../../models/article.model';
 import { GetArticlesParams } from '../../models/article-query.model';
@@ -24,6 +24,12 @@ type ApiArticle = Omit<Article, 'createdAt' | 'publishedAt'> & {
 @Injectable({ providedIn: 'root' })
 export class ArticleService {
   private api = API_ENDPOINTS.articles;
+  private featuredCache$?: Observable<Article[]>;
+  private categoriesCache$?: Observable<string[]>;
+  private tagsCache$?: Observable<string[]>;
+  private latestCache$?: Observable<Article[]>;
+  private mostViewedCache$?: Observable<Article[]>;
+  private categoryCache = new Map<string, Observable<Article[]>>();
 
   constructor(private http: HttpClient) {}
 
@@ -54,15 +60,38 @@ export class ArticleService {
     return params;
   }
 
+  private getArticleList(params: Record<string, unknown>): Observable<Article[]> {
+    return this.http
+      .get<ApiArticle[]>(this.api, {
+        params: this.buildParams(params),
+      })
+      .pipe(map((a) => this.normalizeArticles(a)));
+  }
+
+  private clearCache(): void {
+
+    this.featuredCache$ = undefined;
+    this.categoriesCache$ = undefined;
+    this.tagsCache$ = undefined;
+
+    //Future caches
+    this.latestCache$ = undefined;
+    this.mostViewedCache$ = undefined;
+    this.categoryCache.clear();
+  }
+
   /** Admin: list all articles across statuses. */
   getAdminArticles(): Observable<Article[]> {
-    const params = this.buildParams({ page: 1, limit: 100, sort: 'latest' });
-    return this.http.get<ApiArticle[]>(this.api, { params }).pipe(map((a) => this.normalizeArticles(a)));
+    return this.getArticleList({
+      page: 1,
+      limit: 100,
+      sort: 'latest',
+    });
   }
 
   /** Public: list published articles with filters/paging. */
   getArticles(params: GetArticlesParams): Observable<Article[]> {
-    const httpParams = this.buildParams({
+    return this.getArticleList({
       status: 'Published',
       page: params.page,
       limit: params.limit,
@@ -72,10 +101,6 @@ export class ArticleService {
       sort: params.sort,
       tags: params.tags,
     });
-
-    return this.http
-      .get<ApiArticle[]>(this.api, { params: httpParams })
-      .pipe(map((a) => this.normalizeArticles(a)));
   }
 
   searchArticles(query: string): Observable<Article[]> {
@@ -88,15 +113,23 @@ export class ArticleService {
   }
 
   /** Public: featured + published. */
-  getFeaturedArticles(): Observable<Article[]> {
-    const params = this.buildParams({
-      status: 'Published',
-      featured: true,
-      page: 1,
-      limit: 50,
-    });
+  getFeaturedArticles(limit = 5): Observable<Article[]> {
 
-    return this.http.get<ApiArticle[]>(this.api, { params }).pipe(map((a) => this.normalizeArticles(a)));
+    if (!this.featuredCache$) {
+
+      this.featuredCache$ = this.getArticleList({
+        status: 'Published',
+        featured: true,
+        page: 1,
+        limit,
+      }).pipe(
+        shareReplay(1)
+      );
+
+    }
+
+    return this.featuredCache$;
+
   }
 
   getBySlug(slug: string): Observable<Article> {
@@ -121,29 +154,62 @@ export class ArticleService {
 
   /** Derived metadata for filters UI (from published articles). */
   getCategories(): Observable<string[]> {
-    const params = this.buildParams({ status: 'Published', page: 1, limit: 100 });
-    return this.http.get<ApiArticle[]>(this.api, { params }).pipe(
-      map((articles) => {
-        const categories = [...new Set((articles ?? []).map((a) => a.category))].sort();
-        return categories;
-      }),
-      catchError(() => of([]))
-    );
+
+    if (!this.categoriesCache$) {
+
+      this.categoriesCache$ = this.getArticleList({
+        status: 'Published',
+        page: 1,
+        limit: 100,
+      }).pipe(
+
+        map(articles =>
+          [...new Set(articles.map(a => a.category))].sort()
+        ),
+
+        shareReplay(1)
+
+      );
+
+    }
+
+    return this.categoriesCache$;
+
   }
 
   getTags(): Observable<string[]> {
-    const params = this.buildParams({ status: 'Published', page: 1, limit: 100 });
-    return this.http.get<ApiArticle[]>(this.api, { params }).pipe(
-      map((articles) => {
-        const tags = (articles ?? []).flatMap((a) => (a.tags ?? []) as string[]);
-        return [...new Set(tags)].sort();
-      }),
-      catchError(() => of([]))
-    );
+
+    if (!this.tagsCache$) {
+
+      this.tagsCache$ = this.getArticleList({
+        status: 'Published',
+        page: 1,
+        limit: 100,
+      }).pipe(
+
+        map(articles => {
+
+          const tags = articles.flatMap(a => a.tags ?? []);
+
+          return [...new Set(tags)].sort();
+
+        }),
+
+        shareReplay(1)
+
+      );
+
+    }
+
+    return this.tagsCache$;
+
   }
 
   createArticle(article: CreateArticleDto): Observable<Article> {
-    return this.http.post<ApiArticle>(this.api, article).pipe(map((a) => this.normalizeArticle(a)));
+    return this.http.post<ApiArticle>(this.api, article).pipe(
+      map((a) => this.normalizeArticle(a)),
+      tap(() => this.clearCache())
+    );
   }
 
   updateArticle(id: string, updated: Partial<Article>): Observable<Article> {
@@ -163,39 +229,136 @@ export class ArticleService {
       featured: updated.featured,
     };
 
-    return this.http.patch<ApiArticle>(`${this.api}/${id}`, dto).pipe(map((a) => this.normalizeArticle(a)));
+    return this.http.patch<ApiArticle>(`${this.api}/${id}`, dto).pipe(
+      map((a) => this.normalizeArticle(a)),
+      tap(() => this.clearCache())
+    );
   }
 
   publishArticle(id: string): Observable<Article> {
     return this.http
       .patch<ApiArticle>(`${this.api}/${id}/publish`, { status: 'Published' })
-      .pipe(map((a) => this.normalizeArticle(a)));
+      .pipe(
+        map((a) => this.normalizeArticle(a)),
+        tap(() => this.clearCache())
+      );
   }
 
   archiveArticle(id: string): Observable<Article> {
-    return this.http.patch<ApiArticle>(`${this.api}/${id}/archive`, {}).pipe(map((a) => this.normalizeArticle(a)));
+    return this.http
+      .patch<ApiArticle>(`${this.api}/${id}/archive`, {})
+      .pipe(
+        map((a) => this.normalizeArticle(a)),
+        tap(() => this.clearCache())
+      );
   }
 
   deleteArticle(id: string): Observable<unknown> {
-    return this.http.delete(`${this.api}/${id}`);
+    return this.http.delete(`${this.api}/${id}`).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
-  getRelatedArticles(slug: string, category: string, limit = 3): Observable<Article[]> {
-    const params = this.buildParams({ status: 'Published', category, page: 1, limit: 50 });
-    return this.http.get<ApiArticle[]>(this.api, { params }).pipe(
+
+  getLatestArticles(limit = 8): Observable<Article[]> {
+
+    if (!this.latestCache$) {
+
+      this.latestCache$ = this.getArticleList({
+        status: 'Published',
+        featured: false,
+        page: 1,
+        limit,
+        sort: 'latest',
+      }).pipe(
+        shareReplay(1)
+      );
+
+    }
+
+    return this.latestCache$;
+
+  }
+
+  getMostViewedArticles(limit = 6): Observable<Article[]> {
+
+    if (!this.mostViewedCache$) {
+
+      this.mostViewedCache$ = this.getArticleList({
+        status: 'Published',
+        featured: false,
+        page: 1,
+        limit,
+        sort: 'mostViewed',
+      }).pipe(
+        shareReplay(1)
+      );
+
+    }
+
+    return this.mostViewedCache$;
+
+  }
+  getCategoryArticles(
+    category: ArticleCategory,
+    limit = 4
+  ): Observable<Article[]> {
+
+    const cached = this.categoryCache.get(category);
+
+    if (cached) {
+      return cached;
+    }
+
+    const request = this.getArticleList({
+      status: 'Published',
+      category,
+      page: 1,
+      limit,
+      featured: false,
+      sort: 'latest',
+    }).pipe(
+      shareReplay(1)
+    );
+
+    this.categoryCache.set(category, request);
+
+    return request;
+
+  }
+
+  getRelatedArticles(
+    slug: string,
+    category: string,
+    limit = 3
+  ): Observable<Article[]> {
+    return this.getArticleList({
+      status: 'Published',
+      category,
+      page: 1,
+      limit: limit + 1,
+    }).pipe(
       map((articles) =>
-        this.normalizeArticles(articles)
-          .filter((a) => a.slug !== slug && a.category === (category as any))
+        articles
+          .filter((a) => a.slug !== slug)
           .slice(0, limit)
-      ),
+        ),
       catchError(() => of([]))
     );
   }
 
   getOtherStories(slug: string, limit = 8): Observable<Article[]> {
-    const params = this.buildParams({ status: 'Published', page: 1, limit: 100, sort: 'latest' });
-    return this.http.get<ApiArticle[]>(this.api, { params }).pipe(
-      map((articles) => this.normalizeArticles(articles).filter((a) => a.slug !== slug).slice(0, limit)),
+    return this.getArticleList({
+      status: 'Published',
+      page: 1,
+      limit: limit + 1,
+      sort: 'latest',
+    }).pipe(
+      map(articles =>
+        articles
+          .filter(a => a.slug !== slug)
+          .slice(0, limit)
+      ),
       catchError(() => of([]))
     );
   }
