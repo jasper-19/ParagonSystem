@@ -8,6 +8,7 @@ import {
   updateArticleSchema,
   publishArticleSchema,
 } from "./article.schema";
+import { publicCache } from "../../middlewares/cache";
 
 const router = Router();
 
@@ -39,19 +40,19 @@ const createLimiter = rateLimit({
  */
 
 // GET /api/articles
-router.get("/", controller.getArticles);
+router.get("/", publicCache(300), controller.getArticles);
 
 // GET /api/articles/category/:category
-router.get("/category/:category", controller.getArticlesByCategory);
+router.get("/category/:category", publicCache(300), controller.getArticlesByCategory);
 
 // GET /api/articles/categories
-router.get("/categories", controller.getCategories);
+router.get("/categories", publicCache(3600), controller.getCategories);
 
 // GET /api/articles/tags
-router.get("/tags", controller.getTags);
+router.get("/tags", publicCache(3600), controller.getTags);
 
 // GET /api/articles/:slug
-router.get("/:slug", controller.getArticleBySlug);
+router.get("/:slug", publicCache(300), controller.getArticleBySlug);
 
 // PATCH /api/articles/:slug/views
 router.patch("/:slug/views", viewLimiter, controller.incrementArticleViews);

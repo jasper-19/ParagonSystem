@@ -10,6 +10,8 @@ import { errorHandler } from "./middlewares/errorHandler";
 
 const app = express();
 
+app.set("etag", "strong"); // Enable strong ETag headers for caching
+
 // Secure HTTP response headers (XSS protection, clickjacking, etc.)
 app.use(
   helmet({
