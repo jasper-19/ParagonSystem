@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import * as repository from "./media.repository";
 import { MEDIA_TYPE_VALUES, MediaType } from "./media.schema";
 import { supabase, storageBucket } from "../../config/storage";
+import sharp from "sharp";
 
 export type GetMediaFilters = {
   search?: string;
@@ -46,6 +47,26 @@ export type UploadInput = {
   size: number;
 };
 
+async function optimizeImage(file: UploadInput) {
+  const optimizedBuffer = await sharp(file.buffer)
+    .rotate()
+    .resize({
+      width: 1600,
+      withoutEnlargement: true,
+    })
+    .webp({
+      quality: 82,
+      effort: 4,  
+    })
+    .toBuffer();
+
+  return {
+    buffer: optimizedBuffer,
+    mimetype: "image/webp",
+    extension: "webp",
+    size: optimizedBuffer.length,
+  };
+}
 export async function createMediaFromUpload(file: UploadInput | undefined) {
   if (!file) {
     const err = Object.assign(new Error("No file uploaded"), { statusCode: 400 });
@@ -53,7 +74,21 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
   }
 
   const fileType = detectMediaType(file.mimetype);
-  const objectKey = `media/${Date.now()}-${randomUUID()}-${safeFilename(file.originalname)}`; 
+  const isImage = fileType === "image";
+
+  const uploadFile = isImage
+    ? await optimizeImage(file)
+    : {
+        buffer: file.buffer,
+        mimetype: file.mimetype || "application/octet-stream",
+        extension: file.originalname.split(".").pop() || "bin",
+        size: file.size || file.buffer.length,
+      };
+
+  const baseName = safeFilename(file.originalname.replace(/\.[^/.]+$/, ""));
+  const objectKey = isImage
+    ? `media/${Date.now()}-${randomUUID()}-${baseName}.webp`
+    : `media/${Date.now()}-${randomUUID()}-${safeFilename(file.originalname)}`;
 
   if (!file.buffer || file.buffer.length === 0) {
     const err = Object.assign(new Error("Uploaded file is empty"), { statusCode: 400 });
@@ -62,8 +97,8 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
 
   const { error } = await supabase.storage
     .from(storageBucket)
-    .upload(objectKey, file.buffer, {
-      contentType: file.mimetype || "application/octet-stream",
+    .upload(objectKey, uploadFile.buffer, {
+      contentType: uploadFile.mimetype,
       upsert: false,
     });
 
@@ -73,12 +108,12 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
   }
 
   return repository.create({
-    fileName: file.originalname,
+    fileName: isImage ? `${baseName}.webp` : file.originalname,
     diskName: objectKey,
     storagePath: objectKey,
     fileType,
-    mimeType: file.mimetype || "application/octet-stream",
-    size: file.size || 0,
+    mimeType: uploadFile.mimetype,
+    size: uploadFile.size,
   });
 }
 

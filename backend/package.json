@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --ignore-watch node_modules,dist src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "migrate:article-images": "ts-node src/scripts/migrate-article-images.ts"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "pg": "^8.20.0",
+    "sharp": "^0.35.2",
     "ua-parser-js": "^2.0.10",
     "ws": "^8.21.0",
     "xss": "^1.0.15",
