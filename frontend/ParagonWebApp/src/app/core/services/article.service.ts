@@ -154,55 +154,11 @@ export class ArticleService {
 
   /** Derived metadata for filters UI (from published articles). */
   getCategories(): Observable<string[]> {
-
-    if (!this.categoriesCache$) {
-
-      this.categoriesCache$ = this.getArticleList({
-        status: 'Published',
-        page: 1,
-        limit: 100,
-      }).pipe(
-
-        map(articles =>
-          [...new Set(articles.map(a => a.category))].sort()
-        ),
-
-        shareReplay(1)
-
-      );
-
-    }
-
-    return this.categoriesCache$;
-
+    return this.http.get<string[]>(`${this.api}/categories`);
   }
 
   getTags(): Observable<string[]> {
-
-    if (!this.tagsCache$) {
-
-      this.tagsCache$ = this.getArticleList({
-        status: 'Published',
-        page: 1,
-        limit: 100,
-      }).pipe(
-
-        map(articles => {
-
-          const tags = articles.flatMap(a => a.tags ?? []);
-
-          return [...new Set(tags)].sort();
-
-        }),
-
-        shareReplay(1)
-
-      );
-
-    }
-
-    return this.tagsCache$;
-
+    return this.http.get<string[]>(`${this.api}/tags`);
   }
 
   createArticle(article: CreateArticleDto): Observable<Article> {

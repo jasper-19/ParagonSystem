@@ -417,3 +417,29 @@ export async function incrementViews(slug: string) {
 export async function remove(id: string) {
   await db.query(`DELETE FROM articles WHERE id = $1`, [id]);
 }
+
+export async function findCategories(): Promise<string[]> {
+  const result = await db.query(
+    `
+    SELECT DISTINCT category
+    FROM articles
+    WHERE LOWER(status::text) = 'published'
+    ORDER BY category
+    `
+  );
+
+  return result.rows.map((row) => row.category);
+}
+
+export async function findTags(): Promise<string[]> {
+  const result = await db.query(
+    `
+    SELECT DISTINCT UNNEST(tags) AS tag
+    FROM articles
+    WHERE LOWER(status::text) = 'published'
+    ORDER BY tag
+    `
+  );
+
+    return result.rows.map(r => r.tag);
+}

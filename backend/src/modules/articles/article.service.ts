@@ -35,6 +35,17 @@ export async function getArticlesByCategory(category: string) {
     return repository.findByCategory(category);
 }
 
+//**Retrieve Categories */
+export async function getCategories() {
+    return repository.findCategories();
+}
+
+
+//**Retrieve Tags */
+export async function getTags() {
+    return repository.findTags();
+}
+
 /** Create a new article. */
 export async function createArticle(data: unknown) {
     return repository.create(data);

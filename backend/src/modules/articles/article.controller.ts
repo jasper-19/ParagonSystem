@@ -120,6 +120,20 @@ export const getArticlesByCategory = asyncHandler(
     }
 );
 
+//** GET /api/articles/categories */
+export const getCategories = asyncHandler(
+    async (_req: Request, res: Response) => {
+        res.json(await service.getCategories());
+    }
+);
+
+/** GET /api/articles/tags */   
+export const getTags = asyncHandler(
+    async (_req: Request, res: Response) => {
+        res.json(await service.getTags());
+    }
+);
+
 /** POST /api/articles  - body validated by Zod middleware*/
 export const createArticle = asyncHandler(
     async (req: Request, res: Response) => {

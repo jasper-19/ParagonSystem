@@ -44,6 +44,12 @@ router.get("/", controller.getArticles);
 // GET /api/articles/category/:category
 router.get("/category/:category", controller.getArticlesByCategory);
 
+// GET /api/articles/categories
+router.get("/categories", controller.getCategories);
+
+// GET /api/articles/tags
+router.get("/tags", controller.getTags);
+
 // GET /api/articles/:slug
 router.get("/:slug", controller.getArticleBySlug);
 
