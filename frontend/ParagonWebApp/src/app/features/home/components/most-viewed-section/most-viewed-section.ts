@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
 import { ArticleService } from "../../../../core/services/article.service";
 import { RouterModule } from '@angular/router';
+import { imageVariant } from '../../../../shared/utils/image-variant.util';
 
 @Component({
   selector: 'app-most-viewed-section',
@@ -11,6 +12,8 @@ import { RouterModule } from '@angular/router';
   templateUrl: './most-viewed-section.html'
 })
 export class MostViewedSection {
+  protected readonly imageVariant = imageVariant;
+
   articles: Article[] = [];
 
   constructor(private articleService: ArticleService) {}

@@ -22,7 +22,10 @@
           <article *ngIf="block.data.length" class="group cursor-pointer">
             <a [routerLink]="['/article', block.data[0].slug]" class="block">
               <div class="w-full aspect-video overflow-hidden">
-                <img [src]="block.data[0].image" [alt]="block.data[0].title"
+                <img
+                  [src]="imageVariant(block.data[0].image, 'medium')"
+                  [alt]="block.data[0].title"
+                  loading="lazy"
                   class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"/>
               </div>
               <div class="mt-4 pb-5 border-b border-white/10">
@@ -54,7 +57,10 @@
             <article *ngFor="let a of block.data.slice(1, 4)" class="group cursor-pointer py-4 first:pt-0 last:pb-0">
               <a [routerLink]="['/article', a.slug]" class="flex gap-4 items-start">
                 <div class="w-20 h-14 overflow-hidden shrink-0">
-                  <img [src]="a.image" [alt]="a.title"
+                  <img
+                    [src]="imageVariant(a.image, 'thumbnail')"
+                    [alt]="a.title"
+                    loading="lazy"
                     class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"/>
                 </div>
                 <div>
@@ -96,7 +102,10 @@
           <article *ngIf="block.data.length" class="group cursor-pointer">
             <a [routerLink]="['/article', block.data[0].slug]" class="block">
               <div class="w-full aspect-video overflow-hidden">
-                <img [src]="block.data[0].image" [alt]="block.data[0].title"
+                <img
+                  [src]="imageVariant(block.data[0].image, 'medium')"
+                  [alt]="block.data[0].title"
+                  loading="lazy"
                   class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"/>
               </div>
               <div class="mt-4 pb-4 border-b border-white/10">
@@ -128,7 +137,10 @@
             <article *ngFor="let a of block.data.slice(1, 4)" class="group cursor-pointer py-3 first:pt-0 last:pb-0">
               <a [routerLink]="['/article', a.slug]" class="flex gap-3 items-start">
                 <div class="w-16 h-12 overflow-hidden shrink-0">
-                  <img [src]="a.image" [alt]="a.title"
+                  <img
+                    [src]="imageVariant(a.image, 'thumbnail')"
+                    [alt]="a.title"
+                    loading="lazy"
                     class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"/>
                 </div>
                 <div>
@@ -154,7 +166,10 @@
           <article class="group cursor-pointer flex-1">
             <a [routerLink]="['/article', literary[0].slug]" class="h-full flex flex-col">
               <div class="w-full aspect-3/2 overflow-hidden">
-                <img [src]="literary[0].image" [alt]="literary[0].title"
+                <img
+                  [src]="imageVariant(literary[0].image, 'medium')"
+                  [alt]="literary[0].title"
+                  loading="lazy"
                   class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"/>
               </div>
               <div class="p-6 xl:p-8 flex flex-col gap-4 flex-1">
@@ -190,7 +205,10 @@
                   <article *ngFor="let a of literary.slice(1, 4)" class="group/mini cursor-pointer py-3 first:pt-0 last:pb-0">
                     <a [routerLink]="['/article', a.slug]" class="flex gap-3 items-start">
                       <div class="w-16 h-12 overflow-hidden shrink-0">
-                        <img [src]="a.image" [alt]="a.title"
+                        <img
+                          [src]="imageVariant(a.image, 'thumbnail')"
+                          [alt]="a.title"
+                          loading="lazy"
                           class="w-full h-full object-cover object-center transition-transform duration-300 group-hover/mini:scale-110"/>
                       </div>
                       <div>
@@ -233,7 +251,10 @@
           <article *ngIf="block.data.length" class="group cursor-pointer">
             <a [routerLink]="['/article', block.data[0].slug]" class="block">
               <div class="w-full aspect-video overflow-hidden">
-                <img [src]="block.data[0].image" [alt]="block.data[0].title"
+                <img
+                  [src]="imageVariant(block.data[0].image, 'medium')"
+                  [alt]="block.data[0].title"
+                  loading="lazy"
                   class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"/>
               </div>
               <div class="mt-4 pb-4 border-b border-white/10">
@@ -265,7 +286,10 @@
             <article *ngFor="let a of block.data.slice(1, 4)" class="group cursor-pointer py-4 first:pt-0 last:pb-0">
               <a [routerLink]="['/article', a.slug]" class="flex gap-4 items-start">
                 <div class="w-20 h-14 overflow-hidden shrink-0">
-                  <img [src]="a.image" [alt]="a.title"
+                  <img
+                    [src]="imageVariant(a.image, 'thumbnail')"
+                    [alt]="a.title"
+                    loading="lazy"
                     class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"/>
                 </div>
                 <div>
@@ -297,7 +321,10 @@
             <article class="group cursor-pointer">
               <a [routerLink]="['/article', literary[0].slug]" class="block">
                 <div class="w-full aspect-video overflow-hidden">
-                  <img [src]="literary[0].image" [alt]="literary[0].title"
+                  <img
+                    [src]="imageVariant(literary[0].image, 'medium')"
+                    [alt]="literary[0].title"
+                    loading="lazy"
                     class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"/>
                 </div>
                 <div class="mt-4 pb-4 border-b border-white/10">
@@ -330,7 +357,10 @@
               <article *ngFor="let a of literary.slice(1, 4)" class="group cursor-pointer py-4 first:pt-0 last:pb-0">
                 <a [routerLink]="['/article', a.slug]" class="flex gap-4 items-start">
                   <div class="w-20 h-14 overflow-hidden shrink-0">
-                    <img [src]="a.image" [alt]="a.title"
+                    <img
+                      [src]="imageVariant(a.image, 'thumbnail')"
+                      [alt]="a.title"
+                      loading="lazy"
                       class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"/>
                   </div>
                   <div>

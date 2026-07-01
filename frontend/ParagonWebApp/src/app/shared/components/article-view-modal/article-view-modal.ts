@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { Article } from '../../../models/article.model';
+import { imageVariant } from '../../utils/image-variant.util';
 
 @Component({
   selector: 'app-article-view-modal',
@@ -9,6 +10,8 @@ import { Article } from '../../../models/article.model';
   templateUrl: './article-view-modal.html',
 })
 export class ArticleViewModal implements OnChanges, OnDestroy {
+  protected readonly imageVariant = imageVariant;
+
   @Input() article: Article | null = null;
   @Output() close = new EventEmitter<void>();
 

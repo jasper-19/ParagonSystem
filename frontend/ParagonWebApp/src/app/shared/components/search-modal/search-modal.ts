@@ -7,6 +7,7 @@ import { debounceTime, distinctUntilChanged, switchMap, catchError, tap } from '
 
 import { ArticleService } from '../../../core/services/article.service';
 import { Article } from '../../../models/article.model';
+import { imageVariant } from '../../utils/image-variant.util';
 
 @Component({
   selector: 'app-search-modal',
@@ -15,6 +16,8 @@ import { Article } from '../../../models/article.model';
   templateUrl: './search-modal.html'
 })
 export class SearchModal implements OnInit, AfterViewInit {
+  protected readonly imageVariant = imageVariant;
+
   @Output() close = new EventEmitter<void>();
 
   @ViewChild('searchInput')

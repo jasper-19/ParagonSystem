@@ -102,8 +102,9 @@
           >
             <img
               *ngIf="article.image"
-              [src]="article.image"
+              [src]="imageVariant(article.image, 'thumbnail')"
               [alt]="article.title"
+              loading="lazy"
               class="w-20 h-16 sm:w-32 sm:h-24 object-cover rounded-xl bg-gray-100 shrink-0"
             />
 
@@ -216,8 +217,9 @@
         >
           <img
             *ngIf="article.image"
-            [src]="article.image"
+            [src]="imageVariant(article.image, 'thumbnail')"
             [alt]="article.title"
+            loading="lazy"
             class="w-20 h-16 sm:w-32 sm:h-24 object-cover rounded-xl bg-gray-100 shrink-0"
           />
 

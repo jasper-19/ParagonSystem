@@ -3,6 +3,7 @@ import { ArticleService } from '../../../../core/services/article.service';
 import { Article } from '../../../../models/article.model';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { imageVariant } from '../../../../shared/utils/image-variant.util';
 
 
 @Component({
@@ -14,6 +15,7 @@ import { RouterModule } from '@angular/router';
 })
 
 export class MoreStoriesSection implements OnInit {
+  protected readonly imageVariant = imageVariant;
 
   stories: Article[] = [];
 

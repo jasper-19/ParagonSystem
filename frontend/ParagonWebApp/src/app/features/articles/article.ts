@@ -16,6 +16,7 @@ import { Related } from './components/related/related';
 import { OtherStories } from './components/other-stories/other-stories';
 import { StaffApplication } from './components/staff-application/staff-application';
 import { ArticleSkeleton } from './components/skeleton/article-skeleton';
+import { imageVariant } from '../../shared/utils/image-variant.util';
 
 @Component({
   selector: 'app-article',
@@ -33,6 +34,8 @@ import { ArticleSkeleton } from './components/skeleton/article-skeleton';
   templateUrl: './article.html',
 })
 export class ArticlePage {
+
+  protected readonly imageVariant = imageVariant;
 
   private route = inject(ActivatedRoute);
   private articleService = inject(ArticleService);

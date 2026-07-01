@@ -38,7 +38,9 @@
         <!-- Thumbnail -->
         <div class="relative w-28 h-36 shrink-0 overflow-hidden rounded-lg shadow-lg mt-1">
           <img
-            [src]="a.image"
+            [src]="imageVariant(a.image, 'thumbnail')"
+            [alt]="a.title"
+            loading="lazy"
             class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
           />
           <!-- Gold tint overlay on hover -->

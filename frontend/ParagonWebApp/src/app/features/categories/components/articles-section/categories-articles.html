@@ -17,8 +17,9 @@
         <!-- Image -->
         <div class="relative overflow-hidden bg-slate-100">
           <img
-            [src]="article.image"
+            [src]="imageVariant(article.image, 'medium')"
             [alt]="article.title"
+            loading="lazy"
             class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <!-- Category Badge on Image -->

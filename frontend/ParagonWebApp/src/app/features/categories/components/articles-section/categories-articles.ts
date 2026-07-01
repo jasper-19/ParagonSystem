@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Article } from '../../../../models/article.model';
+import { imageVariant } from '../../../../shared/utils/image-variant.util';
 
 @Component({
   selector: 'app-categories-articles',
@@ -19,6 +20,7 @@ import { Article } from '../../../../models/article.model';
 })
 export class CategoriesArticles
   implements AfterViewInit, OnDestroy {
+    protected readonly imageVariant = imageVariant;
 
   @Input({ required: true }) articles!: Article[];
   @Input({ required: true }) loading!: boolean;

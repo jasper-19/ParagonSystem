@@ -28,8 +28,9 @@
         <!-- Image -->
         <div class="aspect-16/10 overflow-hidden bg-gray-100 relative">
           <img
-            [src]="a.image"
+            [src]="imageVariant(a.image, 'thumbnail')"
             [alt]="a.title"
+            loading="lazy"
             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div class="absolute inset-0 ring-1 ring-inset ring-gray-900/5 pointer-events-none"></div>

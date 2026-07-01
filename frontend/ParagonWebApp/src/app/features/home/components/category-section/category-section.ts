@@ -5,6 +5,7 @@ import { forkJoin } from 'rxjs';
 
 import { ArticleService } from '../../../../core/services/article.service';
 import { Article } from './../../../../models/article.model';
+import { imageVariant } from '../../../../shared/utils/image-variant.util';
 
 @Component({
   selector: 'app-category-section',
@@ -14,6 +15,8 @@ import { Article } from './../../../../models/article.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategorySection implements OnInit {
+  protected readonly imageVariant = imageVariant;
+
   sports: Article[] = [];
   news: Article[] = [];
   feature: Article[] = [];

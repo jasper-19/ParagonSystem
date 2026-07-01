@@ -71,7 +71,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
               <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Slug</div>
-              <div class="text-sm font-medium text-slate-700 break-words">{{ a.slug }}</div>
+              <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ a.slug }}</div>
             </div>
 
             <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
@@ -103,7 +103,10 @@
 
             <!-- Use a square container so the image defines a consistent column height. -->
             <div class="rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm aspect-square">
-              <img [src]="a.image" [alt]="a.title" class="w-full h-full object-cover" />
+              <img
+                [src]="imageVariant(a.image, 'medium')"
+                [alt]="a.title"
+                class="w-full h-full object-cover" />
             </div>
           </div>
 
@@ -118,22 +121,22 @@
               <div class="grid grid-rows-4 gap-3 h-full">
                 <div class="rounded-xl border border-slate-200 bg-white/70 p-4 flex flex-col justify-center">
                   <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Written By</div>
-                  <div class="text-sm font-medium text-slate-700 break-words">{{ a.author }}</div>
+                  <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ a.author }}</div>
                 </div>
 
                 <div class="rounded-xl border border-slate-200 bg-white/70 p-4 flex flex-col justify-center">
                   <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Photo By</div>
-                  <div class="text-sm font-medium text-slate-700 break-words">{{ a.photoby || '-' }}</div>
+                  <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ a.photoby || '-' }}</div>
                 </div>
 
                 <div class="rounded-xl border border-slate-200 bg-white/70 p-4 flex flex-col justify-center">
                   <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Graphic By</div>
-                  <div class="text-sm font-medium text-slate-700 break-words">{{ a.graphicby || '-' }}</div>
+                  <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ a.graphicby || '-' }}</div>
                 </div>
 
                 <div class="rounded-xl border border-slate-200 bg-white/70 p-4 flex flex-col justify-center">
                   <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Illustration By</div>
-                  <div class="text-sm font-medium text-slate-700 break-words">{{ a.illusrationby || '-' }}</div>
+                  <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ a.illusrationby || '-' }}</div>
                 </div>
               </div>
             </div>

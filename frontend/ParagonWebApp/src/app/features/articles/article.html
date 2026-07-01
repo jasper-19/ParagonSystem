@@ -22,7 +22,7 @@
    <div class="max-w-4xl mx-auto px-4 mt-8 mb-2">
       <div class="relative overflow-hidden rounded-lg shadow-sm group">
         <img
-          [src]="article.image"
+          [src]="imageVariant(article.image, 'large')"
           [alt]="article.title"
           class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.02]"/>
         <div class="absolute inset-0 ring-1 ring-inset ring-gray-900/10 rounded-lg pointer-events-none"></div>

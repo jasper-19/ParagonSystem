@@ -10,6 +10,7 @@ import { RouterModule } from '@angular/router';
 
 import { ArticleService } from '../../../../core/services/article.service';
 import { Article } from '../../../../models/article.model';
+import { imageVariant } from '../../../../shared/utils/image-variant.util';
 
 @Component({
   selector: 'app-featured-section',
@@ -19,6 +20,8 @@ import { Article } from '../../../../models/article.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeaturedSection implements OnInit, OnDestroy {
+  protected readonly imageVariant = imageVariant;
+
   Math = Math;
 
   featured: Article[] = [];

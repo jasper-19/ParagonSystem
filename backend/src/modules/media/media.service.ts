@@ -47,26 +47,23 @@ export type UploadInput = {
   size: number;
 };
 
-async function optimizeImage(file: UploadInput) {
-  const optimizedBuffer = await sharp(file.buffer)
-    .rotate()
-    .resize({
-      width: 1600,
-      withoutEnlargement: true,
-    })
-    .webp({
-      quality: 82,
-      effort: 4,  
-    })
-    .toBuffer();
+async function createImageVariants(file: UploadInput) {
+  const base = sharp(file.buffer).rotate();
+
+  const [thumbnail, medium, large] = await Promise.all([
+    base.clone().resize({ width: 400, withoutEnlargement: true }).webp({ quality: 78, effort: 4 }).toBuffer(),
+    base.clone().resize({ width: 900, withoutEnlargement: true }).webp({ quality: 80, effort: 4 }).toBuffer(),
+    base.clone().resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 82, effort: 4 }).toBuffer(),
+  ]);
 
   return {
-    buffer: optimizedBuffer,
+    thumbnail,
+    medium,
+    large,
     mimetype: "image/webp",
-    extension: "webp",
-    size: optimizedBuffer.length,
   };
 }
+
 export async function createMediaFromUpload(file: UploadInput | undefined) {
   if (!file) {
     const err = Object.assign(new Error("No file uploaded"), { statusCode: 400 });
@@ -76,45 +73,50 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
   const fileType = detectMediaType(file.mimetype);
   const isImage = fileType === "image";
 
-  const uploadFile = isImage
-    ? await optimizeImage(file)
-    : {
-        buffer: file.buffer,
-        mimetype: file.mimetype || "application/octet-stream",
-        extension: file.originalname.split(".").pop() || "bin",
-        size: file.size || file.buffer.length,
-      };
-
+  const uploadId = randomUUID();
   const baseName = safeFilename(file.originalname.replace(/\.[^/.]+$/, ""));
-  const objectKey = isImage
-    ? `media/${Date.now()}-${randomUUID()}-${baseName}.webp`
-    : `media/${Date.now()}-${randomUUID()}-${safeFilename(file.originalname)}`;
 
-  if (!file.buffer || file.buffer.length === 0) {
-    const err = Object.assign(new Error("Uploaded file is empty"), { statusCode: 400 });
-    throw err;
-  }
+  if (isImage) {
+    const variants = await createImageVariants(file);
 
-  const { error } = await supabase.storage
-    .from(storageBucket)
-    .upload(objectKey, uploadFile.buffer, {
-      contentType: uploadFile.mimetype,
-      upsert: false,
+    const paths = {
+      thumbnail: `media/${uploadId}/thumbnail.webp`,
+      medium: `media/${uploadId}/medium.webp`,
+      large: `media/${uploadId}/large.webp`,
+    };
+
+    const uploads = await Promise.all([
+      supabase.storage.from(storageBucket).upload(paths.thumbnail, variants.thumbnail, {
+        contentType: variants.mimetype,
+        upsert: false,
+      }),
+      supabase.storage.from(storageBucket).upload(paths.medium, variants.medium, {
+        contentType: variants.mimetype,
+        upsert: false,
+      }),
+      supabase.storage.from(storageBucket).upload(paths.large, variants.large, {
+        contentType: variants.mimetype,
+        upsert: false,
+      }),
+    ]);
+
+    const failed = uploads.find((u) => u.error);
+
+    if (failed?.error) {
+      throw Object.assign(new Error("Failed to upload image variants"), {
+        statusCode: 500,
+      });
+    }
+
+    return repository.create({
+      fileName: `${baseName}.webp`,
+      diskName: paths.large,
+      storagePath: paths.large,
+      fileType,
+      mimeType: variants.mimetype,
+      size: variants.large.length,
     });
-
-  if (error) {
-    const err = Object.assign(new Error("Failed to upload file"), { statusCode: 500 });
-    throw err;
   }
-
-  return repository.create({
-    fileName: isImage ? `${baseName}.webp` : file.originalname,
-    diskName: objectKey,
-    storagePath: objectKey,
-    fileType,
-    mimeType: uploadFile.mimetype,
-    size: uploadFile.size,
-  });
 }
 
 export async function updateMedia(id: string, data: unknown) {
