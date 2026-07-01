@@ -88,14 +88,17 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
     const uploads = await Promise.all([
       supabase.storage.from(storageBucket).upload(paths.thumbnail, variants.thumbnail, {
         contentType: variants.mimetype,
+        cacheControl: "31536000",
         upsert: false,
       }),
       supabase.storage.from(storageBucket).upload(paths.medium, variants.medium, {
         contentType: variants.mimetype,
+        cacheControl: "31536000",
         upsert: false,
       }),
       supabase.storage.from(storageBucket).upload(paths.large, variants.large, {
         contentType: variants.mimetype,
+        cacheControl: "31536000",
         upsert: false,
       }),
     ]);

@@ -7,7 +7,8 @@
     "dev": "ts-node-dev --respawn --ignore-watch node_modules,dist src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "migrate:article-images": "ts-node src/scripts/migrate-article-images.ts"
+    "migrate:article-images": "ts-node src/scripts/migrate-article-images.ts",
+    "generate:article-image-variants": "ts-node src/scripts/generate-existing-article-image-variants.ts"
   },
   "keywords": [],
   "author": "",
