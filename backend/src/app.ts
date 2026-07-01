@@ -44,7 +44,7 @@ app.use(
 // Increase JSON body size to allow image/PDF uploads as base64 (short-term fix).
 // Consider switching to multipart uploads for files + smaller JSON payloads.
 // NOTE: base64 increases payload size by ~33% over the original file size.
-const requestBodyLimit = process.env.REQUEST_BODY_LIMIT || "120mb";
+const requestBodyLimit = process.env.REQUEST_BODY_LIMIT || "5mb";
 app.use(express.json({ limit: requestBodyLimit }));
 app.use(express.urlencoded({ extended: false, limit: requestBodyLimit }));
 
