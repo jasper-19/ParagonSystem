@@ -1,27 +1,33 @@
-import { Article } from '../../../../models/article.model';
-import { CommonModule } from "@angular/common";
-import { Component, OnInit } from "@angular/core";
-import { ArticleService } from "../../../../core/services/article.service";
+import { CommonModule } from '@angular/common';
+import { Component, Input, ChangeDetectionStrategy, } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
 
 @Component({
   selector: 'app-most-viewed-section',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './most-viewed-section.html'
+  templateUrl: './most-viewed-section.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MostViewedSection {
   protected readonly imageVariant = imageVariant;
 
-  articles: Article[] = [];
+  private mostViewedArticles: Article[] = [];
 
-  constructor(private articleService: ArticleService) {}
+  @Input({ required: true })
+  set articles(value: Article[]) {
 
-  ngOnInit(): void {
-    this.articleService.getMostViewedArticles().subscribe({
-      next: (articles) => (this.articles = articles),
-      error: (err) => console.error('Failed to load most viewed articles', err),
-    });
+    if (value === this.mostViewedArticles) {
+      return;
+    }
+
+    this.mostViewedArticles = value ?? [];
   }
+
+  get articles(): Article[] {
+    return this.mostViewedArticles;
+  }
+
 }

@@ -4,6 +4,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import routes from "./routes";
 import pool from "./config/db";
+import path from "path";
 import { xssSanitize } from "./middlewares/sanitize";
 import { errorHandler } from "./middlewares/errorHandler";
 
@@ -78,6 +79,11 @@ app.get("/ready", async (_req, res) => {
     });
   }
 });
+
+if (process.env.NODE_ENV !== "production") {
+  // Serve uploaded files from the local "uploads" directory in development
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+}
 
 // Mount all versioned API routes
 app.use("/api", routes);

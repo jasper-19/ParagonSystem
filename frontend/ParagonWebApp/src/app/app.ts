@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { SocketService } from './core/services/socket.service';
 
 @Component({
   selector: 'app-root',
@@ -13,9 +14,14 @@ export class App implements OnInit {
 
   protected readonly title = signal('ParagonWebApp');
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private socket: SocketService
+  ) {}
 
 ngOnInit(): void {
+
+  this.socket.connect();
 
   // 🌙 Restore theme
   const theme = localStorage.getItem('theme');

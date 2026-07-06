@@ -127,8 +127,7 @@
             <thead class="bg-linear-to-r from-[#000035] to-[#1a3a52]">
               <tr>
                 <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Applicant</th>
-                <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Position</th>
-                <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Subrole</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Applied Positions</th>
                 <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
                 <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Interview</th>
                 <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Actions</th>
@@ -151,12 +150,25 @@
                     </div>
                   </td>
 
-                  <td class="px-6 py-4 font-medium text-gray-800">
-                    {{ getPositionTitle(app.positionId) }}
-                  </td>
-
-                  <td class="px-6 py-4 font-medium text-gray-800">
-                    {{ getSubRoleLabel(app) }}
+                  <td class="px-6 py-4 align-top">
+                    <div class="space-y-3">
+                      @for (selection of getSelectedPositions(app); track selection.positionId) {
+                        <div>
+                          <div class="inline-flex items-center rounded-full bg-[#F4B400]/15 text-[#000035] text-xs font-semibold px-3 py-1">
+                            {{ getPositionTitle(selection.positionId) }}
+                          </div>
+                          @if (selection.categories.length) {
+                            <div class="flex flex-wrap gap-2 mt-2">
+                              @for (category of selection.categories; track category) {
+                                <span class="inline-flex items-center rounded-full bg-slate-100 text-slate-700 text-xs px-2 py-1">
+                                  {{ category }}
+                                </span>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
                   </td>
 
                   <td class="px-6 py-4">
@@ -232,14 +244,30 @@
                   <span class="text-gray-700">{{ getYearLevelLabel(app.yearLevel) }}</span>
                 </div>
 
-                <div>
-                  <span class="text-gray-500 text-xs block mb-1">Position</span>
-                  <span class="text-gray-700">{{ getPositionTitle(app.positionId) }}</span>
-                </div>
-
-                <div>
-                  <span class="text-gray-500 text-xs block mb-1">Subrole</span>
-                  <span class="text-gray-700">{{ getSubRoleLabel(app) }}</span>
+                <div class="col-span-2">
+                  <span class="text-gray-500 text-xs block mb-2">
+                    Applied Positions
+                  </span>
+                  <div class="space-y-3">
+                    @for (selection of getSelectedPositions(app); track selection.positionId) {
+                      <div>
+                        <div
+                          class="inline-flex items-center rounded-full bg-[#F4B400]/15 text-[#000035] text-xs font-semibold px-3 py-1">
+                          {{ getPositionTitle(selection.positionId) }}
+                        </div>
+                        @if (selection.categories.length) {
+                          <div class="flex flex-wrap gap-2 mt-2">
+                            @for (category of selection.categories; track category) {
+                              <span
+                                class="inline-flex items-center rounded-full bg-slate-100 text-slate-700 text-xs px-2 py-1">
+                                {{ category }}
+                              </span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
 
                 <div>
@@ -373,18 +401,12 @@
 
 <application-review-modal
   [application]="selectedApplication"
-  [positionTitle]="selectedApplication ? getPositionTitle(selectedApplication.positionId) : null"
-  [subRoleLabel]="selectedApplication ? getSubRoleLabel(selectedApplication) : null"
+  [positions]="positions()"
   (close)="closeModal()"
-
   (schedule)="scheduleInterview($event.app, $event.date)"
-
   (notes)="addNotes($event.app, $event.notes)"
-
   (interviewed)="markInterviewed($event)"
-
   (accept)="accept($event)"
-
   (reject)="reject($event)"
 >
 </application-review-modal>

@@ -23,7 +23,13 @@ export interface Application {
   collegeId: string;
   programId: string;
 
-  positionId: string;
+  selectedPositions?:  {
+    positionId: string;
+    categories: string[]
+  }[];
+
+  // Legacy Fields for older applications
+  positionId?: string;
   subRole?: string;
 
   motivation: string;

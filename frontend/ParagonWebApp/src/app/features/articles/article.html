@@ -18,63 +18,66 @@
   [readingTime]="'1 min read'">
 </app-article-meta>
 
-  <!-- IMAGE  -->
-   <div class="max-w-4xl mx-auto px-4 mt-8 mb-2">
-      <div class="relative overflow-hidden rounded-lg shadow-sm group">
-        <img
-          [src]="imageVariant(article.image, 'large')"
-          [alt]="article.title"
-          class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.02]"/>
-        <div class="absolute inset-0 ring-1 ring-inset ring-gray-900/10 rounded-lg pointer-events-none"></div>
-      </div>
+<!-- IMAGE -->
+<div class="max-w-4xl mx-auto px-4 mt-8 mb-2">
+  <div class="relative rounded-sm border-none p-2 sm:p-3">
+    <div class="overflow-hidden">
+      <img
+        [src]="imageVariant(article.image, 'large')"
+        [alt]="article.title"
+        class="w-full h-auto object-cover" />
     </div>
+  </div>
+</div>
 
-  <!-- BODY -->
-  <section class="max-w-3xl mx-auto px-4 py-10"
-           *ngIf="articleView$ | async as view">
+<!-- BODY -->
+<section class="max-w-3xl mx-auto px-4 py-10"
+         *ngIf="articleView$ | async as view">
 
-    <app-article-section
-      *ngFor="let section of view.sections"
-      [section]="section">
-    </app-article-section>
+  <app-article-section
+    *ngFor="let section of view.sections"
+    [section]="section">
+  </app-article-section>
 
-  </section>
+</section>
 
 <!-- TAGS -->
 <div *ngIf="article.tags.length"
      class="max-w-3xl mx-auto px-4 pb-16">
 
-  <hr class="border-gray-200 mb-6" />
-
-  <h3 class="text-lg font-semibold text-gray-700 mb-4">
-    Tags
-  </h3>
-
-  <div class="flex flex-wrap gap-3">
-    <a
-      *ngFor="let tag of article.tags"
-      class="px-4 py-2 bg-[#f4b400] text-white rounded-full text-sm hover:bg-[#f4b400]/50 transition"
-    >
-      #{{ tag }}
-    </a>
+  <div class="flex items-center gap-2 mb-4">
+    <h3 id="topics-heading"
+        class=" text-[11px] font-semibold uppercase tracking-[0.16em] text-(--color-ink-muted,#62676d)">
+      Tags
+    </h3>
   </div>
+
+  <ul class="flex flex-wrap gap-2" aria-labelledby="topics-heading">
+    <li *ngFor="let tag of article.tags">
+      <span class="inline-flex items-center px-3 py-1 text-xs uppercase tracking-[0.06em]
+                   text-(--color-ink,#17181a)
+                   border border-(--color-rule,#e4e2dd) rounded-sm">
+        #{{ tag }}
+      </span>
+    </li>
+  </ul>
 
 </div>
 
 <!-- STAFF APPLICATION -->
 <app-staff-application></app-staff-application>
 
-<!-- RELATED ARTICLES -->
-<app-related
-  *ngIf="related$ | async as related"
-  [articles]="related">
-</app-related>
+<ng-container *ngIf="articleFeed() as feed">
 
-<!-- OTHER STORIES -->
-<app-other-stories
-  *ngIf="otherStories$ | async as other"
-  [articles]="other">
-</app-other-stories>
+  <app-related
+    [articles]="feed.related">
+  </app-related>
+
+  <app-other-stories
+    [articles]="feed.otherStories">
+  </app-other-stories>
+
+</ng-container>
 
 </ng-container>
 

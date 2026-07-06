@@ -89,14 +89,40 @@
               <div class="text-sm font-medium text-slate-700">{{ yearLevelLabel(app.yearLevel) }}</div>
             </div>
 
-            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
-              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Position</div>
-              <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ positionTitle || app.positionId }}</div>
-            </div>
+            <div class="sm:col-span-2 p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200 space-y-4">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Applied Positions</div>
+                </div>
+              </div>
 
-            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
-              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Subrole</div>
-              <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ subRoleLabel || (app.subRole ?? '—') }}</div>
+              <div *ngIf="getSelectedPositions(app).length; else noSelectedPositions" class="space-y-3">
+                <div
+                  *ngFor="let selected of getSelectedPositions(app)"
+                  class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
+                >
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center rounded-full bg-[#F4B400]/15 text-[#000035] text-xs font-semibold px-3 py-1">
+                      {{ positionLabel(selected.positionId) }}
+                    </span>
+                  </div>
+
+                  <div *ngIf="selected.categories.length" class="mt-3 flex flex-wrap gap-2">
+                    <span
+                      *ngFor="let category of selected.categories"
+                      class="inline-flex items-center rounded-full bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1"
+                    >
+                      {{ category }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noSelectedPositions>
+                <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                  No positions selected.
+                </div>
+              </ng-template>
             </div>
 
           </div>

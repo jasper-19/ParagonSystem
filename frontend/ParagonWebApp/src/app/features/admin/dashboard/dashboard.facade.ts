@@ -40,6 +40,10 @@ export class DashboardFacade {
   private specialIssueService = inject(SpecialIssueService);
 
   constructor() {
+    this.articleService.getAdminArticles().subscribe({
+        error: (err) => console.error('Failed to fetch admin articles for dashboard:', err),
+    });
+
     this.applicationService.refresh();
   }
 
@@ -49,10 +53,7 @@ export class DashboardFacade {
   );
   private issues = toSignal(this.specialIssueService.issues$, { initialValue: [] });
 
-  private articles = toSignal(
-    this.articleService.getAdminArticles(),
-    { initialValue: [] }
-  );
+  private readonly articles = this.articleService.adminArticles;
 
   //Date Utility Helper
 private countWithinDays<T>(

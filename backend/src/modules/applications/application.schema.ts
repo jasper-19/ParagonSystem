@@ -17,8 +17,14 @@ export const createApplicationSchema = z.object({
   yearLevel: z.enum(YEAR_LEVEL_VALUES, { error: () => ({ message: "Invalid year level" }) }),
   collegeId: z.string().min(1, "College is required").max(50),
   programId: z.string().min(1, "Program is required").max(50),
-  positionId: z.string().min(1, "Position is required").max(50),
-  subRole: z.string().max(100).optional(),
+  selectedPositions: z
+    .array(
+      z.object({
+        positionId: z.string().min(1, "Position is required").max(50),
+        categories: z.array(z.string().min(1).max(100)).default([]),
+      })
+    )
+    .min(1, "At least one position is required"),
   motivation: z.string().min(1, "Motivation is required").max(5000),
   // Allow empty string or valid URL (some applicants may not have a portfolio)
   portfolioUrl: z

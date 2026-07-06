@@ -1,44 +1,24 @@
-import {
-  Component,
-  inject,
-  Input,
-  signal,
-  computed,
-  effect
-} from '@angular/core';
-
+import { Component, inject, Input, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  Validators
-} from '@angular/forms';
-
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
-
 import { JoinPosition } from '../../models/join-position.model';
 import { JoinApplication, YearLevel } from '../../models/join-application.model';
 import { ApplicationService } from '../../../../core/services/application.service';
-
 import { ConfirmationModal } from '../../../../shared/components/confirmation-modal/confirmation-modal';
 import { SuccessModal } from '../../../../shared/components/feedback-modal/success-modal';
 import { ErrorModal } from '../../../../shared/components/feedback-modal/error-modal';
 import { CollegeService } from '../../services/college.service';
 import { College } from '../../models/college.model';
+
 @Component({
   selector: 'app-join-application-form',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    RouterModule,
-    ConfirmationModal,
-    SuccessModal,
-    ErrorModal,
-  ],
+  imports: [ CommonModule, ReactiveFormsModule, RouterModule, ConfirmationModal, SuccessModal, ErrorModal, ],
   templateUrl: './join-application-form.html',
 })
+
 export class JoinApplicationForm {
 
   // ========================
@@ -106,19 +86,12 @@ export class JoinApplicationForm {
     yearLevel: ['', Validators.required],
     collegeId: ['', Validators.required],
     programId: ['', Validators.required],
-    positionId: ['', Validators.required],
-    subRole: ['', Validators.required],
     motivation: ['', [Validators.required, Validators.minLength(30)]],
   });
 
   // ========================
   // REACTIVE SIGNALS
   // ========================
-
-  private positionIdSignal = toSignal(
-    this.form.get('positionId')!.valueChanges,
-    { initialValue: this.form.get('positionId')!.value }
-  );
 
   private collegeIdSignal = toSignal(
     this.form.get('collegeId')!.valueChanges,
@@ -129,19 +102,15 @@ export class JoinApplicationForm {
   // COMPUTED VALUES
   // ========================
 
-  readonly subRoleOptions = computed(() => {
-    const positionId = this.positionIdSignal();
-    const positions = this._positions(); // IMPORTANT: use signal
-
-    const pos = positions.find(p => p.id === positionId);
-    return pos?.subRoles?.map(s => s.name) ?? [];
-  });
-
   readonly availablePrograms = computed(() => {
     const collegeId = this.collegeIdSignal();
     const college = this.colleges().find(c => c.id === collegeId);
     return college?.programs ?? [];
   });
+
+  readonly selectedPositions = signal<
+    { positionId: string; categories: string[] }[]
+    >([]);
 
   // ========================
   // EFFECTS
@@ -153,25 +122,10 @@ export class JoinApplicationForm {
     effect(() => {
       const position = this._preselectedPosition();
       if (position) {
-        this.form.patchValue({ positionId: position });
+        this.selectedPositions.set([
+          { positionId: position, categories: [] }
+        ]);
       }
-    });
-
-    // SubRole validation
-    effect(() => {
-      const options = this.subRoleOptions();
-      const subRoleControl = this.form.get('subRole');
-
-      if (!subRoleControl) return;
-
-      if (options.length > 0) {
-        subRoleControl.setValidators([Validators.required]);
-      } else {
-        subRoleControl.clearValidators();
-        subRoleControl.reset();
-      }
-
-      subRoleControl.updateValueAndValidity();
     });
 
     // Program validation
@@ -197,7 +151,11 @@ export class JoinApplicationForm {
   // ========================
 
   submit() {
-    if (this.form.invalid) {
+    if (
+      this.form.invalid ||
+      this.selectedPositions().length === 0 ||
+      this.hasInvalidSelectedPosition()
+    ) {
       this.form.markAllAsTouched();
       return;
     }
@@ -206,8 +164,11 @@ export class JoinApplicationForm {
   }
 
   confirmSubmission() {
-
-    if (this.form.invalid) {
+    if (
+      this.form.invalid ||
+      this.selectedPositions().length === 0 ||
+      this.hasInvalidSelectedPosition()
+    ) {
       this.showConfirmModal.set(false);
       this.form.markAllAsTouched();
       return;
@@ -225,8 +186,7 @@ export class JoinApplicationForm {
       yearLevel: value.yearLevel as YearLevel,
       collegeId: value.collegeId,
       programId: value.programId,
-      positionId: value.positionId,
-      subRole: value.subRole || undefined,
+      selectedPositions: this.selectedPositions(),
       motivation: value.motivation
     };
 
@@ -234,6 +194,7 @@ export class JoinApplicationForm {
       next: () => {
         this.isSubmitting.set(false);
         this.form.reset();
+        this.selectedPositions.set([]);
         this.showSuccessModal.set(true);
       },
       error: () => {
@@ -242,4 +203,57 @@ export class JoinApplicationForm {
       }
     });
   }
+
+  isPositionSelected(positionId: string): boolean {
+    return this.selectedPositions().some(p => p.positionId === positionId);
+  }
+
+  togglePosition(positionId: string): void {
+    const current = this.selectedPositions();
+
+    if (this.isPositionSelected(positionId)) {
+      this.selectedPositions.set(
+        current.filter(p => p.positionId !== positionId)
+      );
+      return;
+    }
+
+    this.selectedPositions.set([
+      ...current,
+      { positionId, categories: [] }
+    ]);
+  }
+
+  isCategorySelected(positionId: string, category: string): boolean {
+    return this.selectedPositions().some(
+      p => p.positionId === positionId && p.categories.includes(category)
+    );
+  }
+
+  toggleCategory(positionId: string, category: string): void {
+    this.selectedPositions.update(current =>
+      current.map(p => {
+        if (p.positionId !== positionId) return p;
+
+        const exists = p.categories.includes(category);
+
+        return {
+          ...p,
+          categories: exists
+            ? p.categories.filter(c => c !== category)
+            : [...p.categories, category]
+        };
+      })
+    );
+  }
+
+  hasInvalidSelectedPosition(): boolean {
+    return this.selectedPositions().some(selected => {
+      const position = this.positions.find(p => p.id === selected.positionId);
+      const requiresCategories = (position?.subRoles?.length ?? 0) > 0;
+
+      return requiresCategories && selected.categories.length === 0;
+    });
+  }
+
 }

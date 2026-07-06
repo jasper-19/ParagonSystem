@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import * as repository from "./media.repository";
 import { MEDIA_TYPE_VALUES, MediaType } from "./media.schema";
-import { supabase, storageBucket } from "../../config/storage";
+import { storageService } from "../../storage/storage.factory";
 import sharp from "sharp";
 
 export type GetMediaFilters = {
@@ -66,15 +66,18 @@ async function createImageVariants(file: UploadInput) {
 
 export async function createMediaFromUpload(file: UploadInput | undefined) {
   if (!file) {
-    const err = Object.assign(new Error("No file uploaded"), { statusCode: 400 });
-    throw err;
+    throw Object.assign(new Error("No file uploaded"), { statusCode: 400 });
+  }
+
+  if (!file.buffer || file.buffer.length === 0) {
+    throw Object.assign(new Error("Uploaded file is empty"), { statusCode: 400 });
   }
 
   const fileType = detectMediaType(file.mimetype);
   const isImage = fileType === "image";
 
   const uploadId = randomUUID();
-  const baseName = safeFilename(file.originalname.replace(/\.[^/.]+$/, ""));
+  const baseName = safeFilename(file.originalname.replace(/\.[^/.]+$/, "")) || uploadId;
 
   if (isImage) {
     const variants = await createImageVariants(file);
@@ -85,31 +88,23 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
       large: `media/${uploadId}/large.webp`,
     };
 
-    const uploads = await Promise.all([
-      supabase.storage.from(storageBucket).upload(paths.thumbnail, variants.thumbnail, {
+    await Promise.all([
+      storageService.upload(paths.thumbnail, variants.thumbnail, {
         contentType: variants.mimetype,
         cacheControl: "31536000",
         upsert: false,
       }),
-      supabase.storage.from(storageBucket).upload(paths.medium, variants.medium, {
+      storageService.upload(paths.medium, variants.medium, {
         contentType: variants.mimetype,
         cacheControl: "31536000",
         upsert: false,
       }),
-      supabase.storage.from(storageBucket).upload(paths.large, variants.large, {
+      storageService.upload(paths.large, variants.large, {
         contentType: variants.mimetype,
         cacheControl: "31536000",
         upsert: false,
       }),
     ]);
-
-    const failed = uploads.find((u) => u.error);
-
-    if (failed?.error) {
-      throw Object.assign(new Error("Failed to upload image variants"), {
-        statusCode: 500,
-      });
-    }
 
     return repository.create({
       fileName: `${baseName}.webp`,
@@ -120,6 +115,23 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
       size: variants.large.length,
     });
   }
+
+  const safeOriginalName = safeFilename(file.originalname) || `${uploadId}.bin`;
+  const objectKey = `media/${uploadId}/${safeOriginalName}`;
+
+  await storageService.upload(objectKey, file.buffer, {
+    contentType: file.mimetype || "application/octet-stream",
+    upsert: false,
+  });
+
+  return repository.create({
+    fileName: file.originalname,
+    diskName: objectKey,
+    storagePath: objectKey,
+    fileType,
+    mimeType: file.mimetype || "application/octet-stream",
+    size: file.size || file.buffer.length,
+  });
 }
 
 export async function updateMedia(id: string, data: unknown) {
@@ -148,31 +160,23 @@ export async function deleteMedia(id: string) {
   const deleted = await repository.remove(id);
 
   if (!deleted) {
-    const err = Object.assign(new Error("Media not found"), { statusCode: 404 });
-    throw err;
+    throw Object.assign(new Error("Media not found"), { statusCode: 404 });
   }
 
-  await supabase.storage
-  .from(storageBucket)
-  .remove([deleted.storagePath])
-  .catch((error) => {
-    console.error("Failed to delete file from storage:", error);
-  });
+  await storageService.remove([deleted.storagePath]);
 }
 
 export async function getMediaFile(id: string) {
   const media = await repository.findStorageById(id);
+
   if (!media) {
-    const err = Object.assign(new Error("Media not found"), { statusCode: 404 });
-    throw err;
+    throw Object.assign(new Error("Media not found"), { statusCode: 404 });
   }
 
- const { data }= supabase.storage
-  .from(storageBucket)
-  .getPublicUrl(media.storagePath);
+  const url = await storageService.getPublicUrl(media.storagePath);
 
   return {
-    url: data.publicUrl,
+    url,
     mimeType: media.mimeType,
   };
 }

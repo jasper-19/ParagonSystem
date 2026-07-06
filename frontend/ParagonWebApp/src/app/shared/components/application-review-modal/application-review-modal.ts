@@ -1,8 +1,13 @@
 import { Component, EventEmitter, Input, Output, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import { Application } from '../../../models/application.model';
+import { JoinPosition } from '../../../features/join/models/join-position.model';
+
+type SelectedApplicationPosition = {
+  positionId: string;
+  categories: string[];
+};
 
 @Component({
   selector: 'application-review-modal',
@@ -13,10 +18,9 @@ import { Application } from '../../../models/application.model';
 export class ApplicationReviewModal implements OnChanges, OnDestroy {
 
   @Input() application: Application | null = null;
-
   @Input() positionTitle: string | null = null;
-
   @Input() subRoleLabel: string | null = null;
+  @Input() positions: JoinPosition[] = [];
 
   @Output() close = new EventEmitter<void>();
 
@@ -39,6 +43,28 @@ export class ApplicationReviewModal implements OnChanges, OnDestroy {
   // ==========================
   // Stage Helpers
   // ==========================
+
+  getSelectedPositions(app: Application): SelectedApplicationPosition[] {
+    if (app.selectedPositions?.length) {
+      return app.selectedPositions;
+    }
+
+    if (app.positionId) {
+      return [
+        {
+          positionId: app.positionId,
+          categories: app.subRole ? [app.subRole] : [],
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  positionLabel(positionId?: string): string {
+    if (!positionId) return '—';
+    return this.positions.find(p => p.id === positionId)?.title ?? positionId;
+  }
 
   isPending(app: Application) {
     return (app.status ?? 'pending') === 'pending';

@@ -48,4 +48,9 @@ node_modules/
 dist/
 .angular/backend/src/config/seed.sql
 .env
+
+# Local uploads(development only)
 backend/uploads/
+
+#Temporary image processing files
+/backend/tmp/

@@ -1,22 +1,8 @@
-import {
-  Component,
-  signal,
-  computed,
-  effect,
-  inject,
-  DestroyRef,
-  untracked,
-} from '@angular/core';
+import { Component, signal, computed, effect, inject, DestroyRef, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-
-import { Article } from '../../models/article.model';
-import {
-  GetArticlesParams,
-  ArticleSortOption
-} from '../../models/article-query.model';
-
+import { GetArticlesParams, ArticleSortOption } from '../../models/article-query.model';
 import { ArticleService } from '../../core/services/article.service';
 import { CategoriesHero } from './components/hero-section/categories-hero';
 import { CategoriesArticles } from './components/articles-section/categories-articles';
@@ -40,7 +26,7 @@ private readonly destroyRef = inject(DestroyRef);
 private readonly route = inject(ActivatedRoute);
 private readonly router = inject(Router);
 
-private loader = inject(LoaderService);
+private readonly loader = inject(LoaderService);
 
   // -----------------------------------------
   // 🔎 FILTER STATE
@@ -55,16 +41,31 @@ private loader = inject(LoaderService);
   // 📂 AVAILABLE CATEGORIES (Observable → Signal)
   // -----------------------------------------
 
-  readonly categories = toSignal(
-    this.articleService.getCategories(),
-    { initialValue: [] }
+  readonly categoryFeed = this.articleService.categoryFeed;
+
+  readonly articles = this.articleService.categoryArticles;
+
+  readonly categories = computed(() =>
+    this.categoryFeed()?.categories ?? []
   );
 
-  //AVAILABLE TAGS (Observable → Signal)
-  readonly tags = toSignal(
-  this.articleService.getTags(),
-  { initialValue: [] }
-);
+  readonly tags = computed(() =>
+    this.categoryFeed()?.tags ?? []
+  );
+
+  readonly hasMore = computed(() =>
+    this.categoryFeed()?.hasMore ?? true
+  );
+
+  readonly total = computed(() =>
+    this.articles().length
+  );
+
+  readonly visibleTags = computed(() =>
+    this.tags()
+      .filter(tag => tag.trim().length > 0)
+      .slice(0, 12)
+  );
 
   // -----------------------------------------
   // 📄 PAGINATION STATE
@@ -73,15 +74,12 @@ private loader = inject(LoaderService);
   readonly currentPage = signal<number>(1);
   readonly limit = 6;
 
-  readonly hasMore = signal<boolean>(true);
   readonly loading = signal<boolean>(false);
-  readonly total = signal<number>(0);
 
   // -----------------------------------------
   // 📰 ARTICLE STATE
   // -----------------------------------------
 
-  readonly articles = signal<Article[]>([]);
 
   // -----------------------------------------
   // 🧠 COMPUTED FILTER OBJECT
@@ -91,8 +89,6 @@ private loader = inject(LoaderService);
   readonly initialLoading = signal<boolean>(true);
 
   readonly loadingMore = signal<boolean>(false);
-
-private initialized = false;
 
 constructor() {
 
@@ -107,6 +103,7 @@ constructor() {
 
   effect(() => {
     this.filters();
+    this.articleService.articlesChanged();
 
     untracked(() => {
       this.resetAndLoad();
@@ -128,17 +125,19 @@ constructor() {
   // -----------------------------------------
 
   private loadArticles(): void {
+    const isFirstPage = this.currentPage() === 1;
 
-    if (this.loading() || !this.hasMore()) return;
+    if (this.loading()) return;
 
-    this.loading.set(true)
+    if (!isFirstPage && !this.hasMore()) return;
 
-    if (this.initialLoading()){
-       this.loader.show(); // Show loader with a timeout of 3 seconds
+    this.loading.set(true);
+
+    if (this.initialLoading()) {
+      this.loader.show();
     } else {
-        this.loadingMore.set(true);
+      this.loadingMore.set(true);
     }
-
 
     const params: GetArticlesParams = {
       page: this.currentPage(),
@@ -146,27 +145,12 @@ constructor() {
       search: this.search(),
       category: this.selectedCategory(),
       sort: this.sort(),
-      tags: this.selectedTags()
+      tags: this.selectedTags(),
     };
 
-  this.articleService.getArticles(params)
-    .subscribe({
-      next: (articles) => {
-
-        // Append results
-        this.articles.update(prev => [
-          ...prev,
-          ...articles
-        ]);
-
-        this.total.set(this.articles().length);
-
-        const loaded = this.articles().length;
-
-        this.hasMore.set(articles.length === this.limit);
-
-        this.currentPage.update(p => p + 1);
-
+    this.articleService.getCategoryFeed(params).subscribe({
+      next: () => {
+        this.currentPage.update(page => page + 1);
         this.loading.set(false);
 
         if (this.initialLoading()) {
@@ -176,7 +160,6 @@ constructor() {
           this.loadingMore.set(false);
         }
       },
-
       error: () => {
         this.loading.set(false);
 
@@ -186,7 +169,7 @@ constructor() {
         } else {
           this.loadingMore.set(false);
         }
-      }
+      },
     });
   }
 
@@ -195,10 +178,8 @@ constructor() {
   // -----------------------------------------
 
   private resetAndLoad(): void {
-
     this.currentPage.set(1);
-    this.articles.set([]);
-    this.hasMore.set(true);
+    this.initialLoading.set(true);
 
     this.loadArticles();
   }
@@ -265,5 +246,13 @@ constructor() {
       },
       queryParamsHandling: 'merge',
     });
+  }
+
+  formatTag(tag: string): string {
+    return tag
+      .trim()
+      .replace(/[-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/\b\w/g, char => char.toUpperCase());
   }
 }

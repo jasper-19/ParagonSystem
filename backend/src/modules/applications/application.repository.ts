@@ -10,7 +10,8 @@ function mapRow(row: any) {
     yearLevel: row.year_level,
     collegeId: row.college_id,
     programId: row.program_id,
-    positionId: row.position_id,
+    selectedPositions: row.selected_positions ?? [],
+    positionId: row.position_id ?? undefined,
     subRole: row.sub_role ?? undefined,
     motivation: row.motivation,
     portfolioUrl: row.portfolio_url ?? undefined,
@@ -65,13 +66,12 @@ export async function create(data: unknown) {
         year_level,
         college_id,
         program_id,
-        position_id,
-        sub_role,
+        selected_positions,
         motivation,
         portfolio_url,
         additional_notes
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
       RETURNING *`,
       [
         d.fullName,
@@ -80,8 +80,7 @@ export async function create(data: unknown) {
         d.yearLevel,
         d.collegeId,
         d.programId,
-        d.positionId,
-        d.subRole ?? null,
+        JSON.stringify(d.selectedPositions ?? []),
         d.motivation,
         d.portfolioUrl ?? null,
         d.additionalNotes ?? null

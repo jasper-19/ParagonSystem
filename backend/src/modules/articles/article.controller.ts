@@ -4,6 +4,7 @@ import * as notificationService from "../notifications/notification.service";
 import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
+import { emitArticlesUpdated } from "../../realtime/socket.events";
 
 function setPublicCache(res: Response): void {
     res.set({
@@ -90,6 +91,94 @@ export const getArticles =  asyncHandler(
     }
 );
 
+/** GET /api/articles/homepage-feed */
+export const getHomepageFeed = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const homepageFeed = await service.getHomepageFeed();
+    setPublicCache(res);
+    res.json(homepageFeed);
+  }
+);
+
+/** GET /api/articles/category-feed */
+export const getCategoryPageFeed = asyncHandler(
+  async (req: Request, res: Response) => {
+    const rawCategory = req.query["category"];
+    const rawSearch = req.query["search"];
+    const rawSort = req.query["sort"];
+    const rawPage = req.query["page"];
+    const rawLimit = req.query["limit"];
+    const rawTags = req.query["tags"];
+
+    const category =
+      typeof rawCategory === "string"
+        ? String(sanitizeValue(rawCategory))
+        : undefined;
+
+    const search =
+      typeof rawSearch === "string"
+        ? String(sanitizeValue(rawSearch))
+        : undefined;
+
+    const sortRaw =
+      typeof rawSort === "string"
+        ? String(sanitizeValue(rawSort))
+        : undefined;
+
+    const sort =
+      sortRaw === "latest" || sortRaw === "oldest" || sortRaw === "mostViewed"
+        ? sortRaw
+        : undefined;
+
+    const page =
+      typeof rawPage === "string" && rawPage.trim() !== ""
+        ? Number(String(sanitizeValue(rawPage)))
+        : undefined;
+
+    const limit =
+      typeof rawLimit === "string" && rawLimit.trim() !== ""
+        ? Number(String(sanitizeValue(rawLimit)))
+        : undefined;
+
+    const tags = Array.isArray(rawTags)
+      ? rawTags.map((t: unknown) => String(sanitizeValue(String(t)))).filter(Boolean)
+      : typeof rawTags === "string"
+      ? String(sanitizeValue(rawTags))
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : undefined;
+
+    const filters: service.GetArticlesFilters = {};
+
+    if (category !== undefined) filters.category = category;
+    if (search !== undefined) filters.search = search;
+    if (sort !== undefined) filters.sort = sort;
+    if (page !== undefined) filters.page = page;
+    if (limit !== undefined) filters.limit = limit;
+    if (tags !== undefined) filters.tags = tags;
+
+    const categoryFeed = await service.getCategoryPageFeed(filters);
+
+    setPublicCache(res);
+    res.json(categoryFeed);
+  }
+);
+
+/** GET /api/articles/:slug/feed */
+export const getArticleFeed = asyncHandler(
+  async (req: Request, res: Response) => {
+
+    const slug = sanitizeValue(req.params["slug"]) as string;
+
+    const articleFeed = await service.getArticleFeed(slug);
+
+    setPublicCache(res);
+
+    res.json(articleFeed);
+  }
+);
+
 /** GET /api/articles/:slug */
 export const getArticleBySlug = asyncHandler(
     async (req: Request, res: Response) => {
@@ -154,6 +243,7 @@ export const createArticle = asyncHandler(
                 details: { title: (article as any).title, slug: (article as any).slug },
             }
         );
+        emitArticlesUpdated();
 
         res.status(201).json(article);
     }
@@ -176,7 +266,8 @@ export const updateArticle = asyncHandler(
                 details: { title: (article as any)?.title, slug: (article as any)?.slug },
             }
         );
-
+        emitArticlesUpdated();
+        
         res.json(article);
     }
 );
@@ -203,6 +294,7 @@ export const publishArticle = asyncHandler(
                 details: { title: (article as any).title, slug: (article as any).slug },
             }
         );
+        emitArticlesUpdated();
 
         res.json(article);
     }
@@ -225,6 +317,7 @@ export const archiveArticle = asyncHandler(
                 details: { title: (article as any).title, slug: (article as any).slug },
             }
         );
+        emitArticlesUpdated();
 
         res.json(article);
     }
@@ -256,6 +349,7 @@ export const deleteArticle = asyncHandler(
             `Deleted article: ${id}`,
             { resourceId: id }
         );
+        emitArticlesUpdated();
 
         res.status(204).send();
     }

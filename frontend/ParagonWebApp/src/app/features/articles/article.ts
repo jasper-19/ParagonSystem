@@ -1,12 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { switchMap, map, tap, shareReplay } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-
+import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ArticleService } from '../../core/services/article.service';
 import { ArticleViewService } from './services/article-view.service';
-import { LoaderService } from '../../shared/services/loader.service';
 import { Article as ArticleModel } from '../../models/article.model';
 import { ArticleView } from './models/article-view.model';
 import { ArticleSectionComponent } from './components/section/section';
@@ -17,6 +16,7 @@ import { OtherStories } from './components/other-stories/other-stories';
 import { StaffApplication } from './components/staff-application/staff-application';
 import { ArticleSkeleton } from './components/skeleton/article-skeleton';
 import { imageVariant } from '../../shared/utils/image-variant.util';
+import { ArticleFeed } from '../../models/article-feed.model';
 
 @Component({
   selector: 'app-article',
@@ -39,41 +39,36 @@ export class ArticlePage {
 
   private route = inject(ActivatedRoute);
   private articleService = inject(ArticleService);
+  private readonly destroyRef = inject(DestroyRef);
   private viewService = inject(ArticleViewService);
 
-  article$!: Observable<ArticleModel>;
-  articleView$!: Observable<ArticleView>;
-  related$!: Observable<ArticleModel[]>;
-  otherStories$!: Observable<ArticleModel[]>;
+  readonly articleFeed = this.articleService.articleFeed;
 
-ngOnInit() {
+  private readonly articleFeed$ = toObservable(this.articleFeed);
 
-  this.article$ = this.route.paramMap.pipe(
-    map(params => params.get('slug')!),
-    switchMap(slug =>
-      this.articleService.getBySlug(slug).pipe(
-        tap(() => {
-          this.articleService.incrementViews(slug).subscribe({ error: () => {} });
-        })
-      )
-    ),
-    shareReplay(1)
+  article$ = this.articleFeed$.pipe(
+    map(feed => feed?.article),
+    filter((article): article is ArticleModel => !!article)
   );
 
-  this.articleView$ = this.article$.pipe(
+  articleView$ = this.article$.pipe(
     map(article => this.viewService.transform(article))
   );
 
-  this.related$ = this.article$.pipe(
-    switchMap(article =>
-      this.articleService.getRelatedArticles(article.slug, article.category)
-    )
-  );
+  ngOnInit(): void {
+    this.route.paramMap
+      .pipe(
+        map(params => params.get('slug')),
+        filter((slug): slug is string => !!slug),
+        tap(slug => {
+          this.articleService.loadArticleFeed(slug);
 
-  this.otherStories$ = this.article$.pipe(
-    switchMap(article =>
-      this.articleService.getOtherStories(article.slug)
-    )
-  );
-}
+          this.articleService.incrementViews(slug).subscribe({
+            error: () => {},
+          });
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe();
+  }
 }

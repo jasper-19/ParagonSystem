@@ -1,14 +1,6 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  OnDestroy,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, Input } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
-import { ArticleService } from '../../../../core/services/article.service';
 import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
 
@@ -19,12 +11,38 @@ import { imageVariant } from '../../../../shared/utils/image-variant.util';
   imports: [CommonModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FeaturedSection implements OnInit, OnDestroy {
+export class FeaturedSection implements OnDestroy {
   protected readonly imageVariant = imageVariant;
 
-  Math = Math;
+  protected readonly Math = Math;
 
-  featured: Article[] = [];
+private readonly CAROUSEL = {
+  heroWidth: 'min(68vw, 980px)',
+  sideScale: 0.82,
+  sideOffset: 52,
+  sideBlur: 5,
+  hiddenScale: 0.72,
+  animationDuration: 520,
+  autoplayInterval: 6000,
+  shadow: '0 18px 45px rgba(0,0,53,0.22), 0 35px 90px rgba(0,0,53,0.18)',
+} as const;
+
+private _articles: Article[] = [];
+
+@Input({ required: true })
+set articles(value: Article[]) {
+    if (value === this._articles) {
+        return;
+    }
+    this._articles = value ?? [];
+    this.initializeCarousel();
+    this.cdr.markForCheck();
+}
+
+    get articles(): Article[] {
+      return this._articles;
+    }
+
   currentIndex = 0;
   offsets: number[] = [];
   slideStyles: Array<Record<string, string>> = [];
@@ -32,41 +50,16 @@ export class FeaturedSection implements OnInit, OnDestroy {
   private autoplayTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
-    private articleService: ArticleService,
     private cdr: ChangeDetectorRef,
   ) {}
 
-  ngOnInit(): void {
-    this.articleService.getFeaturedArticles().subscribe({
-      next: (articles) => {
-        // Avoid NG0100 in dev-mode double-check by deferring state changes
-        // to the next macrotask (microtasks may still run before Angular’s
-        // dev-mode checkNoChanges pass in some cases).
-        setTimeout(() => {
-          // Keep only the newest 5 featured articles (by createdAt = "added" time).
-          this.featured = articles
-          this.currentIndex = 0;
-          this.updateDerivedState();
-          this.stopAutoplay();
-          if (this.featured.length > 1) {
-            this.startAutoplay();
-          }
-
-          this.cdr.markForCheck();
-        }, 0);
-      },
-      error: (err) => {
-        console.error('Failed to load featured articles', err);
-      },
-    });
-  }
 
   ngOnDestroy(): void {
     this.stopAutoplay();
   }
 
   get current(): Article | null {
-    return this.featured[this.currentIndex] ?? null;
+      return this.articles[this.currentIndex] ?? null;
   }
 
   private computeOffset(i: number, len: number): number {
@@ -80,55 +73,77 @@ export class FeaturedSection implements OnInit, OnDestroy {
     return diff;
   }
 
-  private computeSlideStyles(offset: number): Record<string, string> {
-    if (offset === 0) {
-      return {
-        left: '50%',
-        'transform-origin': 'center',
-        transform: 'perspective(1200px) translateX(-50%) rotateY(0deg)',
-        'z-index': '30',
-        opacity: '1',
-        'pointer-events': 'auto',
-        'box-shadow': '0 8px 20px rgba(0,0,53,0.12), 0 24px 60px rgba(0,0,53,0.18)',
-      };
-    }
+private computeSlideStyles(offset: number): Record<string, string> {
 
-    if (offset === 1) {
-      return {
-        left: '50%',
-        'transform-origin': 'center',
-        transform: 'perspective(1200px) translateX(-50%) translateX(90%) rotateY(20deg) scale(0.65)',
-        'z-index': '20',
-        opacity: '0.8',
-        'pointer-events': 'auto',
-      };
-    }
+  const {
+    heroWidth,
+    sideScale,
+    sideOffset,
+    sideBlur,
+    hiddenScale,
+    animationDuration,
+  } = this.CAROUSEL;
 
-    if (offset === -1) {
-      return {
-        left: '50%',
-        'transform-origin': 'center',
-        transform:
-          'perspective(1200px) translateX(-50%) translateX(-90%) rotateY(-20deg) scale(0.65)',
-        'z-index': '20',
-        opacity: '0.8',
-        'pointer-events': 'auto',
-      };
-    }
+  const base = {
+    top: '0',
+    left: '50%',
+    width: heroWidth,
+    height: '100%',
+    'transform-origin': 'center',
+    transition: `
+      transform ${animationDuration}ms ease,
+      opacity ${animationDuration}ms ease,
+      filter ${animationDuration}ms ease
+    `,
+  };
 
-    const dir = offset > 0 ? 1 : -1;
+  if (offset === 0) {
     return {
-      left: '50%',
-      'transform-origin': 'center',
-      transform: `perspective(1200px) translateX(${dir > 0 ? '130%' : '-230%'}) rotateY(${dir > 0 ? 60 : -60}deg) scale(0.65)`,
-      'z-index': '0',
-      opacity: '0',
-      'pointer-events': 'none',
+      ...base,
+      transform: 'translateX(-50%) scale(1)',
+      'z-index': '30',
+      opacity: '1',
+      filter: 'blur(0)',
+      'pointer-events': 'auto',
+      'box-shadow':
+        this.CAROUSEL.shadow,
     };
   }
 
+  if (offset === -1) {
+    return {
+      ...base,
+      transform: `translateX(-${sideOffset + 50}%) scale(${sideScale})`,
+      'z-index': '10',
+      opacity: '0.55',
+      filter: `blur(${sideBlur}px)`,
+      'pointer-events': 'auto',
+    };
+  }
+
+  if (offset === 1) {
+    return {
+      ...base,
+      transform: `translateX(${sideOffset - 50}%) scale(${sideScale})`,
+      'z-index': '10',
+      opacity: '0.55',
+      filter: `blur(${sideBlur}px)`,
+      'pointer-events': 'auto',
+    };
+  }
+
+  return {
+    ...base,
+    transform: `translateX(${offset > 0 ? '80%' : '-180%'}) scale(${hiddenScale})`,
+    'z-index': '0',
+    opacity: '0',
+    filter: `blur(${sideBlur + 3}px)`,
+    'pointer-events': 'none',
+  };
+}
+
   private updateDerivedState(): void {
-    const len = this.featured.length;
+    const len = this.articles.length;
     if (!len) {
       this.offsets = [];
       this.slideStyles = [];
@@ -148,16 +163,28 @@ export class FeaturedSection implements OnInit, OnDestroy {
     this.slideStyles = slideStyles;
   }
 
-  trackById(index: number, item: Article) {
+  private initializeCarousel(): void {
+      this.currentIndex = Math.min(
+          this.currentIndex,
+          Math.max(this.articles.length - 1, 0)
+      );
+      this.updateDerivedState();
+      this.stopAutoplay();
+      if (this.articles.length > 1) {
+          this.startAutoplay();
+      }
+  }
+
+  trackById(index: number, item: Article): string {
     return item.id;
   }
 
   prev(): void {
-    if (!this.featured.length) return;
+    if (!this.articles.length) return;
 
     this.currentIndex--;
     if (this.currentIndex < 0) {
-      this.currentIndex = this.featured.length - 1;
+      this.currentIndex = this.articles.length - 1;
     }
 
     this.updateDerivedState();
@@ -165,10 +192,10 @@ export class FeaturedSection implements OnInit, OnDestroy {
   }
 
   next(): void {
-    if (!this.featured.length) return;
+    if (!this.articles.length) return;
 
     this.currentIndex++;
-    if (this.currentIndex >= this.featured.length) {
+    if (this.currentIndex >= this.articles.length) {
       this.currentIndex = 0;
     }
 
@@ -184,13 +211,13 @@ export class FeaturedSection implements OnInit, OnDestroy {
 
   private startAutoplay(): void {
     this.autoplayTimer = setInterval(() => {
-      const len = this.featured.length;
+      const len = this.articles.length;
       if (!len) return;
 
       this.currentIndex = (this.currentIndex + 1) % len;
       this.updateDerivedState();
       this.cdr.markForCheck();
-    }, 6000);
+    }, this.CAROUSEL.autoplayInterval);
   }
 
   private stopAutoplay(): void {
@@ -200,7 +227,7 @@ export class FeaturedSection implements OnInit, OnDestroy {
 
   private resetAutoplay(): void {
     this.stopAutoplay();
-    if (this.featured.length > 1) {
+    if (this.articles.length > 1) {
       this.startAutoplay();
     }
   }

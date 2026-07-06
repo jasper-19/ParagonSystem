@@ -168,7 +168,7 @@
         <div class="flex flex-wrap gap-3">
 
           <button
-            *ngFor="let tag of tags()"
+            *ngFor="let tag of visibleTags()"
             class="px-5 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 shadow-sm"
             [class.bg-[#F4B400]]="selectedTags().includes(tag)"
             [class.text-[#000035]]="selectedTags().includes(tag)"
@@ -182,8 +182,12 @@
             [class.hover:bg-slate-50]="!selectedTags().includes(tag)"
             (click)="toggleTag(tag)"
           >
-            {{ tag }}
+            {{ formatTag(tag) }}
           </button>
+
+            <p *ngIf="tags().length > visibleTags().length" class="text-xs text-gray-500 mt-3">
+              +{{ tags().length - visibleTags().length }} more tags
+            </p>
 
         </div>
 

@@ -239,70 +239,85 @@
           <h3 class="text-lg font-bold text-[#000035]">Position Details</h3>
         </div>
 
-        <!-- Position & Category Grid -->
-        <div class="grid md:grid-cols-2 gap-6">
+        <!-- Position Selection -->
+        <div>
+          <label class="block text-sm font-bold text-[#000035] mb-3">
+            Positions <span class="text-red-500">*</span>
+          </label>
 
-          <!-- Position -->
-          <div>
-            <label class="block text-sm font-bold text-[#000035] mb-2">
-              Position <span class="text-red-500">*</span>
-            </label>
-
-            <select
-              formControlName="positionId"
-              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
-                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
-                     transition-all duration-200 bg-slate-50/50 cursor-pointer"
+          <div class="space-y-4">
+            <div
+              *ngFor="let position of positions"
+              class="rounded-2xl border-2 border-slate-200 bg-slate-50/50 p-5 transition-all duration-200"
+              [class.border-[#F4B400]]="isPositionSelected(position.id)"
+              [class.bg-[#F4B400]/5]="isPositionSelected(position.id)"
             >
-              <option value="">Select a position</option>
+              <!-- Position checkbox -->
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="mt-1 h-4 w-4 accent-[#F4B400]"
+                  [checked]="isPositionSelected(position.id)"
+                  (change)="togglePosition(position.id)"
+                />
 
-              <ng-container *ngFor="let position of positions">
-                <option [value]="position.id">
-                  {{ position.title }}
-                </option>
-              </ng-container>
-            </select>
+                <div>
+                  <p class="font-bold text-[#000035]">
+                    {{ position.title }}
+                  </p>
 
-            <p *ngIf="form.controls.positionId.touched && form.controls.positionId.invalid"
-               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              Please select a position.
-            </p>
+                  <p
+                    *ngIf="position.description"
+                    class="text-sm text-slate-600 mt-1"
+                  >
+                    {{ position.description }}
+                  </p>
+                </div>
+              </label>
+
+              <!-- Categories -->
+              <div
+                *ngIf="isPositionSelected(position.id) && position.subRoles?.length"
+                class="mt-5 pl-7 space-y-3"
+              >
+                <p class="text-sm font-bold text-[#000035]">
+                  Select categories for {{ position.title }}
+                </p>
+
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <label
+                    *ngFor="let category of position.subRoles"
+                    class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:border-[#F4B400] transition"
+                  >
+                    <input
+                      type="checkbox"
+                      class="h-4 w-4 accent-[#F4B400]"
+                      [checked]="isCategorySelected(position.id, category.name)"
+                      (change)="toggleCategory(position.id, category.name)"
+                    />
+
+                    <span class="text-sm font-medium text-slate-700">
+                      {{ category.name }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Sub Role / Category -->
-          <div [class.invisible]="subRoleOptions().length === 0">
-            <label class="block text-sm font-bold text-[#000035] mb-2">
-              Category  <span class="text-red-500">*</span>
-            </label>
+          <p
+            *ngIf="selectedPositions().length === 0 && form.touched"
+            class="text-red-500 text-xs mt-2"
+          >
+            Please select at least one position.
+          </p>
 
-            <select
-              formControlName="subRole"
-              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
-                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
-                     transition-all duration-200 bg-slate-50/50 cursor-pointer"
-              [disabled]="subRoleOptions().length === 0"
-            >
-              <option value="">Select category</option>
-
-              <ng-container *ngFor="let option of subRoleOptions()">
-                <option [value]="option">
-                  {{ option }}
-                </option>
-              </ng-container>
-            </select>
-
-            <p *ngIf="form.controls.subRole.touched && form.controls.subRole.invalid"
-               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              Please select a category.
-            </p>
-          </div>
-
+          <p
+            *ngIf="hasInvalidSelectedPosition() && form.touched"
+            class="text-red-500 text-xs mt-2"
+          >
+            Please select at least one category for every selected position that has categories.
+          </p>
         </div>
 
         <!-- Motivation -->

@@ -163,11 +163,20 @@
 
               <td class="px-6 py-4">
                 <div class="font-medium text-gray-800">{{ positionLabel(app.positionId) }}</div>
-                <div *ngIf="app.subRole" class="mt-1">
-                  <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full
-                               bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
-                    {{ app.subRole }}
-                  </span>
+                <div class="space-y-2">
+                  <div *ngFor="let selected of getSelectedPositions(app)">
+                    <div class="font-medium text-gray-800">
+                      {{ positionLabel(selected.positionId) }}
+                    </div>
+
+                    <div *ngIf="selected.categories.length" class="flex flex-wrap gap-1 mt-1">
+                      <span
+                        *ngFor="let category of selected.categories"
+                        class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
+                        {{ category }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </td>
 
@@ -213,13 +222,23 @@
           </div>
           <div class="flex items-center justify-between gap-3">
             <div>
-              <span class="text-sm text-gray-700">{{ positionLabel(app.positionId) }}</span>
-              <span *ngIf="app.subRole"
-                class="ml-2 inline-block px-2 py-0.5 text-xs font-semibold rounded-full
-                       bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
-                {{ app.subRole }}
-              </span>
+              <div class="space-y-2">
+                <div *ngFor="let selected of getSelectedPositions(app)">
+                  <div class="text-sm font-medium text-gray-700">
+                    {{ positionLabel(selected.positionId) }}
+                  </div>
+
+                  <div *ngIf="selected.categories.length" class="flex flex-wrap gap-1 mt-1">
+                    <span
+                      *ngFor="let category of selected.categories"
+                      class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
+                      {{ category }}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
+
             <button
               type="button"
               (click)="openAssignModal(app)"
@@ -227,6 +246,7 @@
             >
               Assign Role
             </button>
+
             <button
               type="button"
               (click)="openRevokeModal(app)"

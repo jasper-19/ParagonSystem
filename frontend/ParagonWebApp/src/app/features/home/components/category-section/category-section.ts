@@ -1,10 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input,  } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
-
-import { ArticleService } from '../../../../core/services/article.service';
 import { Article } from './../../../../models/article.model';
+import { CategoryFeedSection } from './../../../../models/homepage-feed.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
 
 @Component({
@@ -14,48 +12,58 @@ import { imageVariant } from '../../../../shared/utils/image-variant.util';
   templateUrl: './category-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CategorySection implements OnInit {
-  protected readonly imageVariant = imageVariant;
 
-  sports: Article[] = [];
-  news: Article[] = [];
-  feature: Article[] = [];
-  column: Article[] = [];
-  literary: Article[] = [];
-  editorial: Article[] = [];
-  devcom: Article[] = [];
+export class CategorySection {
+    protected readonly imageVariant = imageVariant;
 
-  constructor(
-    private articleService: ArticleService,
-    private cdr: ChangeDetectorRef,
-  ) {}
+    private _sections: CategoryFeedSection[] = [];
 
-  ngOnInit(): void {
-    forkJoin({
-      sports: this.getCategory('Sports'),
-      news: this.getCategory('News'),
-      feature: this.getCategory('Feature'),
-      column: this.getCategory('Column'),
-      literary: this.getCategory('Literary'),
-      editorial: this.getCategory('Editorial'),
-      devcom: this.getCategory('DevCom'),
-    }).subscribe({
-      next: (data) => {
-        this.sports = data.sports;
-        this.news = data.news;
-        this.feature = data.feature;
-        this.column = data.column;
-        this.literary = data.literary;
-        this.editorial = data.editorial;
-        this.devcom = data.devcom;
+    private readonly sectionMap = new Map<string, Article[]>();
 
-        this.cdr.markForCheck();
-      },
-      error: (err) => console.error('Failed to load category articles', err),
-    });
-  }
+    private normalizeCategory(category: string): string {
+      return category.trim().toLowerCase();
+    }
 
-  private getCategory(category: Article['category']) {
-    return this.articleService.getCategoryArticles(category, 4);
-  }
+    @Input({ required: true })
+    set sections(value: CategoryFeedSection[]) {
+
+      this._sections = value ?? [];
+
+      this.sectionMap.clear();
+
+      for (const section of this._sections) {
+        this.sectionMap.set(
+          this.normalizeCategory(section.category),
+          section.articles
+        );
+      }
+    }
+
+    get sections(): CategoryFeedSection[] {
+      return this._sections;
+    }
+
+    readonly topSections = [
+      { title: 'Sports', category: 'Sports' },
+      { title: 'News', category: 'News' },
+      { title: 'Feature', category: 'Feature' },
+    ] as const;
+
+    readonly bottomSections = [
+      { title: 'Column', category: 'Column' },
+      { title: 'Editorial', category: 'Editorial' },
+      { title: 'DevCom', category: 'DevCom' },
+    ] as const;
+
+    articlesFor(category: string): Article[] {
+        return this.sectionMap.get(this.normalizeCategory(category)) ?? [];
+    }
+
+    trackByArticle(index: number, article: Article): string {
+        return article.id;
+    }
+
+    hasAnyArticles(): boolean {
+        return this.sections.some(section => section.articles.length > 0);
+    }
 }

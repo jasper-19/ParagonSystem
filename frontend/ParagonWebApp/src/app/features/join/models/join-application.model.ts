@@ -13,13 +13,12 @@ export interface JoinApplication {
   collegeId: string;
   programId: string;
 
-  positionId: string;
-  subRole?: string;
+  selectedPositions: {
+    positionId: string;
+    categories: string[];
+  }[];
 
   motivation: string;
 
-  portfolioUrl?: string;
-
-  resumeFile?: File; // only for upload stage
   additionalNotes?: string;
 }

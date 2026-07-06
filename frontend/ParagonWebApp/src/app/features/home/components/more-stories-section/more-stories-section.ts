@@ -1,10 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { ArticleService } from '../../../../core/services/article.service';
-import { Article } from '../../../../models/article.model';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
-
 
 @Component({
   selector: 'app-more-stories-section',
@@ -13,27 +11,22 @@ import { imageVariant } from '../../../../shared/utils/image-variant.util';
   templateUrl: './more-stories-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-
-export class MoreStoriesSection implements OnInit {
+export class MoreStoriesSection {
   protected readonly imageVariant = imageVariant;
 
-  stories: Article[] = [];
+  private _articles: Article[] = [];
 
-  constructor(
-    private articleService: ArticleService,
-    private cdr: ChangeDetectorRef,
-  ) {}
+  @Input({ required: true })
+  set articles(value: Article[]) {
+    if (value === this._articles) return;
+    this._articles = value ?? [];
+  }
 
-  ngOnInit(): void {
-    this.articleService.getLatestArticles().subscribe({
-      next: (articles) => {
-        // Defer state updates to avoid NG0100 in dev-mode double-check.
-        setTimeout(() => {
-          this.stories = articles;
-          this.cdr.markForCheck();
-        }, 0);
-      },
-      error: (err) => console.error('Failed to load more stories', err),
-    });
+  get articles(): Article[] {
+    return this._articles;
+  }
+
+  trackByArticle(index: number, article: Article): string {
+    return article.id;
   }
 }

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from "@angular/core";
+import { Component, computed, effect, inject, signal, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ArticleService } from "../../../../../core/services/article.service";
@@ -16,12 +16,12 @@ type SortDirection = 'asc' | 'desc';
   imports: [CommonModule, RouterModule, ArticleViewModal],
   templateUrl: './all-articles.html',
 })
-export class AllArticlesComponent {
+export class AllArticlesComponent implements OnInit {
 
-private articleService = inject(ArticleService);
-private route = inject(ActivatedRoute);
-private router = inject(Router);
-private confirm = inject(ConfirmationService);
+private readonly articleService = inject(ArticleService);
+private readonly route = inject(ActivatedRoute);
+private readonly router = inject(Router);
+private readonly confirm = inject(ConfirmationService);
 
 readonly currentPage = signal(1);
 readonly pageSize = signal(5);
@@ -38,7 +38,7 @@ readonly statuses: ArticleStatus[] = [
 readonly selectedArticle = signal<Article | null>(null);
 
   // ---- Source State ----
-  readonly articles = signal<Article[]>([]);
+  readonly articles = this.articleService.adminArticles;
 
   // ---- Status Filter ----
   readonly statusFilter = signal<ArticleStatus>('all');
@@ -51,7 +51,6 @@ readonly selectedArticle = signal<Article | null>(null);
   readonly pageSizeOptions = [5, 10, 20, 50];
 
   constructor() {
-    this.reloadArticles();
     // Sync query param → signal
     effect(() => {
       const status = this.route.snapshot.queryParamMap.get('status') as ArticleStatus | null;
@@ -77,10 +76,9 @@ readonly selectedArticle = signal<Article | null>(null);
     });
   }
 
-  private reloadArticles(): void {
+  ngOnInit(): void {
     this.articleService.getAdminArticles().subscribe({
-      next: (articles) => this.articles.set(articles),
-      error: (err) => console.error('Failed to load articles', err),
+      error: err => console.error('Failed to load admin articles', err),
     });
   }
 
@@ -129,8 +127,8 @@ readonly filteredArticles = computed(() => {
 
   return list.sort((a, b) => {
 
-    let valueA: any;
-    let valueB: any;
+    let valueA: string | number;
+    let valueB: string | number;
 
     switch (field) {
       case 'title':
@@ -205,7 +203,6 @@ readonly rangeEnd = computed(() => {
   // ---- Actions ----
   deleteArticle(id: string): void {
     this.articleService.deleteArticle(id).subscribe({
-      next: () => this.reloadArticles(),
       error: (err) => console.error('Failed to delete article', err),
     });
   }
@@ -257,8 +254,8 @@ readonly rangeEnd = computed(() => {
     if (!ok) return;
 
     this.articleService.archiveArticle(article.id).subscribe({
-      next: () => this.reloadArticles(),
-      error: (err) => console.error('Failed to archive article', err),
+      error: (err) =>
+        console.error('Failed to archive article', err),
     });
 
   }

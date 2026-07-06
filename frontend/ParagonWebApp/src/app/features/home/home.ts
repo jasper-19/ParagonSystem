@@ -1,6 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { take, finalize } from 'rxjs/operators';
+import { ArticleService } from '../../core/services/article.service';
 import { LoaderService } from '../../shared/services/loader.service';
 import { FeaturedSection } from './components/featured-section/featured-section';
 import { MostViewedSection } from './components/most-viewed-section/most-viewed-section';
@@ -25,14 +27,25 @@ import { WelcomeBanner } from './components/welcome-banner/welcomebanner';
 })
 export class Home implements OnInit {
 
-  constructor(private loader: LoaderService) {
-  }
+  private readonly loader = inject(LoaderService);
+  private readonly articleService = inject(ArticleService);
 
-  ngOnInit() {
+  readonly homepageFeed = this.articleService.homepageFeed;
+
+  ngOnInit(): void {
+
     this.loader.show();
 
-    setTimeout(() => {
-      this.loader.hide();
-    }, 3000);
+    this.articleService
+      .getHomepageFeed()
+      .pipe(
+        take(1),
+        finalize(() => this.loader.hide())
+      )
+      .subscribe({
+        error: err => {
+          console.error('Failed to load homepage feed', err);
+        }
+      });
   }
 }

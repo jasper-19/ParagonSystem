@@ -9,6 +9,10 @@ import { ConfirmationModal } from '../../../../shared/components/confirmation-mo
 import { JoinService } from '../../../join/services/join.service';
 import { JoinPosition } from '../../../join/models/join-position.model';
 
+type SelectedApplicationPosition = {
+  positionId: string;
+  categories: string[];
+};
 @Component({
   selector: 'admin-editorial-applications',
   standalone: true,
@@ -219,9 +223,13 @@ export class ApplicationsComponent implements OnInit {
     return Math.min(this.currentPage * this.pageSize, totalResults);
   }
 
+
+
+
   // ========================
   // Position / Subrole Labels
   // ========================
+
 
   readonly YEAR_LEVEL_LABELS: Record<string, string> = {
     '1st_year':   '1st Year',
@@ -230,6 +238,7 @@ export class ApplicationsComponent implements OnInit {
     '4th_year':   '4th Year',
     'unspecified': '—',
   };
+
 
   getYearLevelLabel(value: string | undefined): string {
     if (!value) return '—';
@@ -293,6 +302,41 @@ export class ApplicationsComponent implements OnInit {
       .slice(0, 5);
   }
 
+  getSelectedPositions(app: Application): SelectedApplicationPosition[] {
+    if (app.selectedPositions?.length) {
+      return app.selectedPositions;
+    }
+
+    // Legacy fallback for old applications
+    if (app.positionId) {
+      return [
+        {
+          positionId: app.positionId,
+          categories: app.subRole ? [app.subRole] : [],
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  getPositionCategoryDisplay(app: Application): string {
+    const selected = this.getSelectedPositions(app);
+
+    if (selected.length === 0) return '—';
+
+    return selected
+      .map(item => {
+        const title = this.getPositionTitle(item.positionId);
+        const categories = item.categories?.length
+          ? item.categories.join(', ')
+          : 'No category';
+
+        return `${title} (${categories})`;
+      })
+      .join('; ');
+  }
+
   //CSV export
   exportApplications(apps: Application[]) {
 
@@ -304,14 +348,13 @@ export class ApplicationsComponent implements OnInit {
       return text;
     };
 
-    const header = ['Name', 'Email', 'StudentID', 'Position', 'Subrole', 'Status', 'InterviewDate'];
+    const header = ['Name', 'Email', 'StudentID', 'Positions & Categories', 'Status', 'InterviewDate'];
 
     const rows = apps.map(app => [
       escapeCsv(app.fullName),
       escapeCsv(app.email),
-      escapeCsv(app.studentId),
-      escapeCsv(this.getPositionTitle(app.positionId)),
-      escapeCsv(this.getSubRoleLabel(app)),
+      escapeCsv(app.studentId),escapeCsv(this.getPositionCategoryDisplay(app)),
+      escapeCsv(this.getPositionCategoryDisplay(app)),
       escapeCsv(this.formatStatus(app.status)),
       escapeCsv(this.formatInterviewDate(app.interviewDate)),
     ]);
@@ -328,6 +371,5 @@ export class ApplicationsComponent implements OnInit {
 
     window.URL.revokeObjectURL(url);
   }
-
 
 }

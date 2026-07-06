@@ -42,6 +42,12 @@ const createLimiter = rateLimit({
 // GET /api/articles
 router.get("/", publicCache(300), controller.getArticles);
 
+// GET /api/articles/homepage-feed
+router.get("/homepage-feed", publicCache(300), controller.getHomepageFeed);
+
+// GET /api/articles/category-feed
+router.get("/category-feed", publicCache(300), controller.getCategoryPageFeed);
+
 // GET /api/articles/category/:category
 router.get("/category/:category", publicCache(300), controller.getArticlesByCategory);
 
@@ -50,6 +56,9 @@ router.get("/categories", publicCache(3600), controller.getCategories);
 
 // GET /api/articles/tags
 router.get("/tags", publicCache(3600), controller.getTags);
+
+// GET /api/articles/:slug/feed
+router.get("/:slug/feed", publicCache(300), controller.getArticleFeed);
 
 // GET /api/articles/:slug
 router.get("/:slug", publicCache(300), controller.getArticleBySlug);

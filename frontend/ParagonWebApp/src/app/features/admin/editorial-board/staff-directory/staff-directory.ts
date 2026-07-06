@@ -14,6 +14,11 @@ import { Application } from '../../../../models/application.model';
 import { BoardMember, ApiBoard } from '../../../../models/editorial-board.model';
 import { StaffMember } from '../../../../models/staff-member.model';
 
+type SelectedApplicationPosition = {
+  positionId: string;
+  categories: string[];
+}
+
 @Component({
   selector: 'admin-editorial-staff',
   standalone: true,
@@ -278,8 +283,26 @@ export class StaffDirectoryComponent implements OnInit {
     broadcast: ['News Anchor', 'Field Reporter', 'Mobile Journalist'],
   };
 
-  positionLabel(positionId: string): string {
+  positionLabel(positionId?: string): string {
+    if (!positionId) return '—';
     return this.POSITION_LABELS[positionId] ?? positionId;
+  }
+
+  getSelectedPositions(app: Application): SelectedApplicationPosition[] {
+    if (app.selectedPositions?.length) {
+      return app.selectedPositions;
+    }
+
+    if (app.positionId) {
+      return [
+        {
+          positionId: app.positionId,
+          categories: app.subRole ? [app.subRole] : [],
+        },
+      ];
+    }
+
+    return [];
   }
 
   // =========================
