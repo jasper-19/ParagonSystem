@@ -30,6 +30,7 @@
 
       <!-- Background Image -->
       <!-- Blurred fill background -->
+    <ng-container *ngIf="a.image; else featuredImagePlaceholder">
       <img
         [src]="imageVariant(a.image, 'large')"
         [alt]="''"
@@ -43,10 +44,18 @@
         [alt]="a.title"
         class="absolute inset-0 w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-[1.02]"
       />
+    </ng-container>
 
-      <!-- Gradient Overlays -->
-      <div class="absolute inset-0 bg-linear-to-t from-[#000035] via-[#000035]/50 to-[#000035]/10"></div>
-      <div class="absolute inset-0 bg-linear-to-r from-[#000035]/60 via-transparent to-transparent"></div>
+    <ng-template #featuredImagePlaceholder>
+      <app-image-placeholder
+        size="large"
+        label="No featured image"
+      ></app-image-placeholder>
+    </ng-template>
+
+    <!-- Gradient Overlays -->
+    <div class="absolute inset-0 bg-linear-to-t from-[#000035] via-[#000035]/50 to-[#000035]/10"></div>
+    <div class="absolute inset-0 bg-linear-to-r from-[#000035]/60 via-transparent to-transparent"></div>
 
       <!-- Slide Content (active slide only) -->
       <a

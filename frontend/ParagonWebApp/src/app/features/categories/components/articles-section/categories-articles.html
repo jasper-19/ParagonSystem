@@ -16,12 +16,25 @@
 
         <!-- Image -->
         <div class="relative overflow-hidden bg-slate-100">
+          <ng-container *ngIf="article.image; else imagePlaceholder">
           <img
             [src]="imageVariant(article.image, 'medium')"
             [alt]="article.title"
             loading="lazy"
             class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
           />
+          </ng-container>
+
+          <ng-template #imagePlaceholder>
+            <div class="w-full h-56">
+              <app-image-placeholder
+                size="medium"
+                label="No Image"
+              >
+            </app-image-placeholder>
+            </div>
+          </ng-template>
+
           <!-- Category Badge on Image -->
           <div class="absolute top-4 left-4">
             <span class="px-3 py-1.5 bg-[#000035] text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg">

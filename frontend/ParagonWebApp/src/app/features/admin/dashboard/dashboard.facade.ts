@@ -1,10 +1,5 @@
 import { Injectable, inject, computed, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ArticleService } from '../../../core/services/article.service';
-import { ApplicationService } from '../../../core/services/application.service';
-import { SpecialIssueService } from '../../../core/services/special-issue.service';
-import { Article } from '../../../models/article.model';
-import { Application } from '../../../models/application.model';
+import { DashboardService } from '../../../core/services/dashboard.service';
 
 export interface AnalyticsMetric {
   label: string;
@@ -30,30 +25,37 @@ export interface ActivityItem {
 @Injectable({ providedIn: 'root' })
 export class DashboardFacade {
 
+
   readonly selectedMode = signal<AnalyticsMode>('daily');
   setMode(mode: AnalyticsMode): void {
     this.selectedMode.set(mode);
   }
 
-  private articleService = inject(ArticleService);
-  private applicationService = inject(ApplicationService);
-  private specialIssueService = inject(SpecialIssueService);
+  private dashboardService = inject(DashboardService);
+
+  readonly dashboardFeed = this.dashboardService.dashboardFeed;
+
+  readonly articleSummary = computed(() =>
+    this.dashboardFeed()?.articles
+  );
+
+  readonly applicationSummary = computed(() =>
+    this.dashboardFeed()?.applications
+  );
+
+  readonly specialIssueSummary = computed(() =>
+    this.dashboardFeed()?.specialIssues
+  );
+
+  readonly staffSummary = computed(() =>
+    this.dashboardFeed()?.staff
+  );
 
   constructor() {
-    this.articleService.getAdminArticles().subscribe({
-        error: (err) => console.error('Failed to fetch admin articles for dashboard:', err),
+    this.dashboardService.loadDashboardFeed().subscribe({
+      error: err => console.error('Failed to load dashboard feed', err),
     });
-
-    this.applicationService.refresh();
   }
-
-  private applications = toSignal(
-    this.applicationService.applications$,
-    { initialValue: [] }
-  );
-  private issues = toSignal(this.specialIssueService.issues$, { initialValue: [] });
-
-  private readonly articles = this.articleService.adminArticles;
 
   //Date Utility Helper
 private countWithinDays<T>(
@@ -85,362 +87,171 @@ private countWithinDays<T>(
 
   // ===== Article Metrics =====
 
-  totalArticles = computed(() => this.articles().length);
-
-  publishedArticles = computed(() =>
-    this.articles().filter(a => a.status === 'Published').length
+  readonly totalArticles = computed(() =>
+    this.articleSummary()?.total ?? 0
   );
 
-  draftArticles = computed(() =>
-    this.articles().filter(a => a.status === 'Draft').length
+  readonly publishedArticles = computed(() =>
+    this.articleSummary()?.published ?? 0
   );
 
-  archivedArticles = computed(() =>
-    this.articles().filter(a => a.status === 'Archived').length
+  readonly draftArticles = computed(() =>
+    this.articleSummary()?.drafts ?? 0
+  );
+
+  readonly archivedArticles = computed(() =>
+    this.articleSummary()?.archived ?? 0
+  );
+
+  readonly recentArticles = computed(() =>
+    this.articleSummary()?.recent ?? []
   );
 
   // ===== Application Metrics =====
 
-  totalApplications = computed(() => this.applications().length);
-
-  pendingApplications = computed(() =>
-    this.applications().filter(a => a.status === 'pending').length
+  readonly totalApplications = computed(() =>
+    this.applicationSummary()?.total ?? 0
   );
 
-  acceptedApplications = computed(() =>
-    this.applications().filter(a => a.status === 'accepted').length
+  readonly pendingApplications = computed(() =>
+    this.applicationSummary()?.pending ?? 0
   );
 
-  rejectedApplications = computed(() =>
-    this.applications().filter(a => a.status === 'rejected').length
+  readonly acceptedApplications = computed(() =>
+    this.applicationSummary()?.accepted ?? 0
   );
 
-  recentApplications = computed(() =>
-    [...this.applications()]
-      .sort((a, b) =>
-        (b.createdAt?.getTime() ?? 0) -
-        (a.createdAt?.getTime() ?? 0)
-      )
-      .slice(0, 5)
+  readonly rejectedApplications = computed(() =>
+    this.applicationSummary()?.rejected ?? 0
+  );
+
+  readonly recentApplications = computed(() =>
+    this.applicationSummary()?.recent ?? []
   );
 
   // ===== Special Issues Metrics =====
-  totalIssues = computed(() =>
-  this.issues().length
-);
+  readonly totalSpecialIssues = computed(() =>
+    this.specialIssueSummary()?.total ?? 0
+  );
 
-publishedIssues = computed(() =>
-  this.issues().filter(i => i.status === 'published').length
-);
+  readonly publishedSpecialIssues = computed(() =>
+    this.specialIssueSummary()?.published ?? 0
+  );
 
-draftIssues = computed(() =>
-  this.issues().filter(i => i.status === 'draft').length
-);
+  readonly draftSpecialIssues = computed(() =>
+    this.specialIssueSummary()?.drafts ?? 0
+  );
 
-archivedIssues = computed(() =>
-  this.issues().filter(i => i.status === 'archived').length
-);
+  readonly archivedSpecialIssues = computed(() =>
+    this.specialIssueSummary()?.archived ?? 0
+  );
+
+  readonly recentSpecialIssues = computed(() =>
+    this.specialIssueSummary()?.recent ?? []
+  );
+
+// ===== Staff Metrics =====
+  readonly totalStaff = computed(() =>
+    this.staffSummary()?.total ?? 0
+  );
+
+  readonly assignedStaff = computed(() =>
+    this.staffSummary()?.assigned ?? 0
+  );
+
+  readonly eligibleStaff = computed(() =>
+    this.staffSummary()?.eligible ?? 0
+  );
+
+  readonly recentStaff = computed(() =>
+    this.staffSummary()?.recent ?? []
+  );
 
   //Compute Analytics
- readonly analyticsMetrics = computed<AnalyticsMetric[]>(() => {
-
+readonly analyticsMetrics = computed<AnalyticsMetric[]>(() => {
   const mode = this.selectedMode();
-  const articles = this.articles();
-  const applications = this.applications();
-
-  let days = 30;
-
-  switch (mode) {
-    case 'daily':
-      days = 30;
-      break;
-    case 'weekly':
-      days = 7 * 12; // 12 weeks
-      break;
-    case 'monthly':
-      days = 30 * 12; // approx 12 months
-      break;
-    case 'yearly':
-      days = 365 * 5; // 5 years
-      break;
-  }
-
-  const now = new Date();
-  const start = new Date();
-  start.setDate(now.getDate() - days);
-
-  const countSince = <T>(
-    items: T[],
-    selector: (item: T) => Date | string | undefined
-  ) => {
-    return items.filter(item => {
-      const raw = selector(item);
-      if (!raw) return false;
-      const date = new Date(raw);
-      return date >= start;
-    }).length;
-  };
-
-  const articlesCount = countSince(
-    articles,
-    (a: Article) => a.publishedAt
-  );
-
-  const applicationsCount = countSince(
-    applications,
-    (a: Application) => a.createdAt
-  );
 
   return [
     {
       label: `Articles (${mode})`,
-      value: articlesCount,
-      change: 0 // optional: re-add comparison later
+      value: this.publishedArticles(),
+      change: 0,
     },
     {
       label: `Applications (${mode})`,
-      value: applicationsCount,
-      change: 0
-    }
+      value: this.totalApplications(),
+      change: 0,
+    },
   ];
 });
 
   //Analytics Trend Data (for chart)
- analyticsTrend = computed<AnalyticsTrend>(() => {
-
-  const mode = this.selectedMode();
-  const articles = this.articles();
-  const applications = this.applications();
-
-  const now = new Date();
-
-  let start: Date;
-  let bucketType: 'day' | 'week' | 'month' | 'year';
-  let bucketCount: number;
-
-  switch (mode) {
-
-    case 'daily':
-      bucketType = 'day';
-      bucketCount = 30;
-      start = new Date();
-      start.setDate(now.getDate() - (bucketCount - 1));
-      start.setHours(0, 0, 0, 0);
-      break;
-
-    case 'weekly':
-      bucketType = 'week';
-      bucketCount = 12;
-      start = new Date();
-      start.setDate(now.getDate() - (bucketCount - 1) * 7);
-      start.setHours(0, 0, 0, 0);
-      break;
-
-    case 'monthly':
-      bucketType = 'month';
-      bucketCount = 12;
-      start = new Date();
-      start.setMonth(now.getMonth() - (bucketCount - 1));
-      start.setDate(1);
-      start.setHours(0, 0, 0, 0);
-      break;
-
-    case 'yearly':
-      bucketType = 'year';
-      bucketCount = 5;
-      start = new Date();
-      start.setFullYear(now.getFullYear() - (bucketCount - 1));
-      start.setMonth(0, 1);
-      start.setHours(0, 0, 0, 0);
-      break;
-  }
-
-  const labels: string[] = [];
-  const articleData: number[] = [];
-  const applicationData: number[] = [];
-
-  for (let i = 0; i < bucketCount; i++) {
-
-    const bucketStart = new Date(start);
-
-    if (bucketType === 'day') {
-      bucketStart.setDate(start.getDate() + i);
-    }
-
-    if (bucketType === 'week') {
-      bucketStart.setDate(start.getDate() + i * 7);
-    }
-
-    if (bucketType === 'month') {
-      bucketStart.setMonth(start.getMonth() + i);
-    }
-
-    if (bucketType === 'year') {
-      bucketStart.setFullYear(start.getFullYear() + i);
-    }
-
-    const bucketEnd = new Date(bucketStart);
-
-    if (bucketType === 'day') bucketEnd.setDate(bucketStart.getDate() + 1);
-    if (bucketType === 'week') bucketEnd.setDate(bucketStart.getDate() + 7);
-    if (bucketType === 'month') bucketEnd.setMonth(bucketStart.getMonth() + 1);
-    if (bucketType === 'year') bucketEnd.setFullYear(bucketStart.getFullYear() + 1);
-
-    // Label formatting
-    let label = '';
-
-    if (bucketType === 'day') {
-      label = bucketStart.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric'
-      });
-    }
-
-    if (bucketType === 'week') {
-      const weekEnd = new Date(bucketStart);
-      weekEnd.setDate(bucketStart.getDate() + 6);
-
-      label = `${bucketStart.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric'
-      })} - ${weekEnd.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric'
-      })}`;
-    }
-
-    if (bucketType === 'month') {
-      label = bucketStart.toLocaleDateString(undefined, {
-        month: 'short',
-        year: '2-digit'
-      });
-    }
-
-    if (bucketType === 'year') {
-      label = bucketStart.getFullYear().toString();
-    }
-
-    labels.push(label);
-
-    const countInBucket = <T>(
-      items: T[],
-      dateSelector: (item: T) => Date | string | undefined
-    ) => {
-      return items.filter(item => {
-        const raw = dateSelector(item);
-        if (!raw) return false;
-        const date = new Date(raw);
-        return date >= bucketStart && date < bucketEnd;
-      }).length;
-    };
-
-    articleData.push(
-      countInBucket(articles, (a: Article) => a.publishedAt)
-    );
-
-    applicationData.push(
-      countInBucket(applications, (a: Application) => a.createdAt)
-    );
-  }
-
-  return {
-    labels,
-    articles: articleData,
-    applications: applicationData
-  };
-});
+readonly analyticsTrend = computed<AnalyticsTrend>(() => ({
+  labels: [],
+  articles: [],
+  applications: [],
+}));
 
   readonly activityFeed = computed<ActivityItem[]>(() => {
+    const articles = this.recentArticles();
+    const applications = this.recentApplications();
+    const specialIssues = this.recentSpecialIssues();
+    const staff = this.staffSummary()?.recent ?? [];
 
-  const articles = this.articles();
-  const applications = this.applications();
-  const specialIssues = this.issues();
+    const articleActivities: ActivityItem[] = articles
+      .filter((a: any) => a.createdAt)
+      .map((a: any) => {
+        const timestamp = a.publishedAt ?? a.createdAt;
 
-  const articleActivities: ActivityItem[] = articles
-    .filter(a => a.createdAt)
-    .map(a => {
-      let title: string;
-      const timestamp = a.publishedAt ?? a.createdAt;
+        return {
+          id: `article-${a.id}`,
+          type: 'article' as const,
+          title: `Article ${a.status?.toLowerCase() ?? 'updated'}: ${a.title}`,
+          timestamp: new Date(timestamp),
+        };
+      });
 
-      switch (a.status) {
-        case 'Published':
-          title = `Article published: ${a.title}`;
-          break;
-        case 'Draft':
-          title = `Draft article created: ${a.title}`;
-          break;
-        case 'Archived':
-          title = `Article archived: ${a.title}`;
-          break;
-        default:
-          title = `Article updated: ${a.title}`;
-      }
-
-      return {
-        id: `article-${a.id}`,
-        type: 'article' as const,
-        title,
-        timestamp: new Date(timestamp)
-      };
-    });
-
-  const applicationActivities: ActivityItem[] = applications
-    .filter(a => a.createdAt)
-    .map(a => {
-      let title: string;
-
-      switch (a.status) {
-        case 'accepted':
-          title = `Application accepted: ${a.fullName}`;
-          break;
-        case 'rejected':
-          title = `Application rejected: ${a.fullName}`;
-          break;
-        case 'pending':
-        default:
-          title = `New application from ${a.fullName}`;
-      }
-
-      return {
+    const applicationActivities: ActivityItem[] = applications
+      .filter((a: any) => a.createdAt)
+      .map((a: any) => ({
         id: `application-${a.id}`,
         type: 'application' as const,
-        title,
-        timestamp: new Date(a.createdAt!)
-      };
-    });
+        title:
+          a.status === 'accepted'
+            ? `Application accepted: ${a.fullName}`
+            : a.status === 'rejected'
+              ? `Application rejected: ${a.fullName}`
+              : `New application from ${a.fullName}`,
+        timestamp: new Date(a.createdAt),
+      }));
 
-  const issueActivities: ActivityItem[] = specialIssues
-    .map(i => {
-      let title: string;
-
-      switch (i.status) {
-        case 'published':
-          title = `Special issue published: ${i.title}`;
-          break;
-        case 'draft':
-          title = `Draft special issue created: ${i.title}`;
-          break;
-        case 'archived':
-          title = `Special issue archived: ${i.title}`;
-          break;
-        default:
-          title = `Special issue updated: ${i.title}`;
-      }
-
-      return {
+    const issueActivities: ActivityItem[] = specialIssues
+      .filter((i: any) => i.createdAt || i.publishedAt)
+      .map((i: any) => ({
         id: `issue-${i.id}`,
         type: 'issue' as const,
-        title,
-        timestamp: new Date(i.publishedAt)
-      };
-    });
+        title: `Special issue ${i.status ?? 'updated'}: ${i.title}`,
+        timestamp: new Date(i.publishedAt ?? i.createdAt),
+      }));
 
-  return [
-    ...articleActivities,
-    ...applicationActivities,
-    ...issueActivities
-  ]
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-    .slice(0, 50);
-});
+    const staffActivities: ActivityItem[] = staff
+      .filter((s: any) => s.createdAt)
+      .map((s: any) => ({
+        id: `staff-${s.id}`,
+        type: 'staff' as const,
+        title: `Staff member added: ${s.fullName}`,
+        timestamp: new Date(s.createdAt),
+      }));
+
+    return [
+      ...articleActivities,
+      ...applicationActivities,
+      ...issueActivities,
+      ...staffActivities,
+    ]
+      .sort((a: ActivityItem, b: ActivityItem) =>
+        b.timestamp.getTime() - a.timestamp.getTime()
+      )
+      .slice(0, 50);
+  });
 }

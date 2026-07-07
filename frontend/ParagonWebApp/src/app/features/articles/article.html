@@ -22,10 +22,22 @@
 <div class="max-w-4xl mx-auto px-4 mt-8 mb-2">
   <div class="relative rounded-sm border-none p-2 sm:p-3">
     <div class="overflow-hidden">
-      <img
-        [src]="imageVariant(article.image, 'large')"
-        [alt]="article.title"
-        class="w-full h-auto object-cover" />
+      <ng-container *ngIf="article.image; else imagePlaceholder">
+        <img
+          [src]="imageVariant(article.image, 'large')"
+          [alt]="article.title"
+          class="w-full h-auto object-cover"
+        />
+      </ng-container>
+
+      <ng-template #imagePlaceholder>
+        <div class="aspect-video w-full">
+          <app-image-placeholder
+            size="large"
+            label="No article image"
+          ></app-image-placeholder>
+        </div>
+      </ng-template>
     </div>
   </div>
 </div>

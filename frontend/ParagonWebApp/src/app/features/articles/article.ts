@@ -17,6 +17,7 @@ import { StaffApplication } from './components/staff-application/staff-applicati
 import { ArticleSkeleton } from './components/skeleton/article-skeleton';
 import { imageVariant } from '../../shared/utils/image-variant.util';
 import { ArticleFeed } from '../../models/article-feed.model';
+import { ImagePlaceholderComponent } from '../../shared/components/image-placeholder/image-placeholder';
 
 @Component({
   selector: 'app-article',
@@ -30,6 +31,7 @@ import { ArticleFeed } from '../../models/article-feed.model';
     OtherStories,
     StaffApplication,
     ArticleSkeleton,
+    ImagePlaceholderComponent,
   ],
   templateUrl: './article.html',
 })
@@ -61,6 +63,8 @@ export class ArticlePage {
         map(params => params.get('slug')),
         filter((slug): slug is string => !!slug),
         tap(slug => {
+          console.log('Loading article:', slug);
+
           this.articleService.loadArticleFeed(slug);
 
           this.articleService.incrementViews(slug).subscribe({

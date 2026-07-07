@@ -183,3 +183,46 @@ export async function updateById(id: string, patch: StaffPatch) {
 
   return result.rows[0] ? mapRow(result.rows[0]) : undefined;
 }
+
+export async function getDashboardSummary() {
+  const [totals, recent] = await Promise.all([
+    db.query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE application_id IS NOT NULL) AS assigned,
+        COUNT(*) FILTER (WHERE year_level IS DISTINCT FROM '4th_year') AS eligible
+      FROM staff_members
+    `),
+
+    db.query(`
+      SELECT
+        id,
+        full_name,
+        email,
+        student_id,
+        year_level,
+        assigned_section,
+        assigned_role,
+        created_at
+      FROM staff_members
+      ORDER BY created_at DESC
+      LIMIT 5
+    `),
+  ]);
+
+  return {
+    total: Number(totals.rows[0].total),
+    assigned: Number(totals.rows[0].assigned),
+    eligible: Number(totals.rows[0].eligible),
+    recent: recent.rows.map(row => ({
+      id: String(row.id),
+      fullName: row.full_name,
+      email: row.email,
+      studentId: row.student_id,
+      yearLevel: row.year_level ?? undefined,
+      assignedSection: row.assigned_section ?? undefined,
+      assignedRole: row.assigned_role ?? undefined,
+      createdAt: row.created_at,
+    })),
+  };
+}

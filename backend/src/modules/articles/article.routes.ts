@@ -48,6 +48,9 @@ router.get("/homepage-feed", publicCache(300), controller.getHomepageFeed);
 // GET /api/articles/category-feed
 router.get("/category-feed", publicCache(300), controller.getCategoryPageFeed);
 
+// GET /api/articles/search-feed
+router.get("/search-feed", publicCache(300), controller.getSearchFeed);
+
 // GET /api/articles/category/:category
 router.get("/category/:category", publicCache(300), controller.getArticlesByCategory);
 

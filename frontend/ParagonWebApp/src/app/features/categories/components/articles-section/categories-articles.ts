@@ -11,11 +11,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
+import { ImagePlaceholderComponent } from '../../../../shared/components/image-placeholder/image-placeholder';
 
 @Component({
   selector: 'app-categories-articles',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ImagePlaceholderComponent],
   templateUrl: './categories-articles.html'
 })
 export class CategoriesArticles

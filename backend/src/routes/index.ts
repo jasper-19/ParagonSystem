@@ -10,11 +10,13 @@ import userRoutes from "../modules/users/user.routes";
 import collegeRoutes from "../modules/colleges/college.routes";
 import activityLogRoutes from "../modules/activity-logs/activity-log.routes";
 import mediaRoutes from "../modules/media/media.routes";
+import dashboardRoutes from "../modules/dashboard/dashboard.routes";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
+router.use("/dashboard", dashboardRoutes);
 router.use("/applications", applicationRoutes);
 router.use("/staff", staffRoutes);
 router.use("/editorial-board", editorialBoardRoutes);

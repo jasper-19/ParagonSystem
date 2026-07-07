@@ -3,12 +3,13 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, Input
 import { RouterModule } from '@angular/router';
 import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
+import { ImagePlaceholderComponent } from '../../../../shared/components/image-placeholder/image-placeholder';
 
 @Component({
   selector: 'app-featured-section',
   standalone: true,
   templateUrl: './featured-section.html',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ImagePlaceholderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeaturedSection implements OnDestroy {

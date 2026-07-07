@@ -69,7 +69,7 @@
         </button>
 
         <button
-          *ngFor="let category of ['News', 'Sports', 'Editorial', 'Feature', 'Literary', 'Column', 'DevCom']"
+          *ngFor="let category of categories()"
           type="button"
           (click)="selectCategory(category)"
           class="shrink-0 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-[#f4b400] hover:text-[#000035]"
@@ -100,13 +100,21 @@
             (click)="openArticle(article)"
             class="group text-left flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border border-gray-100 bg-white hover:border-[#f4b400] hover:shadow-md transition"
           >
-            <img
-              *ngIf="article.image"
-              [src]="imageVariant(article.image, 'thumbnail')"
-              [alt]="article.title"
-              loading="lazy"
-              class="w-20 h-16 sm:w-32 sm:h-24 object-cover rounded-xl bg-gray-100 shrink-0"
-            />
+
+          <div class="w-20 h-16 sm:w-32 sm:h-24 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+            <ng-container *ngIf="article.image; else searchImagePlaceholder">
+              <img
+                [src]="imageVariant(article.image, 'thumbnail')"
+                [alt]="article.title"
+                loading="lazy"
+                class="w-full h-full object-cover"
+              />
+            </ng-container>
+
+            <ng-template #searchImagePlaceholder>
+              <app-image-placeholder size="small"></app-image-placeholder>
+            </ng-template>
+          </div>
 
             <div class="min-w-0 flex-1">
               <p class="text-[11px] font-bold text-[#f4b400] uppercase tracking-wide mb-1">
@@ -147,7 +155,7 @@
 
             <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
               <button
-                *ngFor="let category of ['News', 'Sports', 'Editorial', 'Feature', 'Literary', 'Column', 'DevCom']"
+                *ngFor="let category of categories()"
                 type="button"
                 (click)="selectCategory(category)"
                 class="rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-[#000035]
@@ -171,15 +179,13 @@
 
     <!-- Category Buttons -->
     <button
-      *ngFor="let category of ['Sports', 'News', 'Feature', 'Column', 'Literary', 'Editorial', 'DevCom']"
+      *ngFor="let category of categories()"
       type="button"
       (click)="selectCategory(category)"
       class="group text-left bg-linear-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-300 hover:border-[#f4b400] hover:shadow-lg hover:-translate-y-1"
     >
-      <div class="w-12 h-12 rounded-xl bg-[#f4b400]/10 flex items-center justify-center mb-4 group-hover:bg-[#f4b400]/20">
-        <svg class="w-6 h-6 text-[#f4b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path d="M4 6h16M4 12h12M4 18h8" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
+      <div class="w-12 h-12 rounded-xl bg-[#f4b400]/10 flex items-center justify-center mb-4 group-hover:bg-[#f4b400]/20"
+        [innerHTML]="getCategoryIcon(category)">
       </div>
 
       <h4 class="font-semibold text-[#000035] text-base">
@@ -193,7 +199,7 @@
     <!-- Recently Published -->
     <!-- ========================================= -->
 
-    <div *ngIf="recentArticles.length" class="mt-10 pt-8 border-t border-gray-100">
+    <div *ngIf="recentArticles().length" class="mt-10 pt-8 border-t border-gray-100">
 
       <div class="flex items-center justify-between mb-5">
 
@@ -202,7 +208,7 @@
         </h3>
 
         <span class="text-xs text-gray-400">
-          Latest {{ recentArticles.length }} articles
+          Latest {{ recentArticles().length }} articles
         </span>
 
       </div>
@@ -210,7 +216,7 @@
       <div class="grid gap-3">
 
         <button
-          *ngFor="let article of recentArticles"
+          *ngFor="let article of recentArticles()"
           type="button"
           (click)="openArticle(article)"
           class="group text-left flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border border-gray-100 bg-white hover:border-[#f4b400] hover:shadow-md transition"

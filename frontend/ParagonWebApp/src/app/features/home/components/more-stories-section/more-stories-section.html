@@ -27,7 +27,8 @@
         <a [routerLink]="['/article', story.slug]" class="block">
 
           <!-- IMAGE -->
-          <div class="w-full aspect-4/3 overflow-hidden">
+          <div class="w-full aspect-4/3 overflow-hidden">\\
+            <ng-container *ngIf="story.image; else imagePlaceholder">
             <img
               [src]="imageVariant(story.image, 'medium')"
               [alt]="story.title"
@@ -35,6 +36,13 @@
               decoding="async"
               class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
             />
+            </ng-container>
+            <ng-template #imagePlaceholder>
+              <app-image-placeholder
+                size="medium"
+                label="No Image"
+              ></app-image-placeholder>
+            </ng-template>
           </div>
 
           <!-- CARD BODY -->

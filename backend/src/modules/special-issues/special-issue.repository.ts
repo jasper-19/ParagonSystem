@@ -174,3 +174,48 @@ export async function update(id: string, data: unknown) {
 export async function remove(id: string) {
   await db.query(`DELETE FROM special_issues WHERE id = $1`, [id]);
 }
+
+export async function getDashboardSummary() {
+  const [totals, recent] = await Promise.all([
+    db.query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE LOWER(status::text) = 'published') AS published,
+        COUNT(*) FILTER (WHERE LOWER(status::text) = 'draft') AS drafts,
+        COUNT(*) FILTER (WHERE LOWER(status::text) = 'archived') AS archived
+      FROM special_issues
+    `),
+
+    db.query(`
+      SELECT
+        id,
+        title,
+        slug,
+        type,
+        academic_year,
+        status,
+        published_at,
+        created_at
+      FROM special_issues
+      ORDER BY created_at DESC
+      LIMIT 5
+    `)
+  ]);
+
+  return {
+    total: Number(totals.rows[0].total),
+    published: Number(totals.rows[0].published),
+    drafts: Number(totals.rows[0].drafts),
+    archived: Number(totals.rows[0].archived),
+    recent: recent.rows.map(row => ({
+      id: String(row.id),
+      title: row.title,
+      slug: row.slug,
+      type: row.type,
+      academicYear: row.academic_year,
+      status: row.status,
+      publishedAt: row.published_at ?? undefined,
+      createdAt: row.created_at,
+    })),
+  };
+}

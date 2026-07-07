@@ -262,3 +262,31 @@ export async function addInterviewNotes(id: string, notes: string) {
     throw error;
   }
 }
+
+export async function getDashboardSummary() {
+  const [totals, recent] = await Promise.all([
+    db.query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE LOWER(status::text) = 'pending') AS pending,
+        COUNT(*) FILTER (WHERE LOWER(status::text) = 'accepted') AS accepted,
+        COUNT(*) FILTER (WHERE LOWER(status::text) = 'rejected') AS rejected
+      FROM applications
+    `),
+
+    db.query(`
+      SELECT *
+      FROM applications
+      ORDER BY created_at DESC
+      LIMIT 5
+    `),
+  ]);
+
+  return {
+    total: Number(totals.rows[0].total),
+    pending: Number(totals.rows[0].pending),
+    accepted: Number(totals.rows[0].accepted),
+    rejected: Number(totals.rows[0].rejected),
+    recent: recent.rows.map(mapRow),
+  };
+}

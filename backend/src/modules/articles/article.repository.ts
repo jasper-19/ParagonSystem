@@ -443,3 +443,50 @@ export async function findTags(): Promise<string[]> {
 
     return result.rows.map(r => r.tag);
 }
+
+export async function getDashboardSummary() {
+  const [
+    totals,
+    recent,
+  ] = await Promise.all([
+    db.query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE LOWER(status::text) = 'published') AS published,
+        COUNT(*) FILTER (WHERE LOWER(status::text) = 'draft') AS drafts,
+        COUNT(*) FILTER (WHERE LOWER(status::text) = 'archived') AS archived
+      FROM articles
+    `),
+
+    db.query(`
+      SELECT
+        id,
+        title,
+        slug,
+        excerpt,
+        image,
+        author,
+        photo_by,
+        graphic_by,
+        illustration_by,
+        category,
+        tags,
+        status,
+        featured,
+        views,
+        created_at,
+        published_at
+      FROM articles
+      ORDER BY created_at DESC
+      LIMIT 5
+    `),
+  ]);
+
+  return {
+    total: Number(totals.rows[0].total),
+    published: Number(totals.rows[0].published),
+    drafts: Number(totals.rows[0].drafts),
+    archived: Number(totals.rows[0].archived),
+    recent: recent.rows.map(mapCardRow),
+  };
+}

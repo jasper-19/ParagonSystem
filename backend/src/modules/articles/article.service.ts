@@ -15,8 +15,12 @@ const HOMEPAGE_LIMITS = {
 
 const ARTICLE_FEED_LIMITS = {
   related: 6,
-  otherStories: 6,
+  otherStories: 8,
   queryBuffer: 20,
+} as const;
+
+const SEARCH_FEED_LIMITS = {
+  recent: 5,
 } as const;
 
 type ArticleStatus = (typeof ALLOWED_STATUSES)[number];
@@ -55,6 +59,11 @@ export interface CategoryPageFeed {
   page: number;
   limit: number;
   hasMore: boolean;
+}
+
+export interface SearchFeed {
+  recent: Awaited<ReturnType<typeof repository.findAllCards>>;
+  categories: Awaited<ReturnType<typeof repository.findCategories>>;
 }
 
 function excludeUsed<T extends { id: string }>(
@@ -211,6 +220,24 @@ export async function getCategoryPageFeed(
     page,
     limit,
     hasMore: articles.length === limit,
+  };
+}
+
+export async function getSearchFeed(): Promise<SearchFeed> {
+  const [recent, categories] = await Promise.all([
+    repository.findAllCards({
+      status: "Published",
+      sort: "latest",
+      page: 1,
+      limit: SEARCH_FEED_LIMITS.recent,
+    }),
+
+    repository.findCategories(),
+  ]);
+
+  return {
+    recent,
+    categories,
   };
 }
 

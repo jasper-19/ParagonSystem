@@ -8,14 +8,14 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-
 import { Article } from '../../../models/article.model';
 import { imageVariant } from '../../utils/image-variant.util';
+import { ImagePlaceholderComponent } from '../image-placeholder/image-placeholder';
 
 @Component({
   selector: 'app-article-carousel',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ImagePlaceholderComponent],
   templateUrl: './article-carousel.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -31,7 +31,10 @@ export class ArticleCarouselComponent {
   @Input({ required: true })
   set articles(value: Article[]) {
     this._articles.set(value ?? []);
+
     this.currentPage.set(0);
+    this.renderedPageIndex.set(1);
+    this.isTransitioning.set(false);
   }
 
   @Input() title = 'Stories';
@@ -71,7 +74,7 @@ export class ArticleCarouselComponent {
     ];
   });
 
-  readonly showArrows = computed(() => {  
+  readonly showArrows = computed(() => {
     return (
       this.cardsPerView() > 1 &&
       this.articlesList().length > this.cardsPerView()
@@ -90,7 +93,8 @@ export class ArticleCarouselComponent {
   );
 
   readonly trackStyle = computed(() => {
-    const index = this.renderedPageIndex();
+    const total = this.totalPages();
+    const index = total <= 1 ? 0 : this.renderedPageIndex();
 
     return {
       transform: `translateX(-${index * 100}%)`,
@@ -107,6 +111,8 @@ export class ArticleCarouselComponent {
     if (nextCardsPerView !== this.cardsPerView()) {
       this.cardsPerView.set(nextCardsPerView);
       this.currentPage.set(0);
+      this.renderedPageIndex.set(1);
+      this.isTransitioning.set(false);
     }
   }
 

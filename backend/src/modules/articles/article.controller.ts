@@ -165,6 +165,17 @@ export const getCategoryPageFeed = asyncHandler(
   }
 );
 
+/** GET /api/articles/search-feed */
+export const getSearchFeed = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const searchFeed = await service.getSearchFeed();
+
+    setPublicCache(res);
+
+    res.json(searchFeed);
+  }
+);
+
 /** GET /api/articles/:slug/feed */
 export const getArticleFeed = asyncHandler(
   async (req: Request, res: Response) => {

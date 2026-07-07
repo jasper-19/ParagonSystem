@@ -1,74 +1,84 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-// =====================================================
-// LocationService
-// - Provides geolocation detection using the browser API
-// - Exposes `city` and `coords` as signals for consumers
-// - Uses OpenStreetMap Nominatim reverse geocoding to resolve city names
-// =====================================================
+type Coords = {
+  latitude: number;
+  longitude: number;
+};
+
+type CachedLocation = {
+  city: string;
+  coords: Coords;
+  savedAt: number;
+};
 
 @Injectable({ providedIn: 'root' })
 export class LocationService {
-  // ----- Public signals (state) -----
-  // `city` holds the detected city name or status messages
   readonly city = signal<string | null>(null);
+  readonly coords = signal<Coords | null>(null);
+  readonly isDetecting = signal(false);
 
-  // `coords` holds the numeric latitude/longitude once detected
-  readonly coords = signal<{ latitude: number; longitude: number } | null>(null);
+  private readonly CACHE_KEY = 'paragon_user_location';
+  private readonly CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
 
-  // ----- Dependencies -----
-  // `HttpClient` used only for reverse geocoding lookup
   constructor(private http: HttpClient) {}
 
-  // =====================================================
-  // Public API: detectLocation()
-  // - Attempts to use the browser geolocation API
-  // - Writes status strings to `city` for consumer feedback
-  // - Populates `coords` with numeric latitude/longitude on success
-  // - Performs a reverse geocode lookup to obtain a readable city name
-  // =====================================================
-  detectLocation() {
-    // If the browser does not support geolocation, set status and exit
+  detectLocation(force = false): void {
+    if (this.isDetecting()) return;
+
+    if (!force && this.loadCachedLocation()) {
+      return;
+    }
+
     if (!navigator.geolocation) {
       this.city.set('Location off');
       return;
     }
 
-    // Request the current position from the browser
+    this.isDetecting.set(true);
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        // ---- Parse coordinates ----
+      position => {
         const latitude = Number(position.coords.latitude);
         const longitude = Number(position.coords.longitude);
 
-        // Validate numeric parsing
-        if (isNaN(latitude) || isNaN(longitude)) {
-          // If coordinates are not valid numbers, set unknown state
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
           this.city.set('Unknown');
+          this.isDetecting.set(false);
           return;
         }
 
-        // Save coords to signal for consumers interested in raw coords
-        this.coords.set({ latitude, longitude });
+        const coords = { latitude, longitude };
+        this.coords.set(coords);
 
-        // ---- Reverse geocode to obtain city/town/village name ----
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+        const url =
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
+          `&lat=${latitude}&lon=${longitude}`;
+
         this.http.get<any>(url).subscribe({
           next: res => {
-            // Prefer `city`, then `town`, then `village`, otherwise 'Unknown'
-            const city = res.address?.city || res.address?.town || res.address?.village || 'Unknown';
+            const address = res.address ?? {};
+
+            const city =
+              address.city ||
+              address.municipality ||
+              address.town ||
+              address.village ||
+              address.county ||
+              address.state ||
+              'Unknown';
+
             this.city.set(city);
+            this.saveCachedLocation(city, coords);
+            this.isDetecting.set(false);
           },
-          // On any HTTP error, set a safe unknown state
-          error: () => this.city.set('Unknown')
+          error: () => {
+            this.city.set('Unknown');
+            this.isDetecting.set(false);
+          },
         });
       },
-      (error) => {
-        // =====================================================
-        // Error handling for geolocation request
-        // - Map browser error codes to friendly status messages
-        // =====================================================
+      error => {
         switch (error.code) {
           case error.PERMISSION_DENIED:
             this.city.set('Location denied');
@@ -82,9 +92,50 @@ export class LocationService {
           default:
             this.city.set('Unknown');
         }
+
+        this.isDetecting.set(false);
       },
-      // Options: prefer high accuracy but keep a reasonable timeout
-      { enableHighAccuracy: true, timeout: 5000 }
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 1000 * 60 * 30,
+      }
     );
+  }
+
+  clearLocation(): void {
+    localStorage.removeItem(this.CACHE_KEY);
+    this.city.set(null);
+    this.coords.set(null);
+  }
+
+  private loadCachedLocation(): boolean {
+    const raw = localStorage.getItem(this.CACHE_KEY);
+    if (!raw) return false;
+
+    try {
+      const cached = JSON.parse(raw) as CachedLocation;
+      const isExpired = Date.now() - cached.savedAt > this.CACHE_DURATION;
+
+      if (isExpired) return false;
+
+      this.city.set(cached.city);
+      this.coords.set(cached.coords);
+
+      return true;
+    } catch {
+      localStorage.removeItem(this.CACHE_KEY);
+      return false;
+    }
+  }
+
+  private saveCachedLocation(city: string, coords: Coords): void {
+    const data: CachedLocation = {
+      city,
+      coords,
+      savedAt: Date.now(),
+    };
+
+    localStorage.setItem(this.CACHE_KEY, JSON.stringify(data));
   }
 }

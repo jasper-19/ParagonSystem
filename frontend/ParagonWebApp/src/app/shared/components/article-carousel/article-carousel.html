@@ -63,13 +63,22 @@
             class="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
           >
             <div class="aspect-16/10 overflow-hidden">
-              <img
-                [src]="imageVariant(article.image, 'medium')"
-                [alt]="article.title"
-                loading="lazy"
-                decoding="async"
-                class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-              />
+              <ng-container *ngIf="article.image; else ImagePlaceholder">
+                <img
+                  [src]="imageVariant(article.image, 'medium')"
+                  [alt]="article.title"
+                  loading="lazy"
+                  decoding="async"
+                  class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                />
+              </ng-container>
+
+                <ng-template #ImagePlaceholder>
+                  <app-image-placeholder
+                    size="medium"
+                  ></app-image-placeholder>
+                </ng-template>
+
             </div>
 
             <div class="p-5 sm:p-6 flex flex-col flex-1">
@@ -107,7 +116,7 @@
         class="w-12 h-12 rounded-full flex items-center justify-center bg-white border border-[#000035]/10  text-[#000035] shadow-md
              hover:bg-[#000035] hover:text-white hover:scale-110 hover:shadow-xl transition-all duration-300">
         <svg
-          class="w-5 h-5 shrink-0" 
+          class="w-5 h-5 shrink-0"
           xmlns="http://www.w3.org/2000/svg"
           fill="currentColor"
           viewBox="0 0 24 24"
@@ -123,7 +132,7 @@
     </div>
 
     </div>
-    
+
         <div
           *ngIf="showDots()"
           class="flex items-center justify-center gap-2 mt-8"

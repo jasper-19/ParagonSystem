@@ -7,6 +7,7 @@ import { GetArticlesParams } from '../../models/article-query.model';
 import { HomepageFeed } from '../../models/homepage-feed.model';
 import { ArticleFeed } from '../../models/article-feed.model';
 import { CategoryPageFeed } from '../../models/category-page-feed.model';
+import { SearchFeed } from '../../models/search-feed.model';
 // API endpoints are defined in a central config for maintainability and environment-based switching
 import { API_ENDPOINTS } from '../config/api.config';
 import { SocketService } from './socket.service';
@@ -44,6 +45,11 @@ type ApiCategoryPageFeed = {
   hasMore: boolean;
 };
 
+type ApiSearchFeed = {
+  recent: ApiArticle[];
+  categories: string[];
+};
+
 @Injectable({ providedIn: 'root' })
 export class ArticleService {
   private api = API_ENDPOINTS.articles;
@@ -56,7 +62,8 @@ export class ArticleService {
   private homepageFeedCache$?: Observable<HomepageFeed>;
   private adminArticlesCache$?: Observable<Article[]>;
   private articleFeedCache = new Map<string, Observable<ArticleFeed>>();
-   private categoryFeedCache = new Map<string, Observable<CategoryPageFeed>>();
+  private categoryFeedCache = new Map<string, Observable<CategoryPageFeed>>();
+  private searchFeedCache$?: Observable<SearchFeed>;
 
   private lastCategoryFeedParams: GetArticlesParams | null = null;
   private currentArticleFeedSlug: string | null = null;
@@ -84,6 +91,14 @@ export class ArticleService {
 
   readonly categoryArticles =
     this.categoryArticlesState.asReadonly();
+
+  private readonly searchFeedState =
+    signal<SearchFeed | null>(null);
+
+  readonly searchFeed =
+    this.searchFeedState.asReadonly();
+
+
 
   private readonly adminArticlesState =
     signal<Article[]>([]);
@@ -144,10 +159,12 @@ export class ArticleService {
 
     this.featuredCache$ = undefined;
     this.homepageFeedCache$ = undefined;
+    this.searchFeedCache$ = undefined;
     this.adminArticlesCache$ = undefined;
 
     this.articleFeedCache.clear();
     this.categoryFeedCache.clear();
+
 
     this.latestCache$ = undefined;
     this.mostViewedCache$ = undefined;
@@ -165,6 +182,7 @@ export class ArticleService {
   this.refreshAdminArticles();
   this.refreshArticleFeed();
   this.refreshCategoryFeed();
+  this.refreshSearchFeed();
 }
 
   private buildCategoryFeedCacheKey(params: GetArticlesParams): string {
@@ -266,14 +284,12 @@ export class ArticleService {
   }
 
   private fetchArticleFeed(slug: string): Observable<ArticleFeed> {
+    console.log('[HTTP] Fetching', slug);
+
     return this.http
       .get<ApiArticleFeed>(`${this.api}/${slug}/feed`)
       .pipe(
         map(feed => this.normalizeArticleFeed(feed)),
-        tap(feed => {
-          this.currentArticleFeedSlug = slug;
-          this.articleFeedState.set(feed);
-        })
       );
   }
 
@@ -512,6 +528,15 @@ export class ArticleService {
     };
   }
 
+  private normalizeSearchFeed(
+    feed: ApiSearchFeed
+  ): SearchFeed {
+    return {
+      recent: this.normalizeArticles(feed.recent),
+      categories: feed.categories ?? [],
+    };
+  }
+
   refreshHomepageFeed(): void {
     this.fetchHomepageFeed().subscribe({
       error: (err) => {
@@ -549,6 +574,10 @@ export class ArticleService {
 
   loadArticleFeed(slug: string): void {
     this.getArticleFeed(slug).subscribe({
+      next: feed => {
+        this.currentArticleFeedSlug = slug;
+        this.articleFeedState.set(feed);
+      },
       error: err => {
         console.error('Failed to load article feed', err);
       },
@@ -558,26 +587,26 @@ export class ArticleService {
   private fetchCategoryFeed(
     params: GetArticlesParams
   ): Observable<CategoryPageFeed> {
-    this.lastCategoryFeedParams = params;
+    this.lastCategoryFeedParams = {
+      ...params,
+      tags: [...(params.tags ?? [])],
+    };
 
     return this.http
       .get<ApiCategoryPageFeed>(`${this.api}/category-feed`, {
         params: this.buildParams({ ...params }),
       })
       .pipe(
-        map(feed => this.normalizeCategoryPageFeed(feed)),
-        tap(feed => {
-          this.categoryFeedState.set(feed);
+        map(feed => this.normalizeCategoryPageFeed(feed))
+      );
+}
 
-          if ((params.page ?? 1) === 1) {
-            this.categoryArticlesState.set(feed.articles);
-          } else {
-            this.categoryArticlesState.update(current => [
-              ...current,
-              ...feed.articles,
-            ]);
-          }
-        })
+  private fetchSearchFeed(): Observable<SearchFeed> {
+    return this.http
+      .get<ApiSearchFeed>(`${this.api}/search-feed`)
+      .pipe(
+        map(feed => this.normalizeSearchFeed(feed)),
+        tap(feed => this.searchFeedState.set(feed))
       );
   }
 
@@ -598,28 +627,65 @@ export class ArticleService {
     return request;
   }
 
-  loadCategoryFeed(params: GetArticlesParams): void {
-    this.getCategoryFeed(params).subscribe({
+  loadCategoryFeed(params: GetArticlesParams): Observable<CategoryPageFeed> {
+    return this.getCategoryFeed(params).pipe(
+      tap(feed => {
+        this.categoryFeedState.set(feed);
+
+        if ((params.page ?? 1) === 1) {
+          this.categoryArticlesState.set(feed.articles);
+        } else {
+          this.categoryArticlesState.update(current => [
+            ...current,
+            ...feed.articles,
+          ]);
+        }
+      })
+    );
+  }
+
+refreshCategoryFeed(): void {
+  if (!this.lastCategoryFeedParams) return;
+
+  const params: GetArticlesParams = {
+    ...this.lastCategoryFeedParams,
+    tags: [...(this.lastCategoryFeedParams.tags ?? [])],
+    page: 1,
+  };
+
+  this.categoryFeedCache.clear();
+
+  this.loadCategoryFeed(params).subscribe({
+    error: err => {
+      console.error('Failed to refresh category feed', err);
+    },
+  });
+}
+
+  getSearchFeed(): Observable<SearchFeed> {
+    if (!this.searchFeedCache$) {
+      this.searchFeedCache$ = this.fetchSearchFeed().pipe(
+        shareReplay(1)
+      );
+    }
+
+    return this.searchFeedCache$;
+  }
+
+  loadSearchFeed(): void {
+    this.getSearchFeed().subscribe({
       error: err => {
-        console.error('Failed to load category feed', err);
+        console.error('Failed to load search feed', err);
       },
     });
   }
 
-  refreshCategoryFeed(): void {
-    if (!this.lastCategoryFeedParams) return;
+  refreshSearchFeed(): void {
+    this.searchFeedCache$ = undefined;
 
-    const params: GetArticlesParams = {
-      ...this.lastCategoryFeedParams,
-      page: 1,
-    };
-
-    // Invalidate every cached category page
-    this.categoryFeedCache.clear();
-
-    this.fetchCategoryFeed(params).subscribe({
+    this.fetchSearchFeed().subscribe({
       error: err => {
-        console.error('Failed to refresh category feed', err);
+        console.error('Failed to refresh search feed', err);
       },
     });
   }

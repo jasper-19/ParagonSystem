@@ -34,14 +34,14 @@ export const routes: Routes = [
         data: { breadcrumb: 'Top Stories' }
       },
 
-      // {
-      //   path: 'special-issues',
-      //   data: { breadcrumb: 'Special Issues' },
-      //   children: [
-      //     { path: '', component: SpecialIssues, data: { breadcrumb: null } },
-      //     { path: ':slug', component: SpecialIssueReader, data: { breadcrumb: 'Read Issue' } },
-      //   ],
-      // },
+       {
+         path: 'special-issues',
+         data: { breadcrumb: 'Special Issues' },
+         children: [
+           { path: '', component: SpecialIssues, data: { breadcrumb: null } },
+           { path: ':slug', component: SpecialIssueReader, data: { breadcrumb: 'Read Issue' } },
+         ],
+       },
 
       { path: 'editorial-board', component: EditorialBoard, data: { breadcrumb: 'Editorial Board' } },
 
@@ -83,10 +83,10 @@ export const routes: Routes = [
       { path: 'create-article', loadComponent: () => import('./features/admin/content-management/articles/create-article/create-article').then(m => m.CreateArticleComponent), data: { breadcrumb: 'Create Article' } },
       { path: 'edit-article/:slug', loadComponent: () => import('./features/admin/content-management/articles/create-article/create-article').then(m => m.CreateArticleComponent), data: { breadcrumb: 'Edit Article' } },
 
-      // // Special Issues Management
-      // { path: 'all-special-issues', loadComponent: () => import('./features/admin/content-management/special-issues/all-special-issues/all-special-issues').then(m => m.AllSpecialIssuesComponent), data: { breadcrumb: 'Special Issues' } },
-      // { path: 'create-special-issue', loadComponent: () => import('./features/admin/content-management/special-issues/create-special-issue/create-special-issue').then(m => m.CreateSpecialIssueComponent), data: { breadcrumb: 'Create Special Issue' } },
-      // { path: 'edit-special-issue/:slug', loadComponent: () => import('./features/admin/content-management/special-issues/create-special-issue/create-special-issue').then(m => m.CreateSpecialIssueComponent), data: { breadcrumb: 'Edit Special Issue' } },
+      // Special Issues Management
+       { path: 'all-special-issues', loadComponent: () => import('./features/admin/content-management/special-issues/all-special-issues/all-special-issues').then(m => m.AllSpecialIssuesComponent), data: { breadcrumb: 'Special Issues' } },
+       { path: 'create-special-issue', loadComponent: () => import('./features/admin/content-management/special-issues/create-special-issue/create-special-issue').then(m => m.CreateSpecialIssueComponent), data: { breadcrumb: 'Create Special Issue' } },
+       { path: 'edit-special-issue/:slug', loadComponent: () => import('./features/admin/content-management/special-issues/create-special-issue/create-special-issue').then(m => m.CreateSpecialIssueComponent), data: { breadcrumb: 'Edit Special Issue' } },
 
       // Editorial Board
       { path: 'applications', loadComponent: () => import('./features/admin/editorial-board/applications/applications').then(m => m.ApplicationsComponent), data: { breadcrumb: 'Applications' } },

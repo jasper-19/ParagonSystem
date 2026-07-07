@@ -40,12 +40,22 @@
 
         <!-- Thumbnail -->
         <div class="relative w-28 h-36 shrink-0 overflow-hidden rounded-lg shadow-lg mt-1">
-          <img
-            [src]="imageVariant(a.image, 'thumbnail')"
-            [alt]="a.title"
-            loading="lazy"
-            class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-          />
+          <ng-container *ngIf="a.image; else imagePlaceholder">
+            <img
+              [src]="imageVariant(a.image, 'thumbnail')"
+              [alt]="a.title"
+              loading="lazy"
+              class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+            />
+          </ng-container>
+
+          <ng-template #imagePlaceholder>
+            <app-image-placeholder
+              size="small"
+              label="No image available"
+            ></app-image-placeholder>
+          </ng-template>
+
           <!-- Gold tint overlay on hover -->
           <div class="absolute inset-0 bg-[#F4B400]/0 group-hover:bg-[#F4B400]/10 transition-all duration-300 rounded-lg"></div>
         </div>

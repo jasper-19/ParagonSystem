@@ -148,7 +148,7 @@ constructor() {
       tags: this.selectedTags(),
     };
 
-    this.articleService.getCategoryFeed(params).subscribe({
+    this.articleService.loadCategoryFeed(params).subscribe({
       next: () => {
         this.currentPage.update(page => page + 1);
         this.loading.set(false);
@@ -160,6 +160,7 @@ constructor() {
           this.loadingMore.set(false);
         }
       },
+
       error: () => {
         this.loading.set(false);
 
