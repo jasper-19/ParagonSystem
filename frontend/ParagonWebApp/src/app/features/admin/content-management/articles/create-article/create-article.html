@@ -1,7 +1,7 @@
-<section class="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="space-y-8 max-w-7xl mx-auto px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pb-0">
 
   <!-- Header -->
-  <div class="flex items-center justify-between pb-6 border-b-2 border-slate-200">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-6 border-b-2 border-slate-200">
     <div class="space-y-1">
       <h1 class="text-3xl font-bold text-[#000035]">
         {{ isEditMode() ? 'Edit Article' : 'Create New Article' }}
@@ -12,11 +12,16 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="flex items-center gap-3">
+    <div class="flex w-full sm:w-auto justify-end">
       <button
-        type="button"
-        class="px-4 py-2 text-sm font-medium text-slate-600 border-2 border-slate-200
-               rounded-xl hover:bg-slate-50 transition-all duration-200 flex items-center gap-2"
+          type="button"
+          disabled
+          title="Article preview is not available yet"
+          class="flex w-full items-center justify-center gap-2
+                  rounded-xl border-2 border-slate-200
+                  px-4 py-2 text-sm font-medium text-slate-400
+                  disabled:cursor-not-allowed disabled:opacity-60
+                  sm:w-auto"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -28,7 +33,7 @@
   </div>
 
   <!-- AUTOSAVE STATUS -->
-  <div class="flex items-center justify-between px-4 py-3 rounded-xl
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 rounded-xl
               bg-slate-50 border-2 border-slate-200">
 
     @if (isRestoredDraft()) {
@@ -58,45 +63,51 @@
   <form
     [formGroup]="form"
     (ngSubmit)="submit()"
-    class="grid grid-cols-1 lg:grid-cols-3 gap-6"
+    class="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6"
   >
 
     <!-- ================= LEFT: MAIN CONTENT ================= -->
     <div class="lg:col-span-2 space-y-6">
 
       <!-- Title -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-6 space-y-3">
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-3">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
           </svg>
-          <label class="text-sm font-bold text-[#000035]">Article Title</label>
+          <label
+          for="article-title"
+          class="text-sm font-bold text-[#000035]">Article Title</label>
           <span class="text-red-500 text-sm">*</span>
         </div>
         <input
+          id="article-title"
           type="text"
           formControlName="title"
           placeholder="Enter a compelling title..."
-          class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl
+          class="w-full min-h-12 px-4 py-3 border-2 border-slate-200 rounded-xl
                  focus:ring-4 focus:ring-[#f4b400]/10 focus:border-[#f4b400] focus:outline-none
                  transition-all duration-200 text-lg font-semibold placeholder:text-slate-400"
         />
       </div>
 
       <!-- Slug -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-6 space-y-3">
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-3">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/>
           </svg>
-          <label class="text-sm font-bold text-[#000035]">URL Slug</label>
+          <label
+          for="article-slug"
+          class="text-sm font-bold text-[#000035]">URL Slug</label>
         </div>
         <input
+          id="article-slug"
           type="text"
           formControlName="slug"
           (input)="onSlugInput()"
           placeholder="article-url-slug"
-          class="w-full px-4 py-3 border-2 rounded-xl
+          class="w-full min-h-12 px-4 py-3 border-2 rounded-xl
                  focus:ring-4 focus:ring-[#f4b400]/10 focus:outline-none
                  transition-all duration-200 text-sm placeholder:text-slate-400"
           [class.border-red-300]="form.controls.slug.errors?.['slugTaken']"
@@ -117,26 +128,33 @@
       </div>
 
       <!-- Excerpt -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-6 space-y-3">
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-3">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
           </svg>
-          <label class="text-sm font-bold text-[#000035]">Excerpt</label>
+          <label
+          for="article-excerpt"
+          class="text-sm font-bold text-[#000035]">Excerpt</label>
         </div>
-        <textarea
-          rows="4"
-          formControlName="excerpt"
-          placeholder="Brief summary of the article..."
-          class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl
-                 focus:ring-4 focus:ring-[#f4b400]/10 focus:border-[#f4b400] focus:outline-none
-                 transition-all duration-200 resize-none placeholder:text-slate-400"
-        ></textarea>
+          <textarea
+            id="article-excerpt"
+            rows="4"
+            formControlName="excerpt"
+            placeholder="Brief summary of the article..."
+            class="min-h-32 w-full resize-none rounded-xl
+                  border-2 border-slate-200 px-4 py-3
+                  transition-all duration-200
+                  placeholder:text-slate-400
+                  focus:border-[#f4b400] focus:outline-none
+                  focus:ring-4 focus:ring-[#f4b400]/10
+                  sm:resize-y"
+          ></textarea>
         <p class="text-xs text-slate-500">Short description for previews and SEO</p>
       </div>
 
       <!-- Content -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-6 space-y-3">
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-3">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd"/>
@@ -145,8 +163,8 @@
           <label class="text-sm font-bold text-[#000035]">Article Content</label>
           <span class="text-red-500 text-sm">*</span>
         </div>
-        <div class="border-2 border-slate-200 rounded-xl overflow-hidden">
-          <app-rich-text-editor formControlName="content"></app-rich-text-editor>
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <app-rich-text-editor formControlName="content" class="overflow-x-auto"></app-rich-text-editor>
         </div>
       </div>
 
@@ -154,10 +172,15 @@
 
 
     <!-- ================= RIGHT: SIDEBAR META ================= -->
-    <div class="space-y-6">
+    <div class="min-w-0 space-y-6">
 
       <!-- Publish Panel -->
-      <div class="bg-linear-to-br from-[#000035] to-[#001f5c] rounded-2xl shadow-xl border-2 border-[#000035] p-6 space-y-5">
+      <div
+        class="space-y-5 rounded-2xl border-2 border-[#000035]
+              bg-linear-to-br from-[#000035] to-[#001f5c]
+              p-4 shadow-xl sm:p-5 lg:sticky lg:top-6
+              lg:z-20 lg:p-6"
+      >
 
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
@@ -171,9 +194,12 @@
 
         <!-- Status -->
         <div class="space-y-2">
-          <label class="text-xs text-slate-300 font-semibold uppercase tracking-wide">Status</label>
+          <label
+          for="article-status"
+          class="text-xs text-slate-300 font-semibold uppercase tracking-wide">Status</label>
           <select
             formControlName="status"
+            id="article-status"
             class="w-full px-3 py-2.5 border-2 border-white/20 bg-white/10 text-white rounded-xl
                    focus:ring-4 focus:ring-[#f4b400]/20 focus:border-[#f4b400] focus:outline-none
                    transition-all duration-200 font-medium cursor-pointer"
@@ -204,12 +230,19 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex flex-col gap-3 pt-4 border-t-2 border-white/10">
+        <div
+          class="hidden flex-col gap-3 border-t-2 border-white/10 pt-4
+                lg:flex"
+        >
 
           <button
             type="submit"
-            [disabled]="form.invalid || isSubmitting()"
-            class="w-full px-5 py-3.5 text-sm font-bold
+            [disabled]="
+              form.invalid ||
+              selectedCredits().author.length === 0 ||
+              isSubmitting()
+            "
+            class="w-full min-h-12 px-5 py-3.5 text-sm font-bold
                    bg-linear-to-r from-[#F4B400] to-[#d69800] text-[#000035]
                    hover:shadow-xl hover:shadow-[#F4B400]/30
                    disabled:opacity-50 disabled:cursor-not-allowed
@@ -219,20 +252,20 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
               </svg>
-              <span>{{ isEditMode() ? 'Update Article' : 'Publish Article' }}</span>
+              <span>{{ saveButtonLabel() }}</span>
             } @else {
               <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>{{ isEditMode() ? 'Updating...' : 'Publishing...' }}</span>
+              <span>{{ submittingLabel() }}</span>
             }
           </button>
 
           <button
             type="button"
             (click)="cancel()"
-            class="w-full px-4 py-3 text-sm font-bold text-white
+            class="w-full min-h-12 px-4 py-3 text-sm font-bold text-white
                    border-2 border-white/20 rounded-xl hover:bg-white/10
                    transition-all duration-200"
           >
@@ -244,7 +277,7 @@
       </div>
 
       <!-- ================= IMAGE UPLOAD ================= -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-6 space-y-4">
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-4">
         <app-cover-image-selector
           label="Featured Image"
           [labelClass]="'text-sm font-bold text-[#000035]'"
@@ -258,13 +291,15 @@
       </div>
 
       <!-- Category Panel -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-6 space-y-4">
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-4">
 
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
           </svg>
-          <h2 class="text-sm font-bold text-[#000035] uppercase tracking-wider">
+          <h2
+          for="article-category"
+          class="text-sm font-bold text-[#000035] uppercase tracking-wider">
             Category
           </h2>
           <span class="text-red-500 text-sm">*</span>
@@ -272,7 +307,8 @@
 
         <select
           formControlName="category"
-          class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl
+          id="article-category"
+          class="w-full min-h-12 px-4 py-3 border-2 border-slate-200 rounded-xl
                  focus:ring-4 focus:ring-[#f4b400]/10 focus:border-[#f4b400] focus:outline-none
                  transition-all duration-200 font-medium cursor-pointer"
         >
@@ -290,7 +326,7 @@
       </div>
 
       <!-- Tags Panel -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-6 space-y-4">
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-4">
 
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -313,7 +349,7 @@
           <div class="flex flex-wrap gap-2">
 
             @for (tag of form.controls.tags.value; track tag) {
-              <div class="group flex items-center gap-2 px-3 py-1.5 rounded-xl
+              <div class="inline-flex min-h-10 items-center gap-2 px-3 py-1.5 rounded-xl
                           bg-[#000035] text-white text-sm font-semibold
                           transition-all duration-200 hover:bg-[#F4B400] hover:text-[#000035]">
                 <span>{{ tag }}</span>
@@ -321,7 +357,13 @@
                 <button
                   type="button"
                   (click)="removeTag(tag)"
-                  class="text-white/70 hover:text-white group-hover:text-[#000035] transition-colors"
+                  class="flex h-7 w-7 items-center justify-center rounded-full
+                        text-white/70 transition-colors
+                        hover:bg-white/15 hover:text-white
+                        focus-visible:outline-none
+                        focus-visible:ring-2
+                        focus-visible:ring-[#f4b400]"
+                  [attr.aria-label]="'Remove tag ' + tag"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -359,7 +401,7 @@
                     type="button"
                     (click)="addTag(tag)"
                     [disabled]="form.controls.tags.value.length >= MAX_SELECTED"
-                    class="px-3 py-1.5 text-sm font-semibold rounded-xl
+                    class="min-h-10 px-3 py-2 text-sm font-semibold rounded-xl
                            bg-slate-100 text-slate-700 border-2 border-transparent
                            hover:bg-[#F4B400]/10 hover:border-[#F4B400] hover:text-[#F4B400]
                            disabled:opacity-40 disabled:cursor-not-allowed
@@ -384,7 +426,7 @@
       </div>
 
       <!-- ================= CREDITS PANEL ================= -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-6 space-y-6">
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-6">
 
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
@@ -397,92 +439,181 @@
 
         <!-- AUTHOR -->
         <div class="relative">
-          <label class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">
+          <label
+          for="author-credit-input"
+          class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">
             Article By
           </label>
-          <input
-            type="text"
-            placeholder="Search writer..."
-            [value]="creditInput().author"
-            (input)="onCreditInput('author', $event)"
-            (focus)="onCreditFocus('author')"
-            (keydown)="handleKeyDown($event)"
-            class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl
-                   focus:ring-4 focus:ring-[#f4b400]/10 focus:border-[#f4b400] focus:outline-none
-                   transition-all duration-200 placeholder:text-slate-400"
-          />
+            @if (
+              form.controls.author.touched &&
+              selectedCredits().author.length === 0
+            ) {
+              <p
+              id="author-credit-error"
+              class="mt-2 text-xs font-medium text-red-600">
+                Select at least one author from the active editorial board.
+              </p>
+            }
+            <input
+              id="author-credit-input"
+              type="text"
+              role="combobox"
+              autocomplete="off"
+              aria-autocomplete="list"
+              aria-controls="author-credit-suggestions"
+              [attr.aria-expanded]="
+                activeCreditField() === 'author' &&
+                creditSuggestions().length > 0
+              "
+              [attr.aria-activedescendant]="
+                activeCreditField() === 'author' &&
+                highlightedIndex() >= 0
+                  ? 'author-credit-option-' + highlightedIndex()
+                  : null
+              "
+              [attr.aria-invalid]="
+                form.controls.author.touched &&
+                selectedCredits().author.length === 0
+              "
+              [attr.aria-describedby]="
+                form.controls.author.touched &&
+                selectedCredits().author.length === 0
+                  ? 'author-credit-error'
+                  : null
+              "
+              placeholder="Search writer..."
+              [value]="creditInput().author"
+              (input)="onCreditInput('author', $event)"
+              (focus)="onCreditFocus('author')"
+              (keydown)="handleKeyDown($event)"
+              class="w-full min-h-12 rounded-xl border-2 border-slate-200
+                    px-4 py-3 transition-all duration-200
+                    placeholder:text-slate-400
+                    focus:border-[#f4b400] focus:outline-none
+                    focus:ring-4 focus:ring-[#f4b400]/10"
+            />
 
           @if (selectedCredits().author.length) {
             <div class="mt-3 flex flex-wrap gap-2">
-              @for (name of selectedCredits().author; track name) {
-                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-sm text-[#000035]">
-                  <span class="font-semibold">{{ name }}</span>
-                  <button
-                    type="button"
-                    class="text-slate-500 hover:text-red-600"
-                    (click)="removeCredit('author', name)"
-                    aria-label="Remove author"
-                  >
-                    ×
-                  </button>
+            @for (
+              credit of selectedCredits().author;
+              track credit.staffId
+            ) {
+              <span
+                class="inline-flex min-h-10 items-center gap-2 px-3 py-1.5 rounded-full
+                      bg-slate-100 border border-slate-200 text-sm text-[#000035]"
+              >
+                <span class="font-semibold">
+                  {{ credit.name }}
                 </span>
-              }
+                <button
+                  type="button"
+                  class="flex h-7 w-7 items-center justify-center rounded-full text-slate-500 hover:bg-red-100"
+                  (click)="removeCredit('author', credit.staffId)"
+                  [attr.aria-label]="'Remove ' + credit.name + ' as author'"
+                >
+                  ×
+                </button>
+              </span>
+            }
             </div>
           }
 
-          @if (activeCreditField() === 'author' && creditSuggestions().length > 0) {
-            <div class="absolute z-50 mt-2 w-full bg-white
-                        border-2 border-slate-200 rounded-xl shadow-2xl
-                        max-h-60 overflow-y-auto">
-
-              @for (member of creditSuggestions(); track member.name; let i = $index) {
+          @if (
+            activeCreditField() === 'author' &&
+            creditSuggestions().length > 0
+          ) {
+            <div
+              id="author-credit-suggestions"
+              role="listbox"
+              aria-label="Author suggestions"
+              class="absolute z-60 mt-2 max-h-[50vh] w-full
+                    overflow-y-auto overscroll-contain rounded-xl
+                    border-2 border-slate-200 bg-white shadow-2xl"
+            >
+              @for (
+                member of creditSuggestions();
+                track member.staffId;
+                let i = $index
+              ) {
                 <button
                   type="button"
+                  role="option"
+                  [id]="'author-credit-option-' + i"
+                  [attr.aria-selected]="highlightedIndex() === i"
                   (click)="selectCredit(member)"
-                  class="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors
-                         border-b border-slate-100 last:border-0"
+                  class="w-full border-b border-slate-100 px-4 py-4
+                        text-left transition-colors last:border-0
+                        hover:bg-slate-50"
                   [class.bg-[#F4B400]/10]="highlightedIndex() === i"
                 >
                   <div class="font-semibold text-[#000035]">
                     {{ member.name }}
                   </div>
-                  <div class="text-xs text-slate-500 mt-0.5">
+
+                  <div class="mt-0.5 text-xs text-slate-500">
                     {{ member.position }}
                   </div>
                 </button>
               }
-
             </div>
           }
         </div>
 
         <!-- PHOTO BY -->
         <div class="relative">
-          <label class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">
+          <label
+          for="photo-credit-input"
+          class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">
             Photo by
           </label>
-          <input
-            type="text"
-            placeholder="Search photojourn..."
-            [value]="creditInput().photoby"
-            (input)="onCreditInput('photoby', $event)"
-            (focus)="onCreditFocus('photoby')"
-            (keydown)="handleKeyDown($event)"
-            class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl
-                   focus:ring-4 focus:ring-[#f4b400]/10 focus:border-[#f4b400] focus:outline-none
-                   transition-all duration-200 placeholder:text-slate-400"
-          />
+<input
+  id="photo-credit-input"
+  type="text"
+  role="combobox"
+  autocomplete="off"
+  aria-autocomplete="list"
+  aria-controls="photo-credit-suggestions"
+  [attr.aria-expanded]="
+    activeCreditField() === 'photoby' &&
+    creditSuggestions().length > 0
+  "
+  [attr.aria-activedescendant]="
+    activeCreditField() === 'photoby' &&
+    highlightedIndex() >= 0
+      ? 'photo-credit-option-' + highlightedIndex()
+      : null
+  "
+  placeholder="Search photojournalist..."
+  [value]="creditInput().photoby"
+  (input)="onCreditInput('photoby', $event)"
+  (focus)="onCreditFocus('photoby')"
+  (keydown)="handleKeyDown($event)"
+  class="w-full min-h-12 rounded-xl border-2 border-slate-200
+         px-4 py-3 transition-all duration-200
+         placeholder:text-slate-400
+         focus:border-[#f4b400] focus:outline-none
+         focus:ring-4 focus:ring-[#f4b400]/10"
+/>
 
           @if (selectedCredits().photoby.length) {
             <div class="mt-3 flex flex-wrap gap-2">
-              @for (name of selectedCredits().photoby; track name) {
-                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-sm text-[#000035]">
-                  <span class="font-semibold">{{ name }}</span>
+              @for (
+                credit of selectedCredits().photoby;
+                track credit.staffId
+              ) {
+                <span
+                  class="inline-flex min-h-10 items-center gap-2 px-3 py-1.5 rounded-full
+                        bg-slate-100 border border-slate-200 text-sm text-[#000035]"
+                >
+                  <span class="font-semibold">
+                    {{ credit.name }}
+                  </span>
                   <button
                     type="button"
-                    class="text-slate-500 hover:text-red-600"
-                    (click)="removeCredit('photoby', name)"
-                    aria-label="Remove photo credit"
+                    class="flex h-7 w-7 items-center justify-center rounded-full text-slate-500 hover:bg-red-100"
+                    (click)="removeCredit('photoby', credit.staffId)"
+                    [attr.aria-label]="'Remove ' + credit.name + ' from photo credits'"
                   >
                     ×
                   </button>
@@ -491,59 +622,101 @@
             </div>
           }
 
-          @if (activeCreditField() === 'photoby' && creditSuggestions().length > 0) {
-            <div class="absolute z-50 mt-2 w-full bg-white
-                        border-2 border-slate-200 rounded-xl shadow-2xl
-                        max-h-60 overflow-y-auto">
+@if (
+  activeCreditField() === 'photoby' &&
+  creditSuggestions().length > 0
+) {
+  <div
+    id="photo-credit-suggestions"
+    role="listbox"
+    aria-label="Photojournalist suggestions"
+    class="absolute z-60 mt-2 max-h-[50vh] w-full
+           overflow-y-auto overscroll-contain rounded-xl
+           border-2 border-slate-200 bg-white shadow-2xl"
+  >
+    @for (
+      member of creditSuggestions();
+      track member.staffId;
+      let i = $index
+    ) {
+      <button
+        type="button"
+        role="option"
+        [id]="'photo-credit-option-' + i"
+        [attr.aria-selected]="highlightedIndex() === i"
+        (click)="selectCredit(member)"
+        class="w-full border-b border-slate-100 px-4 py-4
+               text-left transition-colors last:border-0
+               hover:bg-slate-50"
+        [class.bg-[#F4B400]/10]="highlightedIndex() === i"
+      >
+        <div class="font-semibold text-[#000035]">
+          {{ member.name }}
+        </div>
 
-              @for (member of creditSuggestions(); track member.name; let i = $index) {
-                <button
-                  type="button"
-                  (click)="selectCredit(member)"
-                  class="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors
-                         border-b border-slate-100 last:border-0"
-                  [class.bg-[#F4B400]/10]="highlightedIndex() === i"
-                >
-                  <div class="font-semibold text-[#000035]">
-                    {{ member.name }}
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">
-                    {{ member.position }}
-                  </div>
-                </button>
-              }
-
-            </div>
-          }
+        <div class="mt-0.5 text-xs text-slate-500">
+          {{ member.position }}
+        </div>
+      </button>
+    }
+  </div>
+}
         </div>
 
         <!-- GRAPHIC BY -->
         <div class="relative">
-          <label class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">
+          <label
+          for="graphic-credit-input"
+          class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">
             Graphic by
           </label>
-          <input
-            type="text"
-            placeholder="Search graphic artist..."
-            [value]="creditInput().graphicby"
-            (input)="onCreditInput('graphicby', $event)"
-            (focus)="onCreditFocus('graphicby')"
-            (keydown)="handleKeyDown($event)"
-            class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl
-                   focus:ring-4 focus:ring-[#f4b400]/10 focus:border-[#f4b400] focus:outline-none
-                   transition-all duration-200 placeholder:text-slate-400"
-          />
+<input
+  id="graphic-credit-input"
+  type="text"
+  role="combobox"
+  autocomplete="off"
+  aria-autocomplete="list"
+  aria-controls="graphic-credit-suggestions"
+  [attr.aria-expanded]="
+    activeCreditField() === 'graphicby' &&
+    creditSuggestions().length > 0
+  "
+  [attr.aria-activedescendant]="
+    activeCreditField() === 'graphicby' &&
+    highlightedIndex() >= 0
+      ? 'graphic-credit-option-' + highlightedIndex()
+      : null
+  "
+  placeholder="Search graphic designer..."
+  [value]="creditInput().graphicby"
+  (input)="onCreditInput('graphicby', $event)"
+  (focus)="onCreditFocus('graphicby')"
+  (keydown)="handleKeyDown($event)"
+  class="w-full min-h-12 rounded-xl border-2 border-slate-200
+         px-4 py-3 transition-all duration-200
+         placeholder:text-slate-400
+         focus:border-[#f4b400] focus:outline-none
+         focus:ring-4 focus:ring-[#f4b400]/10"
+/>
 
           @if (selectedCredits().graphicby.length) {
             <div class="mt-3 flex flex-wrap gap-2">
-              @for (name of selectedCredits().graphicby; track name) {
-                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-sm text-[#000035]">
-                  <span class="font-semibold">{{ name }}</span>
+              @for (
+                credit of selectedCredits().graphicby;
+                track credit.staffId
+              ) {
+                <span
+                  class="inline-flex min-h-10 items-center gap-2 px-3 py-1.5 rounded-full
+                        bg-slate-100 border border-slate-200 text-sm text-[#000035]"
+                >
+                  <span class="font-semibold">
+                    {{ credit.name }}
+                  </span>
                   <button
                     type="button"
-                    class="text-slate-500 hover:text-red-600"
-                    (click)="removeCredit('graphicby', name)"
-                    aria-label="Remove graphic credit"
+                    class="flex h-7 w-7 items-center justify-center rounded-full text-slate-500 hover:bg-red-100"
+                    (click)="removeCredit('graphicby', credit.staffId)"
+                    [attr.aria-label]="'Remove ' + credit.name + ' from graphic credits'"
                   >
                     ×
                   </button>
@@ -552,59 +725,105 @@
             </div>
           }
 
-          @if (activeCreditField() === 'graphicby' && creditSuggestions().length > 0) {
-            <div class="absolute z-50 mt-2 w-full bg-white
-                        border-2 border-slate-200 rounded-xl shadow-2xl
-                        max-h-60 overflow-y-auto">
+@if (
+  activeCreditField() === 'graphicby' &&
+  creditSuggestions().length > 0
+) {
+  <div
+    id="graphic-credit-suggestions"
+    role="listbox"
+    aria-label="Graphic Designer suggestions"
+    class="absolute z-60 mt-2 max-h-[50vh] w-full
+           overflow-y-auto overscroll-contain rounded-xl
+           border-2 border-slate-200 bg-white shadow-2xl"
+  >
+    @for (
+      member of creditSuggestions();
+      track member.staffId;
+      let i = $index
+    ) {
+      <button
+        type="button"
+        role="option"
+        [id]="'graphic-credit-option-' + i"
+        [attr.aria-selected]="highlightedIndex() === i"
+        (click)="selectCredit(member)"
+        class="w-full border-b border-slate-100 px-4 py-4
+               text-left transition-colors last:border-0
+               hover:bg-slate-50"
+        [class.bg-[#F4B400]/10]="highlightedIndex() === i"
+      >
+        <div class="font-semibold text-[#000035]">
+          {{ member.name }}
+        </div>
 
-              @for (member of creditSuggestions(); track member.name; let i = $index) {
-                <button
-                  type="button"
-                  (click)="selectCredit(member)"
-                  class="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors
-                         border-b border-slate-100 last:border-0"
-                  [class.bg-[#F4B400]/10]="highlightedIndex() === i"
-                >
-                  <div class="font-semibold text-[#000035]">
-                    {{ member.name }}
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">
-                    {{ member.position }}
-                  </div>
-                </button>
-              }
-
-            </div>
-          }
+        <div class="mt-0.5 text-xs text-slate-500">
+          {{ member.position }}
+        </div>
+      </button>
+    }
+  </div>
+}
         </div>
 
         <!-- ILLUSTRATION BY -->
         <div class="relative">
-          <label class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">
+          <label
+            for="illustration-credit-input"
+            class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide"
+          >
             Illustration by
           </label>
-          <input
-            type="text"
-            placeholder="Search cartoonist..."
-            [value]="creditInput().illusrationby"
-            (input)="onCreditInput('illusrationby', $event)"
-            (focus)="onCreditFocus('illusrationby')"
-            (keydown)="handleKeyDown($event)"
-            class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl
-                   focus:ring-4 focus:ring-[#f4b400]/10 focus:border-[#f4b400] focus:outline-none
-                   transition-all duration-200 placeholder:text-slate-400"
-          />
+<input
+  id="illustration-credit-input"
+  type="text"
+  role="combobox"
+  autocomplete="off"
+  aria-autocomplete="list"
+  aria-controls="illustration-credit-suggestions"
+  [attr.aria-expanded]="
+    activeCreditField() === 'illusrationby' &&
+    creditSuggestions().length > 0
+  "
+  [attr.aria-activedescendant]="
+    activeCreditField() === 'illusrationby' &&
+    highlightedIndex() >= 0
+      ? 'illustration-credit-option-' + highlightedIndex()
+      : null
+  "
+  placeholder="Search illustration designer..."
+  [value]="creditInput().illusrationby"
+  (input)="onCreditInput('illusrationby', $event)"
+  (focus)="onCreditFocus('illusrationby')"
+  (keydown)="handleKeyDown($event)"
+  class="w-full min-h-12 rounded-xl border-2 border-slate-200
+         px-4 py-3 transition-all duration-200
+         placeholder:text-slate-400
+         focus:border-[#f4b400] focus:outline-none
+         focus:ring-4 focus:ring-[#f4b400]/10"
+/>
 
           @if (selectedCredits().illusrationby.length) {
             <div class="mt-3 flex flex-wrap gap-2">
-              @for (name of selectedCredits().illusrationby; track name) {
-                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-sm text-[#000035]">
-                  <span class="font-semibold">{{ name }}</span>
+              @for (
+                credit of selectedCredits().illusrationby;
+                track credit.staffId
+              ) {
+                <span
+                  class="inline-flex min-h-10 items-center gap-2 px-3 py-1.5 rounded-full
+                        bg-slate-100 border border-slate-200 text-sm text-[#000035]"
+                >
+                  <span class="font-semibold">
+                    {{ credit.name }}
+                  </span>
                   <button
                     type="button"
-                    class="text-slate-500 hover:text-red-600"
-                    (click)="removeCredit('illusrationby', name)"
-                    aria-label="Remove illustration credit"
+                    class="flex h-7 w-7 items-center justify-center rounded-full text-slate-500 hover:bg-red-100"
+                    (click)="removeCredit(
+                      'illusrationby',
+                      credit.staffId
+                    )"
+                    [attr.aria-label]="'Remove ' + credit.name + ' from illustration credits'"
                   >
                     ×
                   </button>
@@ -613,34 +832,134 @@
             </div>
           }
 
-          @if (activeCreditField() === 'illusrationby' && creditSuggestions().length > 0) {
-            <div class="absolute z-50 mt-2 w-full bg-white
-                        border-2 border-slate-200 rounded-xl shadow-2xl
-                        max-h-60 overflow-y-auto">
+@if (
+  activeCreditField() === 'illusrationby' &&
+  creditSuggestions().length > 0
+) {
+  <div
+    id="illustration-credit-suggestions"
+    role="listbox"
+    aria-label="Cartoonists suggestions"
+    class="absolute z-60 mt-2 max-h-[50vh] w-full
+           overflow-y-auto overscroll-contain rounded-xl
+           border-2 border-slate-200 bg-white shadow-2xl"
+  >
+    @for (
+      member of creditSuggestions();
+      track member.staffId;
+      let i = $index
+    ) {
+      <button
+        type="button"
+        role="option"
+        [id]="'illustration-credit-option-' + i"
+        [attr.aria-selected]="highlightedIndex() === i"
+        (click)="selectCredit(member)"
+        class="w-full border-b border-slate-100 px-4 py-4
+               text-left transition-colors last:border-0
+               hover:bg-slate-50"
+        [class.bg-[#F4B400]/10]="highlightedIndex() === i"
+      >
+        <div class="font-semibold text-[#000035]">
+          {{ member.name }}
+        </div>
 
-              @for (member of creditSuggestions(); track member.name; let i = $index) {
-                <button
-                  type="button"
-                  (click)="selectCredit(member)"
-                  class="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors
-                         border-b border-slate-100 last:border-0"
-                  [class.bg-[#F4B400]/10]="highlightedIndex() === i"
-                >
-                  <div class="font-semibold text-[#000035]">
-                    {{ member.name }}
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5">
-                    {{ member.position }}
-                  </div>
-                </button>
-              }
-
-            </div>
-          }
+        <div class="mt-0.5 text-xs text-slate-500">
+          {{ member.position }}
+        </div>
+      </button>
+    }
+  </div>
+}
         </div>
 
       </div>
 
+    </div>
+
+    <!-- Mobile Sticky Actions -->
+    <div
+      class="fixed bottom-0 right-0 z-40 border-t
+            border-slate-200 bg-white/95
+            px-3 pt-3
+            pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+            shadow-[0_-8px_24px_rgba(15,23,42,0.12)]
+            backdrop-blur
+            transition-[left] duration-300
+            left-0 lg:hidden"
+      [ngClass]="{
+        'md:left-72': isSidebarOpen(),
+        'md:left-20': !isSidebarOpen()
+      }"
+    >
+      <div class="mx-auto grid max-w-7xl grid-cols-2 gap-3">
+        <button
+          type="button"
+          (click)="cancel()"
+          class="inline-flex min-h-12 items-center justify-center
+                rounded-xl border-2 border-slate-200
+                px-4 py-3 text-sm font-bold text-slate-700
+                transition hover:bg-slate-50
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#f4b400]
+                focus-visible:ring-offset-2"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          [disabled]="
+            form.invalid ||
+            selectedCredits().author.length === 0 ||
+            isSubmitting()
+          "
+          class="inline-flex min-h-12 items-center justify-center
+                gap-2 rounded-xl
+                bg-linear-to-r from-[#F4B400] to-[#d69800]
+                px-4 py-3 text-sm font-bold text-[#000035]
+                transition
+                disabled:cursor-not-allowed disabled:opacity-50
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#000035]
+                focus-visible:ring-offset-2"
+        >
+          @if (isSubmitting()) {
+            <svg
+              class="h-5 w-5 animate-spin motion-reduce:animate-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373
+                  0 12h4z"
+              ></path>
+            </svg>
+
+            <span>
+              {{ submittingLabel() }}
+            </span>
+          } @else {
+            <span>
+              {{ saveButtonLabel() }}
+            </span>
+          }
+        </button>
+      </div>
     </div>
 
   </form>
@@ -655,5 +974,14 @@
       (confirmed)="onConfirmSave()"
       (cancelled)="onCancelSave()"
     />
+
+  <!-- Error Modal -->
+  <app-error-modal
+    [isOpen]="showErrorModal()"
+    [title]="errorTitle()"
+    [message]="errorMessage()"
+    buttonText="Close"
+    (closed)="closeErrorModal()"
+  ></app-error-modal>
 
 </section>

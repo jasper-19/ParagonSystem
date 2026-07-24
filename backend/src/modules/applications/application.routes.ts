@@ -10,6 +10,7 @@ import {
   interviewNotesSchema,
   acceptApplicationSchema,
   assignApplicationSchema,
+  updateApplicationSettingsSchema
 } from "./application.schema";
 
 const router = Router();
@@ -23,10 +24,15 @@ const submitLimiter = rateLimit({
   message: { error: "Too many application submissions. Please try again later." },
 });
 
+// GET    /api/applications/settings  – public: retrieve application settings
+router.get("/settings", controller.getApplicationSettings);
+
 // POST   /api/applications  – public: anyone can submit an application
 router.post("/", submitLimiter, validate(createApplicationSchema), controller.createApplication);
 
 // All routes below are admin-only
+router.patch("/settings", authenticate, validate(updateApplicationSettingsSchema), controller.updateApplicationSettings);
+
 router.get("/", authenticate, controller.getApplications);
 
 router.get("/:id", authenticate, controller.getApplicationById);

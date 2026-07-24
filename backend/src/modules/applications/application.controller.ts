@@ -4,17 +4,45 @@ import * as notificationService from "../notifications/notification.service";
 import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
+import { emitApplicationsUpdated, emitApplicationSettingsUpdated } from "../../realtime/socket.events";
 
-/** GET /api/applications?status=<value> */
+/** GET /api/applications?page=&limit=&status=&search=&sort=&order= */
 export const getApplications = asyncHandler(
   async (req: Request, res: Response) => {
-    const raw = req.query["status"];
-    // Sanitize query param individually since req.query is read-only in Express 5
-    const status =
-      typeof raw === "string"
-        ? (sanitizeValue(raw) as string)
-        : undefined;
-    const applications = await service.getApplications(status);
+    const query: service.GetApplicationsQuery = {};
+
+    const status = req.query["status"];
+    if (typeof status === "string" && status.trim() !== "") {
+      query.status = sanitizeValue(status) as string;
+    }
+
+    const search = req.query["search"];
+    if (typeof search === "string" && search.trim() !== "") {
+      query.search = sanitizeValue(search) as string;
+    }
+
+    const page = req.query["page"];
+    if (typeof page === "string" && page.trim() !== "") {
+      query.page = Number(sanitizeValue(page));
+    }
+
+    const limit = req.query["limit"];
+    if (typeof limit === "string" && limit.trim() !== "") {
+      query.limit = Number(sanitizeValue(limit));
+    }
+
+    const sort = req.query["sort"];
+    if (typeof sort === "string" && sort.trim() !== "") {
+      query.sort = sanitizeValue(sort) as string;
+    }
+
+    const order = req.query["order"];
+    if (order === "asc" || order === "desc") {
+      query.order = order;
+    }
+
+    const applications = await service.getApplications(query);
+
     res.json(applications);
   }
 );
@@ -37,6 +65,9 @@ export const getApplicationById = asyncHandler(
 export const createApplication = asyncHandler(
   async (req: Request, res: Response) => {
     const application = await service.createApplication(req.body);
+
+    emitApplicationsUpdated(); // Notify clients that applications have been updated
+
     notificationService.create(
       `New application received from ${(application as any).fullName ?? 'an applicant'}.`,
       "application"
@@ -65,6 +96,9 @@ export const updateStatus = asyncHandler(
     const id = req.params["id"] as string;
     const { status } = req.body as { status: string };
     const updated = await service.updateApplicationStatus(id, status);
+
+    emitApplicationsUpdated(); // Notify clients that applications have been updated
+
     auditLog(req, "UPDATE_STATUS", "APPLICATIONS", `Updated application status to ${status}: ${id}`, {
       resourceId: id,
       details: { status },
@@ -79,6 +113,9 @@ export const scheduleInterview = asyncHandler(
     const id = req.params["id"] as string;
     const { interviewDate } = req.body as { interviewDate: string };
     const updated = await service.scheduleInterview(id, interviewDate);
+
+    emitApplicationsUpdated(); // Notify clients that applications have been updated
+
     auditLog(req, "SCHEDULE_INTERVIEW", "APPLICATIONS", `Scheduled interview for application: ${id}`, {
       resourceId: id,
       details: { interviewDate },
@@ -92,6 +129,9 @@ export const markInterviewed = asyncHandler(
   async (req: Request, res: Response) => {
     const id = req.params["id"] as string;
     const updated = await service.markInterviewed(id);
+
+    emitApplicationsUpdated(); // Notify clients that applications have been updated
+
     auditLog(req, "MARK_INTERVIEWED", "APPLICATIONS", `Marked application interviewed: ${id}`, {
       resourceId: id,
     });
@@ -105,6 +145,9 @@ export const addInterviewNotes = asyncHandler(
     const id = req.params["id"] as string;
     const { notes } = req.body as { notes: string };
     const updated = await service.addInterviewNotes(id, notes);
+
+    emitApplicationsUpdated(); // Notify clients that applications have been updated
+
     auditLog(req, "ADD_NOTES", "APPLICATIONS", `Added interview notes to application: ${id}`, {
       resourceId: id,
       details: { notes },
@@ -120,6 +163,9 @@ export const acceptApplication = asyncHandler(
     // interviewNotes is optional — callers may pass final notes at acceptance time
     const { interviewNotes } = req.body as { interviewNotes?: string };
     const updated = await service.acceptApplication(id, interviewNotes);
+
+    emitApplicationsUpdated(); // Notify clients that applications have been updated
+
     notificationService.create(
       `Application accepted: ${(updated as any).fullName ?? id}.`,
       "application"
@@ -137,6 +183,9 @@ export const rejectApplication = asyncHandler(
   async (req: Request, res: Response) => {
     const id = req.params["id"] as string;
     const updated = await service.rejectApplication(id);
+
+    emitApplicationsUpdated(); // Notify clients that applications have been updated
+    
     notificationService.create(
       `Application rejected: ${(updated as any).fullName ?? id}.`,
       "application"
@@ -153,6 +202,9 @@ export const deleteApplication = asyncHandler(
   async (req: Request, res: Response) => {
     const id = req.params["id"] as string;
     await service.deleteApplication(id);
+
+    emitApplicationsUpdated(); // Notify clients that applications have been updated
+
     auditLog(req, "DELETE", "APPLICATIONS", `Deleted application: ${id}`, {
       resourceId: id,
     });
@@ -166,10 +218,50 @@ export const assignApplication = asyncHandler(
     const id = req.params["id"] as string;
     const { section, role } = req.body as { section: string; role: string };
     const updated = await service.assignApplication(id, section, role);
+
+    emitApplicationsUpdated(); // Notify clients that applications have been updated
+
     auditLog(req, "ASSIGN", "APPLICATIONS", `Assigned application: ${id}`, {
       resourceId: id,
       details: { section, role },
     });
+    res.json(updated);
+  }
+);
+
+/** GET /api/applications/settings — public */
+export const getApplicationSettings = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const settings = await service.getApplicationSettings();
+
+    res.json(settings);
+  }
+);
+
+/** PATCH /api/applications/settings — admin only */
+export const updateApplicationSettings = asyncHandler(
+  async (req: Request, res: Response) => {
+    const updated = await service.updateApplicationSettings(
+      req.body
+    );
+
+    emitApplicationSettingsUpdated(); // Notify clients that application settings have been updated
+
+    auditLog(
+      req,
+      "UPDATE",
+      "APPLICATIONS",
+      updated.isOpen
+        ? "Opened publication applications"
+        : "Closed publication applications",
+      {
+        details: {
+          isOpen: updated.isOpen,
+          announcement: updated.announcement,
+        },
+      }
+    );
+
     res.json(updated);
   }
 );

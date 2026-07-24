@@ -1,57 +1,175 @@
-<section class="space-y-6 pt-12 pb-12">
+<section
+  aria-labelledby="quick-actions-title"
+  class="hidden min-w-0 space-y-5 rounded-2xl
+         border border-slate-200 bg-white
+         p-6 shadow-sm xl:block"
+>
 
-  <div class="pb-4 border-b-2 border-slate-100">
-    <h2 class="text-2xl font-bold text-[#000035]">
+  <div class="space-y-1 border-b border-slate-200 pb-5">
+    <h2
+      id="quick-actions-title"
+      class="text-lg font-bold tracking-tight
+            text-[#000035] sm:text-xl"
+    >
       Quick Actions
     </h2>
-    <p class="text-sm text-slate-600 font-medium">
+    <p class="text-sm text-slate-600">
       Frequently used administrative tasks
     </p>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div
+    class="grid grid-cols-4 gap-4"
+  >
 
-    @for (action of actions; track action.label) {
+    @for (action of actions(); track action.route) {
 
-      <a
-        [routerLink]="action.route"
-        class="group relative bg-white border-2 border-slate-200 rounded-2xl p-6
-               hover:border-[#F4B400] hover:shadow-xl transition-all duration-300
-               flex flex-col justify-between overflow-hidden"
-      >
+        <a
+          [routerLink]="action.route"
+          class="group flex min-h-40 min-w-0 flex-col
+                justify-between overflow-hidden rounded-xl
+                border border-slate-200 bg-white
+                p-4 shadow-sm transition
+                hover:border-[#F4B400]
+                hover:shadow-md
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#F4B400]
+                focus-visible:ring-offset-2
+                motion-reduce:transition-none
+                sm:p-5"
+        >
 
         <div class="relative space-y-4">
 
           <!-- Icon & Arrow -->
           <div class="flex items-center justify-between">
-            <div class="w-12 h-12 rounded-xl bg-[#F4B400]/10
-                        flex items-center justify-center
-                        group-hover:bg-[#F4B400] group-hover:scale-110
-                        transition-all duration-300 shadow-sm">
-              <span class="text-lg font-bold text-[#F4B400] group-hover:text-[#000035] transition-colors">
-                {{ action.icon ?? action.label.charAt(0) }}
-              </span>
+            <div
+              class="flex h-11 w-11 items-center justify-center
+                    rounded-xl bg-[#F4B400]/10
+                    text-[#000035]
+                    transition-colors
+                    group-hover:bg-[#F4B400]
+                    group-focus-visible:bg-[#F4B400]"
+              aria-hidden="true"
+            >
+              @switch (action.icon) {
+                @case ('square-pen') {
+                  <svg
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                  <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/>
+                  </svg>
+                }
+
+                @case ('file-up') {
+                  <svg
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                    <path d="M12 12v6" />
+                    <path d="m15 15-3-3-3 3" />
+                  </svg>
+                }
+
+                @case ('clipboard-check') {
+                  <svg
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect width="8" height="4" x="8" y="2" rx="1" />
+
+                    <path
+                      d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+                    />
+
+                    <path d="m9 14 2 2 4-4" />
+                  </svg>
+                }
+
+                @case ('images') {
+                  <svg
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M18 22H4a2 2 0 0 1-2-2V6" />
+                    <path d="m22 13-1.296-1.296a2.41 2.41 0 0 0-3.408 0L11 18" />
+                    <circle cx="12" cy="8" r="2" />
+                    <rect width="16" height="16" x="6" y="2" rx="2" />
+                  </svg>
+                }
+
+                @default {
+                  <span class="text-base font-bold">
+                    {{ action.label.charAt(0) }}
+                  </span>
+                }
+              }
             </div>
 
-            <div class="w-8 h-8 rounded-lg bg-slate-100
-                        flex items-center justify-center
-                        group-hover:bg-[#F4B400] group-hover:translate-x-1
-                        transition-all duration-300">
-              <svg class="w-4 h-4 text-slate-400 group-hover:text-[#000035] transition-colors"
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-              </svg>
+            <div
+              class="flex h-9 w-9 items-center justify-center
+                    rounded-lg bg-slate-100 text-slate-500
+                    transition-colors
+                    group-hover:bg-[#F4B400]
+                    group-hover:text-[#000035]
+                    group-focus-visible:bg-[#F4B400]
+                    group-focus-visible:text-[#000035]"
+              aria-hidden="true"
+            >
+            <svg
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
             </div>
           </div>
 
           <!-- Content -->
-          <div class="space-y-2">
-            <h3 class="text-base font-bold text-[#000035] group-hover:text-[#F4B400] transition-colors">
+          <div class="min-w-0 space-y-1.5">
+            <h3
+              class="wrap-break-word text-base font-bold
+                    text-[#000035]"
+            >
               {{ action.label }}
             </h3>
 
             @if (action.description) {
-              <p class="text-xs text-slate-600 leading-relaxed line-clamp-2">
+              <p
+                class="line-clamp-2 text-sm leading-5
+                      text-slate-600"
+              >
                 {{ action.description }}
               </p>
             }

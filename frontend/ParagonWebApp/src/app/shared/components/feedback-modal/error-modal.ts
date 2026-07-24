@@ -18,6 +18,7 @@ export class ErrorModal {
   isOpen = input<boolean>(false);
   title = input<string>('Something went wrong');
   message = input<string>('Please try again.');
+  details = input<string[]>([])
   buttonText = input<string>('Close');
 
   closed = output<void>();

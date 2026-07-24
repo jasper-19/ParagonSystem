@@ -1,10 +1,19 @@
-import { Component, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
+
 import { EditorialBoardService } from '../../core/services/editorial-board.service';
 import { LoaderService } from '../../shared/services/loader.service';
-import {EditorialBoardData, BoardSection, BoardMember} from '../../models/editorial-board.model';
-
-/* ================= COMPONENT ================= */
+import { SocketService } from '../../core/services/socket.service';
+import { SOCKET_EVENTS } from '../../core/constants/socket-events';
 
 @Component({
   selector: 'app-editorial-board',
@@ -12,39 +21,84 @@ import {EditorialBoardData, BoardSection, BoardMember} from '../../models/editor
   imports: [CommonModule],
   templateUrl: './editorial-board.html',
 })
-export class EditorialBoard implements OnInit {
+export class EditorialBoard implements OnInit, OnDestroy {
+  private readonly editorialBoardService =
+    inject(EditorialBoardService);
 
-  /* ================= TEMPLATE BINDINGS ================= */
+  private readonly loaderService =
+    inject(LoaderService);
 
-  academicYear!: string;
-  sections: BoardSection[] = [];
-  adviser!: BoardMember;
+  private readonly socketService =
+    inject(SocketService);
 
-  /* ================= SERVICES ================= */
+  private readonly boardSignal = toSignal(
+    this.editorialBoardService.board$,
+    {
+      initialValue:
+        this.editorialBoardService.getCurrentBoard(),
+    }
+  );
 
-  private editorialBoardService = inject(EditorialBoardService);
+  readonly academicYear = computed(
+    () => this.boardSignal().academicYear
+  );
 
-  loading = true;
+  readonly sections = computed(
+    () => this.boardSignal().sections
+  );
 
-  /* ================= LIFECYCLE ================= */
-  constructor(private loaderService: LoaderService) {}
+  readonly adviser = computed(
+    () => this.boardSignal().adviser
+  );
+
+  readonly loading = signal(true);
+
+  private readonly handleEditorialBoardUpdated = (): void => {
+    console.log('📡 Refreshing public editorial board');
+
+    this.loadActiveBoard(false);
+  };
 
   ngOnInit(): void {
-    this.loaderService.show();
+    // Initial page load
+    this.loadActiveBoard(true);
 
-    this.editorialBoardService.loadActiveBoard().subscribe({
-      complete: () => {
-        const board = this.editorialBoardService.getCurrentBoard();
-        this.academicYear = board.academicYear;
-        this.sections = board.sections;
-        this.adviser = board.adviser;
-        this.loading = false;
-        this.loaderService.hide();
-      },
-      error: () => {
-        this.loading = false;
-        this.loaderService.hide();
-      },
-    });
+    // Subsequent realtime refreshes
+    this.socketService.onEditorialBoardUpdated(
+      this.handleEditorialBoardUpdated
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.socketService.off(
+      SOCKET_EVENTS.EDITORIAL_BOARD_UPDATED,
+      this.handleEditorialBoardUpdated
+    );
+  }
+
+  private loadActiveBoard(showPageLoader: boolean): void {
+    if (showPageLoader) {
+      this.loading.set(true);
+      this.loaderService.show();
+    }
+
+    this.editorialBoardService
+      .loadActiveBoard()
+      .pipe(
+        finalize(() => {
+          if (showPageLoader) {
+            this.loading.set(false);
+            this.loaderService.hide();
+          }
+        })
+      )
+      .subscribe({
+        error: (err: unknown) => {
+          console.error(
+            'Failed to load the public editorial board',
+            err
+          );
+        },
+      });
   }
 }

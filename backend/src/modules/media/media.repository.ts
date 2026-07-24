@@ -26,6 +26,23 @@ function buildMediaFileUrl(id: string): string {
   return `${getApiBaseUrl()}/api/media/${id}/file`;
 }
 
+const MEDIA_SELECT_COLUMNS = `
+  m.id,
+  m.file_name,
+  m.disk_name,
+  m.storage_path,
+  m.file_type,
+  m.mime_type,
+  m.size,
+  m.width,
+  m.height,
+  m.alt_text,
+  m.caption,
+  m.tags,
+  m.created_at,
+  m.updated_at
+`;
+
 function mapRow(row: MediaRow) {
   return {
     id: String(row.id),
@@ -52,56 +69,150 @@ export type FindAllFilters = {
   limit?: number;
 };
 
-export async function findAll(filters: FindAllFilters = {}) {
+export async function findAll(
+  filters: FindAllFilters = {}
+) {
   const where: string[] = [];
   const values: unknown[] = [];
 
-  const push = (expression: string, value: unknown) => {
+  /*
+   * $1 is reserved for baseUrl in both SQL queries.
+   * Dynamic filters therefore begin at $2.
+   */
+  const push = (
+    expression: string,
+    value: unknown
+  ): void => {
     values.push(value);
-    where.push(expression.replace("?", `$${values.length}`));
+
+    const parameterIndex =
+      values.length + 1;
+
+    where.push(
+      expression.replace(
+        "?",
+        `$${parameterIndex}`
+      )
+    );
   };
 
-  if (filters.search) {
-    values.push(`%${filters.search}%`);
-    const p = `$${values.length}`;
-    where.push(`(file_name ILIKE ${p} OR mime_type ILIKE ${p})`);
+  if (filters.search?.trim()) {
+    const searchValue = `%${filters.search.trim()}%`;
+
+    values.push(searchValue);
+
+    const parameterIndex = values.length + 1;
+
+    where.push(`
+      (
+        m.file_name ILIKE $${parameterIndex}
+        OR m.mime_type ILIKE $${parameterIndex}
+        OR COALESCE(m.alt_text, '') ILIKE $${parameterIndex}
+        OR COALESCE(m.caption, '') ILIKE $${parameterIndex}
+        OR EXISTS (
+          SELECT 1
+          FROM unnest(COALESCE(m.tags, ARRAY[]::text[])) AS tag
+          WHERE tag ILIKE $${parameterIndex}
+        )
+      )
+    `);
   }
 
   if (filters.type) {
-    push(`file_type = ?`, filters.type);
+    push(
+      `m.file_type = ?::media_type`,
+      filters.type
+    );
   }
 
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-  const page = Number.isFinite(filters.page) && (filters.page as number) > 0 ? (filters.page as number) : 1;
-  const limit = Number.isFinite(filters.limit) && (filters.limit as number) > 0
-    ? Math.min(filters.limit as number, 200)
-    : 50;
-  const offset = (page - 1) * limit;
+  const page =
+    Number.isFinite(filters.page) &&
+    Number(filters.page) > 0
+      ? Number(filters.page)
+      : 1;
+
+  const limit =
+    Number.isFinite(filters.limit) &&
+    Number(filters.limit) > 0
+      ? Math.min(
+          Number(filters.limit),
+          200
+        )
+      : 50;
+
+  const offset =
+    (page - 1) * limit;
+
+  const baseUrl = getApiBaseUrl();
+
+  const filterSql =
+    where.length > 0
+      ? `AND ${where.join(" AND ")}`
+      : "";
+
+  const countValues = [
+    baseUrl,
+    ...values,
+  ];
 
   const countResult = await db.query(
-    `SELECT COUNT(*)::int AS count
-     FROM media_files
-     ${whereSql}`,
-    values
+    `SELECT
+       COUNT(DISTINCT m.id)::int AS count
+     FROM media_files m
+     JOIN articles a
+       ON a.image =
+          $1::text ||
+          '/api/media/' ||
+          m.id::text ||
+          '/file'
+     WHERE LOWER(a.status::text) = 'published'
+     ${filterSql}`,
+    countValues
   );
-  const total = Number(countResult.rows[0]?.count ?? 0);
 
-  values.push(limit, offset);
-  const limitParam = `$${values.length - 1}`;
-  const offsetParam = `$${values.length}`;
+  const total =
+    Number(
+      countResult.rows[0]?.count ?? 0
+    );
+
+  const queryValues = [
+    baseUrl,
+    ...values,
+    limit,
+    offset,
+  ];
+
+  const limitParam =
+    `$${queryValues.length - 1}`;
+
+  const offsetParam =
+    `$${queryValues.length}`;
 
   const result = await db.query(
-    `SELECT *
-     FROM media_files
-     ${whereSql}
-     ORDER BY created_at DESC
+    `SELECT DISTINCT ON (m.id)
+       ${MEDIA_SELECT_COLUMNS}
+     FROM media_files m
+     JOIN articles a
+       ON a.image =
+          $1::text ||
+          '/api/media/' ||
+          m.id::text ||
+          '/file'
+     WHERE LOWER(a.status::text) = 'published'
+     ${filterSql}
+     ORDER BY
+       m.id,
+       m.created_at DESC
      LIMIT ${limitParam}
      OFFSET ${offsetParam}`,
-    values
+    queryValues
   );
 
   return {
-    data: result.rows.map((row) => mapRow(row as MediaRow)),
+    data: result.rows.map(
+      row =>
+        mapRow(row as MediaRow)
+    ),
     total,
     page,
     limit,
@@ -201,6 +312,18 @@ export async function update(id: string, input: UpdateMediaInput) {
 }
 
 export async function remove(id: string): Promise<{ id: string; storagePath: string } | null> {
+  const usage = await findPublishedArticleUsageByMediaId(id);
+
+  if (usage.length > 0) {
+    throw Object.assign(
+      new Error("Media is currently used by published articles."),
+      {
+        statusCode: 409,
+        usage,
+      }
+    );
+  }
+
   const result = await db.query(
     `DELETE FROM media_files
      WHERE id = $1
@@ -216,3 +339,30 @@ export async function remove(id: string): Promise<{ id: string; storagePath: str
   };
 }
 
+export async function findPublishedArticleUsageByMediaId(mediaId: string) {
+  const baseUrl = getApiBaseUrl();
+
+  const result = await db.query(
+    `
+    SELECT
+      id,
+      title,
+      slug
+    FROM articles
+    WHERE LOWER(status::text) = 'published'
+      AND image =
+        $1::text ||
+        '/api/media/' ||
+        $2::text ||
+        '/file'
+    ORDER BY published_at DESC NULLS LAST, created_at DESC
+    `,
+    [baseUrl, mediaId]
+  );
+
+  return result.rows.map(row => ({
+    id: String(row.id),
+    title: row.title,
+    slug: row.slug,
+  }));
+}

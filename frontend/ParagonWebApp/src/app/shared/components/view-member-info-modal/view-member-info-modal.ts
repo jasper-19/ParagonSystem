@@ -1,5 +1,5 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
-import { Component, OnDestroy, effect, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, output, AfterViewInit, ElementRef, HostListener, ViewChild,  } from '@angular/core';
 
 import { BoardMember } from '../../../models/editorial-board.model';
 
@@ -11,7 +11,18 @@ let viewMemberScrollLockCount = 0;
   imports: [CommonModule],
   templateUrl: './view-member-info-modal.html',
 })
-export class ViewMemberInfoModalComponent implements OnDestroy {
+export class ViewMemberInfoModalComponent implements OnDestroy, AfterViewInit {
+
+  @ViewChild('dialogContainer')
+  private dialogContainer?: ElementRef<HTMLElement>;
+
+  @ViewChild('closeButton')
+  private closeButton?: ElementRef<HTMLButtonElement>;
+
+  private previouslyFocusedElement:
+    HTMLElement | null = null;
+
+  private viewInitialized = false;
 
   private readonly document = inject(DOCUMENT);
   private locked = false;
@@ -28,13 +39,37 @@ export class ViewMemberInfoModalComponent implements OnDestroy {
 
   constructor() {
     effect(() => {
-      if (this.isOpen()) this.lockScroll();
-      else this.unlockScroll();
+      if (this.isOpen()) {
+        this.previouslyFocusedElement =
+          this.document.activeElement instanceof HTMLElement
+            ? this.document.activeElement
+            : null;
+
+        this.lockScroll();
+
+        if (this.viewInitialized) {
+          this.focusInitialElement();
+        }
+
+        return;
+      }
+
+      this.unlockScroll();
+      this.restorePreviousFocus();
     });
+  }
+
+  ngAfterViewInit(): void {
+    this.viewInitialized = true;
+
+    if (this.isOpen()) {
+      this.focusInitialElement();
+    }
   }
 
   ngOnDestroy(): void {
     this.unlockScroll();
+    this.restorePreviousFocus();
   }
 
   close(): void {
@@ -52,6 +87,43 @@ export class ViewMemberInfoModalComponent implements OnDestroy {
     '4th_year':    '4th Year',
     'unspecified': '—',
   };
+
+  private focusInitialElement(): void {
+    queueMicrotask(() => {
+      const closeButton =
+        this.closeButton?.nativeElement;
+
+      const dialog =
+        this.dialogContainer?.nativeElement;
+
+      if (closeButton) {
+        closeButton.focus();
+        return;
+      }
+
+      dialog?.focus();
+    });
+  }
+
+  private restorePreviousFocus(): void {
+    const target =
+      this.previouslyFocusedElement;
+
+    this.previouslyFocusedElement = null;
+
+    if (
+      !target ||
+      !this.document.contains(target)
+    ) {
+      return;
+    }
+
+    queueMicrotask(() => {
+      target.focus({
+        preventScroll: true,
+      });
+    });
+  }
 
   getYearLevelLabel(value: string | undefined): string {
     if (!value) return '—';
@@ -81,4 +153,84 @@ export class ViewMemberInfoModalComponent implements OnDestroy {
     }
     this.locked = false;
   }
+
+  onDialogKeydown(
+    event: KeyboardEvent
+  ): void {
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const dialog =
+      this.dialogContainer?.nativeElement;
+
+    if (!dialog) {
+      return;
+    }
+
+    const focusableElements = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        [
+          'button:not([disabled])',
+          'input:not([disabled])',
+          'select:not([disabled])',
+          'textarea:not([disabled])',
+          'a[href]',
+          '[tabindex]:not([tabindex="-1"])',
+        ].join(',')
+      )
+    ).filter(element =>
+      element.offsetParent !== null &&
+      element.getAttribute('aria-hidden') !== 'true'
+    );
+
+    if (!focusableElements.length) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+
+    const first =
+      focusableElements[0];
+
+    const last =
+      focusableElements[
+        focusableElements.length - 1
+      ];
+
+    const active =
+      this.document.activeElement;
+
+    if (
+      event.shiftKey &&
+      (
+        active === first ||
+        active === dialog
+      )
+    ) {
+      event.preventDefault();
+      last.focus();
+      return;
+    }
+
+    if (
+      !event.shiftKey &&
+      active === last
+    ) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeKey(event: Event): void {
+    if (!this.isOpen()) {
+      return;
+    }
+
+    event.preventDefault();
+
+    this.close();
+  }
+
 }

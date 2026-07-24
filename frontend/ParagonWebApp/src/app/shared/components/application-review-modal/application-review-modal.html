@@ -1,25 +1,68 @@
 <ng-container *ngIf="application as app">
 
-  <div
-    class="fixed inset-0 bg-black/70 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
-    (click)="close.emit()"
+<div
+  class="fixed inset-0 z-9999
+       flex items-end justify-center
+       bg-slate-950/70 backdrop-blur-sm
+       animate-in fade-in
+       transition-opacity duration-200
+       ease-out
+       motion-reduce:animate-none
+       motion-reduce:transition-none
+       sm:items-center sm:p-4"
+  [class.opacity-0]="isClosing()"
+  [class.opacity-100]="!isClosing()"
+  (click)="requestClose()"
+>
+  <section
+    #dialogContainer
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="application-review-title"
+    class="relative flex max-h-[94dvh]
+           w-full max-w-3xl flex-col
+           overflow-hidden bg-white
+           shadow-2xl
+           rounded-t-3xl
+           sm:max-h-[calc(100dvh-2rem)]
+           sm:rounded-3xl
+           animate-in fade-in slide-in-from-bottom-4
+          duration-200 ease-out
+          transition-[opacity,transform]
+          motion-reduce:animate-none
+          motion-reduce:transition-none"
+    [class.translate-y-4]="isClosing()"
+    [class.opacity-0]="isClosing()"
+    [class.translate-y-0]="!isClosing()"
+    [class.opacity-100]="!isClosing()"
+    (click)="$event.stopPropagation()"
+    (keydown)="onDialogKeydown($event)"
   >
 
-    <div
-      class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden relative"
-      (click)="$event.stopPropagation()"
-    >
-
       <!-- Header with Background -->
-      <div class="relative bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035] px-8 py-6">
+      <header
+        class="relative z-10 shrink-0
+              bg-linear-to-br
+              from-[#000035]
+              via-[#001f5c]
+              to-[#000035]
+              px-4 py-4
+              sm:px-6 sm:py-5
+              lg:px-8 lg:py-6"
+      >
 
         <div class="relative flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
-            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
+            <h3
+              id="application-review-title"
+              class="text-xl font-bold text-white
+                    sm:text-2xl lg:text-3xl"
+            >
               Application Review
             </h3>
 
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="mt-2 flex flex-wrap items-center gap-2">
 
               <div
                 class="inline-flex items-center gap-2 px-3 py-1 rounded-xl
@@ -28,7 +71,7 @@
                 <div class="w-1.5 h-1.5 bg-[#F4B400] rounded-full"></div>
                 <span class="text-sm font-medium">Status:</span>
                 <span class="text-sm font-semibold text-white">
-                  {{ app.status ?? 'Pending' }}
+                  {{ statusLabel(app.status) }}
                 </span>
               </div>
 
@@ -37,13 +80,19 @@
 
           <!-- Close Button -->
           <button
-            (click)="close.emit()"
-            class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl
-                   bg-white/10 hover:bg-white/20 text-white
-                   transition-all duration-300 backdrop-blur-sm
-                   border border-white/10 hover:border-white/20"
-            aria-label="Close"
+            #closeButton
             type="button"
+            (click)="requestClose()"
+            class="inline-flex h-11 w-11 shrink-0
+                  items-center justify-center
+                  rounded-xl border border-white/10
+                  bg-white/10 text-white
+                  transition-colors
+                  hover:bg-white/20
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]"
+            aria-label="Close"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -51,80 +100,391 @@
           </button>
         </div>
 
-      </div>
+      </header>
+
+        <div
+          class="shrink-0 border-b border-slate-200
+                bg-white px-4 py-4
+                sm:px-6 lg:px-8"
+          aria-label="Application progress"
+        >
+          @if (isRejected(app)) {
+            <div
+              class="flex items-center gap-3 rounded-xl
+                    border border-red-200 bg-red-50
+                    px-4 py-3"
+            >
+              <span
+                class="flex h-9 w-9 shrink-0
+                      items-center justify-center
+                      rounded-full bg-red-600
+                      text-white"
+                aria-hidden="true"
+              >
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <line x1="17" x2="22" y1="8" y2="13"/>
+                <line x1="22" x2="17" y1="8" y2="13"/>
+                </svg>
+              </span>
+
+              <div>
+                <p class="text-sm font-bold text-red-700">
+                  Application Rejected
+                </p>
+
+                <p class="mt-0.5 text-xs text-red-600">
+                  This application has reached a final decision.
+                </p>
+              </div>
+            </div>
+          } @else {
+        <div
+          class="overflow-x-auto px-1 pb-2
+                overscroll-x-contain
+                [scrollbar-width:none]
+                [&::-webkit-scrollbar]:hidden"
+        >
+          <ol
+            class="mx-auto grid min-w-128
+                  grid-cols-4 items-start
+                  sm:w-full sm:max-w-2xl"
+            aria-label="Application progress stages"
+          >
+            @for (
+              stage of applicationStages;
+              track stage.key;
+              let index = $index;
+              let last = $last
+            ) {
+              <li
+                class="relative flex min-w-32
+                      flex-col items-center
+                      px-2 text-center
+                      sm:min-w-36"
+                [attr.aria-current]="
+                  isCurrentStage(app, stage)
+                    ? 'step'
+                    : null
+                "
+              >
+                <!-- Connector before this stage -->
+                @if (index > 0) {
+                  <span
+                    aria-hidden="true"
+                    class="absolute right-1/2 top-[17px]
+                          h-0.5 w-full"
+                    [class.bg-[#000035]]="
+                      isStageComplete(app, stage) ||
+                      isCurrentStage(app, stage)
+                    "
+                    [class.bg-slate-200]="
+                      !isStageComplete(app, stage) &&
+                      !isCurrentStage(app, stage)
+                    "
+                  ></span>
+                }
+
+                <!-- Stage marker -->
+                <span
+                  class="relative z-10 flex h-9 w-9
+                        shrink-0 items-center justify-center
+                        rounded-full border-2 bg-white
+                        text-xs font-bold
+                        transition-colors"
+                  [ngClass]="{
+                    'border-[#000035] bg-[#000035] text-[#F4B400]':
+                      isStageComplete(app, stage),
+
+                    'border-[#F4B400] bg-[#F4B400] text-[#000035] ring-4 ring-[#F4B400]/15':
+                      isCurrentStage(app, stage),
+
+                    'border-slate-300 bg-white text-slate-400':
+                      !isStageComplete(app, stage) &&
+                      !isCurrentStage(app, stage)
+                  }"
+                >
+                  @if (isStageComplete(app, stage)) {
+                    <svg
+                      aria-hidden="true"
+                      class="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="m5 12 4 4L19 6" />
+                    </svg>
+                  } @else {
+                    {{ index + 1 }}
+                  }
+                </span>
+
+                <!-- Stage label -->
+                <span
+                  class="mt-2 block min-h-8
+                        max-w-32 text-center
+                        text-xs font-semibold
+                        leading-4"
+                  [class.text-[#000035]]="
+                    isStageComplete(app, stage) ||
+                    isCurrentStage(app, stage)
+                  "
+                  [class.text-slate-400]="
+                    !isStageComplete(app, stage) &&
+                    !isCurrentStage(app, stage)
+                  "
+                >
+                  {{ stage.label }}
+                </span>
+              </li>
+            }
+          </ol>
+        </div>
+      }
+        </div>
 
       <!-- Content -->
-      <div class="p-8 space-y-6 max-h-[calc(100vh-12rem)] overflow-y-auto">
-
+      <div
+        class="min-h-0 flex-1 space-y-6
+              overflow-y-auto
+              overscroll-contain
+              px-4 py-5
+              sm:px-6 sm:py-6
+              lg:px-8 lg:py-7"
+      >
 
         <!-- Applicant Info -->
         <div class="space-y-4">
 
           <div class="flex items-center gap-2">
-            <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+            <div class="h-5 w-1 rounded-full bg-[#F4B400]"></div>
             <h4 class="text-lg font-bold text-[#000035]">
               Applicant
             </h4>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
-              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Name</div>
-              <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ app.fullName }}</div>
-            </div>
-
-            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
-              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</div>
-              <div class="text-sm font-medium text-slate-700 wrap-break-word">{{ app.email }}</div>
-            </div>
-
-            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
-              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Student ID</div>
-              <div class="text-sm font-medium text-slate-700">{{ app.studentId }}</div>
-            </div>
-
-            <div class="p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200">
-              <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Year Level</div>
-              <div class="text-sm font-medium text-slate-700">{{ yearLevelLabel(app.yearLevel) }}</div>
-            </div>
-
-            <div class="sm:col-span-2 p-5 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200 space-y-4">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Applied Positions</div>
-                </div>
+          <!-- Identity -->
+          <div
+            class="rounded-2xl border border-slate-200
+                  bg-slate-50 p-4 sm:p-5"
+          >
+            <div class="flex min-w-0 items-center gap-3">
+              <div
+                class="flex h-12 w-12 shrink-0 items-center
+                      justify-center rounded-xl
+                      bg-[#000035] text-base font-bold
+                      text-[#F4B400]"
+                aria-hidden="true"
+              >
+                {{ app.fullName.charAt(0).toUpperCase() }}
               </div>
 
-              <div *ngIf="getSelectedPositions(app).length; else noSelectedPositions" class="space-y-3">
-                <div
-                  *ngFor="let selected of getSelectedPositions(app)"
-                  class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
+              <div class="min-w-0">
+                <p class="truncate text-base font-bold text-[#000035]">
+                  {{ app.fullName }}
+                </p>
+
+                <p
+                  class="sr-only"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
                 >
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="inline-flex items-center rounded-full bg-[#F4B400]/15 text-[#000035] text-xs font-semibold px-3 py-1">
-                      {{ positionLabel(selected.positionId) }}
-                    </span>
-                  </div>
+                  {{
+                    emailCopied()
+                      ? 'Applicant email copied to clipboard.'
+                      : ''
+                  }}
+                </p>
 
-                  <div *ngIf="selected.categories.length" class="mt-3 flex flex-wrap gap-2">
-                    <span
-                      *ngFor="let category of selected.categories"
-                      class="inline-flex items-center rounded-full bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1"
-                    >
-                      {{ category }}
-                    </span>
-                  </div>
+                <div
+                  class="mt-1 flex min-w-0 flex-col gap-2
+                        sm:flex-row sm:items-center"
+                >
+                  <a
+                    [href]="'mailto:' + app.email"
+                    class="min-w-0 break-all text-sm
+                          text-slate-500 underline-offset-2
+                          hover:text-[#000035]
+                          hover:underline
+                          focus-visible:outline-none
+                          focus-visible:ring-2
+                          focus-visible:ring-[#F4B400]
+                          focus-visible:ring-offset-2"
+                  >
+                    {{ app.email }}
+                  </a>
+
+                  <button
+                    type="button"
+                    (click)="copyEmail(app.email)"
+                    class="inline-flex min-h-9 w-fit
+                          shrink-0 items-center justify-center
+                          gap-1.5 rounded-lg
+                          border border-slate-200
+                          bg-white px-3 py-1.5
+                          text-xs font-semibold text-slate-600
+                          transition-colors
+                          hover:border-[#F4B400]/50
+                          hover:bg-[#F4B400]/10
+                          hover:text-[#000035]
+                          focus-visible:outline-none
+                          focus-visible:ring-2
+                          focus-visible:ring-[#F4B400]
+                          focus-visible:ring-offset-2"
+                    [attr.aria-label]="
+                      emailCopied()
+                        ? 'Email copied'
+                        : 'Copy applicant email'
+                    "
+                  >
+                    @if (emailCopied()) {
+                      <svg
+                        aria-hidden="true"
+                        class="h-3.5 w-3.5 text-green-600"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="m5 12 4 4L19 6" />
+                      </svg>
+
+                      Copied
+                    } @else {
+                      <svg
+                        aria-hidden="true"
+                        class="h-3.5 w-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                      <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                      </svg>
+
+                      Copy
+                    }
+                  </button>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <ng-template #noSelectedPositions>
-                <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
-                  No positions selected.
-                </div>
-              </ng-template>
+          <!-- Details -->
+          <dl
+            class="grid grid-cols-1 gap-3
+                  min-[480px]:grid-cols-2"
+          >
+            <div
+              class="rounded-xl border border-slate-200
+                    bg-white p-4"
+            >
+              <dt
+                class="text-[11px] font-semibold uppercase
+                      tracking-wide text-slate-400"
+              >
+                Student ID
+              </dt>
+
+              <dd class="mt-1 text-sm font-medium text-slate-700">
+                {{ app.studentId }}
+              </dd>
             </div>
 
+            <div
+              class="rounded-xl border border-slate-200
+                    bg-white p-4"
+            >
+              <dt
+                class="text-[11px] font-semibold uppercase
+                      tracking-wide text-slate-400"
+              >
+                Year level
+              </dt>
+
+              <dd class="mt-1 text-sm font-medium text-slate-700">
+                {{ yearLevelLabel(app.yearLevel) }}
+              </dd>
+            </div>
+          </dl>
+
+          <!-- Applied positions -->
+          <div
+            class="rounded-2xl border border-slate-200
+                  bg-white p-4 sm:p-5"
+          >
+            <p
+              class="text-[11px] font-semibold uppercase
+                    tracking-wide text-slate-400"
+            >
+              Applied positions
+            </p>
+
+            @if (getSelectedPositions(app).length) {
+              <div class="mt-3 space-y-3">
+                @for (
+                  selected of getSelectedPositions(app);
+                  track selected.positionId
+                ) {
+                  <div
+                    class="rounded-xl border border-slate-200
+                          bg-slate-50 p-3"
+                  >
+                    <p class="text-sm font-bold text-[#000035]">
+                      {{ positionLabel(selected.positionId) }}
+                    </p>
+
+                    @if (selected.categories.length) {
+                      <div class="mt-2 flex flex-wrap gap-1.5">
+                        @for (
+                          category of selected.categories;
+                          track category
+                        ) {
+                          <span
+                            class="inline-flex rounded-full
+                                  bg-[#F4B400]/15
+                                  px-2.5 py-1 text-xs
+                                  font-medium text-[#000035]"
+                          >
+                            {{ category }}
+                          </span>
+                        }
+                      </div>
+                    } @else {
+                      <p class="mt-1 text-xs text-slate-400">
+                        No category selected
+                      </p>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <div
+                class="mt-3 rounded-xl border
+                      border-dashed border-slate-200
+                      bg-slate-50 px-4 py-5
+                      text-sm text-slate-500"
+              >
+                No positions selected.
+              </div>
+            }
           </div>
 
         </div>
@@ -134,152 +494,429 @@
         <div class="space-y-4">
 
           <div class="flex items-center gap-2">
-            <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
+            <div class="h-5 w-1 rounded-full bg-[#F4B400]"></div>
             <h4 class="text-lg font-bold text-[#000035]">
               Motivation
             </h4>
           </div>
 
-          <p class="text-slate-700 leading-relaxed text-base">
-            {{ app.motivation }}
-          </p>
+          <div
+            class="rounded-2xl border border-slate-200
+                  bg-slate-50 p-4 sm:p-5"
+          >
+            <p
+              class="whitespace-pre-wrap break-words
+                    text-sm leading-6 text-slate-700
+                    sm:text-base sm:leading-7"
+            >
+              {{ app.motivation }}
+            </p>
+          </div>
 
         </div>
 
+
+        @if (actionError) {
+          <div
+            role="alert"
+            class="rounded-xl border border-red-200
+                  bg-red-50 px-4 py-3
+                  text-sm font-medium text-red-700"
+          >
+            {{ actionError }}
+          </div>
+        }
 
     <!-- ========================= -->
     <!-- Pending → Schedule Interview -->
     <!-- ========================= -->
 
-    <div *ngIf="isPending(app)" class="p-6 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200 space-y-4">
-
-      <div class="flex items-center gap-2">
-        <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
-        <h4 class="text-lg font-bold text-[#000035]">
+    <section
+      *ngIf="isPending(app)"
+      aria-labelledby="schedule-interview-title"
+      class="space-y-4 rounded-2xl
+            border border-slate-200
+            bg-slate-50 p-4 sm:p-5
+            animate-in fade-in slide-in-from-bottom-2
+            duration-200 ease-out
+            motion-reduce:animate-none"
+    >
+      <div>
+        <h4
+          id="schedule-interview-title"
+          class="text-base font-bold text-[#000035]
+                sm:text-lg"
+        >
           Schedule Interview
         </h4>
+
+        <p class="mt-1 text-sm text-slate-500">
+          Select the applicant’s interview date and time.
+        </p>
       </div>
 
-      <input
-        type="datetime-local"
-        name="interviewDate"
-        [(ngModel)]="interviewDate"
-        step="60"
-        required
-        class="border-2 border-slate-200 rounded-xl p-3 w-full focus:outline-none focus:border-[#F4B400]/40"
-      />
+      <div>
+        <label
+          for="interview-date"
+          class="mb-2 block text-sm font-semibold
+                text-slate-700"
+        >
+          Interview date and time
+        </label>
+
+        <input
+          id="interview-date"
+          type="datetime-local"
+          name="interviewDate"
+          [(ngModel)]="interviewDate"
+          step="60"
+          required
+          class="min-h-11 w-full rounded-xl
+                border border-slate-300 bg-white
+                px-3 py-2.5 text-sm
+                text-slate-700 outline-none
+                transition
+                focus:border-[#F4B400]
+                focus:ring-2
+                focus:ring-[#F4B400]/30"
+        />
+      </div>
 
       <button
         type="button"
-        [disabled]="!interviewDate"
-        class="px-6 py-3 rounded-xl bg-[#000035] text-white font-bold
-               shadow-lg shadow-[#000035]/20
-               hover:shadow-xl hover:shadow-[#000035]/30
-               hover:-translate-y-0.5
-               transition-all duration-300"
+        [disabled]="!interviewDate || hasPendingAction"
         (click)="scheduleInterview(app)"
+        [attr.aria-busy]="isActionPending('schedule')"
+        class="inline-flex min-h-11 w-full gap-2
+              items-center justify-center
+              rounded-xl bg-[#000035]
+              px-4 py-2.5 text-sm
+              font-semibold text-[#F4B400]
+              transition hover:bg-[#0a1a2e]
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-[#F4B400]
+              focus-visible:ring-offset-2
+              sm:w-auto"
       >
-        Schedule Interview
-      </button>
+        @if (isActionPending('schedule')) {
+          <span
+            class="h-4 w-4 animate-spin rounded-full
+                  border-2 border-[#F4B400]/30
+                  border-t-[#F4B400]"
+            aria-hidden="true"
+          ></span>
 
-    </div>
+          Scheduling…
+        } @else {
+          Schedule Interview
+        }
+      </button>
+    </section>
 
 
     <!-- ========================= -->
     <!-- Interview Scheduled -->
     <!-- ========================= -->
 
-    <div *ngIf="isScheduled(app)" class="p-6 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200 space-y-4">
-
-      <div class="flex items-center gap-2">
-        <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
-        <h4 class="text-lg font-bold text-[#000035]">
+    <section
+      *ngIf="isScheduled(app)"
+      class="space-y-4 rounded-2xl
+            border border-blue-200
+            bg-blue-50 p-4 sm:p-5
+            animate-in fade-in slide-in-from-bottom-2
+            duration-200 ease-out
+            motion-reduce:animate-none"
+    >
+      <div>
+        <h4 class="text-base font-bold text-[#000035] sm:text-lg">
           Interview Scheduled
         </h4>
-      </div>
 
-      <div class="text-sm text-slate-700">
-        <span class="font-semibold">Date:</span>
-        {{ app.interviewDate }}
+        <div
+          class="mt-3 rounded-xl border border-blue-200
+                bg-white p-4"
+        >
+          <p
+            class="text-xs font-bold uppercase
+                  tracking-wider text-blue-600"
+          >
+            {{ formatInterviewWeekday(app.interviewDate) }}
+          </p>
+
+          <p
+            class="mt-1 text-base font-bold
+                  text-[#000035] sm:text-lg"
+          >
+            {{ formatInterviewFullDate(app.interviewDate) }}
+          </p>
+
+          <div
+            class="mt-3 flex items-center gap-2
+                  border-t border-slate-100 pt-3"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 text-[#F4B400]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+            <path d="M8 2v4"/>
+            <path d="M16 2v4"/>
+            <rect width="18" height="18" x="3" y="4" rx="2"/>
+            <path d="M3 10h18"/>
+            <path d="m9 16 2 2 4-4"/>
+            </svg>
+
+            <p class="text-sm font-semibold text-slate-700">
+              {{ formatInterviewTime(app.interviewDate) }}
+            </p>
+          </div>
+        </div>
       </div>
 
       <button
-        class="px-6 py-3 rounded-xl bg-[#000035] text-white font-bold
-               shadow-lg shadow-[#000035]/20
-               hover:shadow-xl hover:shadow-[#000035]/30
-               hover:-translate-y-0.5
-               transition-all duration-300"
-        (click)="interviewed.emit(app); close.emit()"
+        type="button"
+        (click)="markInterviewedAndClose(app)"
+        [disabled]="hasPendingAction"
+        [attr.aria-busy]="isActionPending('interviewed')"
+        class="inline-flex min-h-11 w-full
+              items-center justify-center
+              rounded-xl bg-[#000035]
+              px-4 py-2.5 text-sm
+              font-semibold text-[#F4B400]
+              transition hover:bg-[#0a1a2e]
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-[#F4B400]
+              focus-visible:ring-offset-2
+              sm:w-auto
+              disabled:cursor-not-allowed
+              disabled:opacity-50"
       >
-        Mark Interviewed
-      </button>
+        @if (isActionPending('interviewed')) {
+          <span
+            class="h-4 w-4 animate-spin rounded-full
+                  border-2 border-[#F4B400]/30
+                  border-t-[#F4B400]"
+            aria-hidden="true"
+          ></span>
 
-    </div>
+          Updating…
+        } @else {
+          Mark Interviewed
+        }
+      </button>
+    </section>
 
 
     <!-- ========================= -->
     <!-- Interview Completed -->
     <!-- ========================= -->
 
-    <div *ngIf="isInterviewed(app)" class="p-6 bg-linear-to-br from-slate-50 to-white rounded-2xl border-2 border-slate-200 space-y-4">
-
-      <div class="flex items-center gap-2">
-        <div class="w-1 h-5 bg-[#F4B400] rounded-full"></div>
-        <h4 class="text-lg font-bold text-[#000035]">
+    <section
+      *ngIf="hasInterviewNotesStage(app)"
+      aria-labelledby="interview-notes-title"
+      class="space-y-4 rounded-2xl
+            border border-slate-200
+            bg-slate-50 p-4 sm:p-5"
+    >
+      <div>
+        <h4
+          id="interview-notes-title"
+          class="text-base font-bold text-[#000035]
+                sm:text-lg"
+        >
           Interview Notes
         </h4>
+
+        <p class="mt-1 text-sm text-slate-500">
+          {{
+            app.status === 'accepted' || app.status === 'rejected'
+              ? 'Interview notes recorded during the review process.'
+              : 'Add optional notes before making a decision.'
+          }}
+        </p>
       </div>
 
-      <textarea
-        [(ngModel)]="notesText"
-        rows="4"
-        class="border-2 border-slate-200 rounded-xl w-full p-3 focus:outline-none focus:border-[#F4B400]/40"
-      ></textarea>
+      <div>
+        <label
+          for="interview-notes"
+          class="sr-only"
+        >
+          Interview notes
+        </label>
 
-      <p class="text-sm text-slate-600">
-        Notes will be saved when you Accept or Reject.
-      </p>
+        <textarea
+          id="interview-notes"
+          [(ngModel)]="notesText"
+          rows="5"
+          maxlength="2000"
+          placeholder="Add notes about the interview..."
+          class="w-full resize-y rounded-xl
+                border border-slate-300 bg-white
+                px-3 py-2.5 text-sm
+                text-slate-700 outline-none
+                transition
+                placeholder:text-slate-400
+                focus:border-[#F4B400]
+                focus:ring-2
+                focus:ring-[#F4B400]/30"
+          [ngClass]="{
+            'bg-slate-100 cursor-default':
+              app.status === 'accepted' ||
+              app.status === 'rejected'
+          }"
+          [readonly]="
+            app.status === 'accepted' ||
+            app.status === 'rejected'
+          "
+        ></textarea>
+      </div>
 
-    </div>
+      @if (hasUnsavedNotes) {
+        <p class="text-xs text-slate-500">
+          Changes will be saved when you accept or reject the application.
+        </p>
+      }
+
+      <div
+        *ngIf="
+          app.status !== 'accepted' &&
+          app.status !== 'rejected'
+        "
+        class="flex flex-col gap-1
+              text-xs text-slate-400
+              sm:flex-row sm:items-center
+              sm:justify-between"
+      >
+        <div
+          class="flex items-center gap-2"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span
+            aria-hidden="true"
+            class="h-2 w-2 rounded-full"
+            [class.bg-amber-500]="hasUnsavedNotes"
+            [class.bg-green-500]="!hasUnsavedNotes"
+          ></span>
+
+          <span
+            class="font-medium"
+            [class.text-amber-700]="hasUnsavedNotes"
+            [class.text-green-700]="!hasUnsavedNotes"
+          >
+            {{ notesStatusLabel }}
+          </span>
+        </div>
+
+        <p class="tabular-nums">
+          {{ notesText.length }}/2000
+        </p>
+      </div>
+    </section>
 
 
     <!-- ========================= -->
     <!-- Decision Section -->
     <!-- ========================= -->
 
-    <div
-      *ngIf="isInterviewed(app)"
-      class="flex flex-col sm:flex-row gap-3 border-t border-slate-200 pt-4"
-    >
-
-      <button
-        class="px-6 py-3 rounded-xl bg-green-600 text-white font-bold
-               shadow-lg shadow-green-600/20
-               hover:shadow-xl hover:shadow-green-600/30
-               hover:-translate-y-0.5
-               transition-all duration-300"
-        (click)="acceptWithNotes(app)"
-      >
-        Accept
-      </button>
-
-      <button
-        class="px-6 py-3 rounded-xl bg-red-600 text-white font-bold
-               shadow-lg shadow-red-600/20
-               hover:shadow-xl hover:shadow-red-600/30
-               hover:-translate-y-0.5
-               transition-all duration-300"
-        (click)="rejectWithNotes(app)"
-      >
-        Reject
-      </button>
-
-    </div>
-
       </div>
 
-    </div>
+        <footer
+          *ngIf="isInterviewed(app)"
+          class="shrink-0 border-t border-slate-200
+                bg-white/95 px-4 pt-3
+                pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+                backdrop-blur
+                animate-in fade-in
+                slide-in-from-bottom-3
+                duration-200 ease-out
+                motion-reduce:animate-none
+                sm:px-6 sm:pb-3
+                lg:px-8
+                "
+        >
+          <div
+            class="grid grid-cols-1 gap-3
+                  min-[420px]:grid-cols-2"
+          >
+          <button
+            type="button"
+            (click)="acceptWithNotes(app)"
+            [disabled]="hasPendingAction"
+            [attr.aria-busy]="isActionPending('accept')"
+            class="inline-flex min-h-11 gap-2
+                  items-center justify-center
+                  rounded-xl bg-green-600
+                  px-4 py-2.5 text-sm
+                  font-semibold text-white
+                  transition hover:bg-green-700
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-green-600
+                  focus-visible:ring-offset-2
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50"
+          >
+          @if (isActionPending('accept')) {
+            <span
+              class="h-4 w-4 animate-spin rounded-full
+                    border-2 border-white/30
+                    border-t-white"
+              aria-hidden="true"
+            ></span>
 
-  </div>
+            Accepting…
+          } @else {
+            Accept
+          }
+          </button>
+
+          <button
+            type="button"
+            (click)="rejectWithNotes(app)"
+            [disabled]="hasPendingAction"
+            [attr.aria-busy]="isActionPending('reject')"
+            class="inline-flex min-h-11 gap-2
+                  items-center justify-center
+                  rounded-xl bg-red-600
+                  px-4 py-2.5 text-sm
+                  font-semibold text-white
+                  transition hover:bg-red-700
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-red-600
+                  focus-visible:ring-offset-2
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50"
+          >
+          @if (isActionPending('reject')) {
+            <span
+              class="h-4 w-4 animate-spin rounded-full
+                    border-2 border-white/30
+                    border-t-white"
+              aria-hidden="true"
+            ></span>
+
+            Rejecting…
+          } @else {
+            Reject
+          }
+          </button>
+        </div>
+      </footer>
+
+  </section>
+
+</div>
 
 </ng-container>

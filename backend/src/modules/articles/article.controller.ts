@@ -4,7 +4,7 @@ import * as notificationService from "../notifications/notification.service";
 import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
-import { emitArticlesUpdated } from "../../realtime/socket.events";
+import { emitArticlesUpdated, emitMediaUpdated } from "../../realtime/socket.events";
 
 function setPublicCache(res: Response): void {
     res.set({
@@ -89,6 +89,197 @@ export const getArticles =  asyncHandler(
         setPublicCache(res);
         res.json(articles);
     }
+);
+
+/**
+ * GET /api/articles/admin
+ *
+ * Lightweight paginated article list for the
+ * All Articles admin page.
+ */
+export const getAdminArticles = asyncHandler(
+  async (req: Request, res: Response) => {
+    const rawStatus = req.query["status"];
+    const rawCategory = req.query["category"];
+    const rawFeatured = req.query["featured"];
+    const rawSearch = req.query["search"];
+    const rawSort = req.query["sort"];
+    const rawPage = req.query["page"];
+    const rawLimit = req.query["limit"];
+    const rawTags = req.query["tags"];
+
+    const status =
+      typeof rawStatus === "string"
+        ? String(
+            sanitizeValue(rawStatus)
+          ).trim()
+        : undefined;
+
+    const category =
+      typeof rawCategory === "string"
+        ? String(
+            sanitizeValue(rawCategory)
+          ).trim()
+        : undefined;
+
+    const featured =
+      typeof rawFeatured === "string"
+        ? String(
+            sanitizeValue(rawFeatured)
+          ) === "true"
+        : undefined;
+
+    const search =
+      typeof rawSearch === "string"
+        ? String(
+            sanitizeValue(rawSearch)
+          ).trim()
+        : undefined;
+
+    const sanitizedSort =
+      typeof rawSort === "string"
+        ? String(
+            sanitizeValue(rawSort)
+          )
+        : undefined;
+
+    const sort =
+      sanitizedSort === "latest" ||
+      sanitizedSort === "oldest" ||
+      sanitizedSort === "mostViewed"
+        ? sanitizedSort
+        : undefined;
+
+    const parsedPage =
+      typeof rawPage === "string"
+        ? Number(
+            sanitizeValue(rawPage)
+          )
+        : undefined;
+
+    const parsedLimit =
+      typeof rawLimit === "string"
+        ? Number(
+            sanitizeValue(rawLimit)
+          )
+        : undefined;
+
+    const page =
+      Number.isInteger(parsedPage) &&
+      Number(parsedPage) > 0
+        ? Number(parsedPage)
+        : 1;
+
+    const limit =
+      Number.isInteger(parsedLimit) &&
+      Number(parsedLimit) > 0
+        ? Math.min(
+            Number(parsedLimit),
+            100
+          )
+        : 20;
+
+    const tags = Array.isArray(rawTags)
+      ? rawTags
+          .map(tag =>
+            String(
+              sanitizeValue(String(tag))
+            ).trim()
+          )
+          .filter(Boolean)
+      : typeof rawTags === "string"
+        ? String(
+            sanitizeValue(rawTags)
+          )
+            .split(",")
+            .map(tag => tag.trim())
+            .filter(Boolean)
+        : undefined;
+
+    const filters:
+      service.GetArticlesFilters = {
+        page,
+        limit,
+      };
+
+    if (status) {
+      filters.status = status;
+    }
+
+    if (category) {
+      filters.category = category;
+    }
+
+    if (
+      featured !== undefined
+    ) {
+      filters.featured = featured;
+    }
+
+    if (search) {
+      filters.search = search;
+    }
+
+    if (sort) {
+      filters.sort = sort;
+    }
+
+    if (tags?.length) {
+      filters.tags = tags;
+    }
+
+    const result =
+      await service.getAdminArticles(
+        filters
+      );
+
+    /*
+     * This is authenticated admin data.
+     * Do not allow browsers or shared proxies
+     * to retain stale copies.
+     */
+    res.set(
+      "Cache-Control",
+      "private, no-store"
+    );
+
+    res.status(200).json(result);
+  }
+);
+
+/**
+ * GET /api/articles/admin/:id
+ *
+ * Lightweight article detail for the
+ * admin Article View Modal.
+ */
+export const getAdminArticleDetail = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = String(
+      sanitizeValue(
+        req.params["id"]
+      )
+    ).trim();
+
+    if (!id) {
+      res.status(400).json({
+        error: "Article ID is required",
+      });
+      return;
+    }
+
+    const article =
+      await service.getAdminArticleDetail(
+        id
+      );
+
+    res.set(
+      "Cache-Control",
+      "private, no-store"
+    );
+
+    res.status(200).json(article);
+  }
 );
 
 /** GET /api/articles/homepage-feed */
@@ -255,32 +446,53 @@ export const createArticle = asyncHandler(
             }
         );
         emitArticlesUpdated();
+        emitMediaUpdated();
 
         res.status(201).json(article);
     }
 );
 
-/** PATCH /api/articles/: id*/
+/** PATCH /api/articles/:id */
 export const updateArticle = asyncHandler(
-    async (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
 
-        const id = sanitizeValue(req.params["id"]) as string;
+    const id = sanitizeValue(
+      req.params["id"]
+    ) as string;
 
-        const article = await service.updateArticle(id, req.body);
-        auditLog(
-            req,
-            "UPDATE",
-            "ARTICLES",
-            `Updated article: ${(article as any)?.title ?? id}`,
-            {
-                resourceId: id,
-                details: { title: (article as any)?.title, slug: (article as any)?.slug },
-            }
-        );
-        emitArticlesUpdated();
-        
-        res.json(article);
-    }
+    const {
+      article,
+      previousSlug,
+      currentSlug,
+    } = await service.updateArticle(
+      id,
+      req.body
+    );
+
+    auditLog(
+      req,
+      "UPDATE",
+      "ARTICLES",
+      `Updated article: ${article.title}`,
+      {
+        resourceId: id,
+        details: {
+          title: article.title,
+          slug: article.slug,
+        },
+      }
+    );
+
+    emitArticlesUpdated({
+      articleId: article.id,
+      previousSlug,
+      currentSlug,
+    });
+
+    emitMediaUpdated();
+
+    res.json(article);
+  }
 );
 
 /**PATCH /api/articles/:id/publish */
@@ -306,6 +518,7 @@ export const publishArticle = asyncHandler(
             }
         );
         emitArticlesUpdated();
+        emitMediaUpdated();
 
         res.json(article);
     }
@@ -329,7 +542,7 @@ export const archiveArticle = asyncHandler(
             }
         );
         emitArticlesUpdated();
-
+        emitMediaUpdated();
         res.json(article);
     }
 );
@@ -361,7 +574,7 @@ export const deleteArticle = asyncHandler(
             { resourceId: id }
         );
         emitArticlesUpdated();
-
+        emitMediaUpdated();
         res.status(204).send();
     }
 )

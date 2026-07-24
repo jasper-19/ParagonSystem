@@ -408,6 +408,14 @@
       (closed)="showErrorModal.set(false)"
     ></app-error-modal>
 
+    <app-error-modal
+    [isOpen]="showSubmissionError()"
+    [title]="submissionErrorTitle()"
+    [message]="submissionErrorMessage()"
+    buttonText="Close"
+    (closed)="closeSubmissionError()">
+  </app-error-modal>
+
   </div>
 
 </section>

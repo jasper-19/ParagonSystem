@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { filter, map} from 'rxjs/operators';
 
 import { Media, MediaQuery, PaginatedMediaResponse } from '../../models/media.model';
 
 import { API_ENDPOINTS } from '../config/api.config';
+
 
 type ApiMedia = Omit<Media, 'createdAt' | 'updatedAt'> & {
   createdAt?: string;
@@ -20,7 +21,10 @@ type UploadProgressOrMedia = number | Media;
 export class MediaService {
   private readonly api = API_ENDPOINTS.media
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient
+  ) {}
+
 
   private normalizeMedia(media: ApiMedia): Media {
     const fileUrl = media.fileUrl?.startsWith('http')
@@ -44,12 +48,14 @@ export class MediaService {
     if (query?.page) params['page'] = String(query.page);
     if (query?.limit) params['limit'] = String(query.limit);
 
-    return this.http.get<PaginatedMediaResponse & { data: ApiMedia[] }>(this.api, { params }).pipe(
-      map((response) => ({
-        ...response,
-        data: (response.data || []).map((item) => this.normalizeMedia(item)),
-      }))
-    );
+    return this.http
+      .get<PaginatedMediaResponse & { data: ApiMedia[] }>(this.api, { params })
+      .pipe(
+        map((response) => ({
+          ...response,
+          data: (response.data || []).map((item) => this.normalizeMedia(item)),
+        }))
+      );
   }
 
   uploadMedia(file: File): Observable<UploadProgressOrMedia> {
@@ -92,5 +98,6 @@ export class MediaService {
       map((response) => this.normalizeMedia(response))
     );
   }
+
 }
 

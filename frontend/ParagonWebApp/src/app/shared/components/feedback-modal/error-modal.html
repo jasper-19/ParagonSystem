@@ -38,6 +38,19 @@
           {{ message() }}
         </p>
 
+        <ul
+          *ngIf="details().length"
+          class="relative mx-auto max-w-sm text-left space-y-2 rounded-2xl bg-red-50 border border-red-100 p-4"
+        >
+          <li
+            *ngFor="let item of details()"
+            class="flex gap-2 text-sm text-slate-700"
+          >
+            <span class="text-red-500 shrink-0">•</span>
+            <span>{{ item }}</span>
+          </li>
+        </ul>
+
         <!-- Button -->
         <div class="relative pt-2">
           <button

@@ -1,16 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map, finalize, forkJoin } from 'rxjs';
 import { StaffMember } from '../../models/staff-member.model';
-
+import { SocketService } from './socket.service';
 import { API_ENDPOINTS } from '../config/api.config';
 
-// =====================================================
 // StaffService
-// - Loads and caches staff members
-// - Tracks staff eligible for board assignment separately
-// - Provides create/update/delete helpers that keep in-memory cache in sync
-// =====================================================
 @Injectable({
   providedIn: 'root'
 })
@@ -18,6 +13,11 @@ export class StaffService {
 
   private readonly apiUrl = API_ENDPOINTS.staff;
   private http = inject(HttpClient);
+  private socketService = inject(SocketService);
+
+  private realtimeRefreshInProgress = false;
+
+  private realtimeRefreshPending = false;
 
   // ----- All staff members observable/cache -----
   private staffSubject = new BehaviorSubject<StaffMember[]>([]);
@@ -28,8 +28,58 @@ export class StaffService {
   readonly eligibleForBoard$ = this.eligibleSubject.asObservable();
 
   constructor() {
-    this.loadStaff();
-    this.loadEligibleForBoard();
+    this.initializeRealtime();
+  }
+
+  private initializeRealtime(): void {
+    this.socketService
+      .onEditorialBoardUpdated(() => {
+        console.log(
+          '📡 Editorial board changed staff state'
+        );
+
+        this.refreshFromRealtime();
+      });
+  }
+
+  private refreshFromRealtime(): void {
+    if (
+      this.realtimeRefreshInProgress
+    ) {
+      this.realtimeRefreshPending = true;
+      return;
+    }
+
+    this.realtimeRefreshInProgress = true;
+
+    forkJoin({
+      staff: this.loadStaff(),
+      eligible:
+        this.loadEligibleForBoard(),
+    })
+      .pipe(
+        finalize(() => {
+          this.realtimeRefreshInProgress =
+            false;
+
+          if (
+            this.realtimeRefreshPending
+          ) {
+            this.realtimeRefreshPending =
+              false;
+
+            this.refreshFromRealtime();
+          }
+        })
+      )
+      .subscribe({
+        error: error => {
+          console.error(
+            'Failed to refresh staff after editorial-board update:',
+            error
+          );
+        },
+      });
   }
 
   // Parse date-like fields returned from API into proper Date objects
@@ -43,23 +93,44 @@ export class StaffService {
   // ====================================
   // Data Loading
   // ====================================
-  private loadStaff(): void {
-    this.http.get<any[]>(this.apiUrl).subscribe({
-      next: members => this.staffSubject.next(members.map(m => this.parseDates(m))),
-      error: err => console.error('Failed to load staff:', err)
-    });
+  loadStaff(): Observable<StaffMember[]> {
+    return this.http
+      .get<any[]>(this.apiUrl)
+      .pipe(
+        map(members =>
+          members.map(member =>
+            this.parseDates(member)
+          )
+        ),
+        tap(members => {
+          this.staffSubject.next(members);
+        })
+      );
   }
 
-  private loadEligibleForBoard(): void {
-    this.http.get<any[]>(`${this.apiUrl}/eligible-for-board`).subscribe({
-      next: members => this.eligibleSubject.next(members.map(m => this.parseDates(m))),
-      error: err => console.error('Failed to load eligible staff:', err)
-    });
+  loadEligibleForBoard(): Observable<StaffMember[]> {
+    return this.http
+      .get<any[]>(
+        `${this.apiUrl}/eligible-for-board`
+      )
+      .pipe(
+        map(members =>
+          members.map(member =>
+            this.parseDates(member)
+          )
+        ),
+        tap(members => {
+          this.eligibleSubject.next(members);
+        })
+      );
   }
 
-  refresh(): void {
-    this.loadStaff();
-    this.loadEligibleForBoard();
+  refreshStaff(): Observable<StaffMember[]> {
+    return this.loadStaff();
+  }
+
+  refreshEligibleForBoard(): Observable<StaffMember[]> {
+    return this.loadEligibleForBoard();
   }
 
   getAll(): StaffMember[] {

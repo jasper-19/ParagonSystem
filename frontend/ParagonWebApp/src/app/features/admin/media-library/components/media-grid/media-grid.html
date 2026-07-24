@@ -1,10 +1,42 @@
-<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
-  <app-media-card
-    *ngFor="let media of mediaList; trackBy: trackByMediaId"
-    [media]="media"
-    [selected]="isSelected(media.id)"
-    (toggleSelection)="toggleSelection.emit($event)"
-    (openDetails)="openDetails.emit($event)"
+<div
+  #gridContainer
+  role="listbox"
+  aria-label="Available images"
+  class="grid min-w-0 grid-cols-1 gap-3
+        min-[420px]:grid-cols-2
+        sm:grid-cols-3 sm:gap-4
+        xl:grid-cols-4
+        2xl:grid-cols-5"
   >
-  </app-media-card>
+  <div
+    #mediaItem
+    *ngFor="
+      let media of mediaList;
+      let index = index;
+      trackBy: trackByMediaId
+    "
+    role="option"
+    [attr.aria-selected]="isSelected(media.id)"
+    [attr.aria-label]="
+      media.fileName +
+      (isSelected(media.id)
+        ? ', selected'
+        : ', not selected') +
+      '. Press Space to toggle selection. Press Enter to open details.'
+    "
+    [tabindex]="index === activeIndex ? 0 : -1"
+    (focus)="onItemFocus(index)"
+    (keydown)="onItemKeydown($event, index)"
+    class="rounded-2xl outline-none
+          focus-visible:ring-2
+          focus-visible:ring-[#F4B400]
+          focus-visible:ring-offset-2"
+  >
+    <app-media-card
+      [media]="media"
+      [selected]="isSelected(media.id)"
+      (toggleSelection)="toggleSelection.emit($event)"
+      (openDetails)="openDetails.emit($event)"
+    ></app-media-card>
+  </div>
 </div>

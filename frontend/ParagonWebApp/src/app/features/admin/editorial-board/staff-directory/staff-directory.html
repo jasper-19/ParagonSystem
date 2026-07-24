@@ -4,10 +4,18 @@
   <!-- Page Header -->
   <!-- ========================= -->
 
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+  <div
+    class="flex flex-col gap-4
+          sm:flex-row sm:items-start
+          sm:justify-between"
+  >
 
     <div class="space-y-2">
-      <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+      <h2
+        class="text-2xl font-bold tracking-tight
+              text-slate-900
+              sm:text-3xl lg:text-4xl"
+      >
         Staff Directory
       </h2>
       <p class="text-base text-gray-600">
@@ -18,17 +26,58 @@
     <button
       type="button"
       (click)="openNewBoardModal()"
-      class="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm
-             bg-[#000035] text-white hover:bg-[#0a1a2e] shadow hover:shadow-md transition-all duration-200"
+      class="inline-flex min-h-11 w-full
+            items-center justify-center gap-2
+            rounded-xl bg-[#000035]
+            px-5 py-2.5 text-sm font-semibold
+            text-white shadow-sm transition
+            hover:bg-[#0a1a2e]
+            hover:shadow-md
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-[#F4B400]
+            focus-visible:ring-offset-2
+            sm:w-auto"
     >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14"/>
+        <path d="M12 5v14"/>
       </svg>
       New Board
     </button>
 
   </div>
 
+  @if (boardLoadError() || boardsLoadError()) {
+    <div
+      role="alert"
+      class="rounded-2xl border border-red-200
+            bg-red-50 p-4"
+    >
+      <p class="text-sm font-semibold text-red-700">
+        {{
+          boardLoadError() ||
+          boardsLoadError()
+        }}
+      </p>
+
+      <button
+        type="button"
+        (click)="loadActiveBoard(); loadAllBoards()"
+        class="mt-3 inline-flex min-h-10
+              items-center justify-center
+              rounded-xl border border-red-300
+              bg-white px-4 py-2
+              text-sm font-semibold text-red-700
+              transition hover:bg-red-100
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-red-500"
+      >
+        Retry
+      </button>
+    </div>
+  }
 
   <!-- ========================= -->
   <!-- Board Switcher            -->
@@ -36,75 +85,197 @@
 
   <div *ngIf="allBoards().length > 0" class="bg-white rounded-xl shadow border border-gray-100">
 
-    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+    <div
+      class="flex items-center gap-3
+            border-b border-slate-100
+            px-4 py-4 sm:px-5 lg:px-6"
+    >
       <div class="w-1.5 h-5 rounded-full bg-[#000035]"></div>
       <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Switch Active Board</h3>
     </div>
 
-    <div class="p-6 space-y-3">
+    <div class="space-y-4 p-4 sm:p-5 lg:p-6">
 
-      <p *ngIf="boardSwitchError()" class="text-sm text-red-600 font-medium">{{ boardSwitchError() }}</p>
-      <p *ngIf="boardDeleteError()" class="text-sm text-red-600 font-medium">{{ boardDeleteError() }}</p>
+      <div
+        *ngIf="boardSwitchError()"
+        role="alert"
+        class="rounded-xl border border-red-200
+              bg-red-50 px-4 py-3
+              text-sm font-medium text-red-700"
+      >
+        {{ boardSwitchError() }}
+      </div>
+      <div
+        *ngIf="boardDeleteError()"
+        role="alert"
+        class="rounded-xl border border-red-200
+              bg-red-50 px-4 py-3
+              text-sm font-medium text-red-700"
+      >
+        {{ boardDeleteError() }}
+      </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <div
-          *ngFor="let b of allBoards()"
-          class="relative flex items-start gap-3 p-4 rounded-xl border-2 transition-all duration-200"
+      <div
+        class="grid grid-cols-1 gap-4
+              sm:grid-cols-2
+              xl:grid-cols-3"
+      >
+        <article
+          *ngFor="let board of allBoards()"
+          class="relative flex min-w-0 flex-col
+                rounded-2xl border bg-white p-4
+                transition
+                focus-within:ring-2
+                focus-within:ring-[#F4B400]
+                focus-within:ring-offset-2"
           [ngClass]="{
-            'border-[#000035] bg-[#000035]/5': b.isActive,
-            'border-gray-200 hover:border-[#f4b400] hover:bg-[#f4b400]/5': !b.isActive
+            'border-[#000035] shadow-sm':
+              board.isActive,
+            'border-slate-200 hover:border-[#F4B400]/60 hover:shadow-sm':
+              !board.isActive
           }"
         >
-          <!-- Activate button (covers whole card except delete btn) -->
-          <button
-            type="button"
-            (click)="switchToBoard(b)"
-            [disabled]="b.isActive || switchingBoardId() !== null || deletingBoardId() !== null"
-            class="absolute inset-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f4b400]"
-            [class.cursor-default]="b.isActive"
-            [class.cursor-pointer]="!b.isActive"
-            [class.cursor-not-allowed]="!b.isActive && (switchingBoardId() !== null || deletingBoardId() !== null)"
-          ></button>
-
-          <!-- Active badge -->
-          <span *ngIf="b.isActive"
-            class="absolute top-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
-                   bg-emerald-50 text-emerald-700 border border-emerald-200 z-10">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            Active
-          </span>
-
-          <!-- Spinner while switching -->
-          <span *ngIf="switchingBoardId() === b.id"
-            class="absolute top-3 right-3 w-4 h-4 border-2 border-[#000035] border-t-transparent rounded-full animate-spin z-10">
-          </span>
-
-          <!-- Delete button (only for inactive boards) -->
-          <button
-            *ngIf="!b.isActive"
-            type="button"
-            (click)="deleteBoard(b, $event)"
-            [disabled]="deletingBoardId() !== null || switchingBoardId() !== null"
-            title="Delete board"
-            class="absolute top-2.5 right-2.5 z-10 w-7 h-7 flex items-center justify-center rounded-lg
-                   text-gray-400 hover:text-red-600 hover:bg-red-50 border border-transparent
-                   hover:border-red-200 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+          <!-- Header -->
+          <header
+            class="relative z-10 shrink-0
+                  bg-white
+                  px-4 py-4
+                  sm:px-6 sm:py-5
+                  lg:px-8"
           >
-            <!-- Spinner while deleting this card -->
-            <span *ngIf="deletingBoardId() === b.id"
-              class="w-3.5 h-3.5 border-2 border-red-500 border-t-transparent rounded-full animate-spin">
-            </span>
-            <svg *ngIf="deletingBoardId() !== b.id" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3M4 7h16"/>
-            </svg>
-          </button>
+            <div class="flex min-w-0 items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p
+                  class="truncate text-base font-bold
+                        text-[#000035]"
+                >
+                  {{ board.academicYear }}
+                </p>
 
-          <div class="min-w-0 relative z-0 pointer-events-none">
-            <p class="font-bold text-[#000035] truncate">{{ b.academicYear }}</p>
-            <p class="text-xs text-gray-500 truncate">{{ b.adviserName }}</p>
+                <p class="mt-1 truncate text-sm text-slate-500">
+                  {{ board.adviserName }}
+                </p>
+              </div>
+
+              @if (board.isActive) {
+                <span
+                  class="inline-flex shrink-0 items-center
+                        gap-1.5 rounded-full
+                        border border-emerald-200
+                        bg-emerald-50 px-2.5 py-1
+                        text-xs font-semibold
+                        text-emerald-700"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="h-1.5 w-1.5 rounded-full
+                          bg-emerald-500"
+                  ></span>
+
+                  Active
+                </span>
+              }
+            </div>
+        </header>
+
+          <!-- Actions -->
+          <div
+            class="mt-4 grid grid-cols-1 gap-2
+                  min-[420px]:grid-cols-2"
+          >
+            <button
+              type="button"
+              (click)="switchToBoard(board)"
+              [disabled]="
+                board.isActive ||
+                switchingBoardId() !== null ||
+                deletingBoardId() !== null
+              "
+              class="inline-flex min-h-11
+                    items-center justify-center gap-2
+                    rounded-xl border px-3 py-2.5
+                    text-sm font-semibold transition
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-[#F4B400]
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50"
+              [ngClass]="{
+                'border-[#000035] bg-[#000035] text-[#F4B400]':
+                  !board.isActive,
+                'border-slate-200 bg-slate-100 text-slate-500':
+                  board.isActive
+              }"
+            >
+              @if (switchingBoardId() === board.id) {
+                <span
+                  aria-hidden="true"
+                  class="h-4 w-4 animate-spin
+                        rounded-full border-2
+                        border-current/30
+                        border-t-current"
+                ></span>
+
+                Activating…
+              } @else {
+                {{ board.isActive ? 'Active Board' : 'Set Active' }}
+              }
+            </button>
+
+            @if (!board.isActive) {
+              <button
+                type="button"
+                (click)="deleteBoard(board, $event)"
+                [disabled]="
+                  deletingBoardId() !== null ||
+                  switchingBoardId() !== null
+                "
+                class="inline-flex min-h-11
+                      items-center justify-center gap-2
+                      rounded-xl border border-red-200
+                      bg-red-50 px-3 py-2.5
+                      text-sm font-semibold text-red-600
+                      transition hover:bg-red-100
+                      focus-visible:outline-none
+                      focus-visible:ring-2
+                      focus-visible:ring-red-500
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50"
+              >
+                @if (deletingBoardId() === board.id) {
+                  <span
+                    aria-hidden="true"
+                    class="h-4 w-4 animate-spin
+                          rounded-full border-2
+                          border-red-500/30
+                          border-t-red-500"
+                  ></span>
+
+                  Deleting…
+                } @else {
+                  <svg
+                    aria-hidden="true"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                  <path d="M10 11v6"/>
+                  <path d="M14 11v6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                  <path d="M3 6h18"/>
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+
+                  Delete
+                }
+              </button>
+            }
           </div>
-        </div>
+        </article>
       </div>
 
     </div>
@@ -118,15 +289,67 @@
   <div class="bg-white rounded-xl shadow border border-gray-100">
 
     <!-- Section Header -->
-    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+    <div
+      class="flex items-center gap-3
+            border-b border-slate-100
+            px-4 py-4 sm:px-5 lg:px-6"
+    >
       <div class="w-1.5 h-5 rounded-full bg-[#f4b400]"></div>
       <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">
         Awaiting Adviser Assignment
       </h3>
     </div>
 
+  <ng-container
+    *ngIf="awaitingAssignment$ | async as awaiting"
+  >
+
+  <div
+    *ngIf="awaiting.length === 0"
+    class="flex flex-col items-center
+          justify-center px-4 py-10
+          text-center sm:px-6"
+  >
+    <div
+      aria-hidden="true"
+      class="flex h-12 w-12 items-center
+            justify-center rounded-full
+            bg-emerald-50 text-emerald-600"
+    >
+      <svg
+        class="h-5 w-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="m5 13 4 4L19 7"
+        />
+      </svg>
+    </div>
+
+    <p class="mt-3 text-sm font-semibold text-slate-700">
+      No applicants awaiting assignment
+    </p>
+
+    <p
+      class="mt-1 max-w-md text-xs
+            leading-5 text-slate-500"
+    >
+      Accepted applicants who have not yet been
+      assigned to the editorial board will appear here.
+    </p>
+  </div>
+
     <!-- Desktop Table -->
-    <div class="hidden md:block overflow-x-auto">
+    <div
+      *ngIf="awaiting.length > 0"
+      class="hidden overflow-x-auto
+            overscroll-x-contain lg:block"
+    >
       <table class="min-w-full divide-y divide-gray-100">
 
         <thead class="bg-linear-to-r from-[#000035] to-[#1a3a52]">
@@ -140,11 +363,11 @@
 
         <tbody class="bg-white divide-y divide-gray-50">
 
-          <ng-container *ngFor="let app of applications$ | async">
-            <tr
-              *ngIf="app.status === 'accepted' && !app.assigned"
-              class="hover:bg-[#f4b400]/10 transition-colors group"
-            >
+          <tr
+            *ngFor="let app of awaiting"
+            class="group transition-colors
+                  hover:bg-[#F4B400]/10"
+          >
               <td class="px-6 py-4">
                 <div class="font-semibold text-[#000035] group-hover:text-[#f4b400]">
                   {{ app.fullName }}
@@ -162,7 +385,6 @@
               </td>
 
               <td class="px-6 py-4">
-                <div class="font-medium text-gray-800">{{ positionLabel(app.positionId) }}</div>
                 <div class="space-y-2">
                   <div *ngFor="let selected of getSelectedPositions(app)">
                     <div class="font-medium text-gray-800">
@@ -199,50 +421,126 @@
                 </div>
               </td>
             </tr>
-          </ng-container>
 
         </tbody>
       </table>
     </div>
 
     <!-- Mobile Card View -->
-    <div class="md:hidden divide-y divide-gray-100">
-      <ng-container *ngFor="let app of applications$ | async">
-        <div
-          *ngIf="app.status === 'accepted' && !app.assigned"
-          class="p-4 hover:bg-[#f4b400]/5 transition-colors"
-        >
-          <div class="font-semibold text-[#000035] mb-1">{{ app.fullName }}</div>
-          <div class="text-xs text-gray-500 mb-1">{{ app.email }}</div>
-          <div class="mb-3">
-            <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full
-                         bg-indigo-50 text-indigo-700 border border-indigo-200">
+    <div
+      *ngIf="awaiting.length > 0"
+      class="grid grid-cols-1 gap-4
+            bg-slate-50/60 p-3
+            sm:p-4 lg:hidden"
+    >
+      <article
+        *ngFor="let app of awaiting"
+        class="rounded-2xl border border-slate-200
+              bg-white p-4 shadow-sm
+              transition
+              hover:border-[#F4B400]/50
+              hover:shadow-md
+              sm:p-5"
+      >
+          <!-- Identity -->
+          <div class="flex min-w-0 items-start gap-3">
+            <div
+              aria-hidden="true"
+              class="flex h-11 w-11 shrink-0
+                    items-center justify-center
+                    rounded-xl bg-[#000035]
+                    text-sm font-bold text-[#F4B400]"
+            >
+              {{ app.fullName.charAt(0).toUpperCase() }}
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <h4
+                class="truncate text-base font-bold
+                      text-[#000035]"
+              >
+                {{ app.fullName }}
+              </h4>
+
+              <p class="mt-0.5 break-all text-sm text-slate-500">
+                {{ app.email }}
+              </p>
+            </div>
+
+            <span
+              class="inline-flex shrink-0 rounded-full
+                    border border-indigo-200
+                    bg-indigo-50 px-2.5 py-1
+                    text-xs font-semibold
+                    text-indigo-700"
+            >
               {{ getYearLevelLabel(app.yearLevel) }}
             </span>
           </div>
-          <div class="flex items-center justify-between gap-3">
-            <div>
-              <div class="space-y-2">
-                <div *ngFor="let selected of getSelectedPositions(app)">
-                  <div class="text-sm font-medium text-gray-700">
+
+          <!-- Applied positions -->
+          <div class="mt-4">
+            <p
+              class="text-[11px] font-semibold uppercase
+                    tracking-wide text-slate-400"
+            >
+              Applied positions
+            </p>
+
+            <div class="mt-2 space-y-2">
+              @for (
+                selected of getSelectedPositions(app);
+                track selected.positionId
+              ) {
+                <div
+                  class="rounded-xl border border-slate-200
+                        bg-slate-50 p-3"
+                >
+                  <p class="text-sm font-bold text-[#000035]">
                     {{ positionLabel(selected.positionId) }}
-                  </div>
+                  </p>
 
-                  <div *ngIf="selected.categories.length" class="flex flex-wrap gap-1 mt-1">
-                    <span
-                      *ngFor="let category of selected.categories"
-                      class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
-                      {{ category }}
-                    </span>
-                  </div>
+                  @if (selected.categories.length) {
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                      @for (
+                        category of selected.categories;
+                        track category
+                      ) {
+                        <span
+                          class="inline-flex rounded-full
+                                bg-[#F4B400]/15
+                                px-2.5 py-1 text-xs
+                                font-medium text-[#000035]"
+                        >
+                          {{ category }}
+                        </span>
+                      }
+                    </div>
+                  }
                 </div>
-              </div>
+              }
             </div>
+          </div>
 
+          <!-- Actions -->
+          <div
+            class="mt-4 grid grid-cols-1 gap-2
+                  border-t border-slate-100 pt-4
+                  min-[420px]:grid-cols-2"
+          >
             <button
               type="button"
               (click)="openAssignModal(app)"
-              class="px-3 py-1.5 text-xs font-semibold text-white bg-[#000035] hover:bg-[#0a1a2e] rounded-lg transition-all duration-200"
+              class="inline-flex min-h-11 items-center
+                    justify-center rounded-xl
+                    bg-[#000035] px-4 py-2.5
+                    text-sm font-semibold
+                    text-[#F4B400] transition
+                    hover:bg-[#0a1a2e]
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-[#F4B400]
+                    focus-visible:ring-offset-2"
             >
               Assign Role
             </button>
@@ -250,15 +548,24 @@
             <button
               type="button"
               (click)="openRevokeModal(app)"
-              class="px-3 py-1.5 text-xs font-semibold text-orange-600 border border-orange-200 hover:bg-orange-50 rounded-lg transition-all duration-200"
+              class="inline-flex min-h-11 items-center
+                    justify-center rounded-xl
+                    border border-orange-200
+                    bg-orange-50 px-4 py-2.5
+                    text-sm font-semibold
+                    text-orange-700 transition
+                    hover:bg-orange-100
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-orange-500
+                    focus-visible:ring-offset-2"
             >
-              Revoke
+              Revoke Acceptance
             </button>
           </div>
-        </div>
-      </ng-container>
+        </article>
     </div>
-
+  </ng-container>
   </div>
 
 
@@ -268,14 +575,46 @@
 
   <div *ngIf="(boardLoaded$ | async) && (hasActiveBoard$ | async)" class="bg-white rounded-xl shadow border border-gray-100">
 
-    <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+    <div
+      class="flex flex-col gap-4
+            border-b border-slate-100
+            px-4 py-4
+            sm:px-5 lg:px-6
+            xl:flex-row
+            xl:items-center
+            xl:justify-between"
+    >
+      <div class="flex min-w-0 items-start gap-3">
+        <div
+          aria-hidden="true"
+          class="mt-0.5 h-5 w-1.5 shrink-0
+                rounded-full bg-indigo-500"
+        ></div>
 
-      <div class="flex items-center gap-3">
-        <div class="w-1.5 h-5 rounded-full bg-indigo-500"></div>
-        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Available for Board Assignment</h3>
+        <div class="min-w-0">
+          <h3
+            class="text-sm font-bold uppercase
+                  tracking-wider text-slate-700"
+          >
+            Available for Board Assignment
+          </h3>
+
+          <p
+            id="board-satisfied-help"
+            class="mt-1 text-xs leading-5
+                  text-slate-500"
+          >
+            Marking the board as satisfied hides staff
+            who already hold one assignment.
+          </p>
+        </div>
       </div>
 
-      <div class="flex items-center gap-3 flex-wrap">
+      <div
+        class="flex flex-col gap-2
+              min-[480px]:flex-row
+              min-[480px]:items-center"
+      >
 
         <ng-container *ngIf="availableForAssignment$ | async as unassigned">
           <span *ngIf="unassigned.length > 0"
@@ -290,8 +629,18 @@
           type="button"
           (click)="toggleBoardSatisfied()"
           [disabled]="satisfyingBoard()"
-          title="Mark the board as satisfied to hide staff with only 1 assignment from this panel. Saves to the database."
-          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          aria-describedby="board-satisfied-help"
+          class="inline-flex min-h-11 w-full
+                items-center justify-center gap-2
+                rounded-xl border px-4 py-2.5
+                text-sm font-semibold transition
+                disabled:cursor-not-allowed
+                disabled:opacity-60
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#F4B400]
+                focus-visible:ring-offset-2
+                min-[480px]:w-auto"
           [ngClass]="isBoardSatisfied
             ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
             : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50'"
@@ -301,33 +650,38 @@
             class="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0">
           </span>
           <!-- Checkmark when satisfied -->
-          <svg *ngIf="!satisfyingBoard() && isBoardSatisfied" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          <svg *ngIf="!satisfyingBoard() && isBoardSatisfied" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
           </svg>
           <!-- Circle when not satisfied -->
           <svg *ngIf="!satisfyingBoard() && !isBoardSatisfied" class="w-3.5 h-3.5 shrink-0 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <circle cx="12" cy="12" r="9"/>
+            <circle cx="12" cy="12" r="10"/>
           </svg>
           {{ isBoardSatisfied ? 'Board Satisfied' : 'Mark as Satisfied' }}
         </button>
 
       </div>
-
     </div>
 
     <ng-container *ngIf="availableForAssignment$ | async as unassigned">
 
       <!-- Empty state -->
       <div *ngIf="unassigned.length === 0" class="px-6 py-8 flex items-center gap-3 text-sm text-gray-400">
-        <svg class="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        <svg class="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6 9 17l-5-5"/>
         </svg>
         <span *ngIf="!isBoardSatisfied">All eligible staff members are assigned to the board (or at their 2-position limit).</span>
-        <span *ngIf="isBoardSatisfied">Board is satisfied — staff with one assignment are hidden. Click "Mark as Satisfied" again to show them.</span>
+        <span *ngIf="isBoardSatisfied">
+          The board is marked as satisfied, so staff with one assignment
+          are hidden. Toggle this setting off to show them again.
+        </span>
       </div>
 
       <!-- Desktop Table -->
-      <div *ngIf="unassigned.length > 0" class="hidden md:block overflow-x-auto">
+      <div *ngIf="unassigned.length > 0"
+        class="hidden overflow-x-auto
+          overscroll-x-contain
+          lg:block">
         <table class="min-w-full divide-y divide-gray-100">
           <thead class="bg-linear-to-r from-[#000035] to-[#1a3a52]">
             <tr>
@@ -372,8 +726,8 @@
                 <button
                   type="button"
                   (click)="openAssignStaffModal(s)"
-                  class="px-3 py-1.5 text-xs font-semibold text-white bg-[#000035]
-                         hover:bg-[#0a1a2e] hover:shadow-md rounded-lg transition-all duration-200"
+                  class="inline-flex min-h-10 items-center justify-center rounded-lg px-3.5 py-2 text-xs font-semibold text-white bg-[#000035]
+                         hover:bg-[#0a1a2e] hover:shadow-md transition-all duration-200"
                 >
                   Add to Board
                 </button>
@@ -384,37 +738,132 @@
       </div>
 
       <!-- Mobile Cards -->
-      <div *ngIf="unassigned.length > 0" class="md:hidden divide-y divide-gray-100">
-        <div
-          *ngFor="let s of unassigned"
-          class="p-4 hover:bg-[#f4b400]/5 transition-colors"
+      <div
+        *ngIf="unassigned.length > 0"
+        class="grid grid-cols-1 gap-4
+              bg-slate-50/60 p-3
+              sm:p-4 lg:hidden"
+      >
+        <article
+          *ngFor="let staff of unassigned"
+          class="rounded-2xl border border-slate-200
+                bg-white p-4 shadow-sm
+                transition
+                hover:border-[#F4B400]/50
+                hover:shadow-md
+                sm:p-5"
         >
-          <div class="font-semibold text-[#000035] mb-1">{{ s.fullName }}</div>
-          <div class="text-xs text-gray-500 mb-1">{{ s.email }}</div>
-          <div class="mb-2">
-            <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full
-                         bg-indigo-50 text-indigo-700 border border-indigo-200">
-              {{ getYearLevelLabel(s.yearLevel) }}
+          <!-- Identity -->
+          <div class="flex min-w-0 items-start gap-3">
+            <div
+              aria-hidden="true"
+              class="flex h-11 w-11 shrink-0
+                    items-center justify-center
+                    rounded-xl bg-[#000035]
+                    text-sm font-bold text-[#F4B400]"
+            >
+              {{ generateInitials(staff.fullName) }}
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <h4
+                class="truncate text-base font-bold
+                      text-[#000035]"
+              >
+                {{ staff.fullName }}
+              </h4>
+
+              <p class="mt-0.5 break-all text-sm text-slate-500">
+                {{ staff.email }}
+              </p>
+            </div>
+
+            <span
+              class="inline-flex shrink-0 rounded-full
+                    border border-indigo-200
+                    bg-indigo-50 px-2.5 py-1
+                    text-xs font-semibold
+                    text-indigo-700"
+            >
+              {{ getYearLevelLabel(staff.yearLevel) }}
             </span>
           </div>
-          <div *ngIf="getCurrentBoardAssignments(s.id, s.fullName) as current" class="mb-3">
-            <div *ngFor="let a of current" class="flex items-center gap-1.5 mb-1">
-              <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full
-                           bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
-                {{ a.role }}
-              </span>
-              <span class="text-xs text-gray-400">{{ a.section }}</span>
-            </div>
+
+          <!-- Current assignments -->
+          <div
+            *ngIf="
+              getCurrentBoardAssignments(
+                staff.id,
+                staff.fullName
+              ) as assignments
+            "
+            class="mt-4"
+          >
+            <p
+              class="text-[11px] font-semibold uppercase
+                    tracking-wide text-slate-400"
+            >
+              Current board assignments
+            </p>
+
+            @if (assignments.length) {
+              <div class="mt-2 space-y-2">
+                @for (
+                  assignment of assignments;
+                  track assignment.section + assignment.role
+                ) {
+                  <div
+                    class="flex flex-col gap-1
+                          rounded-xl border
+                          border-slate-200
+                          bg-slate-50 p-3
+                          min-[420px]:flex-row
+                          min-[420px]:items-center
+                          min-[420px]:justify-between"
+                  >
+                    <span
+                      class="text-sm font-semibold
+                            text-[#000035]"
+                    >
+                      {{ assignment.role }}
+                    </span>
+
+                    <span class="text-xs text-slate-500">
+                      {{ assignment.section }}
+                    </span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div
+                class="mt-2 rounded-xl border
+                      border-dashed border-slate-200
+                      bg-slate-50 px-3 py-4
+                      text-sm text-slate-500"
+              >
+                No current board assignment
+              </div>
+            }
           </div>
+
           <button
             type="button"
-            (click)="openAssignStaffModal(s)"
-            class="px-3 py-1.5 text-xs font-semibold text-white bg-[#000035]
-                   hover:bg-[#0a1a2e] rounded-lg transition-all duration-200"
+            (click)="openAssignStaffModal(staff)"
+            class="mt-4 inline-flex min-h-11
+                  w-full items-center justify-center
+                  rounded-xl bg-[#000035]
+                  px-4 py-2.5 text-sm
+                  font-semibold text-[#F4B400]
+                  transition hover:bg-[#0a1a2e]
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]
+                  focus-visible:ring-offset-2
+                  min-[420px]:w-auto"
           >
             Add to Board
           </button>
-        </div>
+        </article>
       </div>
 
     </ng-container>
@@ -474,141 +923,413 @@
     </div>
 
     <!-- Single Section Carousel Card -->
-    <div *ngIf="board.sections.length > 0" class="bg-white rounded-xl shadow border border-gray-100">
+    <div
+      *ngIf="board.sections.length > 0"
+      tabindex="0"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Editorial board sections"
+      class="overflow-hidden rounded-2xl
+            border border-slate-200
+            bg-white shadow-sm
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-[#F4B400]
+            focus-visible:ring-offset-2"
+      (keydown)="
+        onSectionCarouselKeydown(
+          $event,
+          board.sections.length
+        )
+      "
+      (touchstart)="onSectionTouchStart($event)"
+      (touchend)="
+        onSectionTouchEnd(
+          $event,
+          board.sections.length
+        )
+      "
+    >
 
       <!-- Navigation Header -->
-      <div class="px-4 py-4 border-b border-gray-100 flex items-center gap-3">
-
+      <div
+        class="grid grid-cols-[auto_minmax(0,1fr)_auto]
+              items-center gap-3
+              border-b border-slate-100
+              px-3 py-3
+              sm:px-4 sm:py-4"
+      >
         <button
           type="button"
           (click)="prevSection(board.sections.length)"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-full
-                 bg-gray-50 border border-gray-200
-                 hover:bg-[#f4b400]/10 hover:border-[#f4b400]/50
-                 transition-all duration-200"
+          class="inline-flex h-11 w-11
+                items-center justify-center
+                rounded-xl border border-slate-200
+                bg-white text-slate-600
+                transition
+                hover:border-[#F4B400]/60
+                hover:bg-[#F4B400]/10
+                hover:text-[#000035]
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#F4B400]"
+          aria-label="Show previous editorial board section"
         >
-          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+          <svg
+            aria-hidden="true"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m14 16-4-4 4-4"/>
           </svg>
         </button>
 
-        <div class="flex-1 text-center">
-          <h4 class="text-sm font-bold text-gray-800 uppercase tracking-wider">
+        <div class="min-w-0 text-center">
+          <h4
+            class="truncate text-sm font-bold
+                  uppercase tracking-wider
+                  text-[#000035]
+                  sm:text-base"
+          >
             {{ board.sections[currentSectionIndex].title }}
           </h4>
-          <p class="text-xs text-gray-400 mt-0.5">
-            {{ currentSectionIndex + 1 }} of {{ board.sections.length }} sections
-          </p>
-        </div>
 
-        <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
-                     bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
-          {{ board.sections[currentSectionIndex].members.length }}
-          member{{ board.sections[currentSectionIndex].members.length !== 1 ? 's' : '' }}
-        </span>
+          <div
+            class="mt-1 flex flex-wrap
+                  items-center justify-center
+                  gap-x-2 gap-y-1"
+          >
+            <p class="text-xs text-slate-500">
+              Section {{ currentSectionIndex + 1 }}
+              of {{ board.sections.length }}
+            </p>
+
+            <span
+              aria-hidden="true"
+              class="h-1 w-1 rounded-full
+                    bg-slate-300"
+            ></span>
+
+            <p class="text-xs font-semibold text-[#000035]">
+              {{
+                board.sections[currentSectionIndex]
+                  .members.length
+              }}
+              {{
+                board.sections[currentSectionIndex]
+                  .members.length === 1
+                  ? 'member'
+                  : 'members'
+              }}
+            </p>
+          </div>
+        </div>
 
         <button
           type="button"
           (click)="nextSection(board.sections.length)"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-full
-                 bg-gray-50 border border-gray-200
-                 hover:bg-[#f4b400]/10 hover:border-[#f4b400]/50
-                 transition-all duration-200"
+          class="inline-flex h-11 w-11
+                items-center justify-center
+                rounded-xl border border-slate-200
+                bg-white text-slate-600
+                transition
+                hover:border-[#F4B400]/60
+                hover:bg-[#F4B400]/10
+                hover:text-[#000035]
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#F4B400]"
+          aria-label="Show next editorial board section"
         >
-          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+          <svg
+            aria-hidden="true"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m10 8 4 4-4 4"/>
           </svg>
         </button>
-
       </div>
 
       <!-- Section Indicator Dots -->
-      <div class="flex justify-center items-center gap-1.5 py-3 border-b border-gray-100">
-        <button
-          *ngFor="let s of board.sections; let i = index"
-          type="button"
-          (click)="currentSectionIndex = i"
-          class="rounded-full transition-all duration-200"
-          [ngClass]="{
-            'w-5 h-2 bg-[#000035]': currentSectionIndex === i,
-            'w-2 h-2 bg-gray-300 hover:bg-gray-400': currentSectionIndex !== i
-          }"
-        ></button>
-      </div>
+      <nav
+        aria-label="Editorial board sections"
+        class="flex max-w-full gap-2
+              overflow-x-auto
+              border-b border-slate-100
+              px-3 py-3
+              overscroll-x-contain
+              [scrollbar-width:none]
+              [&::-webkit-scrollbar]:hidden
+              sm:justify-center sm:px-4"
+      >
+        @for (
+          section of board.sections;
+          track section.title;
+          let index = $index
+        ) {
+          <button
+            type="button"
+            (click)="currentSectionIndex = index"
+            [attr.aria-current]="
+              currentSectionIndex === index
+                ? 'true'
+                : null
+            "
+            class="inline-flex min-h-10 shrink-0
+                  items-center justify-center
+                  whitespace-nowrap rounded-full
+                  border px-3 py-2
+                  text-xs font-semibold transition
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]"
+            [ngClass]="{
+              'border-[#000035] bg-[#000035] text-[#F4B400]':
+                currentSectionIndex === index,
+              'border-slate-200 bg-white text-slate-600 hover:border-[#F4B400]/60 hover:bg-[#F4B400]/10':
+                currentSectionIndex !== index
+            }"
+          >
+            {{ section.title }}
+          </button>
+        }
+      </nav>
 
       <!-- Members Grid -->
-      <div class="p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-
-        <div
-          *ngFor="let member of board.sections[currentSectionIndex].members"
-          (click)="openViewModal(member, board.sections[currentSectionIndex].title)"
-          class="flex flex-col items-center gap-3 bg-gray-50 rounded-xl border border-gray-100 p-4
-                 cursor-pointer hover:border-[#f4b400]/50 hover:shadow-sm transition-all duration-200"
+      <div class="grid grid-cols-1 gap-4
+        bg-slate-50/50 p-3
+        min-[480px]:grid-cols-2
+        sm:p-4
+        lg:grid-cols-3
+        xl:grid-cols-4
+        2xl:grid-cols-5
+        lg:p-6"
+      >
+      @if (
+          board.sections[currentSectionIndex]
+            .members.length > 0
+        ) {
+          @for (
+            member of
+              board.sections[currentSectionIndex].members;
+            track member.boardMemberId ?? member.staffId ?? member.name
+          ) {
+      <article
+        class="flex min-w-0 flex-col
+              rounded-2xl border border-slate-200
+              bg-white p-4 shadow-sm
+              transition
+              hover:border-[#F4B400]/50
+              hover:shadow-md
+              focus-within:border-[#F4B400]/60"
+      >
+        <!-- Primary member action -->
+        <button
+          type="button"
+          (click)="
+            openViewModal(
+              member,
+              board.sections[currentSectionIndex].title
+            )
+          "
+          class="flex min-w-0 flex-1 flex-col
+                items-center rounded-xl
+                text-center
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#F4B400]
+                focus-visible:ring-offset-2"
+          [attr.aria-label]="
+            'View information for ' + member.name
+          "
         >
+          <span
+            aria-hidden="true"
+            class="flex h-14 w-14
+                  items-center justify-center
+                  rounded-2xl
+                  bg-linear-to-br
+                  from-[#000035] to-[#1a1a4d]
+                  text-base font-bold text-[#F4B400]"
+          >
+            {{
+              member.initials ||
+              member.name.charAt(0)
+            }}
+          </span>
 
-          <!-- Avatar -->
-          <div class="w-12 h-12 rounded-full bg-linear-to-br from-[#000035] to-[#1a1a4d]
-                      text-white flex items-center justify-center text-base font-bold shrink-0">
-            {{ member.initials || member.name.charAt(0) }}
-          </div>
-
-          <!-- Name + Role -->
-          <div class="text-center flex-1 w-full">
-            <p class="font-semibold text-[#000035] text-sm leading-snug mb-1.5">
+          <span class="mt-3 min-w-0 w-full">
+            <span
+              class="block break-words text-sm
+                    font-bold leading-snug
+                    text-[#000035]"
+            >
               {{ member.name }}
-            </p>
-            <span class="inline-block px-2.5 py-0.5 text-xs font-bold uppercase rounded-full
-                         bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
+            </span>
+
+            <span
+              class="mt-2 inline-flex max-w-full
+                    rounded-full
+                    border border-[#F4B400]/30
+                    bg-[#F4B400]/10
+                    px-2.5 py-1 text-center
+                    text-xs font-semibold
+                    text-[#000035]"
+            >
               {{ member.position }}
             </span>
-          </div>
+          </span>
+        </button>
 
-          <!-- Edit Button -->
+        <!-- Actions -->
+        <div
+          class="mt-4 grid grid-cols-1 gap-2
+                border-t border-slate-100 pt-4
+                min-[420px]:grid-cols-2
+                lg:grid-cols-1"
+        >
           <button
             type="button"
-            (click)="$event.stopPropagation(); openEditModal(member, board.sections[currentSectionIndex].title)"
-            class="w-full py-1.5 text-xs font-semibold text-gray-600
-                   border border-gray-200 rounded-lg
-                   hover:border-[#f4b400] hover:text-[#000035] hover:bg-[#f4b400]/5
-                   transition-all duration-200"
+            (click)="
+              openEditModal(
+                member,
+                board.sections[currentSectionIndex].title
+              )
+            "
+            class="inline-flex min-h-11
+                  items-center justify-center
+                  rounded-xl border border-slate-200
+                  bg-white px-3 py-2.5
+                  text-sm font-semibold
+                  text-slate-700 transition
+                  hover:border-[#F4B400]
+                  hover:bg-[#F4B400]/10
+                  hover:text-[#000035]
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]"
           >
-            Edit Role
+            Edit Assignment
           </button>
 
-          <!-- Remove Button -->
           <button
             type="button"
-            (click)="$event.stopPropagation(); openDeleteModal(member, board.sections[currentSectionIndex].title)"
-            class="w-full py-1.5 text-xs font-semibold text-red-500
-                   border border-red-200 rounded-lg
-                   hover:border-red-400 hover:bg-red-50
-                   transition-all duration-200"
+            (click)="
+              openRevokeMemberModal(
+                member,
+                board.sections[currentSectionIndex].title
+              )
+            "
+            class="inline-flex min-h-11
+                  items-center justify-center
+                  rounded-xl border border-red-200
+                  bg-red-50 px-3 py-2.5
+                  text-sm font-semibold text-red-600
+                  transition hover:bg-red-100
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-red-500"
+            [attr.aria-label]="
+              'Revoke board assignment for ' +
+              member.name
+            "
           >
-            Remove
+            Revoke
           </button>
-
         </div>
+      </article>
+
+        }
+          } @else {
+            <div
+              class="col-span-full flex min-h-56
+                    flex-col items-center justify-center
+                    rounded-2xl border border-dashed
+                    border-slate-300 bg-white
+                    px-4 py-10 text-center"
+            >
+              <div
+                aria-hidden="true"
+                class="flex h-12 w-12 items-center
+                      justify-center rounded-full
+                      bg-slate-100 text-slate-400"
+              >
+                <svg
+                  class="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M19 8v6" />
+                  <path d="M22 11h-6" />
+                </svg>
+              </div>
+
+              <p class="mt-3 text-sm font-semibold text-slate-600">
+                No members in this section
+              </p>
+
+              <p class="mt-1 max-w-sm text-xs leading-5 text-slate-400">
+                Assign an eligible staff member to fill this editorial-board section.
+              </p>
+            </div>
+          }
 
       </div>
 
     </div>
 
   </div>
+</section>
 
-  <!-- Delete Board Confirmation -->
+  <!-- Revoke Board Assignment Confirmation -->
+  <app-confirmation-modal
+    [isOpen]="!!revokingMember"
+    title="Revoke Board Assignment"
+    [message]="
+      revokingMember
+        ? revokingMember.member.name +
+          ' will be removed from ' +
+          revokingMember.sectionTitle +
+          ' and returned to Available for Board Assignment. Their staff record will not be deleted.'
+        : ''
+    "
+    confirmText="Revoke Assignment"
+    cancelText="Cancel"
+    variant="danger"
+    (confirmed)="confirmRevokeMember()"
+    (cancelled)="closeRevokeMemberModal()"
+  ></app-confirmation-modal>
+
+  <!-- Delete Editorial Board Confirmation -->
   <app-confirmation-modal
     [isOpen]="showDeleteBoardConfirm()"
-    [title]="'Delete Board'"
+    title="Delete Editorial Board"
     [message]="deleteBoardMessage()"
-    [confirmText]="'Delete'"
-    [cancelText]="'Cancel'"
-    [variant]="'danger'"
+    confirmText="Delete Board"
+    cancelText="Cancel"
+    variant="danger"
     (confirmed)="confirmDeleteBoard()"
     (cancelled)="cancelDeleteBoard()"
   ></app-confirmation-modal>
-
-</section>
-
 
 <!-- ========================= -->
 <!-- Assign Role Modal         -->
@@ -617,56 +1338,128 @@
 <ng-container *ngIf="pendingApp">
 
   <div
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
+    class="fixed inset-0 z-9999
+          flex items-end justify-center
+          bg-slate-950/70
+          backdrop-blur-sm
+          sm:items-center sm:p-4"
     (click)="closeAssignModal()"
   >
-
-    <div
-      class="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl relative"
+    <section
+      #assignDialog
+      tabindex="-1"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="assign-role-title"
+      class="relative flex max-h-[94dvh]
+            w-full max-w-2xl flex-col
+            overflow-hidden bg-white
+            shadow-2xl
+            rounded-t-3xl
+            sm:max-h-[calc(100dvh-2rem)]
+            sm:rounded-3xl"
       (click)="$event.stopPropagation()"
+      (keydown)="onAssignDialogKeydown($event)"
     >
 
       <!-- Modal Header -->
-      <div class="bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035] px-5 sm:px-8 py-5 sm:py-6 flex items-start justify-between gap-4 rounded-t-2xl">
+      <header
+        class="relative z-10 shrink-0
+              bg-linear-to-br
+              from-[#000035]
+              via-[#001f5c]
+              to-[#000035]
+              px-4 py-4
+              sm:px-6 sm:py-5
+              lg:px-8"
+      >
 
-        <div>
-          <h3 class="text-2xl font-bold text-white">Assign Role</h3>
-          <p class="text-sm text-white/70 mt-1">
-            Assigning <span class="font-semibold text-white">{{ pendingApp.fullName }}</span>
-          </p>
+        <div class="flex items-start justify-between gap-4">
+
+          <!-- Title -->
+          <div class="min-w-0 flex-1">
+            <h3
+              id="assign-role-title"
+              class="text-xl font-bold text-white
+                    sm:text-2xl"
+            >
+              Assign Role
+            </h3>
+
+            <p class="mt-1 text-sm text-white/70">
+              Assigning
+              <span class="font-semibold text-white">
+                {{ pendingApp.fullName }}
+              </span>
+            </p>
+          </div>
+
+          <!-- Close -->
+          <button
+            #assignCloseButton
+            type="button"
+            (click)="closeAssignModal()"
+            class="inline-flex h-11 w-11 shrink-0
+                  items-center justify-center
+                  rounded-xl border border-white/10
+                  bg-white/10 text-white
+                  transition-colors
+                  hover:bg-white/20
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50"
+            aria-label="Close assign role dialog"
+          >
+            <svg
+              class="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+
         </div>
 
-        <button
-          type="button"
-          (click)="closeAssignModal()"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl
-                 bg-white/10 hover:bg-white/20 text-white
-                 border border-white/10 hover:border-white/20
-                 transition-all duration-200"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-
-      </div>
+      </header>
 
       <!-- Modal Body -->
-      <form [formGroup]="assignForm" (ngSubmit)="submitAssign()" class="p-8 space-y-6">
-
+      <form
+        [formGroup]="assignForm"
+        (ngSubmit)="submitAssign()"
+        class="contents"
+      >
+      <div
+        class="min-h-0 flex-1 space-y-5
+              overflow-y-auto overscroll-contain
+              px-4 py-5
+              sm:px-6 sm:py-6
+              lg:px-8"
+      >
         <!-- Section Field -->
         <div class="space-y-1.5">
           <label for="assign-section" class="block text-sm font-semibold text-gray-700">
             Section
             <span class="text-red-500 ml-0.5">*</span>
           </label>
-          <div class="relative">
+          <div class="relative z-50">
             <input
               id="assign-section"
               type="text"
               formControlName="section"
               placeholder="Search sections…"
               autocomplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              [attr.aria-expanded]="showSectionDropdown"
+              aria-controls="assign-section-options"
               (focus)="onSectionFocus()"
               (input)="onSectionSearch($event)"
               (blur)="hideSectionDropdown()"
@@ -674,18 +1467,56 @@
                      focus:ring-2 focus:ring-[#f4b400] focus:outline-none transition"
               [class.border-red-400]="assignForm.get('section')!.invalid && assignForm.get('section')!.touched"
               [class.border-gray-200]="!(assignForm.get('section')!.invalid && assignForm.get('section')!.touched)"
+              (keydown)="onAssignSectionKeydown($event)"
+              [attr.aria-activedescendant]="
+                activeSectionIndex >= 0
+                  ? 'assign-section-option-' + activeSectionIndex
+                  : null
+              "
             />
             <!-- Suggestions Dropdown -->
             <ul
-              *ngIf="showSectionDropdown && sectionSuggestions.length > 0"
-              class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-52 overflow-y-auto"
+              *ngIf="
+                showSectionDropdown &&
+                sectionSuggestions.length > 0
+              "
+              id="assign-section-options"
+              role="listbox"
+              aria-label="Editorial board sections"
+              class="absolute left-0 right-0 z-50
+                    mt-1 max-h-52 overflow-y-auto
+                    rounded-lg border border-gray-200
+                    bg-white shadow-lg"
             >
               <li
-                *ngFor="let s of sectionSuggestions"
-                (mousedown)="selectSection(s)"
-                class="px-4 py-2.5 text-sm text-gray-800 cursor-pointer hover:bg-[#f4b400]/10 hover:text-[#000035] transition-colors"
+                *ngFor="
+                  let section of sectionSuggestions;
+                  let index = index
+                "
+                [id]="
+                  'assign-section-option-' + index
+                "
+                role="option"
+                [attr.aria-selected]="
+                  activeSectionIndex === index
+                "
+                (mouseenter)="
+                  activeSectionIndex = index
+                "
+                (mousedown)="
+                  $event.preventDefault();
+                  selectSection(section)
+                "
+                class="cursor-pointer
+                      px-4 py-2.5
+                      text-sm transition-colors"
+                [ngClass]="
+                  activeSectionIndex === index
+                    ? 'bg-[#F4B400]/15 text-[#000035]'
+                    : 'text-gray-800 hover:bg-[#F4B400]/10 hover:text-[#000035]'
+                "
               >
-                {{ s }}
+                {{ section }}
               </li>
             </ul>
             <!-- No results -->
@@ -717,31 +1548,94 @@
               formControlName="role"
               [placeholder]="availableRoles.length ? 'Search roles…' : 'Choose a section first'"
               autocomplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              (keydown)="onAssignRoleKeydown($event)"
+              [attr.aria-expanded]="showRoleDropdown"
+              aria-controls="assign-role-options"
               (focus)="onRoleFocus()"
               (input)="onRoleSearch($event)"
               (blur)="hideRoleDropdown()"
+              (keydown)="onAssignRoleKeydown($event)"
+              [attr.aria-activedescendant]="
+                activeRoleIndex >= 0
+                  ? 'assign-role-option-' + activeRoleIndex
+                  : null
+              "
               class="w-full px-4 py-2.5 border rounded-lg text-sm
                      focus:ring-2 focus:ring-[#f4b400] focus:outline-none transition"
               [class.border-red-400]="assignForm.get('role')!.invalid && assignForm.get('role')!.touched"
               [class.border-gray-200]="!(assignForm.get('role')!.invalid && assignForm.get('role')!.touched)"
+
             />
             <!-- Suggestions Dropdown -->
-            <ul
-              *ngIf="showRoleDropdown && roleSuggestions.length > 0"
-              class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-52 overflow-y-auto"
-            >
-              <li
-                *ngFor="let r of roleSuggestions"
-                (mousedown)="isRoleTakenInDropdown(r) ? $event.preventDefault() : selectRole(r)"
-                class="px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between"
-                [ngClass]="isRoleTakenInDropdown(r)
-                  ? 'text-gray-400 cursor-not-allowed hover:bg-gray-50'
-                  : 'text-gray-800 hover:bg-[#f4b400]/10 hover:text-[#000035]'"
+              <ul
+                *ngIf="
+                  showRoleDropdown &&
+                  roleSuggestions.length > 0
+                "
+                id="assign-role-options"
+                role="listbox"
+                aria-label="Editorial board roles"
+                class="absolute left-0 right-0 z-50
+                      mt-1 max-h-52 overflow-y-auto
+                      rounded-lg border border-gray-200
+                      bg-white shadow-lg"
               >
-                <span>{{ r }}</span>
-                <span *ngIf="isRoleTakenInDropdown(r)" class="text-xs text-orange-500 font-semibold">Taken</span>
-              </li>
-            </ul>
+                <li
+                  *ngFor="
+                    let role of roleSuggestions;
+                    let index = index
+                  "
+                  [id]="
+                    'assign-role-option-' +
+                    index
+                  "
+                  role="option"
+                  [attr.aria-selected]="
+                    activeRoleIndex === index
+                  "
+                  [attr.aria-disabled]="
+                    isRoleTakenInDropdown(role)
+                  "
+                  (mouseenter)="
+                    !isRoleTakenInDropdown(role) &&
+                    (activeRoleIndex = index)
+                  "
+                  (mousedown)="
+                    $event.preventDefault();
+                    !isRoleTakenInDropdown(role) &&
+                    selectRole(role)
+                  "
+                  class="flex items-center
+                        justify-between px-4 py-2.5
+                        text-sm transition-colors"
+                  [ngClass]="{
+                    'cursor-not-allowed bg-gray-50 text-gray-400':
+                      isRoleTakenInDropdown(role),
+
+                    'cursor-pointer bg-[#F4B400]/15 text-[#000035]':
+                      !isRoleTakenInDropdown(role) &&
+                      activeRoleIndex === index,
+
+                    'cursor-pointer text-gray-800 hover:bg-[#F4B400]/10 hover:text-[#000035]':
+                      !isRoleTakenInDropdown(role) &&
+                      activeRoleIndex !== index
+                  }"
+                >
+                  <span>{{ role }}</span>
+
+                  <span
+                    *ngIf="
+                      isRoleTakenInDropdown(role)
+                    "
+                    class="text-xs font-semibold
+                          text-orange-500"
+                  >
+                    Taken
+                  </span>
+                </li>
+              </ul>
             <!-- No results -->
             <div
               *ngIf="showRoleDropdown && roleSuggestions.length === 0 && availableRoles.length > 0"
@@ -760,34 +1654,92 @@
             {{ assignRoleConflict }}
           </p>
         </div>
+       </div>
 
-        <!-- Actions -->
-        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2">
-
-          <button
-            type="button"
-            (click)="closeAssignModal()"
-            class="px-6 py-2.5 rounded-xl border-2 border-[#f4b400] text-gray-700 font-semibold
-                   hover:bg-gray-50 transition-all duration-200"
+        @if (assignSubmitError()) {
+          <div
+            role="alert"
+            class="rounded-xl border border-red-200
+                  bg-red-50 px-4 py-3
+                  text-sm font-medium text-red-700"
           >
-            Cancel
-          </button>
+            {{ assignSubmitError() }}
+          </div>
+        }
 
-          <button
-            type="submit"
-            [disabled]="assignForm.invalid || !!assignRoleConflict"
-            class="px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all duration-200
-                   bg-[#000035] hover:bg-[#0a1a2e] hover:shadow-xl
-                   disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-lg"
+        <footer
+          class="shrink-0 border-t border-slate-200
+                bg-white/95 px-4 pt-3
+                pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+                backdrop-blur
+                sm:px-6 sm:pb-3
+                lg:px-8"
+        >
+          <div
+            class="grid grid-cols-1 gap-3
+                  min-[420px]:grid-cols-2"
           >
-            Confirm Assignment
-          </button>
+            <button
+              type="button"
+              (click)="closeAssignModal()"
+              [disabled]="assignSubmitting()"
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+              class="inline-flex min-h-11
+                    items-center justify-center
+                    rounded-xl border border-slate-300
+                    bg-white px-4 py-2.5
+                    text-sm font-semibold text-slate-700
+                    transition-colors
+                    hover:bg-slate-50
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-[#F4B400]"
+            >
+              Cancel
+            </button>
 
-        </div>
+            <button
+              type="submit"
+              [disabled]="
+                assignForm.invalid ||
+                !!assignRoleConflict ||
+                assignSubmitting()
+              "
+              [attr.aria-busy]="assignSubmitting()"
+              class="inline-flex min-h-11
+                    items-center justify-center gap-2
+                    rounded-xl bg-[#000035]
+                    px-4 py-2.5
+                    text-sm font-semibold text-[#F4B400]
+                    transition-colors
+                    hover:bg-[#0a1a2e]
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-[#F4B400]"
+            >
+              @if (assignSubmitting()) {
+                <span
+                  aria-hidden="true"
+                  class="h-4 w-4 animate-spin
+                        rounded-full border-2
+                        border-[#F4B400]/30
+                        border-t-[#F4B400]"
+                ></span>
+
+                Assigning…
+              } @else {
+                Confirm Assignment
+              }
+            </button>
+          </div>
+        </footer>
 
       </form>
 
-    </div>
+    </section>
 
   </div>
 
@@ -799,72 +1751,185 @@
 <!-- ========================= -->
 
 <ng-container *ngIf="editingMember">
-
   <div
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
+    class="fixed inset-0 z-9999
+           flex items-end justify-center
+           bg-slate-950/70
+           backdrop-blur-sm
+           sm:items-center sm:p-4"
     (click)="closeEditModal()"
   >
-
-    <div
-      class="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl relative"
+    <section
+      #editRoleDialog
+      tabindex="-1"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-role-title"
+      class="relative flex max-h-[96dvh]
+             w-full max-w-5xl flex-col
+             overflow-hidden bg-white
+             shadow-2xl
+             rounded-t-3xl
+             sm:max-h-[calc(100dvh-2rem)]
+             sm:rounded-3xl"
       (click)="$event.stopPropagation()"
+      (keydown)="onEditRoleDialogKeydown($event)"
     >
 
       <!-- Modal Header -->
-      <div class="bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035] px-5 sm:px-8 py-5 sm:py-6 flex items-start justify-between gap-4 rounded-t-2xl">
-
-        <div>
-          <h3 class="text-2xl font-bold text-white">Edit Role</h3>
-          <p class="text-sm text-white/70 mt-1">
-            <span class="font-semibold text-white">{{ editingMember.member.name }}</span>
-            <span class="mx-1.5 opacity-40">·</span>
-            {{ editingMember.sectionTitle }}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          (click)="closeEditModal()"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl
-                 bg-white/10 hover:bg-white/20 text-white
-                 border border-white/10 hover:border-white/20
-                 transition-all duration-200"
+      <header
+        class="relative z-10 shrink-0
+              bg-linear-to-br
+              from-[#000035]
+              via-[#001f5c]
+              to-[#000035]
+              px-4 py-4
+              sm:px-6 sm:py-5
+              lg:px-8"
+      >
+        <div
+          class="flex items-start
+                justify-between gap-4"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
+          <div class="min-w-0">
+            <h3
+              id="edit-role-title"
+              class="text-xl font-bold
+                    text-white sm:text-2xl"
+            >
+              Edit Staff Assignment
+            </h3>
 
-      </div>
+            <p
+              class="mt-1 text-sm
+                    leading-5 text-white/70"
+            >
+              Editing
+              <span class="font-semibold text-white">
+                {{ editingMember.member.name }}
+              </span>
+            </p>
+
+            <p class="mt-1 text-xs text-white/50">
+              {{ editingMember.sectionTitle }}
+              <span class="mx-1">·</span>
+              {{ editingMember.member.position }}
+            </p>
+          </div>
+
+          <button
+            #editRoleCloseButton
+            type="button"
+            (click)="closeEditModal()"
+            [disabled]="editSubmitting"
+            class="inline-flex h-11 w-11 shrink-0
+                  items-center justify-center
+                  rounded-xl border border-white/10
+                  bg-white/10 text-white
+                  transition-colors
+                  hover:bg-white/20
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]"
+            aria-label="Close edit staff assignment dialog"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+      </header>
 
       <!-- Modal Body -->
-      <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="p-5 sm:p-8 space-y-5">
+      <form
+        [formGroup]="editForm"
+        (ngSubmit)="submitEdit()"
+        class="contents"
+      >
+        <div
+          class="min-h-0 flex-1
+                overflow-y-auto
+                overscroll-contain
+                px-4 py-5
+                sm:px-6 sm:py-6
+                lg:px-8"
+        >
+          <div class="space-y-6">
 
         <!-- Current Info -->
-        <div class="bg-gray-50 rounded-xl px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-gray-500 shrink-0">Section:</span>
-            <span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded-full
-                         bg-[#000035]/10 text-[#000035] border border-[#000035]/20">
+        <div
+          class="grid grid-cols-1 gap-3
+                rounded-2xl border border-slate-200
+                bg-slate-50 p-4
+                sm:grid-cols-2"
+        >
+          <div class="min-w-0">
+            <p
+              class="text-[11px] font-semibold uppercase
+                    tracking-wide text-slate-400"
+            >
+              Current section
+            </p>
+
+            <p class="mt-1 truncate text-sm font-bold text-[#000035]">
               {{ editingMember.sectionTitle }}
-            </span>
+            </p>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-gray-500 shrink-0">Role:</span>
-            <span class="inline-block px-2.5 py-0.5 text-xs font-bold uppercase rounded-full
-                         bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
+
+          <div class="min-w-0">
+            <p
+              class="text-[11px] font-semibold uppercase
+                    tracking-wide text-slate-400"
+            >
+              Current role
+            </p>
+
+            <p class="mt-1 text-sm font-bold text-[#000035]">
               {{ editingMember.member.position }}
-            </span>
+            </p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div
+          class="grid grid-cols-1 gap-6
+                xl:grid-cols-2"
+        >
 
           <!-- Board Assignment -->
-          <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-            <h4 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Board Assignment</h4>
+          <div class="space-y-6">
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <section
+              aria-labelledby="edit-board-assignment-title"
+              class="rounded-2xl border border-slate-200
+                    bg-white p-4 shadow-sm sm:p-5"
+            >
+              <h4
+                id="edit-board-assignment-title"
+                class="text-sm font-bold text-[#000035]"
+              >
+                Board Assignment
+              </h4>
+
+              <p class="mt-1 text-xs text-slate-500">
+                Change the member’s board section and role.
+              </p>
+
+              <div
+                class="mt-4 grid grid-cols-1 gap-4
+                      sm:grid-cols-2"
+              >
               <!-- Section Field -->
               <div class="space-y-1.5">
                 <label for="edit-section" class="block text-sm font-semibold text-gray-700">
@@ -877,36 +1942,104 @@
                     formControlName="section"
                     placeholder="Search sections…"
                     autocomplete="off"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    (keydown)="onEditSectionKeydown($event)"
+                    aria-controls="edit-section-options"
+                    [attr.aria-expanded]="showEditSectionDropdown()"
+                    aria-describedby="edit-section-error"
+                    [attr.aria-invalid]="
+                      editForm.get('section')!.invalid &&
+                      editForm.get('section')!.touched
+                    "
+                    [attr.aria-activedescendant]="
+                      activeEditSectionIndex() >= 0
+                        ? 'edit-section-option-' +
+                          activeEditSectionIndex()
+                        : null
+                    "
                     (focus)="onEditSectionFocus()"
                     (input)="onEditSectionSearch($event)"
                     (blur)="hideEditSectionDropdown()"
-                    class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                           focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition"
+                    class="min-h-11 w-full rounded-xl
+                          border border-slate-300 bg-white
+                          px-4 py-2.5 text-sm text-slate-700
+                          outline-none transition
+                          placeholder:text-slate-400
+                          focus:border-[#F4B400]
+                          focus:ring-2
+                          focus:ring-[#F4B400]/30"
                     [class.border-red-400]="editForm.get('section')!.invalid && editForm.get('section')!.touched"
                     [class.border-gray-200]="!(editForm.get('section')!.invalid && editForm.get('section')!.touched)"
                   />
                   <ul
-                    *ngIf="showEditSectionDropdown && editSectionSuggestions.length > 0"
-                    class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-52 overflow-y-auto"
+                    id="edit-section-options"
+                    role="listbox"
+                    aria-label="Editorial board sections"
+                    *ngIf="
+                      showEditSectionDropdown() &&
+                      editSectionSuggestions.length > 0
+                    "
+                    class="absolute left-0 right-0 z-50
+                          mt-1 max-h-52 overflow-y-auto
+                          rounded-xl border
+                          border-slate-200 bg-white
+                          py-1 shadow-xl"
                   >
                     <li
-                      *ngFor="let s of editSectionSuggestions"
-                      (mousedown)="selectEditSection(s)"
-                      class="px-4 py-2.5 text-sm text-gray-800 cursor-pointer hover:bg-[#f4b400]/10 hover:text-[#000035] transition-colors"
+                      *ngFor="
+                        let section of
+                          editSectionSuggestions;
+                        let index = index
+                      "
+                      [id]="
+                        'edit-section-option-' +
+                        index
+                      "
+                      role="option"
+                      [attr.aria-selected]="
+                        activeEditSectionIndex() ===
+                        index
+                      "
+                      (mouseenter)="
+                        activeEditSectionIndex.set(
+                          index
+                        )
+                      "
+                      (mousedown)="
+                        $event.preventDefault();
+                        selectEditSection(section)
+                      "
+                      class="cursor-pointer
+                            px-4 py-2.5
+                            text-sm transition-colors"
+                      [ngClass]="
+                        activeEditSectionIndex() ===
+                        index
+                          ? 'bg-[#F4B400]/15 text-[#000035]'
+                          : 'text-slate-700 hover:bg-[#F4B400]/10 hover:text-[#000035]'
+                      "
                     >
-                      {{ s }}
+                      {{ section }}
                     </li>
                   </ul>
                   <div
-                    *ngIf="showEditSectionDropdown && editSectionSuggestions.length === 0"
+                    *ngIf="showEditSectionDropdown() && editSectionSuggestions.length === 0"
                     class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg px-4 py-3 text-sm text-gray-400"
                   >
                     No matching sections
                   </div>
                 </div>
-                <p *ngIf="editForm.get('section')!.invalid && editForm.get('section')!.touched" class="text-xs text-red-500">
-                  Please select or enter a section.
-                </p>
+                  <p
+                    id="edit-section-error"
+                    *ngIf="
+                      editForm.get('section')!.invalid &&
+                      editForm.get('section')!.touched
+                    "
+                    class="text-xs font-medium text-red-600"
+                  >
+                    Please select or enter a section.
+                  </p>
               </div>
 
               <!-- Role Field -->
@@ -915,66 +2048,192 @@
                   Role <span class="text-red-500 ml-0.5">*</span>
                 </label>
                 <div class="relative">
-                  <input
-                    id="edit-role"
-                    type="text"
-                    formControlName="role"
-                    [placeholder]="editAvailableRoles.length ? 'Search roles…' : 'Choose a section first'"
-                    autocomplete="off"
-                    (focus)="onEditRoleFocus()"
-                    (input)="onEditRoleSearch($event)"
-                    (blur)="hideEditRoleDropdown()"
-                    class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                           focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition"
-                    [class.border-red-400]="editForm.get('role')!.invalid && editForm.get('role')!.touched"
-                    [class.border-gray-200]="!(editForm.get('role')!.invalid && editForm.get('role')!.touched)"
-                  />
-                  <ul
-                    *ngIf="showEditRoleDropdown && editRoleSuggestions.length > 0"
-                    class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-52 overflow-y-auto"
+                <input
+                  id="edit-role"
+                  type="text"
+                  formControlName="role"
+                  [placeholder]="
+                    editAvailableRoles.length
+                      ? 'Search roles…'
+                      : 'Choose a section first'
+                  "
+                  autocomplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-controls="edit-role-options"
+                  aria-describedby="edit-role-error"
+                  [attr.aria-expanded]="
+                    showEditRoleDropdown()
+                  "
+                  [attr.aria-activedescendant]="
+                    activeEditRoleIndex() >= 0
+                      ? 'edit-role-option-' +
+                        activeEditRoleIndex()
+                      : null
+                  "
+                  [attr.aria-invalid]="
+                    editForm.get('role')!.invalid &&
+                    editForm.get('role')!.touched
+                  "
+                  (focus)="onEditRoleFocus()"
+                  (input)="onEditRoleSearch($event)"
+                  (keydown)="onEditRoleKeydown($event)"
+                  (blur)="hideEditRoleDropdown()"
+                  class="min-h-11 w-full rounded-xl
+                        border border-slate-300 bg-white
+                        px-4 py-2.5 text-sm
+                        text-slate-700 outline-none
+                        transition
+                        placeholder:text-slate-400
+                        focus:border-[#F4B400]
+                        focus:ring-2
+                        focus:ring-[#F4B400]/30"
+                  [class.border-red-400]="
+                    editForm.get('role')!.invalid &&
+                    editForm.get('role')!.touched
+                  "
+                  [class.border-gray-200]="
+                    !(
+                      editForm.get('role')!.invalid &&
+                      editForm.get('role')!.touched
+                    )
+                  "
+                />
+                <ul
+                  *ngIf="
+                    showEditRoleDropdown() &&
+                    editRoleSuggestions.length > 0
+                  "
+                  id="edit-role-options"
+                  role="listbox"
+                  aria-label="Editorial board roles"
+                  class="absolute left-0 right-0
+                        z-50 mt-1 max-h-52
+                        overflow-y-auto rounded-xl
+                        border border-slate-200
+                        bg-white py-1 shadow-xl"
+                >
+                  <li
+                    *ngFor="
+                      let role of editRoleSuggestions;
+                      let index = index
+                    "
+                    [id]="
+                      'edit-role-option-' + index
+                    "
+                    role="option"
+                    [attr.aria-selected]="
+                      activeEditRoleIndex() === index
+                    "
+                    [attr.aria-disabled]="
+                      isEditRoleTakenInDropdown(role)
+                    "
+                    (mouseenter)="
+                      !isEditRoleTakenInDropdown(role) &&
+                      activeEditRoleIndex.set(index)
+                    "
+                    (mousedown)="
+                      $event.preventDefault();
+                      !isEditRoleTakenInDropdown(role) &&
+                      selectEditRole(role)
+                    "
+                    class="flex items-center
+                          justify-between
+                          px-4 py-2.5 text-sm
+                          transition-colors"
+                    [ngClass]="{
+                      'cursor-not-allowed bg-slate-50 text-slate-400':
+                        isEditRoleTakenInDropdown(role),
+
+                      'cursor-pointer bg-[#F4B400]/15 text-[#000035]':
+                        !isEditRoleTakenInDropdown(role) &&
+                        activeEditRoleIndex() === index,
+
+                      'cursor-pointer text-slate-700 hover:bg-[#F4B400]/10 hover:text-[#000035]':
+                        !isEditRoleTakenInDropdown(role) &&
+                        activeEditRoleIndex() !== index
+                    }"
                   >
-                    <li
-                      *ngFor="let r of editRoleSuggestions"
-                      (mousedown)="isEditRoleTakenInDropdown(r) ? $event.preventDefault() : selectEditRole(r)"
-                      class="px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between"
-                      [ngClass]="isEditRoleTakenInDropdown(r)
-                        ? 'text-gray-400 cursor-not-allowed hover:bg-gray-50'
-                        : 'text-gray-800 hover:bg-[#f4b400]/10 hover:text-[#000035]'"
+                    <span>{{ role }}</span>
+
+                    <span
+                      *ngIf="
+                        isEditRoleTakenInDropdown(role)
+                      "
+                      class="text-xs font-semibold
+                            text-orange-500"
                     >
-                      <span>{{ r }}</span>
-                      <span *ngIf="isEditRoleTakenInDropdown(r)" class="text-xs text-orange-500 font-semibold">Taken</span>
-                    </li>
-                  </ul>
+                      Taken
+                    </span>
+                  </li>
+                </ul>
                   <div
-                    *ngIf="showEditRoleDropdown && editRoleSuggestions.length === 0 && editAvailableRoles.length > 0"
+                    *ngIf="showEditRoleDropdown() && editRoleSuggestions.length === 0 && editAvailableRoles.length > 0"
                     class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg px-4 py-3 text-sm text-gray-400"
                   >
                     No matching roles
                   </div>
                 </div>
-                <p *ngIf="editForm.get('role')!.invalid && editForm.get('role')!.touched" class="text-xs text-red-500">
+                <p
+                  id="edit-role-error"
+                  *ngIf="
+                    editForm.get('role')!.invalid &&
+                    editForm.get('role')!.touched
+                  "
+                  class="text-xs font-medium text-red-600"
+                >
                   Please select or enter a role.
                 </p>
                 <p *ngIf="editRoleConflict" class="text-xs text-orange-600 font-medium">{{ editRoleConflict }}</p>
               </div>
-            </div>
+              </div>
+            </section>
 
-            <!-- Staff Information (Name + Email) -->
-            <div class="border-t border-gray-100 mt-5 pt-5">
-              <h5 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Staff Information</h5>
+            <!-- Core Information -->
+            <section
+              aria-labelledby="edit-core-information-title"
+              class="rounded-2xl border border-slate-200
+                    bg-white p-4 shadow-sm sm:p-5"
+            >
+              <h4
+                id="edit-core-information-title"
+                class="text-sm font-bold text-[#000035]"
+              >
+                Core Information
+              </h4>
 
-              <div class="space-y-4 mt-4">
+              <p class="mt-1 text-xs text-slate-500">
+                Update the staff member’s name and contact information.
+              </p>
+
+              <div class="mt-4 space-y-4">
                 <div class="space-y-1.5">
                   <label for="edit-full-name" class="block text-sm font-semibold text-gray-700">
                     Full Name <span class="text-red-500 ml-0.5">*</span>
+
                   </label>
+                @if (
+                  editForm.get('fullName')!.invalid &&
+                  editForm.get('fullName')!.touched
+                ) {
+                  <p class="text-xs font-medium text-red-600">
+                    Full name is required.
+                  </p>
+                }
                   <input
                     id="edit-full-name"
                     type="text"
                     formControlName="fullName"
                     placeholder="Full name"
-                    class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                           focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition"
+                    autocomplete="name"
+                    class="min-h-11 w-full rounded-xl
+                          border border-slate-300 bg-white
+                          px-4 py-2.5 text-sm text-slate-700
+                          outline-none transition
+                          placeholder:text-slate-400
+                          focus:border-[#F4B400]
+                          focus:ring-2
+                          focus:ring-[#F4B400]/30"
                     [class.border-red-400]="editForm.get('fullName')!.invalid && editForm.get('fullName')!.touched"
                     [class.border-gray-200]="!(editForm.get('fullName')!.invalid && editForm.get('fullName')!.touched)"
                   />
@@ -984,25 +2243,59 @@
                   <label for="edit-email" class="block text-sm font-semibold text-gray-700">
                     Email <span class="text-red-500 ml-0.5">*</span>
                   </label>
+                    @if (
+                      editForm.get('email')!.invalid &&
+                      editForm.get('email')!.touched
+                    ) {
+                      <p class="text-xs font-medium text-red-600">
+                        Enter a valid email address.
+                      </p>
+                    }
                   <input
                     id="edit-email"
                     type="email"
                     formControlName="email"
                     placeholder="Email"
-                    class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                           focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition"
+                    autocomplete="email"
+                    class="min-h-11 w-full rounded-xl
+                          border border-slate-300 bg-white
+                          px-4 py-2.5 text-sm text-slate-700
+                          outline-none transition
+                          placeholder:text-slate-400
+                          focus:border-[#F4B400]
+                          focus:ring-2
+                          focus:ring-[#F4B400]/30"
                     [class.border-red-400]="editForm.get('email')!.invalid && editForm.get('email')!.touched"
                     [class.border-gray-200]="!(editForm.get('email')!.invalid && editForm.get('email')!.touched)"
                   />
                 </div>
               </div>
-            </div>
-          </div>
+          </section>
+        </div>
 
           <!-- Staff Information -->
-          <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div class="space-y-6">
+            <section
+              aria-labelledby="edit-academic-information-title"
+              class="rounded-2xl border border-slate-200
+                    bg-white p-4 shadow-sm sm:p-5"
+            >
+              <h4
+                id="edit-academic-information-title"
+                class="text-sm font-bold text-[#000035]"
+              >
+                Academic Information
+              </h4>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <p class="mt-1 text-xs text-slate-500">
+                Update the staff member’s academic details.
+              </p>
+
+              <div
+                class="mt-4 grid grid-cols-1 gap-4
+                      sm:grid-cols-2"
+              >
+
               <div class="space-y-1.5">
                 <label for="edit-student-id" class="block text-sm font-semibold text-gray-700">Student ID</label>
                 <input
@@ -1010,21 +2303,37 @@
                   type="text"
                   formControlName="studentId"
                   placeholder="Student ID"
-                  class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                         focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition"
+                  autocomplete="off"
+                  class="min-h-11 w-full rounded-xl
+                        border border-slate-300 bg-white
+                        px-4 py-2.5 text-sm text-slate-700
+                        outline-none transition
+                        placeholder:text-slate-400
+                        focus:border-[#F4B400]
+                        focus:ring-2
+                        focus:ring-[#F4B400]/30"
                 />
               </div>
 
               <div class="space-y-1.5">
                 <label for="edit-year-level" class="block text-sm font-semibold text-gray-700">Year Level</label>
-                <input
-                  id="edit-year-level"
-                  type="text"
-                  formControlName="yearLevel"
-                  placeholder="e.g. 1st_year"
-                  class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                         focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition"
-                />
+                  <select
+                    id="edit-year-level"
+                    formControlName="yearLevel"
+                    class="min-h-11 w-full rounded-xl
+                          border border-slate-300 bg-white
+                          px-4 py-2.5 text-sm text-slate-700
+                          outline-none transition
+                          focus:border-[#F4B400]
+                          focus:ring-2
+                          focus:ring-[#F4B400]/30"
+                  >
+                    <option value="">Select year level</option>
+                    <option value="1st_year">1st Year</option>
+                    <option value="2nd_year">2nd Year</option>
+                    <option value="3rd_year">3rd Year</option>
+                    <option value="4th_year">4th Year</option>
+                  </select>
               </div>
 
               <div class="space-y-1.5">
@@ -1033,8 +2342,13 @@
                   id="edit-college"
                   formControlName="collegeId"
                   (change)="onEditCollegeChange($event)"
-                  class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                         focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition"
+                  class="min-h-11 w-full rounded-xl
+                        border border-slate-300 bg-white
+                        px-4 py-2.5 text-sm text-slate-700
+                        outline-none transition
+                        focus:border-[#F4B400]
+                        focus:ring-2
+                        focus:ring-[#F4B400]/30"
                 >
                   <option value="">Select college</option>
                   <option *ngFor="let c of colleges()" [value]="c.id">{{ c.name }}</option>
@@ -1047,14 +2361,44 @@
                   id="edit-program"
                   formControlName="programId"
                   [disabled]="!editForm.get('collegeId')?.value"
-                  class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                         focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition
-                         disabled:opacity-60 disabled:cursor-not-allowed"
+                  class="min-h-11 w-full rounded-xl
+                        border border-slate-300 bg-white
+                        px-4 py-2.5 text-sm text-slate-700
+                        outline-none transition
+                        focus:border-[#F4B400]
+                        focus:ring-2
+                        focus:ring-[#F4B400]/30
+                        disabled:cursor-not-allowed
+                        disabled:bg-slate-100
+                        disabled:text-slate-400"
                 >
                   <option value="">Select program</option>
                   <option *ngFor="let p of editProgramOptions" [value]="p.id">{{ p.name }}</option>
                 </select>
               </div>
+              </div>
+            </section>
+
+              <section
+                aria-labelledby="edit-publication-position-title"
+                class="rounded-2xl border border-slate-200
+                      bg-white p-4 shadow-sm sm:p-5"
+              >
+                <h4
+                  id="edit-publication-position-title"
+                  class="text-sm font-bold text-[#000035]"
+                >
+                  Publication Position
+                </h4>
+
+                <p class="mt-1 text-xs text-slate-500">
+                  Update the member’s publication position and specialization.
+                </p>
+
+                <div
+                  class="mt-4 grid grid-cols-1 gap-4
+                        sm:grid-cols-2"
+                >
 
               <div class="space-y-1.5">
                 <label for="edit-position" class="block text-sm font-semibold text-gray-700">Position</label>
@@ -1062,8 +2406,13 @@
                   id="edit-position"
                   formControlName="positionId"
                   (change)="onEditPositionChange($event)"
-                  class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                         focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition"
+                  class="min-h-11 w-full rounded-xl
+                        border border-slate-300 bg-white
+                        px-4 py-2.5 text-sm text-slate-700
+                        outline-none transition
+                        focus:border-[#F4B400]
+                        focus:ring-2
+                        focus:ring-[#F4B400]/30"
                 >
                   <option value="">Select position</option>
                   <option *ngFor="let pos of POSITION_OPTIONS" [value]="pos.id">{{ pos.label }}</option>
@@ -1076,52 +2425,114 @@
                   id="edit-sub-role"
                   formControlName="subRole"
                   [disabled]="!editForm.get('positionId')?.value"
-                  class="w-full px-4 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                         focus:ring-2 focus:ring-[#f4b400]/40 focus:border-[#f4b400]/60 focus:outline-none transition
-                         disabled:opacity-60 disabled:cursor-not-allowed"
+                  class="min-h-11 w-full rounded-xl
+                        border border-slate-300 bg-white
+                        px-4 py-2.5 text-sm text-slate-700
+                        outline-none transition
+                        focus:border-[#F4B400]
+                        focus:ring-2
+                        focus:ring-[#F4B400]/30
+                        disabled:cursor-not-allowed
+                        disabled:bg-slate-100
+                        disabled:text-slate-400"
                 >
                   <option value="">Select sub role</option>
                   <option *ngFor="let sr of editSubRoleOptions" [value]="sr">{{ sr }}</option>
                 </select>
               </div>
+
             </div>
+          </section>
+        </div>
+
+          </div>
+
+          @if (editSubmitError) {
+            <div
+              role="alert"
+              class="rounded-xl border border-red-200
+                    bg-red-50 px-4 py-3
+                    text-sm font-medium text-red-700"
+            >
+              {{ editSubmitError }}
+            </div>
+          }
           </div>
         </div>
 
-        <p *ngIf="editSubmitError" class="text-xs text-red-600 font-medium">
-          {{ editSubmitError }}
-        </p>
-
         <!-- Actions -->
-        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-
-          <button
-            type="button"
-            (click)="closeEditModal()"
-            class="px-6 py-2.5 rounded-xl border-2 border-[#f4b400] text-gray-700 font-semibold
-                   hover:bg-gray-50 transition-all duration-200"
+        <footer
+          class="shrink-0 border-t border-slate-200
+                bg-white/95 px-4 pt-3
+                pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+                backdrop-blur
+                sm:px-6 sm:pb-3
+                lg:px-8"
+        >
+          <div
+            class="grid grid-cols-1 gap-3
+                  min-[420px]:grid-cols-2
+                  sm:ml-auto sm:max-w-md"
           >
-            Cancel
-          </button>
+            <button
+              type="button"
+              (click)="closeEditModal()"
+              [disabled]="editSubmitting"
+              class="inline-flex min-h-11
+                    items-center justify-center
+                    rounded-xl border border-slate-300
+                    bg-white px-4 py-2.5
+                    text-sm font-semibold text-slate-700
+                    transition hover:bg-slate-50
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-[#F4B400]"
+            >
+              Cancel
+            </button>
 
-          <button
-            type="submit"
-            [disabled]="editForm.invalid || !!editRoleConflict || editSubmitting"
-            class="px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all duration-200
-                   bg-[#000035] hover:bg-[#0a1a2e] hover:shadow-xl
-                   disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-lg"
-          >
-            {{ editSubmitting ? 'Saving…' : 'Save Changes' }}
-          </button>
+            <button
+              type="submit"
+              [disabled]="
+                editForm.invalid ||
+                !!editRoleConflict ||
+                editSubmitting
+              "
+              [attr.aria-busy]="editSubmitting"
+              class="inline-flex min-h-11
+                    items-center justify-center gap-2
+                    rounded-xl bg-[#000035]
+                    px-4 py-2.5
+                    text-sm font-semibold text-[#F4B400]
+                    transition hover:bg-[#0a1a2e]
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-[#F4B400]"
+            >
+              @if (editSubmitting) {
+                <span
+                  aria-hidden="true"
+                  class="h-4 w-4 animate-spin
+                        rounded-full border-2
+                        border-[#F4B400]/30
+                        border-t-[#F4B400]"
+                ></span>
 
-        </div>
+                Saving…
+              } @else {
+                Save Changes
+              }
+            </button>
+          </div>
+        </footer>
 
       </form>
-
+    </section>
     </div>
-
-  </div>
-
 </ng-container>
 
 
@@ -1137,168 +2548,233 @@
   (editRequested)="handleViewEdit()"
 ></app-view-member-info-modal>
 
-
-<!-- ========================= -->
-<!-- Remove Confirmation Modal -->
-<!-- ========================= -->
-
-<ng-container *ngIf="deletingMember">
-
-  <div
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
-    (click)="closeDeleteModal()"
-  >
-
-    <div
-      class="bg-white w-full max-w-md rounded-2xl shadow-2xl relative"
-      (click)="$event.stopPropagation()"
-    >
-
-      <!-- Modal Header -->
-      <div class="bg-linear-to-br from-red-700 to-red-900 px-8 py-6 flex items-start justify-between gap-4 rounded-t-2xl">
-        <div>
-          <h3 class="text-2xl font-bold text-white">Remove Staff Member</h3>
-          <p class="text-sm text-white/70 mt-1">
-            This will reset their application status.
-          </p>
-        </div>
-        <button
-          type="button"
-          (click)="closeDeleteModal()"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl
-                 bg-white/10 hover:bg-white/20 text-white
-                 border border-white/10 hover:border-white/20
-                 transition-all duration-200"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="p-8 space-y-6">
-
-        <p class="text-sm text-gray-700">
-          Are you sure you want to remove
-          <span class="font-semibold text-[#000035]">{{ deletingMember.member.name }}</span>
-          from <span class="font-semibold text-[#000035]">{{ deletingMember.sectionTitle }}</span>?
-        </p>
-        <p class="text-xs text-gray-500">
-          They will be removed from the board but remain as a staff member.
-          You can reassign them from the <span class="font-semibold">Staff Without Board Assignment</span> panel.
-        </p>
-
-        <!-- Error message -->
-        <p *ngIf="deleteError" class="text-xs text-red-500 font-medium">
-          {{ deleteError }}
-        </p>
-
-        <!-- Actions -->
-        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2">
-          <button
-            type="button"
-            (click)="closeDeleteModal()"
-            class="px-6 py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold
-                   hover:bg-gray-50 transition-all duration-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            (click)="confirmDelete()"
-            class="px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all duration-200
-                   bg-red-600 hover:bg-red-700 hover:shadow-xl"
-          >
-            Yes, Remove
-          </button>
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</ng-container>
-
-
 <!-- ========================= -->
 <!-- Revoke Acceptance Modal   -->
 <!-- ========================= -->
 
 <ng-container *ngIf="revokingApp">
-
   <div
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
+    class="fixed inset-0 z-9999
+           flex items-end justify-center
+           bg-slate-950/70
+           backdrop-blur-sm
+           sm:items-center sm:p-4"
     (click)="closeRevokeModal()"
   >
-
-    <div
-      class="bg-white w-full max-w-md rounded-2xl shadow-2xl relative"
+    <section
+      #revokeAcceptanceDialog
+      tabindex="-1"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="revoke-acceptance-title"
+      aria-describedby="revoke-acceptance-description"
+      class="relative flex max-h-[94dvh]
+             w-full max-w-md flex-col
+             overflow-hidden bg-white
+             shadow-2xl
+             rounded-t-3xl
+             sm:max-h-[calc(100dvh-2rem)]
+             sm:rounded-3xl"
       (click)="$event.stopPropagation()"
+      (keydown)="
+        onRevokeAcceptanceDialogKeydown($event)
+      "
     >
+      <header
+        class="relative z-10 shrink-0
+               bg-linear-to-br
+               from-orange-500 to-orange-700
+               px-4 py-4
+               sm:px-6 sm:py-5"
+      >
+        <div
+          class="flex items-start
+                 justify-between gap-4"
+        >
+          <div class="min-w-0">
+            <h3
+              id="revoke-acceptance-title"
+              class="text-xl font-bold
+                     text-white sm:text-2xl"
+            >
+              Revoke Acceptance
+            </h3>
 
-      <!-- Modal Header -->
-      <div class="bg-linear-to-br from-orange-500 to-orange-700 px-8 py-6 flex items-start justify-between gap-4 rounded-t-2xl">
-        <div>
-          <h3 class="text-2xl font-bold text-white">Revoke Acceptance</h3>
-          <p class="text-sm text-white/70 mt-1">
-            This will undo the accepted status of this applicant.
+            <p
+              class="mt-1 text-sm leading-5
+                     text-white/75"
+            >
+              Return this applicant to the
+              interview-completed stage.
+            </p>
+          </div>
+
+          <button
+            #revokeAcceptanceCloseButton
+            type="button"
+            (click)="closeRevokeModal()"
+            [disabled]="
+              revokeAcceptanceSubmitting()
+            "
+            class="inline-flex h-11 w-11
+                   shrink-0 items-center
+                   justify-center rounded-xl
+                   border border-white/10
+                   bg-white/10 text-white
+                   transition-colors
+                   hover:bg-white/20
+                   disabled:cursor-not-allowed
+                   disabled:opacity-50
+                   focus-visible:outline-none
+                   focus-visible:ring-2
+                   focus-visible:ring-white"
+            aria-label="Close revoke acceptance dialog"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+            <path d="M18 6 6 18"/>
+            <path d="m6 6 12 12"/>
+              />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div
+        class="min-h-0 flex-1 space-y-5
+               overflow-y-auto
+               overscroll-contain
+               px-4 py-5
+               sm:px-6 sm:py-6"
+      >
+        <div
+          class="rounded-2xl border
+                 border-orange-200
+                 bg-orange-50 p-4"
+        >
+          <p
+            id="revoke-acceptance-description"
+            class="text-sm leading-6
+                   text-slate-700"
+          >
+            Are you sure you want to revoke
+            the acceptance of
+            <span class="font-bold text-[#000035]">
+              {{ revokingApp.fullName }}
+            </span>?
+          </p>
+
+          <p
+            class="mt-3 text-sm leading-6
+                   text-slate-600"
+          >
+            They will return to
+            <span class="font-semibold">
+              Interview Completed
+            </span>
+            and be removed from the
+            adviser-assignment queue. They can
+            be accepted again later.
           </p>
         </div>
-        <button
-          type="button"
-          (click)="closeRevokeModal()"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl
-                 bg-white/10 hover:bg-white/20 text-white
-                 border border-white/10 hover:border-white/20
-                 transition-all duration-200"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
+
+        @if (revokeAcceptanceError()) {
+          <div
+            role="alert"
+            class="rounded-xl border
+                   border-red-200 bg-red-50
+                   px-4 py-3 text-sm
+                   font-medium text-red-700"
+          >
+            {{ revokeAcceptanceError() }}
+          </div>
+        }
       </div>
 
-      <!-- Modal Body -->
-      <div class="p-8 space-y-6">
-
-        <p class="text-sm text-gray-700">
-          Are you sure you want to revoke the acceptance of
-          <span class="font-semibold text-[#000035]">{{ revokingApp.fullName }}</span>?
-        </p>
-        <p class="text-xs text-gray-500">
-          They will be moved back to <span class="font-semibold">Interview Completed</span> status
-          and removed from the assignment queue. You can re-accept them later.
-        </p>
-
-        <!-- Actions -->
-        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2">
+      <footer
+        class="shrink-0 border-t
+               border-slate-200
+               bg-white/95 px-4 pt-3
+               pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+               backdrop-blur
+               sm:px-6 sm:pb-3"
+      >
+        <div
+          class="grid grid-cols-1 gap-3
+                 min-[420px]:grid-cols-2"
+        >
           <button
             type="button"
             (click)="closeRevokeModal()"
-            class="px-6 py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold
-                   hover:bg-gray-50 transition-all duration-200"
+            [disabled]="
+              revokeAcceptanceSubmitting()
+            "
+            class="inline-flex min-h-11
+                   items-center justify-center
+                   rounded-xl border
+                   border-slate-300 bg-white
+                   px-4 py-2.5 text-sm
+                   font-semibold text-slate-700
+                   transition hover:bg-slate-50
+                   disabled:cursor-not-allowed
+                   disabled:opacity-50
+                   focus-visible:outline-none
+                   focus-visible:ring-2
+                   focus-visible:ring-orange-500"
           >
             Cancel
           </button>
+
           <button
             type="button"
             (click)="confirmRevoke()"
-            class="px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all duration-200
-                   bg-orange-600 hover:bg-orange-700 hover:shadow-xl"
+            [disabled]="
+              revokeAcceptanceSubmitting()
+            "
+            [attr.aria-busy]="
+              revokeAcceptanceSubmitting()
+            "
+            class="inline-flex min-h-11
+                   items-center justify-center
+                   gap-2 rounded-xl
+                   bg-orange-600 px-4 py-2.5
+                   text-sm font-semibold
+                   text-white transition
+                   hover:bg-orange-700
+                   disabled:cursor-not-allowed
+                   disabled:opacity-50
+                   focus-visible:outline-none
+                   focus-visible:ring-2
+                   focus-visible:ring-orange-500"
           >
-            Yes, Revoke
+            @if (
+              revokeAcceptanceSubmitting()
+            ) {
+              <span
+                aria-hidden="true"
+                class="h-4 w-4 animate-spin
+                       rounded-full border-2
+                       border-white/30
+                       border-t-white"
+              ></span>
+
+              Revoking…
+            } @else {
+              Revoke Acceptance
+            }
           </button>
         </div>
-
-      </div>
-
-    </div>
-
+      </footer>
+    </section>
   </div>
-
 </ng-container>
 
 
@@ -1306,48 +2782,154 @@
 <!-- Add Unassigned Staff to Board Modal    -->
 <!-- ====================================== -->
 
-<ng-container *ngIf="assigningStaff">
-
-  <div
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
-    (click)="closeAssignStaffModal()"
-  >
-
+  <ng-container *ngIf="assigningStaff">
     <div
-      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl relative"
-      (click)="$event.stopPropagation()"
+      class="fixed inset-0 z-9999
+            flex items-end justify-center
+            bg-slate-950/70
+            backdrop-blur-sm
+            sm:items-center sm:p-4"
+      (click)="closeAssignStaffModal()"
     >
+      <section
+        #assignStaffDialog
+        tabindex="-1"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="assign-staff-title"
+        class="relative flex max-h-[94dvh]
+              w-full max-w-lg flex-col
+              overflow-hidden bg-white
+              shadow-2xl
+              rounded-t-3xl
+              sm:max-h-[calc(100dvh-2rem)]
+              sm:rounded-3xl"
+        (click)="$event.stopPropagation()"
+        (keydown)="
+          onAssignStaffDialogKeydown($event)
+        "
+      >
 
       <!-- Modal Header -->
-      <div class="bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035] px-5 sm:px-8 py-5 sm:py-6 flex items-start justify-between gap-4 rounded-t-2xl">
-        <div>
-          <h3 class="text-2xl font-bold text-white">Add to Board</h3>
-          <p class="text-sm text-white/70 mt-1">
-            Assigning
-            <span class="font-semibold text-white">{{ assigningStaff.fullName }}</span>
-            to the current board
-          </p>
-          <p *ngIf="assigningStaff.assignedSection" class="text-xs text-white/50 mt-1">
-            Previously: {{ assigningStaff.assignedSection }}
-            <span *ngIf="assigningStaff.assignedRole"> · {{ assigningStaff.assignedRole }}</span>
-          </p>
-        </div>
-        <button
-          type="button"
-          (click)="closeAssignStaffModal()"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl
-                 bg-white/10 hover:bg-white/20 text-white
-                 border border-white/10 hover:border-white/20
-                 transition-all duration-200"
+      <header
+        class="relative z-10 shrink-0
+              bg-linear-to-br
+              from-[#000035]
+              via-[#001f5c]
+              to-[#000035]
+              px-4 py-4
+              sm:px-6 sm:py-5"
+      >
+        <div
+          class="flex items-start
+                justify-between gap-4"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
+          <div class="min-w-0">
+            <h3
+              id="assign-staff-title"
+              class="text-xl font-bold
+                    text-white sm:text-2xl"
+            >
+              Add to Board
+            </h3>
+
+            <p
+              class="mt-1 text-sm
+                    leading-5 text-white/70"
+            >
+              Assigning
+              <span class="font-semibold text-white">
+                {{ assigningStaff.fullName }}
+              </span>
+              to the current board.
+            </p>
+
+            @if (
+              assigningStaff.assignedSection
+            ) {
+              <p
+                class="mt-1 text-xs
+                      text-white/50"
+              >
+                Previously:
+                {{
+                  assigningStaff.assignedSection
+                }}
+
+                @if (
+                  assigningStaff.assignedRole
+                ) {
+                  <span>
+                    ·
+                    {{
+                      assigningStaff.assignedRole
+                    }}
+                  </span>
+                }
+              </p>
+            }
+          </div>
+
+          <button
+            #assignStaffCloseButton
+            type="button"
+            (click)="closeAssignStaffModal()"
+            [disabled]="assignStaffSubmitting()"
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+            class="inline-flex h-11 w-11
+                  shrink-0 items-center
+                  justify-center rounded-xl
+                  border border-white/10
+                  bg-white/10 text-white
+                  transition-colors
+                  hover:bg-white/20
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]"
+            aria-label="Close add to board dialog"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+      </header>
 
       <!-- Modal Body -->
-      <form [formGroup]="assignStaffForm" (ngSubmit)="submitAssignStaff()" class="p-8 space-y-6">
+      <form
+        [formGroup]="assignStaffForm"
+        (ngSubmit)="submitAssignStaff()"
+        class="contents"
+      >
+        <div
+          class="min-h-0 flex-1
+                space-y-5 overflow-y-auto
+                overscroll-contain
+                px-4 py-5
+                sm:px-6 sm:py-6"
+        >
+
+      @if (assignStaffSubmitError()) {
+        <div
+          role="alert"
+          class="rounded-xl border border-red-200
+                bg-red-50 px-4 py-3
+                text-sm font-medium text-red-700"
+        >
+          {{ assignStaffSubmitError() }}
+        </div>
+      }
 
         <!-- Section Field -->
         <div class="space-y-1.5">
@@ -1361,24 +2943,97 @@
               formControlName="section"
               placeholder="Search sections…"
               autocomplete="off"
-              (focus)="onAssignStaffSectionFocus()"
-              (input)="onAssignStaffSectionSearch($event)"
-              (blur)="hideAssignStaffSectionDropdown()"
-              class="w-full px-4 py-2.5 border rounded-lg text-sm
-                     focus:ring-2 focus:ring-[#f4b400] focus:outline-none transition"
-              [class.border-red-400]="assignStaffForm.get('section')!.invalid && assignStaffForm.get('section')!.touched"
-              [class.border-gray-200]="!(assignStaffForm.get('section')!.invalid && assignStaffForm.get('section')!.touched)"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="assign-staff-section-options"
+              [attr.aria-expanded]="
+                showAssignStaffSectionDropdown
+              "
+              [attr.aria-activedescendant]="
+                activeAssignStaffSectionIndex >= 0
+                  ? 'assign-staff-section-option-' +
+                    activeAssignStaffSectionIndex
+                  : null
+              "
+              (focus)="
+                onAssignStaffSectionFocus()
+              "
+              (input)="
+                onAssignStaffSectionSearch($event)
+              "
+              (keydown)="
+                onAssignStaffSectionKeydown($event)
+              "
+              (blur)="
+                hideAssignStaffSectionDropdown()
+              "
+              class="min-h-11 w-full rounded-xl
+                    border bg-white px-4 py-2.5
+                    text-sm text-slate-700
+                    outline-none transition
+                    placeholder:text-slate-400
+                    focus:border-[#F4B400]
+                    focus:ring-2
+                    focus:ring-[#F4B400]/30"
+              [class.border-red-400]="
+                assignStaffForm.get('section')!.invalid &&
+                assignStaffForm.get('section')!.touched
+              "
+              [class.border-slate-300]="
+                !(
+                  assignStaffForm.get('section')!.invalid &&
+                  assignStaffForm.get('section')!.touched
+                )
+              "
             />
             <ul
-              *ngIf="showAssignStaffSectionDropdown && assignStaffSectionSuggestions.length > 0"
-              class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-52 overflow-y-auto"
+              *ngIf="
+                showAssignStaffSectionDropdown &&
+                assignStaffSectionSuggestions.length > 0
+              "
+              id="assign-staff-section-options"
+              role="listbox"
+              aria-label="Editorial board sections"
+              class="absolute left-0 right-0 z-50
+                    mt-1 max-h-52 overflow-y-auto
+                    rounded-xl border
+                    border-slate-200 bg-white
+                    py-1 shadow-xl"
             >
               <li
-                *ngFor="let s of assignStaffSectionSuggestions"
-                (mousedown)="selectAssignStaffSection(s)"
-                class="px-4 py-2.5 text-sm text-gray-800 cursor-pointer hover:bg-[#f4b400]/10 hover:text-[#000035] transition-colors"
+                *ngFor="
+                  let section of
+                    assignStaffSectionSuggestions;
+                  let index = index
+                "
+                [id]="
+                  'assign-staff-section-option-' +
+                  index
+                "
+                role="option"
+                [attr.aria-selected]="
+                  activeAssignStaffSectionIndex ===
+                  index
+                "
+                (mouseenter)="
+                  activeAssignStaffSectionIndex =
+                    index
+                "
+                (mousedown)="
+                  $event.preventDefault();
+                  selectAssignStaffSection(section)
+                "
+                class="cursor-pointer
+                      px-4 py-2.5 text-sm
+                      transition-colors"
+                [ngClass]="
+                  activeAssignStaffSectionIndex ===
+                  index
+                    ? 'bg-[#F4B400]/15 text-[#000035]'
+                    : 'text-slate-700 hover:bg-[#F4B400]/10 hover:text-[#000035]'
+                "
               >
-                {{ s }}
+                {{ section }}
               </li>
             </ul>
             <div
@@ -1405,34 +3060,143 @@
             Role <span class="text-red-500 ml-0.5">*</span>
           </label>
           <div class="relative">
-            <input
-              id="assign-staff-role"
-              type="text"
-              formControlName="role"
-              [placeholder]="assignStaffAvailableRoles.length ? 'Search roles…' : 'Choose a section first'"
-              autocomplete="off"
-              (focus)="onAssignStaffRoleFocus()"
-              (input)="onAssignStaffRoleSearch($event)"
-              (blur)="hideAssignStaffRoleDropdown()"
-              class="w-full px-4 py-2.5 border rounded-lg text-sm
-                     focus:ring-2 focus:ring-[#f4b400] focus:outline-none transition"
-              [class.border-red-400]="assignStaffForm.get('role')!.invalid && assignStaffForm.get('role')!.touched"
-              [class.border-gray-200]="!(assignStaffForm.get('role')!.invalid && assignStaffForm.get('role')!.touched)"
-            />
+          <input
+            id="assign-staff-role"
+            type="text"
+            formControlName="role"
+            [placeholder]="
+              assignStaffAvailableRoles.length
+                ? 'Search roles…'
+                : 'Choose a section first'
+            "
+            autocomplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls="assign-staff-role-options"
+            [attr.aria-expanded]="
+              showAssignStaffRoleDropdown
+            "
+            [attr.aria-activedescendant]="
+              activeAssignStaffRoleIndex >= 0
+                ? 'assign-staff-role-option-' +
+                  activeAssignStaffRoleIndex
+                : null
+            "
+            (focus)="
+              onAssignStaffRoleFocus()
+            "
+            (input)="
+              onAssignStaffRoleSearch($event)
+            "
+            (keydown)="
+              onAssignStaffRoleKeydown($event)
+            "
+            (blur)="
+              hideAssignStaffRoleDropdown()
+            "
+            class="min-h-11 w-full rounded-xl
+                  border bg-white px-4 py-2.5
+                  text-sm text-slate-700
+                  outline-none transition
+                  placeholder:text-slate-400
+                  focus:border-[#F4B400]
+                  focus:ring-2
+                  focus:ring-[#F4B400]/30"
+            [class.border-red-400]="
+              assignStaffForm.get('role')!.invalid &&
+              assignStaffForm.get('role')!.touched
+            "
+            [class.border-slate-300]="
+              !(
+                assignStaffForm.get('role')!.invalid &&
+                assignStaffForm.get('role')!.touched
+              )
+            "
+          />
             <ul
-              *ngIf="showAssignStaffRoleDropdown && assignStaffRoleSuggestions.length > 0"
-              class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-52 overflow-y-auto"
+              *ngIf="
+                showAssignStaffRoleDropdown &&
+                assignStaffRoleSuggestions.length > 0
+              "
+              id="assign-staff-role-options"
+              role="listbox"
+              aria-label="Editorial board roles"
+              class="absolute left-0 right-0 z-50
+                    mt-1 max-h-52 overflow-y-auto
+                    rounded-xl border
+                    border-slate-200 bg-white
+                    py-1 shadow-xl"
             >
               <li
-                *ngFor="let r of assignStaffRoleSuggestions"
-                (mousedown)="isAssignStaffRoleTakenInDropdown(r) ? $event.preventDefault() : selectAssignStaffRole(r)"
-                class="px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between"
-                [ngClass]="isAssignStaffRoleTakenInDropdown(r)
-                  ? 'text-gray-400 cursor-not-allowed hover:bg-gray-50'
-                  : 'text-gray-800 hover:bg-[#f4b400]/10 hover:text-[#000035]'"
+                *ngFor="
+                  let role of
+                    assignStaffRoleSuggestions;
+                  let index = index
+                "
+                [id]="
+                  'assign-staff-role-option-' +
+                  index
+                "
+                role="option"
+                [attr.aria-selected]="
+                  activeAssignStaffRoleIndex ===
+                  index
+                "
+                [attr.aria-disabled]="
+                  isAssignStaffRoleTakenInDropdown(
+                    role
+                  )
+                "
+                (mouseenter)="
+                  !isAssignStaffRoleTakenInDropdown(
+                    role
+                  ) &&
+                  (activeAssignStaffRoleIndex = index)
+                "
+                (mousedown)="
+                  $event.preventDefault();
+                  !isAssignStaffRoleTakenInDropdown(
+                    role
+                  ) &&
+                  selectAssignStaffRole(role)
+                "
+                class="flex items-center
+                      justify-between px-4 py-2.5
+                      text-sm transition-colors"
+                [ngClass]="{
+                  'cursor-not-allowed bg-slate-50 text-slate-400':
+                    isAssignStaffRoleTakenInDropdown(
+                      role
+                    ),
+
+                  'cursor-pointer bg-[#F4B400]/15 text-[#000035]':
+                    !isAssignStaffRoleTakenInDropdown(
+                      role
+                    ) &&
+                    activeAssignStaffRoleIndex ===
+                      index,
+
+                  'cursor-pointer text-slate-700 hover:bg-[#F4B400]/10 hover:text-[#000035]':
+                    !isAssignStaffRoleTakenInDropdown(
+                      role
+                    ) &&
+                    activeAssignStaffRoleIndex !==
+                      index
+                }"
               >
-                <span>{{ r }}</span>
-                <span *ngIf="isAssignStaffRoleTakenInDropdown(r)" class="text-xs text-orange-500 font-semibold">Taken</span>
+                <span>{{ role }}</span>
+
+                <span
+                  *ngIf="
+                    isAssignStaffRoleTakenInDropdown(
+                      role
+                    )
+                  "
+                  class="text-xs font-semibold
+                        text-orange-500"
+                >
+                  Taken
+                </span>
               </li>
             </ul>
             <div
@@ -1453,30 +3217,76 @@
           </p>
         </div>
 
-        <!-- Actions -->
-        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2">
+      </div>
+      <footer
+        class="shrink-0 border-t border-slate-200
+              bg-white/95 px-4 pt-3
+              pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+              backdrop-blur
+              sm:px-6 sm:pb-3"
+      >
+        <div
+          class="grid grid-cols-1 gap-3
+                min-[420px]:grid-cols-2"
+        >
           <button
             type="button"
             (click)="closeAssignStaffModal()"
-            class="px-6 py-2.5 rounded-xl border-2 border-[#f4b400] text-gray-700 font-semibold
-                   hover:bg-gray-50 transition-all duration-200"
+            class="inline-flex min-h-11
+                  items-center justify-center
+                  rounded-xl border border-slate-300
+                  bg-white px-4 py-2.5
+                  text-sm font-semibold text-slate-700
+                  transition hover:bg-slate-50
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]"
           >
             Cancel
           </button>
+
           <button
             type="submit"
-            [disabled]="assignStaffForm.invalid || !!assignStaffRoleConflict || !!assignStaffSectionConflict"
-            class="px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all duration-200
-                   bg-[#000035] hover:bg-[#0a1a2e] hover:shadow-xl
-                   disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-lg"
+            [disabled]="
+              assignStaffForm.invalid ||
+              !!assignStaffRoleConflict ||
+              !!assignStaffSectionConflict ||
+              assignStaffSubmitting()
+            "
+            [attr.aria-busy]="assignStaffSubmitting()"
+            class="inline-flex min-h-11
+                  items-center justify-center gap-2
+                  rounded-xl bg-[#000035]
+                  px-4 py-2.5
+                  text-sm font-semibold
+                  text-[#F4B400]
+                  transition hover:bg-[#0a1a2e]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]"
           >
-            Add to Board
+            @if (assignStaffSubmitting()) {
+              <span
+                aria-hidden="true"
+                class="h-4 w-4 animate-spin
+                      rounded-full border-2
+                      border-[#F4B400]/30
+                      border-t-[#F4B400]"
+              ></span>
+
+              Adding…
+            } @else {
+              Add to Board
+            }
           </button>
         </div>
+      </footer>
 
       </form>
 
-    </div>
+    </section>
 
   </div>
 
@@ -1488,73 +3298,182 @@
 <!-- ========================= -->
 
 <ng-container *ngIf="showNewBoardModal()">
-
   <div
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 flex items-center justify-center p-4"
+    class="fixed inset-0 z-9999
+           flex items-end justify-center
+           bg-slate-950/70
+           backdrop-blur-sm
+           sm:items-center sm:p-4"
     (click)="closeNewBoardModal()"
   >
-
-    <div
-      class="bg-white w-full max-w-md rounded-2xl shadow-2xl relative"
+    <section
+      #newBoardDialog
+      tabindex="-1"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="new-board-title"
+      class="relative flex max-h-[94dvh]
+             w-full max-w-md flex-col
+             overflow-hidden bg-white
+             shadow-2xl
+             rounded-t-3xl
+             sm:max-h-[calc(100dvh-2rem)]
+             sm:rounded-3xl"
       (click)="$event.stopPropagation()"
+      (keydown)="onNewBoardDialogKeydown($event)"
     >
 
       <!-- Modal Header -->
-      <div class="bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035] px-8 py-6 flex items-start justify-between gap-4 rounded-t-2xl">
-        <div>
-          <h3 class="text-2xl font-bold text-white">New Editorial Board</h3>
-          <p class="text-sm text-white/70 mt-1">Set the academic year and adviser</p>
-        </div>
-        <button
-          type="button"
-          (click)="closeNewBoardModal()"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl
-                 bg-white/10 hover:bg-white/20 text-white
-                 border border-white/10 hover:border-white/20
-                 transition-all duration-200"
+      <header
+        class="relative z-10 shrink-0
+              bg-linear-to-br
+              from-[#000035]
+              via-[#001f5c]
+              to-[#000035]
+              px-4 py-4
+              sm:px-6 sm:py-5"
+      >
+        <div
+          class="flex items-start
+                justify-between gap-4"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
+          <div class="min-w-0">
+            <h3
+              id="new-board-title"
+              class="text-xl font-bold
+                    text-white sm:text-2xl"
+            >
+              New Editorial Board
+            </h3>
+
+            <p
+              class="mt-1 text-sm
+                    leading-5 text-white/70"
+            >
+              Set the academic year and adviser
+              for the new board.
+            </p>
+          </div>
+
+          <button
+            #newBoardCloseButton
+            type="button"
+            (click)="closeNewBoardModal()"
+            [disabled]="newBoardSubmitting()"
+            class="inline-flex h-11 w-11 shrink-0
+                  items-center justify-center
+                  rounded-xl border border-white/10
+                  bg-white/10 text-white
+                  transition-colors
+                  hover:bg-white/20
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]"
+            aria-label="Close create board dialog"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+      </header>
 
       <!-- Modal Body -->
-      <form [formGroup]="newBoardForm" (ngSubmit)="submitNewBoard()" class="p-8 space-y-5">
+      <form
+        [formGroup]="newBoardForm"
+        (ngSubmit)="submitNewBoard()"
+        class="contents"
+      >
+        <div
+          class="min-h-0 flex-1 space-y-5
+                overflow-y-auto
+                overscroll-contain
+                px-4 py-5
+                sm:px-6 sm:py-6"
+        >
 
         <!-- Academic Year -->
         <div class="space-y-1.5">
           <label for="board-year" class="block text-sm font-semibold text-gray-700">
             Academic Year <span class="text-red-500 ml-0.5">*</span>
           </label>
-          <input
-            id="board-year"
-            type="text"
-            formControlName="academicYear"
-            placeholder="e.g. 2025–2026"
-            class="w-full px-4 py-2.5 border rounded-lg text-sm
-                   focus:ring-2 focus:ring-[#f4b400] focus:outline-none transition"
-            [class.border-red-400]="newBoardForm.get('academicYear')!.invalid && newBoardForm.get('academicYear')!.touched"
-            [class.border-gray-200]="!(newBoardForm.get('academicYear')!.invalid && newBoardForm.get('academicYear')!.touched)"
-          />
+            <input
+              id="board-year"
+              type="text"
+              formControlName="academicYear"
+              placeholder="e.g. 2026-2027"
+              autocomplete="off"
+              inputmode="numeric"
+              aria-describedby="board-year-help board-year-error"
+              class="min-h-11 w-full rounded-xl
+                    border bg-white px-4 py-2.5
+                    text-sm text-slate-700
+                    outline-none transition
+                    placeholder:text-slate-400
+                    focus:border-[#F4B400]
+                    focus:ring-2
+                    focus:ring-[#F4B400]/30"
+              [class.border-red-400]="
+                newBoardForm.get('academicYear')!.invalid &&
+                newBoardForm.get('academicYear')!.touched
+              "
+              [class.border-slate-300]="
+                !(
+                  newBoardForm.get('academicYear')!.invalid &&
+                  newBoardForm.get('academicYear')!.touched
+                )
+              "
+            />
           <p
-            *ngIf="newBoardForm.get('academicYear')!.hasError('required') && newBoardForm.get('academicYear')!.touched"
-            class="text-xs text-red-500"
+            id="board-year-help"
+            class="text-xs leading-5 text-slate-500"
           >
-            Academic year is required.
+            Use two consecutive years, such as 2026-2027.
           </p>
-          <p
-            *ngIf="newBoardForm.get('academicYear')!.hasError('invalidFormat') && newBoardForm.get('academicYear')!.touched"
-            class="text-xs text-red-500"
+
+          <div
+            id="board-year-error"
+            aria-live="polite"
           >
-            Use the format YYYY-YYYY (e.g. 2025-2026).
-          </p>
-          <p
-            *ngIf="newBoardForm.get('academicYear')!.hasError('invalidGap') && newBoardForm.get('academicYear')!.touched"
-            class="text-xs text-red-500"
-          >
-            The second year must be exactly one year after the first (e.g. 2025-2026).
-          </p>
+            @if (
+              newBoardForm.get('academicYear')!
+                .hasError('required') &&
+              newBoardForm.get('academicYear')!.touched
+            ) {
+              <p class="text-xs font-medium text-red-600">
+                Academic year is required.
+              </p>
+            } @else if (
+              newBoardForm.get('academicYear')!
+                .hasError('invalidFormat') &&
+              newBoardForm.get('academicYear')!.touched
+            ) {
+              <p class="text-xs font-medium text-red-600">
+                Use the format YYYY-YYYY.
+              </p>
+            } @else if (
+              newBoardForm.get('academicYear')!
+                .hasError('invalidGap') &&
+              newBoardForm.get('academicYear')!.touched
+            ) {
+              <p class="text-xs font-medium text-red-600">
+                The second year must be exactly one year later.
+              </p>
+            }
+          </div>
+
         </div>
 
         <!-- Adviser Name -->
@@ -1566,9 +3485,17 @@
             id="board-adviser"
             type="text"
             formControlName="adviserName"
+            autocomplete="name"
             placeholder="e.g. Dr. Louraine Chriselle Seguritan"
-            class="w-full px-4 py-2.5 border rounded-lg text-sm
-                   focus:ring-2 focus:ring-[#f4b400] focus:outline-none transition"
+            aria-describedby="board-adviser-error"
+            class="min-h-11 w-full rounded-xl
+                    border bg-white px-4 py-2.5
+                    text-sm text-slate-700
+                    outline-none transition
+                    placeholder:text-slate-400
+                    focus:border-[#F4B400]
+                    focus:ring-2
+                    focus:ring-[#F4B400]/30"
             [class.border-red-400]="newBoardForm.get('adviserName')!.invalid && newBoardForm.get('adviserName')!.touched"
             [class.border-gray-200]="!(newBoardForm.get('adviserName')!.invalid && newBoardForm.get('adviserName')!.touched)"
           />
@@ -1581,32 +3508,89 @@
         </div>
 
         <!-- API Error -->
-        <p *ngIf="newBoardError()" class="text-xs text-red-500 font-medium">{{ newBoardError() }}</p>
+        @if (newBoardError()) {
+          <div
+            role="alert"
+            class="rounded-xl border border-red-200
+                  bg-red-50 px-4 py-3
+                  text-sm font-medium text-red-700"
+          >
+            {{ newBoardError() }}
+          </div>
+        }
+      </div>
 
         <!-- Actions -->
-        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2">
-          <button
-            type="button"
-            (click)="closeNewBoardModal()"
-            class="px-6 py-2.5 rounded-xl border-2 border-[#f4b400] text-gray-700 font-semibold
-                   hover:bg-gray-50 transition-all duration-200"
+        <footer
+          class="shrink-0 border-t border-slate-200
+                bg-white/95 px-4 pt-3
+                pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+                backdrop-blur
+                sm:px-6 sm:pb-3"
+        >
+          <div
+            class="grid grid-cols-1 gap-3
+                  min-[420px]:grid-cols-2"
           >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            [disabled]="newBoardForm.invalid || newBoardSubmitting()"
-            class="px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all duration-200
-                   bg-[#000035] hover:bg-[#0a1a2e] hover:shadow-xl
-                   disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {{ newBoardSubmitting() ? 'Creating…' : 'Create Board' }}
-          </button>
-        </div>
+            <button
+              type="button"
+              (click)="closeNewBoardModal()"
+              [disabled]="newBoardSubmitting()"
+              class="inline-flex min-h-11
+                    items-center justify-center
+                    rounded-xl border border-slate-300
+                    bg-white px-4 py-2.5
+                    text-sm font-semibold text-slate-700
+                    transition hover:bg-slate-50
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-[#F4B400]"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              [disabled]="
+                newBoardForm.invalid ||
+                newBoardSubmitting()
+              "
+              class="inline-flex min-h-11
+                    items-center justify-center gap-2
+                    rounded-xl bg-[#000035]
+                    px-4 py-2.5
+                    text-sm font-semibold
+                    text-[#F4B400]
+                    transition hover:bg-[#0a1a2e]
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-[#F4B400]"
+              [attr.aria-busy]="newBoardSubmitting()"
+            >
+              @if (newBoardSubmitting()) {
+                <span
+                  aria-hidden="true"
+                  class="h-4 w-4 animate-spin
+                        rounded-full border-2
+                        border-[#F4B400]/30
+                        border-t-[#F4B400]"
+                ></span>
+
+                Creating…
+              } @else {
+                Create Board
+              }
+            </button>
+          </div>
+        </footer>
 
       </form>
 
-    </div>
+    </section>
 
   </div>
 

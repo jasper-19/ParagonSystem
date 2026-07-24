@@ -1,7 +1,6 @@
-import { Component, inject, signal, ElementRef, HostListener, computed, effect } from '@angular/core';
+import { Component, inject, signal, ElementRef, HostListener, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  FormBuilder,
   ReactiveFormsModule,
   Validators,
   NonNullableFormBuilder,
@@ -10,15 +9,19 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArticleService } from '../../../../../core/services/article.service';
-import { StaffService } from '../../../../../core/services/staff.service';
-import { Article, ArticleCategory, ArticleStatus } from '../../../../../models/article.model';
+import { Article, ArticleCategory, ArticleStatus, CreateArticleDto } from '../../../../../models/article.model';
 import { RichTextEditorComponent } from '../../../../../shared/components/rich-text-editor/rich-text-editor';
-import { Observable, combineLatest, startWith, of, timer } from 'rxjs';
-import { BoardMember, EditorialBoardData } from '../../../../../models/editorial-board.model';
-import { catchError, debounceTime, distinctUntilChanged, first, map, switchMap } from 'rxjs/operators';
+import { Observable, of, timer, forkJoin } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { BoardMember } from '../../../../../models/editorial-board.model';
+import { catchError, debounceTime, distinctUntilChanged, first, map, switchMap, take } from 'rxjs/operators';
 import { ConfirmationModal } from '../../../../../shared/components/confirmation-modal/confirmation-modal';
+import { ErrorModal } from '../../../../../shared/components/feedback-modal/error-modal';
 import { CoverImagSelectorComponent } from '../../../media-library/components/cover-image-selector/cover-image-selector';
 import { Media } from '../../../../../models/media.model';
+import { EditorialBoardService } from '../../../../../core/services/editorial-board.service';
+import { SidebarService } from '../../../../../core/services/sidebar.service';
+import { SocketService } from '../../../../../core/services/socket.service';
 
 interface CreateArticleForm {
   title: string;
@@ -30,19 +33,38 @@ interface CreateArticleForm {
 
 type CreditField = 'author' | 'photoby' | 'graphicby' | 'illusrationby';
 
+type SelectedCredit = {
+  staffId: string;
+  name: string;
+};
+
+type TagCandidateType =
+  | 'acronym'
+  | 'phrase'
+  | 'keyword';
+
+type TagCandidate = {
+  tag: string;
+  normalized: string;
+  score: number;
+  type: TagCandidateType;
+};
+
 @Component({
   selector: 'app-create-article',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RichTextEditorComponent, ConfirmationModal, CoverImagSelectorComponent],
+  imports: [CommonModule, ReactiveFormsModule, RichTextEditorComponent, ConfirmationModal, CoverImagSelectorComponent, ErrorModal],
   templateUrl: './create-article.html'
 })
-export class CreateArticleComponent {
+export class CreateArticleComponent implements OnDestroy {
   private fb = inject(NonNullableFormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private articleService = inject(ArticleService);
-  private staffService = inject(StaffService);
   private elementRef = inject(ElementRef);
+  private editorialBoardService = inject(EditorialBoardService);
+  private socketService = inject(SocketService);
+  private sidebarService = inject(SidebarService);
 
   readonly editingId = signal<string | null>(null);
   readonly isEditMode = computed(() => this.editingId() !== null);
@@ -50,6 +72,9 @@ export class CreateArticleComponent {
 
   //EB Data
   private allMembers: BoardMember[] = [];
+
+  private removeEditorialBoardUpdatedListener:
+    (() => void) | null = null;
 
   //Credits Shared Signals
   readonly creditSuggestions = signal<BoardMember[]>([]);
@@ -61,12 +86,54 @@ export class CreateArticleComponent {
     graphicby: '',
     illusrationby: '',
   });
-  readonly selectedCredits = signal<Record<CreditField, string[]>>({
+
+  // Sidebar Signals
+  readonly isSidebarOpen = toSignal(
+    this.sidebarService.sidebarOpen$,
+    {
+      initialValue: this.sidebarService.value,
+    }
+  );
+
+  // Form Signals
+  readonly selectedCredits = signal<
+    Record<CreditField, SelectedCredit[]>
+  >({
     author: [],
     photoby: [],
     graphicby: [],
     illusrationby: [],
   });
+
+  readonly saveButtonLabel = computed(() => {
+    const isEdit = this.isEditMode();
+    const isPublished =
+      this.articleStatus() === 'Published';
+
+    if (isEdit) {
+      return isPublished
+        ? 'Update & Publish'
+        : 'Update Draft';
+    }
+
+    return isPublished
+      ? 'Publish Article'
+      : 'Save Draft';
+  });
+
+  readonly submittingLabel = computed(() => {
+    if (this.isEditMode()) {
+      return this.articleStatus() === 'Published'
+        ? 'Updating & Publishing...'
+        : 'Updating Draft...';
+    }
+
+    return this.articleStatus() === 'Published'
+      ? 'Publishing...'
+      : 'Saving Draft...';
+  });
+
+
 
   //Autosave Signals
   readonly lastSavedAt = signal<Date | null>(null);
@@ -83,9 +150,9 @@ export class CreateArticleComponent {
   readonly tagsManuallyEdited = signal(false);
 
   //Tag Limits
-  readonly MAX_SUGGESTED = 6;
+  readonly MAX_SUGGESTED = 10;
   readonly MIN_SELECTED = 1;
-  readonly MAX_SELECTED = 2;
+  readonly MAX_SELECTED = 3;
 
   //Article Catergory Options
   readonly categories: ArticleCategory[] = [
@@ -120,6 +187,15 @@ export class CreateArticleComponent {
     );
   };
 
+
+
+  // Error Modal Signals
+  readonly showErrorModal = signal(false);
+  readonly errorTitle = signal('Unable to Save Article');
+  readonly errorMessage = signal(
+    'The article could not be saved. Please try again.'
+  );
+
   readonly form = this.fb.group({
     title: ['', Validators.required],
     slug: ['', [Validators.required], [this.slugUniqueValidator]],
@@ -144,13 +220,25 @@ export class CreateArticleComponent {
     'Published'
   ];
 
+private readonly handleEditorialBoardUpdated = (): void => {
+  console.log(
+    '📡 Active editorial board changed — refreshing article credit options'
+  );
+
+  this.refreshActiveBoardMembers();
+};
+
+  ngOnDestroy(): void {
+    this.removeEditorialBoardUpdatedListener?.();
+    this.removeEditorialBoardUpdatedListener = null;
+  }
 
   // Auto-generate slug from title
   constructor() {
-  this.initEditModeFromRoute();
   this.setupSlugAutoGeneration();
   this.setupAutoTagGeneration();
-  this.initializeMembers();
+  this.initializeArticleMode();
+  this.socketService.onEditorialBoardUpdated(this.handleEditorialBoardUpdated);
 
   if (!this.isEditMode()) {
     this.restoreDraft();
@@ -159,24 +247,226 @@ export class CreateArticleComponent {
   this.setupAutosave();
 }
 
-private initEditModeFromRoute(): void {
+  private extractUniqueBoardMembers(
+    board: {
+      sections: {
+        members: BoardMember[];
+      }[];
+    }
+  ): BoardMember[] {
+    const uniqueMembers =
+      new Map<string, BoardMember>();
 
-  const slugParam = this.route.snapshot.paramMap.get('slug');
-  if (!slugParam) return;
+    for (const section of board.sections) {
+      for (const member of section.members) {
+        if (!member.staffId) {
+          continue;
+        }
 
-  const slug = String(slugParam).trim();
-  if (!slug) return;
+        uniqueMembers.set(
+          member.staffId,
+          member
+        );
+      }
+    }
 
-  this.articleService.getBySlug(slug).subscribe({
-    next: (article) => {
-      this.originalArticle.set(article);
-      this.editingId.set(article.id);
-      this.autosaveKey = `edit-article-draft-${article.id}`;
-      this.loadArticleForEdit(article);
-    },
-    error: () => this.router.navigate(['/admin/all-articles']),
-  });
-}
+    return [
+      ...uniqueMembers.values(),
+    ];
+  }
+
+  private initializeArticleMode(): void {
+    const slugParam =
+      this.route.snapshot.paramMap.get(
+        'slug'
+      );
+
+    const slug =
+      String(slugParam ?? '').trim();
+
+    if (!slug) {
+      this.initializeCreateMode();
+      return;
+    }
+
+    this.initializeEditMode(slug);
+  }
+
+  private initializeCreateMode(): void {
+    this.editorialBoardService
+      .loadAdminActiveBoard()
+      .subscribe({
+        error: err => {
+          console.error(
+            'Failed to load active editorial board members:',
+            err
+          );
+        },
+      });
+
+    this.subscribeToBoardMembers();
+  }
+
+  private initializeEditMode(
+    slug: string
+  ): void {
+    const article$ =
+      this.articleService
+        .getBySlug(slug)
+        .pipe(take(1));
+
+    const board$ =
+      this.editorialBoardService
+        .loadAdminActiveBoard()
+        .pipe(
+          switchMap(() =>
+            this.editorialBoardService
+              .board$
+              .pipe(take(1))
+          )
+        );
+
+    forkJoin({
+      article: article$,
+      board: board$,
+    }).subscribe({
+      next: ({
+        article,
+        board,
+      }) => {
+        this.allMembers =
+          this.extractUniqueBoardMembers(
+            board
+          );
+
+        this.originalArticle.set(
+          article
+        );
+
+        this.editingId.set(
+          article.id
+        );
+
+        this.autosaveKey =
+          `edit-article-draft-${article.id}`;
+
+        this.loadArticleForEdit(
+          article
+        );
+
+        this.hydrateSelectedCreditsFromArticle(
+          article
+        );
+
+        this.subscribeToBoardMembers();
+      },
+
+      error: err => {
+        console.error(
+          'Failed to initialize article editor:',
+          err
+        );
+
+        this.router.navigate([
+          '/admin/all-articles',
+        ]);
+      },
+    });
+  }
+
+  private boardMembersSubscribed = false;
+
+  private subscribeToBoardMembers(): void {
+    if (this.boardMembersSubscribed) {
+      return;
+    }
+
+    this.boardMembersSubscribed = true;
+
+    this.editorialBoardService
+      .board$
+      .subscribe(board => {
+        this.allMembers =
+          this.extractUniqueBoardMembers(
+            board
+          );
+
+        const activeField =
+          this.activeCreditField();
+
+        if (activeField) {
+          this.updateCreditSuggestions(
+            activeField,
+            this.creditInput()[
+              activeField
+            ]
+          );
+        }
+      });
+  }
+
+  private hydrateSelectedCreditsFromArticle(
+    article: Article
+  ): void {
+    const credits =
+      article.credits ?? [];
+
+    const next:
+      Record<
+        CreditField,
+        SelectedCredit[]
+      > = {
+        author: [],
+        photoby: [],
+        graphicby: [],
+        illusrationby: [],
+      };
+
+    for (const credit of credits) {
+      const selected: SelectedCredit = {
+        staffId: credit.staffId,
+        name: credit.creditedName,
+      };
+
+      switch (credit.creditType) {
+        case 'author':
+          next.author.push(selected);
+          break;
+
+        case 'photo':
+          next.photoby.push(selected);
+          break;
+
+        case 'graphic':
+          next.graphicby.push(selected);
+          break;
+
+        case 'illustration':
+          next.illusrationby.push(
+            selected
+          );
+          break;
+      }
+    }
+
+    this.selectedCredits.set(next);
+
+    this.syncCreditsFieldToForm(
+      'author'
+    );
+
+    this.syncCreditsFieldToForm(
+      'photoby'
+    );
+
+    this.syncCreditsFieldToForm(
+      'graphicby'
+    );
+
+    this.syncCreditsFieldToForm(
+      'illusrationby'
+    );
+  }
 
 private loadArticleForEdit(article: Article): void {
 
@@ -202,13 +492,17 @@ private loadArticleForEdit(article: Article): void {
     featured: article.featured
   }, { emitEvent: false });
 
+  this.refreshSuggestedTags(
+    article.excerpt ?? ''
+  );
+
   // Hydrate multi-select UI state from stored comma-separated values.
   this.creditInput.set({ author: '', photoby: '', graphicby: '', illusrationby: '' });
   this.selectedCredits.set({ author: [], photoby: [], graphicby: [], illusrationby: [] });
-  this.hydrateSelectedCreditsFromForm();
 
   this.selectedImageMedia.set(this.buildMediaFromUrl(article.image));
 }
+
 private setupSlugAutoGeneration(): void {
 
     const titleControl = this.form.controls.title;
@@ -226,55 +520,380 @@ private setupSlugAutoGeneration(): void {
   }
 
 private setupAutoTagGeneration(): void {
-
   const excerptControl = this.form.controls.excerpt;
 
-  excerptControl.valueChanges.subscribe(excerpt => {
+  excerptControl.valueChanges
+    .pipe(
+      map(excerpt => String(excerpt ?? '').trim()),
+      debounceTime(350),
+      distinctUntilChanged()
+    )
+    .subscribe(excerpt => {
+      this.refreshSuggestedTags(excerpt);
+    });
+}
 
-    const cleanText = excerpt?.trim() ?? '';
+private refreshSuggestedTags(excerpt: string): void {
+  if (!excerpt) {
+    this.suggestedTags.set([]);
+    return;
+  }
 
-    // If excerpt empty → reset everything
-    if (!cleanText) {
-      this.suggestedTags.set([]);
-      this.tagsManuallyEdited.set(false);
-      this.form.controls.tags.setValue([]);
-      return;
-    }
+  const selectedTags = new Set(
+    this.form.controls.tags.value.map(tag =>
+      this.normalizeTag(tag)
+    )
+  );
 
-    const generated = this.extractKeywords(cleanText)
-      .slice(0, this.MAX_SUGGESTED);
+  const suggestions = this.extractKeywords(excerpt)
+    .filter(tag => !selectedTags.has(this.normalizeTag(tag)))
+    .slice(0, this.MAX_SUGGESTED);
 
-    this.suggestedTags.set(generated);
+  this.suggestedTags.set(suggestions);
+}
 
-  });
-
+private normalizeTag(tag: string): string {
+  return tag
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/\s+/g, ' ');
 }
 
 private extractKeywords(text: string): string[] {
+  const stopWords = new Set([
+    'a', 'an', 'and', 'are', 'as', 'at', 'be', 'been',
+    'being', 'but', 'by', 'for', 'from', 'had', 'has',
+    'have', 'he', 'her', 'hers', 'him', 'his', 'how',
+    'i', 'if', 'in', 'into', 'is', 'it', 'its', 'of',
+    'on', 'or', 'our', 'ours', 'she', 'that', 'the',
+    'their', 'theirs', 'them', 'they', 'this', 'those',
+    'through', 'to', 'under', 'was', 'we', 'were',
+    'what', 'when', 'where', 'which', 'who', 'will',
+    'with', 'would', 'you', 'your', 'yours',
 
-  const stopWords = [
-    'the','and','or','to','of','in','a','an',
-    'is','are','was','were','for','with','on',
-    'at','by','from','as','that','this','it'
-  ];
+    // Common low-value publication words
+    'article', 'said', 'says', 'according', 'during',
+    'after', 'before', 'also', 'more', 'most', 'new',
+    'current', 'recent'
+  ]);
 
-  const words = text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
-    .split(/\s+/)
-    .filter(word =>
-      word.length > 4 && !stopWords.includes(word)
-    );
+  const normalizedText = text
+    .normalize('NFKC')
+    .replace(/[’‘]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[^a-zA-Z0-9À-ÿ'&\-\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  const frequency: Record<string, number> = {};
-
-  for (const word of words) {
-    frequency[word] = (frequency[word] || 0) + 1;
+  if (!normalizedText) {
+    return [];
   }
 
-  return Object.entries(frequency)
-  .sort((a, b) => b[1] - a[1])
-  .map(entry => entry[0]);
+  const rawWords = normalizedText.split(' ');
+
+  const keywordTokens = rawWords
+    .map(word => this.cleanKeywordToken(word))
+    .filter((word): word is string => {
+      if (!word) return false;
+
+      const normalized = this.normalizeTag(word);
+
+      return (
+        !stopWords.has(normalized) &&
+        this.isUsefulKeyword(word)
+      );
+    });
+
+  const scores = new Map<string, number>();
+  const displayValues = new Map<string, string>();
+
+  // Score individual keywords.
+  keywordTokens.forEach((word, index) => {
+    const normalized = this.normalizeTag(word);
+
+    let score = 1;
+
+    // Reward acronyms such as CSU, CHED, DOST, AI.
+    if (this.isAcronym(word)) {
+      score += 2;
+    }
+
+    // Slightly reward earlier terms in the excerpt.
+    if (index < 8) {
+      score += 0.75;
+    } else if (index < 16) {
+      score += 0.35;
+    }
+
+    scores.set(
+      normalized,
+      (scores.get(normalized) ?? 0) + score
+    );
+
+    if (!displayValues.has(normalized)) {
+      displayValues.set(
+        normalized,
+        this.formatSuggestedTag(word)
+      );
+    }
+  });
+
+  // Score useful adjacent two-word phrases.
+  for (
+    let index = 0;
+    index < keywordTokens.length - 1;
+    index++
+  ) {
+    const first = keywordTokens[index];
+    const second = keywordTokens[index + 1];
+
+    if (!first || !second) continue;
+
+    const phrase = `${first} ${second}`;
+    const normalizedPhrase = this.normalizeTag(phrase);
+
+    let score = 2.25;
+
+    if (index < 8) {
+      score += 0.75;
+    }
+
+    if (
+      this.isAcronym(first) ||
+      this.isAcronym(second)
+    ) {
+      score += 0.5;
+    }
+
+    scores.set(
+      normalizedPhrase,
+      (scores.get(normalizedPhrase) ?? 0) + score
+    );
+
+    if (!displayValues.has(normalizedPhrase)) {
+      displayValues.set(
+        normalizedPhrase,
+        this.formatSuggestedTag(phrase)
+      );
+    }
+  }
+
+  const candidates: TagCandidate[] =
+    [...scores.entries()]
+      .map(([normalized, score]) => {
+        const tag =
+          displayValues.get(normalized);
+
+        if (!tag) {
+          return null;
+        }
+
+        return {
+          tag,
+          normalized,
+          score,
+          type: this.getTagCandidateType(tag),
+        };
+      })
+      .filter(
+        (
+          candidate
+        ): candidate is TagCandidate =>
+          candidate !== null
+      )
+      .sort(
+        (first, second) =>
+          second.score - first.score ||
+          first.tag.localeCompare(second.tag)
+      );
+
+  return this.balanceTagCandidates(
+    candidates,
+    this.MAX_SUGGESTED
+  );
+}
+
+private cleanKeywordToken(value: string): string {
+  return value
+    .trim()
+    .replace(/^[-'&]+|[-'&]+$/g, '');
+}
+
+private isUsefulKeyword(value: string): boolean {
+  const lettersOnly = value.replace(/[^a-zA-ZÀ-ÿ]/g, '');
+
+  if (!lettersOnly) {
+    return false;
+  }
+
+  if (this.isAcronym(value)) {
+    return lettersOnly.length >= 2;
+  }
+
+  return lettersOnly.length >= 4;
+}
+
+private isAcronym(value: string): boolean {
+  return /^[A-Z0-9]{2,8}$/.test(value);
+}
+
+private getTagCandidateType(
+  tag: string
+): TagCandidateType {
+  const words = tag
+    .trim()
+    .split(/\s+/);
+
+  if (
+    words.length === 1 &&
+    this.isAcronym(words[0])
+  ) {
+    return 'acronym';
+  }
+
+  if (words.length > 1) {
+    return 'phrase';
+  }
+
+  return 'keyword';
+}
+
+private balanceTagCandidates(
+  candidates: TagCandidate[],
+  limit: number
+): string[] {
+  if (limit <= 0) {
+    return [];
+  }
+
+  const grouped: Record<
+    TagCandidateType,
+    TagCandidate[]
+  > = {
+    keyword: [],
+    phrase: [],
+    acronym: [],
+  };
+
+  for (const candidate of candidates) {
+    grouped[candidate.type].push(
+      candidate
+    );
+  }
+
+  const selected: TagCandidate[] = [];
+  const selectedKeys =
+    new Set<string>();
+
+  const addCandidates = (
+    source: TagCandidate[],
+    quota: number
+  ): void => {
+    let added = 0;
+
+    for (const candidate of source) {
+      if (
+        selected.length >= limit ||
+        added >= quota
+      ) {
+        break;
+      }
+
+      if (
+        selectedKeys.has(
+          candidate.normalized
+        )
+      ) {
+        continue;
+      }
+
+      selected.push(candidate);
+      selectedKeys.add(
+        candidate.normalized
+      );
+
+      added++;
+    }
+  };
+
+  const keywordQuota =
+    Math.min(4, limit);
+
+  const phraseQuota =
+    Math.min(
+      3,
+      Math.max(limit - keywordQuota, 0)
+    );
+
+  const acronymQuota =
+    Math.min(
+      2,
+      Math.max(
+        limit -
+          keywordQuota -
+          phraseQuota,
+        0
+      )
+    );
+
+  addCandidates(
+    grouped.keyword,
+    keywordQuota
+  );
+
+  addCandidates(
+    grouped.phrase,
+    phraseQuota
+  );
+
+  addCandidates(
+    grouped.acronym,
+    acronymQuota
+  );
+
+  for (const candidate of candidates) {
+    if (selected.length >= limit) {
+      break;
+    }
+
+    if (
+      selectedKeys.has(
+        candidate.normalized
+      )
+    ) {
+      continue;
+    }
+
+    selected.push(candidate);
+    selectedKeys.add(
+      candidate.normalized
+    );
+  }
+
+  return selected
+    .sort(
+      (first, second) =>
+        second.score - first.score ||
+        first.tag.localeCompare(
+          second.tag
+        )
+    )
+    .map(candidate => candidate.tag);
+}
+
+
+private formatSuggestedTag(value: string): string {
+  return value
+    .split(/\s+/)
+    .map(word => {
+      if (this.isAcronym(word)) {
+        return word;
+      }
+
+      return word.charAt(0).toUpperCase() +
+        word.slice(1).toLowerCase();
+    })
+    .join(' ');
 }
 
     private generateSlug(value: string): string {
@@ -320,30 +939,56 @@ onTagsInput(event: Event): void {
 }
 
 addTag(tag: string): void {
-
   const current = this.form.controls.tags.value;
+  const cleanedTag = tag.trim();
 
-  if (current.includes(tag)) return;
+  if (!cleanedTag) return;
 
+  const normalizedTag =
+    this.normalizeTag(cleanedTag);
+
+  const alreadySelected = current.some(
+    currentTag =>
+      this.normalizeTag(currentTag) ===
+      normalizedTag
+  );
+
+  if (alreadySelected) return;
   if (current.length >= this.MAX_SELECTED) return;
 
   this.tagsManuallyEdited.set(true);
 
-  this.form.controls.tags.setValue([...current, tag]);
+  this.form.controls.tags.setValue([
+    ...current,
+    cleanedTag,
+  ]);
+
+  this.refreshSuggestedTags(
+    this.form.controls.excerpt.value
+  );
 }
 
 removeTag(tag: string): void {
+  const current =
+    this.form.controls.tags.value;
 
-  const current = this.form.controls.tags.value;
-
-  if (current.length <= this.MIN_SELECTED) return;
+  if (current.length <= this.MIN_SELECTED) {
+    return;
+  }
 
   this.tagsManuallyEdited.set(true);
 
-  const updated = this.form.controls.tags.value
-    .filter(t => t !== tag);
+  const updated = current.filter(
+    currentTag =>
+      this.normalizeTag(currentTag) !==
+      this.normalizeTag(tag)
+  );
 
   this.form.controls.tags.setValue(updated);
+
+  this.refreshSuggestedTags(
+    this.form.controls.excerpt.value
+  );
 }
 
 onCoverMediaChange(media: Media | null): void {
@@ -351,66 +996,111 @@ onCoverMediaChange(media: Media | null): void {
   this.form.controls.image.setValue(media?.fileUrl || media?.filePath || '');
 }
 
-  //Initialize Members for Author AutoComplete — fetch staff from backend
-private initializeMembers(): void {
-    // Subscribe to staff$ so we receive backend data when it arrives (async)
-    this.staffService.staff$.subscribe(staffList => {
-      this.allMembers = staffList.map(s => ({
-        name: s.fullName,
-        position: s.assignedRole ?? s.subRole ?? '',
-        initials: s.fullName?.split(' ').map(p => p[0]).join('').substring(0,2).toUpperCase(),
-        staffId: s.id,
-      }));
-      this.hydrateSelectedCreditsFromForm();
-    });
-  }
-
-private setupCreditAutocomplete(
-  _fieldName: CreditField
-): void {
-  // (Deprecated) old single-select implementation was removed in favor of multi-select.
-}
-
 private hydrateSelectedCreditsFromForm(): void {
   const current = this.selectedCredits();
-  const next: Record<CreditField, string[]> = { ...current };
-
-  const fields: CreditField[] = ['author', 'photoby', 'graphicby', 'illusrationby'];
+  const next: Record<CreditField, SelectedCredit[]> = {
+    author: [...current.author],
+    photoby: [...current.photoby],
+    graphicby: [...current.graphicby],
+    illusrationby: [...current.illusrationby],
+  };
+  const fields: CreditField[] = [
+    'author',
+    'photoby',
+    'graphicby',
+    'illusrationby',
+  ];
   for (const field of fields) {
-    if (next[field].length) continue;
-    const raw = String(this.form.controls[field].value ?? '').trim();
-    if (!raw) continue;
-    next[field] = raw
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
+    if (next[field].length > 0) {
+      continue;
+    }
+    const raw = String(
+      this.form.controls[field].value ?? ''
+    ).trim();
 
+    if (!raw) {
+      continue;
+    }
+    const names = raw
+      .split(',')
+      .map(name => name.trim())
+      .filter(Boolean);
+    next[field] = names
+      .map(name => {
+        const member = this.allMembers.find(
+          candidate =>
+            candidate.name.trim().toLowerCase() ===
+            name.toLowerCase()
+        );
+        if (!member?.staffId) {
+          return null;
+        }
+        return {
+          staffId: member.staffId,
+          name: member.name,
+        };
+      })
+      .filter(
+        (credit): credit is SelectedCredit =>
+          credit !== null
+      );
+  }
   this.selectedCredits.set(next);
 }
 
-private syncCreditsFieldToForm(field: CreditField): void {
-  const names = this.selectedCredits()[field];
-  this.form.controls[field].setValue(names.join(', '));
+private syncCreditsFieldToForm(
+  field: CreditField
+): void {
+  const names = this.selectedCredits()[field]
+    .map(credit => credit.name);
+  this.form.controls[field].setValue(
+    names.join(', ')
+  );
 }
 
-private addCredit(field: CreditField, name: string): void {
-  const trimmed = name.trim();
-  if (!trimmed) return;
-
+private addCredit(
+  field: CreditField,
+  member: BoardMember
+): void {
+  const staffId = member.staffId;
+  const name = member.name.trim();
+  if (!staffId || !name) {
+    return;
+  }
   const current = this.selectedCredits();
   const existing = current[field];
-  if (existing.some((n) => n.toLowerCase() === trimmed.toLowerCase())) return;
-
-  const next = { ...current, [field]: [...existing, trimmed] };
-  this.selectedCredits.set(next);
+  if (
+    existing.some(
+      credit => credit.staffId === staffId
+    )
+  ) {
+    return;
+  }
+  this.selectedCredits.set({
+    ...current,
+    [field]: [
+      ...existing,
+      {
+        staffId,
+        name,
+      },
+    ],
+  });
   this.syncCreditsFieldToForm(field);
 }
 
-removeCredit(field: CreditField, name: string): void {
+removeCredit(
+  field: CreditField,
+  staffId: string
+): void {
   const current = this.selectedCredits();
-  const nextList = current[field].filter((n) => n !== name);
-  this.selectedCredits.set({ ...current, [field]: nextList });
+  const nextList = current[field].filter(
+    credit => credit.staffId !== staffId
+  );
+  this.selectedCredits.set({
+    ...current,
+    [field]: nextList,
+  });
   this.syncCreditsFieldToForm(field);
 }
 
@@ -429,29 +1119,64 @@ onCreditInput(field: CreditField, event: Event): void {
   this.updateCreditSuggestions(field, value);
 }
 
-private updateCreditSuggestions(_field: CreditField, raw: string): void {
-  const search = raw.trim().toLowerCase();
-
-  if (!search || search.length < 2) {
-    this.creditSuggestions.set(this.allMembers);
-    this.highlightedIndex.set(this.allMembers.length ? 0 : -1);
-    return;
-  }
-
-  const filtered = this.allMembers.filter((member) =>
-    member.name.toLowerCase().includes(search)
+isCreditStillActive(
+  credit: SelectedCredit
+): boolean {
+  return this.allMembers.some(
+    member => member.staffId === credit.staffId
   );
-
-  this.creditSuggestions.set(filtered);
-  this.highlightedIndex.set(filtered.length ? 0 : -1);
 }
 
-private commitTypedCredit(field: CreditField): void {
-  const typed = this.creditInput()[field].trim();
-  if (!typed) return;
+private updateCreditSuggestions(
+  field: CreditField,
+  raw: string
+): void {
+  const search = raw.trim().toLowerCase();
+  const selectedIds = new Set(
+    this.selectedCredits()[field].map(
+      credit => credit.staffId
+    )
+  );
+  const availableMembers =
+    this.allMembers.filter(
+      member =>
+        !!member.staffId &&
+        !selectedIds.has(member.staffId)
+    );
+  const filtered =
+    !search || search.length < 2
+      ? availableMembers
+      : availableMembers.filter(member =>
+          member.name
+            .toLowerCase()
+            .includes(search)
+        );
+  this.creditSuggestions.set(filtered);
+  this.highlightedIndex.set(
+    filtered.length ? 0 : -1
+  );
+}
 
-  this.addCredit(field, typed);
-  this.creditInput.set({ ...this.creditInput(), [field]: '' });
+private commitTypedCredit(
+  field: CreditField
+): void {
+  const typed =
+    this.creditInput()[field]
+      .trim()
+      .toLowerCase();
+  if (!typed) return;
+  const exactMatch = this.allMembers.find(
+    member =>
+      member.name.trim().toLowerCase() === typed
+  );
+  if (!exactMatch) {
+    return;
+  }
+  this.addCredit(field, exactMatch);
+  this.creditInput.set({
+    ...this.creditInput(),
+    [field]: '',
+  });
 }
 
 private commitAllTypedCredits(): void {
@@ -463,12 +1188,19 @@ selectCredit(member: BoardMember): void {
   const field = this.activeCreditField();
   if (!field) return;
 
-  this.addCredit(field, member.name);
+  this.addCredit(field, member);
   this.creditInput.set({ ...this.creditInput(), [field]: '' });
 
   this.creditSuggestions.set([]);
   this.activeCreditField.set(null);
   this.highlightedIndex.set(-1);
+}
+
+private getSelectedCreditIds(
+  field: CreditField
+): string[] {
+  return this.selectedCredits()[field]
+    .map(credit => credit.staffId);
 }
 
 //autosave methods
@@ -501,6 +1233,9 @@ private restoreDraft(): void {
   const parsed = JSON.parse(saved);
 
   this.form.patchValue(parsed);
+  this.refreshSuggestedTags(
+    this.form.controls.excerpt.value
+  );
   this.hydrateSelectedCreditsFromForm();
   this.selectedImageMedia.set(this.buildMediaFromUrl(this.form.controls.image.value));
 
@@ -513,83 +1248,189 @@ private executeSave(): void {
   this.commitAllTypedCredits();
   this.form.updateValueAndValidity();
 
-  const selectedTags = this.form.controls.tags.value;
+  const selectedTags =
+    this.form.controls.tags.value;
+
+  const authorIds =
+    this.getSelectedCreditIds('author');
 
   if (
     this.form.invalid ||
     selectedTags.length < this.MIN_SELECTED ||
     selectedTags.length > this.MAX_SELECTED ||
+    authorIds.length === 0 ||
     this.isSubmitting()
   ) {
+    if (authorIds.length === 0) {
+      this.form.controls.author.markAsTouched();
+    }
+
     return;
   }
 
+  const raw = this.form.getRawValue();
+
+  const dto: CreateArticleDto = {
+    ...raw,
+
+    authorIds,
+
+    photoByIds:
+      this.getSelectedCreditIds('photoby'),
+
+    graphicByIds:
+      this.getSelectedCreditIds('graphicby'),
+
+    illustrationByIds:
+      this.getSelectedCreditIds(
+        'illusrationby'
+      ),
+  };
+
   this.isSubmitting.set(true);
 
-  const raw = this.form.getRawValue();
   const id = this.editingId();
 
   if (id !== null) {
-
     const existing = this.originalArticle();
+
     if (!existing) {
       this.isSubmitting.set(false);
       return;
     }
 
-    this.articleService.updateArticle(id, raw).pipe(
-      switchMap((updated) => {
-        this.originalArticle.set(updated);
-        if (raw.status === 'Published' && !updated.publishedAt) {
-          return this.articleService.publishArticle(id);
-        }
-        return of(updated);
-      })
-    ).subscribe({
-      next: (updated) => {
-        this.originalArticle.set(updated);
-        localStorage.removeItem(this.autosaveKey);
-        this.isSubmitting.set(false);
-        this.router.navigate(['/admin/all-articles']);
-      },
-      error: (err) => {
-        console.error('Failed to update article', err);
-        this.isSubmitting.set(false);
-        const details = err?.error?.details;
-        if (Array.isArray(details) && details.length) {
-          alert(details.map((d: any) => `${d.field}: ${d.message}`).join('\n'));
-        } else {
-          alert('Failed to update the article. Please try again.');
-        }
-      }
-    });
+    this.articleService
+      .updateArticle(id, dto)
+      .pipe(
+        switchMap(updated => {
+          this.originalArticle.set(updated);
 
-  } else {
-    this.articleService.createArticle(raw).pipe(
-      switchMap((created) => {
-        if (raw.status === 'Published' && !created.publishedAt) {
-          return this.articleService.publishArticle(created.id);
+          if (
+            dto.status === 'Published' &&
+            !updated.publishedAt
+          ) {
+            return this.articleService
+              .publishArticle(id);
+          }
+
+          return of(updated);
+        })
+      )
+      .subscribe({
+        next: updated => {
+          this.originalArticle.set(updated);
+          localStorage.removeItem(
+            this.autosaveKey
+          );
+          this.isSubmitting.set(false);
+
+          this.router.navigate([
+            '/admin/all-articles',
+          ]);
+        },
+
+        error: err => {
+          this.handleArticleSaveError(
+            err,
+            'update'
+          );
+        },
+      });
+
+    return;
+  }
+
+  this.articleService
+    .createArticle(dto)
+    .pipe(
+      switchMap(created => {
+        if (
+          dto.status === 'Published' &&
+          !created.publishedAt
+        ) {
+          return this.articleService
+            .publishArticle(created.id);
         }
+
         return of(created);
       })
-    ).subscribe({
+    )
+    .subscribe({
       next: () => {
-        localStorage.removeItem(this.autosaveKey);
+        localStorage.removeItem(
+          this.autosaveKey
+        );
+
         this.isSubmitting.set(false);
-        this.router.navigate(['/admin/all-articles']);
+
+        this.router.navigate([
+          '/admin/all-articles',
+        ]);
       },
-      error: (err) => {
-        console.error('Failed to create article', err);
-        this.isSubmitting.set(false);
-        const details = err?.error?.details;
-        if (Array.isArray(details) && details.length) {
-          alert(details.map((d: any) => `${d.field}: ${d.message}`).join('\n'));
-        } else {
-          alert('Failed to create the article. Please try again.');
-        }
-      }
+
+      error: err => {
+        this.handleArticleSaveError(
+          err,
+          'create'
+        );
+      },
     });
+}
+
+private handleArticleSaveError(
+  err: any,
+  action: 'create' | 'update'
+): void {
+  console.error(
+    `Failed to ${action} article`,
+    err
+  );
+
+  this.isSubmitting.set(false);
+
+  const backendMessage =
+    err?.error?.error;
+
+  const validationDetails =
+    err?.error?.details;
+
+  this.errorTitle.set(
+    action === 'create'
+      ? 'Unable to Create Article'
+      : 'Unable to Update Article'
+  );
+
+  if (
+    backendMessage ===
+    'Only members of the active editorial board can be credited.'
+  ) {
+    this.errorMessage.set(
+      'Only members of the active editorial board can be credited. Please remove or replace any inactive contributors before saving the article.'
+    );
+  } else if (
+    Array.isArray(validationDetails) &&
+    validationDetails.length > 0
+  ) {
+    this.errorMessage.set(
+      validationDetails
+        .map(
+          (detail: any) =>
+            `${detail.field}: ${detail.message}`
+        )
+        .join('\n')
+    );
+  } else {
+    this.errorMessage.set(
+      backendMessage ??
+      `Failed to ${action} the article. Please try again.`
+    );
   }
+
+  this.showErrorModal.set(true);
+}
+
+closeErrorModal(): void {
+  this.showErrorModal.set(false);
 }
 
 //submit
@@ -775,23 +1616,53 @@ handleKeyDown(event: KeyboardEvent): void {
       break;
 
     case 'Escape':
-      this.creditSuggestions.set([]);
-      this.activeCreditField.set(null);
-      this.highlightedIndex.set(-1);
+      event.preventDefault();
+      this.closeCreditSuggestions();
       break;
   }
 
 }
 
-@HostListener('document:click', ['$event'])
-handleOutsideClick(event: MouseEvent): void {
-
-  if (!this.elementRef.nativeElement.contains(event.target)) {
-    this.creditSuggestions.set([]);
-    this.activeCreditField.set(null);
-    this.highlightedIndex.set(-1);
+  private refreshActiveBoardMembers(): void {
+    this.editorialBoardService
+      .loadAdminActiveBoard()
+      .subscribe({
+        error: err => {
+          console.error(
+            'Failed to refresh active editorial board members:',
+            err
+          );
+        },
+      });
   }
 
+readonly articleStatus = toSignal(
+  this.form.controls.status.valueChanges,
+  {
+    initialValue: this.form.controls.status.value,
+  }
+);
+
+private closeCreditSuggestions(): void {
+  this.creditSuggestions.set([]);
+  this.activeCreditField.set(null);
+  this.highlightedIndex.set(-1);
+}
+
+@HostListener('document:click', ['$event'])
+handleOutsideClick(event: MouseEvent): void {
+  if (
+    !this.elementRef.nativeElement.contains(
+      event.target
+    )
+  ) {
+    this.closeCreditSuggestions();
+  }
+}
+
+@HostListener('window:resize')
+onWindowResize(): void {
+  this.closeCreditSuggestions();
 }
 
 }

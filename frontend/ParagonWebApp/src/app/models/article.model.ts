@@ -1,10 +1,7 @@
-export type ArticleStatus = 'Draft' | 'Published' | 'Archived';
-
-export type CreateArticle = Omit<
-  Article,
-  'id' | 'views' | 'createdAt' | 'publishedAt'
->;
-
+export type ArticleStatus =
+  | 'Draft'
+  | 'Published'
+  | 'Archived';
 
 export type ArticleCategory =
   | 'News'
@@ -15,6 +12,18 @@ export type ArticleCategory =
   | 'DevCom'
   | 'Literary';
 
+export type ArticleCreditType =
+  | 'author'
+  | 'photo'
+  | 'graphic'
+  | 'illustration';
+
+export interface ArticleCredit {
+  staffId: string;
+  creditedName: string;
+  creditType: ArticleCreditType;
+}
+
 export interface Article {
   id: string;
 
@@ -24,37 +33,51 @@ export interface Article {
   content: string;
   image: string;
 
+  /**
+   * Legacy display-name fields.
+   * Keep these while existing public article views
+   * still read credits as strings.
+   */
   author: string;
   photoby: string;
   graphicby: string;
   illusrationby: string;
 
-  category: ArticleCategory;
-  tags: string[];
+  authorIds?: string[];
+  photoByIds?: string[];
+  graphicByIds?: string[];
+  illustrationByIds?: string[];
 
-  status: ArticleStatus;        // NOT optional
-  featured: boolean;            // NOT optional
-  views: number;                // required
-
-  createdAt: Date;              // always exists
-  publishedAt?: Date;           // only if published
-}
-
-export interface CreateArticleDto {
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  image: string;
-
-  author: string;
-  photoby: string;
-  graphicby: string;
-  illusrationby: string;
+  /**
+   * Structured credits returned by the backend.
+   * Optional during migration because older articles
+   * may not have article_credits records yet.
+   */
+  credits?: ArticleCredit[];
 
   category: ArticleCategory;
   tags: string[];
 
   status: ArticleStatus;
   featured: boolean;
+  views: number;
+
+  createdAt: Date;
+  publishedAt?: Date;
+}
+
+export type CreateArticle = Omit<
+  Article,
+  | 'id'
+  | 'views'
+  | 'createdAt'
+  | 'publishedAt'
+  | 'credits'
+>;
+
+export interface CreateArticleDto extends CreateArticle {
+  authorIds: string[];
+  photoByIds: string[];
+  graphicByIds: string[];
+  illustrationByIds: string[];
 }

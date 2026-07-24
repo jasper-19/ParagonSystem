@@ -1,14 +1,20 @@
-import { Component, EventEmitter, Output, inject, OnInit, ElementRef, ViewChild, AfterViewInit, computed } from '@angular/core';
+import { Component, EventEmitter, Output, inject, OnInit, ElementRef, ViewChild, AfterViewInit, computed, effect, untracked, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, tap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ArticleService } from '../../../core/services/article.service';
 import { Article } from '../../../models/article.model';
 import { imageVariant } from '../../utils/image-variant.util';
 import { ImagePlaceholderComponent } from '../image-placeholder/image-placeholder';
+
+type SearchMode =
+  | 'idle'
+  | 'query'
+  | 'category';
 
 @Component({
   selector: 'app-search-modal',
@@ -20,6 +26,7 @@ export class SearchModal implements OnInit, AfterViewInit {
   protected readonly imageVariant = imageVariant;
 
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly destroyRef = inject(DestroyRef);
 
   @Output() close = new EventEmitter<void>();
 
@@ -28,6 +35,48 @@ export class SearchModal implements OnInit, AfterViewInit {
 
   private articleService = inject(ArticleService);
   private router = inject(Router);
+
+  private searchMode: SearchMode = 'idle';
+  private runTextSearch(
+  query: string,
+  showLoading = true
+): void {
+  const term = query.trim();
+
+  if (term.length < 2) {
+    this.results = [];
+    this.hasSearched = false;
+    this.isLoading = false;
+    this.searchMode = 'idle';
+    return;
+  }
+
+  this.searchMode = 'query';
+  this.hasSearched = true;
+
+  if (showLoading) {
+    this.isLoading = true;
+  }
+
+  this.articleService
+    .searchArticles(term)
+    .pipe(
+      catchError(err => {
+        console.error(
+          'Failed to search articles',
+          err
+        );
+
+        return of([]);
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    )
+    .subscribe(articles => {
+      this.results = articles;
+      this.isLoading = false;
+    });
+}
+
 
   readonly recentArticles = computed(() =>
     this.searchFeed()?.recent ?? []
@@ -51,28 +100,60 @@ export class SearchModal implements OnInit, AfterViewInit {
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
-        tap(() => {
+        tap(term => {
+          const query = term.trim();
+
+          if (query.length < 2) {
+            this.results = [];
+            this.hasSearched = false;
+            this.isLoading = false;
+            this.searchMode = 'idle';
+            return;
+          }
+
           this.isLoading = true;
           this.hasSearched = true;
+          this.searchMode = 'query';
         }),
-        switchMap((term) => {
-          const q = term.trim();
+        switchMap(term => {
+          const query = term.trim();
 
-          if (q.length < 2) {
-            this.isLoading = false;
-            this.hasSearched = false;
+          if (query.length < 2) {
             return of([]);
           }
 
-          return this.articleService.searchArticles(q).pipe(
-            catchError(() => of([]))
-          );
-        })
+          return this.articleService
+            .searchArticles(query)
+            .pipe(
+              catchError(err => {
+                console.error(
+                  'Failed to search articles',
+                  err
+                );
+
+                return of([]);
+              })
+            );
+        }),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((articles) => {
+      .subscribe(articles => {
         this.results = articles;
         this.isLoading = false;
       });
+
+    effect(() => {
+      const version =
+        this.articleService.articlesChanged();
+
+      if (version === 0) {
+        return;
+      }
+
+      untracked(() => {
+        this.refreshCurrentResults();
+      });
+    });
   }
 
   ngOnInit(): void {
@@ -102,29 +183,13 @@ export class SearchModal implements OnInit, AfterViewInit {
   selectCategory(category: string): void {
     this.selectedCategory = category;
     this.query = category;
-    this.hasSearched = true;
-    this.isLoading = true;
 
-    this.articleService.getArticles({
-      page: 1,
-      limit: 12,
-      category: category as any,
-      sort: 'latest',
-    }).subscribe({
-      next: (articles) => {
-        this.results = articles;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.results = [];
-        this.isLoading = false;
-      }
-    });
+    this.runCategorySearch(category);
   }
 
-  onBackdropClick(): void {
-    this.close.emit();
-  }
+    onBackdropClick(): void {
+      this.close.emit();
+    }
 
   getCategoryIcon(category: string): SafeHtml {
 
@@ -135,6 +200,65 @@ export class SearchModal implements OnInit, AfterViewInit {
       this.categoryIcons['news']
     );
 
+  }
+
+  private refreshCurrentResults(): void {
+    if (
+      this.searchMode === 'query' &&
+      this.query.trim().length >= 2
+    ) {
+      this.runTextSearch(
+        this.query,
+        false
+      );
+
+      return;
+    }
+
+    if (
+      this.searchMode === 'category' &&
+      this.selectedCategory
+    ) {
+      this.runCategorySearch(
+        this.selectedCategory,
+        false
+      );
+    }
+  }
+
+  private runCategorySearch(
+    category: string,
+    showLoading = true
+  ): void {
+    this.searchMode = 'category';
+    this.hasSearched = true;
+
+    if (showLoading) {
+      this.isLoading = true;
+    }
+
+    this.articleService
+      .getArticles({
+        page: 1,
+        limit: 12,
+        category: category as any,
+        sort: 'latest',
+      })
+      .pipe(
+        catchError(err => {
+          console.error(
+            'Failed to load category search results',
+            err
+          );
+
+          return of([]);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(articles => {
+        this.results = articles;
+        this.isLoading = false;
+      });
   }
 
 private readonly categoryIcons: Record<string, SafeHtml> = {

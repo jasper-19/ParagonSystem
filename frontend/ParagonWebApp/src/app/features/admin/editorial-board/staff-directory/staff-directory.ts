@@ -1,8 +1,7 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, AfterViewInit, ElementRef, HostListener, OnDestroy, ViewChild  } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { combineLatest, map, of, switchMap, finalize } from 'rxjs';
-
+import { combineLatest, map, switchMap, finalize, Subscription } from 'rxjs';
 import { ViewMemberInfoModalComponent } from '../../../../shared/components/view-member-info-modal/view-member-info-modal';
 import { ConfirmationModal } from '../../../../shared/components/confirmation-modal/confirmation-modal';
 import { ApplicationService } from '../../../../core/services/application.service';
@@ -18,20 +17,69 @@ type SelectedApplicationPosition = {
   positionId: string;
   categories: string[];
 }
-
 @Component({
   selector: 'admin-editorial-staff',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ViewMemberInfoModalComponent, ConfirmationModal],
   templateUrl: './staff-directory.html',
 })
-export class StaffDirectoryComponent implements OnInit {
+export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy {
+
+  @ViewChild('assignDialog')
+  private assignDialog?: ElementRef<HTMLElement>;
+
+  @ViewChild('assignCloseButton')
+  private assignCloseButton?: ElementRef<HTMLButtonElement>;
+
+  @ViewChild('assignStaffDialog')
+  private assignStaffDialog?: ElementRef<HTMLElement>;
+
+  @ViewChild('assignStaffCloseButton')
+  private assignStaffCloseButton?: ElementRef<HTMLButtonElement>;
+
+  @ViewChild('newBoardDialog')
+  private newBoardDialog?: ElementRef<HTMLElement>;
+
+  @ViewChild('newBoardCloseButton')
+  private newBoardCloseButton?: ElementRef<HTMLButtonElement>;
+
+  @ViewChild('editRoleDialog')
+  private editRoleDialog?: ElementRef<HTMLElement>;
+
+  @ViewChild('editRoleCloseButton')
+  private editRoleCloseButton?: ElementRef<HTMLButtonElement>;
+
+
+  @ViewChild('revokeAcceptanceDialog')
+  private revokeAcceptanceDialog?: ElementRef<HTMLElement>;
+
+  @ViewChild('revokeAcceptanceCloseButton')
+  private revokeAcceptanceCloseButton?: ElementRef<HTMLButtonElement>;
+
+  readonly revokeAcceptanceSubmitting = signal(false);
+
+  readonly revokeAcceptanceError =
+    signal<string | null>(null);
+
+  private previouslyFocusedElement:
+    HTMLElement | null = null;
+
+  private viewInitialized = false;
+  private previousBodyOverflow = '';
+  private isBodyScrollLocked = false;
 
   private applicationService = inject(ApplicationService);
   private editorialBoardService = inject(EditorialBoardService);
   private staffService = inject(StaffService);
   private collegeService = inject(CollegeService);
   private fb = inject(FormBuilder);
+
+  private sectionTouchStartX: number | null = null;
+  private readonly sectionSwipeThreshold = 50;
+
+  private allBoardsSubscription?: Subscription;
+
+  private boardSubscription?: Subscription;
 
   colleges = signal<College[]>([]);
 
@@ -40,15 +88,6 @@ export class StaffDirectoryComponent implements OnInit {
   boardLoaded$ = this.editorialBoardService.boardLoaded$;
   hasActiveBoard$ = this.editorialBoardService.hasActiveBoard$;
 
-  /**
-   * Staff members eligible and available for the current board.
-   * Rules enforced on both layers:
-   *   – Backend: /api/staff/eligible-for-board already excludes 4th-year staff.
-   *   – Frontend guard: additionally filters out 4th_year in case the cache is stale.
-   *   – Members who already hold their maximum 2 board positions are excluded.
-   *   – When the board is marked satisfied (persisted in DB), members with exactly
-   *     1 assignment are also hidden so the panel stays clean.
-   */
   availableForAssignment$ = combineLatest([
     this.editorialBoardService.board$,
     this.staffService.staff$,
@@ -78,26 +117,111 @@ export class StaffDirectoryComponent implements OnInit {
     })
   );
 
+  readonly awaitingAssignment$ =
+    this.applications$.pipe(
+      map(applications =>
+        applications.filter(
+          application =>
+            application.status === 'accepted' &&
+            !application.assigned
+        )
+      )
+    );
+
+  readonly boardLoading = signal(true);
+  readonly staffLoading = signal(true);
+  readonly collegesLoading = signal(true);
+  readonly boardsLoading = signal(true);
+
+  readonly boardLoadError =
+    signal<string | null>(null);
+
+  readonly staffLoadError =
+    signal<string | null>(null);
+
+  readonly collegesLoadError =
+    signal<string | null>(null);
+
+  readonly boardsLoadError =
+    signal<string | null>(null);
+
+  readonly assignSubmitting =
+    signal(false);
+
+  readonly assignSubmitError =
+    signal<string | null>(null);
+
+  readonly allBoards$ =
+    this.editorialBoardService.allBoards$;
+
+  // Assign Role modal
+  activeSectionIndex = -1;
+  activeRoleIndex = -1;
+
+  // Add Staff modal
+  activeAssignStaffSectionIndex = -1;
+  activeAssignStaffRoleIndex = -1;
+
+  // Edit modal
+  readonly activeEditSectionIndex =
+    signal(-1);
+
+  readonly activeEditRoleIndex =
+    signal(-1);
+
   ngOnInit(): void {
-    // Clear hardcoded initial data, then load real board from DB.
-    this.editorialBoardService.loadActiveBoard().subscribe(() => {
-      this.currentSectionIndex = 0;
-      // Refresh eligible staff so the available panel reflects the current board state
-      this.staffService.refresh();
-    });
+    this.loadActiveBoard();
     this.loadAllBoards();
-    this.collegeService.getColleges().subscribe({
-      next: (colleges) => {
-        this.colleges.set(colleges ?? []);
-      },
-      error: () => this.colleges.set([]),
-    });
+    this.loadStaff();
+    this.loadColleges();
+
+    this.boardSubscription =
+      this.board$.subscribe(board => {
+        const sectionCount =
+          board.sections.length;
+
+        this.currentSectionIndex =
+          sectionCount > 0
+            ? Math.min(
+                this.currentSectionIndex,
+                sectionCount - 1
+              )
+            : 0;
+      });
+
+    this.allBoardsSubscription =
+      this.editorialBoardService
+        .allBoards$
+        .subscribe(boards => {
+          this.allBoards.set(boards);
+        });
+
+    this.applicationService.refresh(
+      1,
+      100,
+      'accepted'
+    );
   }
 
-  // =========================
-  // Board Satisfied
-  // =========================
+  ngAfterViewInit(): void {
+    this.viewInitialized = true;
 
+    if (this.pendingApp) {
+      this.focusAssignModal();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.unlockBodyScroll();
+
+    this.allBoardsSubscription
+      ?.unsubscribe();
+
+    this.boardSubscription
+      ?.unsubscribe();
+  }
+
+  // Board Satisfied
   /** Whether a satisfy/unsatisfy API call is in progress. */
   satisfyingBoard = signal(false);
 
@@ -115,39 +239,192 @@ export class StaffDirectoryComponent implements OnInit {
     });
   }
 
-  // =========================
   // Board Switcher
-  // =========================
-
   allBoards = signal<ApiBoard[]>([]);
   switchingBoardId = signal<string | null>(null);
   boardSwitchError = signal<string | null>(null);
 
   loadAllBoards(): void {
-    this.editorialBoardService.getAllBoards().subscribe({
-      next: boards => { this.allBoards.set(boards); },
-      error: () => {},
-    });
+    this.boardsLoading.set(true);
+    this.boardsLoadError.set(null);
+
+    this.editorialBoardService
+      .getAllBoards()
+      .pipe(
+        finalize(() => {
+          this.boardsLoading.set(false);
+        })
+      )
+      .subscribe({
+        next: boards => {
+          this.allBoards.set(boards);
+        },
+        error: error => {
+          console.error(
+            'Failed to load all boards:',
+            error
+          );
+
+          this.allBoards.set([]);
+          this.boardsLoadError.set(
+            'Unable to load the editorial board list.'
+          );
+        },
+      });
+  }
+
+  loadActiveBoard(): void {
+    this.boardLoading.set(true);
+    this.boardLoadError.set(null);
+
+    this.editorialBoardService
+      .loadAdminActiveBoard()
+      .pipe(
+        finalize(() => {
+          this.boardLoading.set(false);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.currentSectionIndex = 0;
+        },
+
+        error: error => {
+          console.error(
+            'Failed to load active board:',
+            error
+          );
+
+          this.boardLoadError.set(
+            'Unable to load the active editorial board.'
+          );
+        },
+      });
+  }
+
+  loadStaff(): void {
+    this.staffLoading.set(true);
+    this.staffLoadError.set(null);
+
+    this.staffService
+      .loadStaff()
+      .pipe(
+        finalize(() => {
+          this.staffLoading.set(false);
+        })
+      )
+      .subscribe({
+        error: error => {
+          console.error(
+            'Failed to load staff:',
+            error
+          );
+
+          this.staffLoadError.set(
+            'Unable to load staff members.'
+          );
+        },
+      });
+  }
+
+  loadColleges(): void {
+    this.collegesLoading.set(true);
+    this.collegesLoadError.set(null);
+
+    this.collegeService
+      .getColleges()
+      .pipe(
+        finalize(() => {
+          this.collegesLoading.set(false);
+        })
+      )
+      .subscribe({
+        next: colleges => {
+          this.colleges.set(
+            colleges ?? []
+          );
+        },
+        error: error => {
+          console.error(
+            'Failed to load colleges:',
+            error
+          );
+
+          this.colleges.set([]);
+          this.collegesLoadError.set(
+            'Unable to load colleges and programs.'
+          );
+        },
+      });
   }
 
   switchToBoard(board: ApiBoard): void {
-    if (board.isActive || this.switchingBoardId()) return;
+    if (
+      board.isActive ||
+      this.switchingBoardId()
+    ) {
+      return;
+    }
+
     this.switchingBoardId.set(board.id);
     this.boardSwitchError.set(null);
-    this.editorialBoardService.activateBoard(board.id).subscribe({
-      next: () => {
-        // Update local list to reflect new active state
-        this.allBoards.update(bs => bs.map(b => ({ ...b, isActive: b.id === board.id })));
-        this.switchingBoardId.set(null);
+
+    this.editorialBoardService
+      .activateBoard(board.id)
+      .pipe(
+        finalize(() => {
+          this.switchingBoardId.set(null);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.currentSectionIndex = 0;
+        },
+        error: err => {
+          console.error(
+            'Failed to switch editorial board:',
+            err
+          );
+
+          this.boardSwitchError.set(
+            'Failed to switch board. Please try again.'
+          );
+        },
+      });
+  }
+
+  onSectionCarouselKeydown(
+    event: KeyboardEvent,
+    total: number
+  ): void {
+    if (total <= 0) {
+      return;
+    }
+
+    switch (event.key) {
+      case 'ArrowLeft':
+        event.preventDefault();
+        this.prevSection(total);
+        break;
+
+      case 'ArrowRight':
+        event.preventDefault();
+        this.nextSection(total);
+        break;
+
+      case 'Home':
+        event.preventDefault();
         this.currentSectionIndex = 0;
-        // Refresh eligible staff for the newly activated board
-        this.staffService.refresh();
-      },
-      error: () => {
-        this.switchingBoardId.set(null);
-        this.boardSwitchError.set('Failed to switch board. Please try again.');
-      },
-    });
+        break;
+
+      case 'End':
+        event.preventDefault();
+        this.currentSectionIndex = total - 1;
+        break;
+
+      default:
+        break;
+    }
   }
 
   deletingBoardId = signal<string | null>(null);
@@ -165,33 +442,57 @@ export class StaffDirectoryComponent implements OnInit {
   }
 
   confirmDeleteBoard(): void {
-    const board = this.boardToDelete();
-    if (!board) return;
+    const board =
+      this.boardToDelete();
+
+    if (
+      !board ||
+      this.deletingBoardId()
+    ) {
+      return;
+    }
+
     this.showDeleteBoardConfirm.set(false);
     this.deletingBoardId.set(board.id);
     this.boardDeleteError.set(null);
-    this.editorialBoardService.deleteBoard(board.id).subscribe({
-      next: () => {
-        this.allBoards.update(bs => bs.filter(b => b.id !== board.id));
-        this.deletingBoardId.set(null);
-        this.boardToDelete.set(null);
-      },
-      error: () => {
-        this.deletingBoardId.set(null);
-        this.boardDeleteError.set('Failed to delete board. Please try again.');
-      },
-    });
+
+    this.editorialBoardService
+      .deleteBoard(board.id)
+      .pipe(
+        finalize(() => {
+          this.deletingBoardId.set(null);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.boardToDelete.set(null);
+        },
+
+        error: error => {
+          console.error(
+            'Failed to delete editorial board:',
+            error
+          );
+
+          this.boardDeleteError.set(
+            error?.error?.error ??
+            'Failed to delete board. Please try again.'
+          );
+        },
+      });
   }
 
   cancelDeleteBoard(): void {
+    if (this.deletingBoardId()) {
+      return;
+    }
+
     this.showDeleteBoardConfirm.set(false);
     this.boardToDelete.set(null);
+    this.deleteBoardMessage.set('');
   }
 
-  // =========================
   // New Board Modal
-  // =========================
-
   showNewBoardModal = signal(false);
   newBoardError = signal<string | null>(null);
   newBoardSubmitting = signal(false);
@@ -215,15 +516,35 @@ export class StaffDirectoryComponent implements OnInit {
     };
   }
 
-  openNewBoardModal() {
+  openNewBoardModal(): void {
+    this.previouslyFocusedElement =
+      typeof document !== 'undefined' &&
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
     this.newBoardForm.reset();
     this.newBoardError.set(null);
     this.showNewBoardModal.set(true);
+
+    this.lockBodyScroll();
+
+    if (this.viewInitialized) {
+      this.focusNewBoardModal();
+    }
   }
 
-  closeNewBoardModal() {
+  closeNewBoardModal(): void {
+    if (this.newBoardSubmitting()) {
+      return;
+    }
+
     this.showNewBoardModal.set(false);
     this.newBoardError.set(null);
+    this.newBoardForm.reset();
+
+    this.unlockBodyScroll();
+    this.restorePreviousFocus();
   }
 
   submitNewBoard() {
@@ -242,11 +563,9 @@ export class StaffDirectoryComponent implements OnInit {
 
     this.newBoardSubmitting.set(true);
     this.editorialBoardService.createBoard(academicYear.trim(), adviserName.trim()).subscribe({
-      next: (newBoard) => {
+      next: () => {
         this.newBoardSubmitting.set(false);
         this.closeNewBoardModal();
-        // Prepend the new board (backend orders by created_at DESC)
-        this.allBoards.update(bs => [newBoard, ...bs]);
       },
       error: (err) => {
         this.newBoardSubmitting.set(false);
@@ -258,10 +577,7 @@ export class StaffDirectoryComponent implements OnInit {
     });
   }
 
-  // =========================
   // Position ID → Display Label
-  // =========================
-
   readonly POSITION_LABELS: Record<string, string> = {
     'writer':     'Staff Writer',
     'multimedia': 'Multimedia Producer',
@@ -305,10 +621,7 @@ export class StaffDirectoryComponent implements OnInit {
     return [];
   }
 
-  // =========================
   // Year Level → Display Label
-  // =========================
-
   readonly YEAR_LEVEL_LABELS: Record<string, string> = {
     '1st_year':    '1st Year',
     '2nd_year':    '2nd Year',
@@ -322,10 +635,7 @@ export class StaffDirectoryComponent implements OnInit {
     return this.YEAR_LEVEL_LABELS[value] ?? value;
   }
 
-  // =========================
   // View Member Modal
-  // =========================
-
   viewingMember: { member: BoardMember; sectionTitle: string } | null = null;
 
   openViewModal(member: BoardMember, sectionTitle: string) {
@@ -343,10 +653,7 @@ export class StaffDirectoryComponent implements OnInit {
     this.openEditModal(member, sectionTitle);
   }
 
-  // =========================
   // Section → Roles Map
-  // =========================
-
   readonly BOARD_SECTION_ROLES: Record<string, string[]> = {
     'Executive Editors': [
       'Senior Editor-In-Chief',
@@ -394,14 +701,28 @@ export class StaffDirectoryComponent implements OnInit {
   readonly boardSections = Object.keys(this.BOARD_SECTION_ROLES);
 
   get availableRoles(): string[] {
-    const section = this.assignForm.get('section')?.value as string;
-    return this.BOARD_SECTION_ROLES[section] ?? [];
+    const sectionValue =
+      String(
+        this.assignForm
+          .get('section')
+          ?.value ?? ''
+      ).trim();
+
+    const matchingSection =
+      this.boardSections.find(
+        section =>
+          section.toLowerCase() ===
+          sectionValue.toLowerCase()
+      );
+
+    return matchingSection
+      ? this.BOARD_SECTION_ROLES[
+          matchingSection
+        ] ?? []
+      : [];
   }
 
-  // =========================
   // Section Carousel
-  // =========================
-
   currentSectionIndex = 0;
 
   prevSection(total: number) {
@@ -412,10 +733,7 @@ export class StaffDirectoryComponent implements OnInit {
     this.currentSectionIndex = (this.currentSectionIndex + 1) % total;
   }
 
-  // =========================
   // Modal State
-  // =========================
-
   pendingApp: Application | null = null;
 
   assignForm: FormGroup = this.fb.group({
@@ -423,65 +741,136 @@ export class StaffDirectoryComponent implements OnInit {
     role:    ['', [Validators.required, Validators.minLength(2)]],
   });
 
-  // =========================
   // Autocomplete State
-  // =========================
-
   sectionSuggestions: string[] = [];
   showSectionDropdown = false;
 
   roleSuggestions: string[] = [];
   showRoleDropdown = false;
 
-  // =========================
   // Open / Close Modal
-  // =========================
+  openAssignModal(
+    app: Application
+  ): void {
+    this.previouslyFocusedElement =
+      typeof document !== 'undefined' &&
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
 
-  openAssignModal(app: Application) {
     this.pendingApp = app;
+
     this.assignForm.reset();
     this.sectionSuggestions = [];
     this.roleSuggestions = [];
     this.showSectionDropdown = false;
     this.showRoleDropdown = false;
+    this.activeSectionIndex = -1;
+    this.activeRoleIndex = -1;
+    this.assignSubmitting.set(false);
+    this.assignSubmitError.set(null);
+
+    this.lockBodyScroll();
+
+    if (this.viewInitialized) {
+      this.focusAssignModal();
+    }
   }
 
-  closeAssignModal() {
+  closeAssignModal(): void {
+    if (this.assignSubmitting()) {
+      return;
+    }
+
     this.pendingApp = null;
     this.assignForm.reset();
+
     this.showSectionDropdown = false;
+    this.showRoleDropdown = false;
+    this.activeSectionIndex = -1;
+    this.activeRoleIndex = -1;
+    this.assignSubmitError.set(null);
+
+    this.unlockBodyScroll();
+    this.restorePreviousFocus();
+  }
+
+  // Section Autocomplete
+  onSectionFocus(): void {
+    const value =
+      String(
+        this.assignForm
+          .get('section')
+          ?.value ?? ''
+      );
+
+    this.sectionSuggestions =
+      this.filterAssignSections(value);
+
+    this.activeSectionIndex =
+      this.sectionSuggestions.length > 0
+        ? 0
+        : -1;
+
+    this.showSectionDropdown = true;
+  }
+
+  onSectionSearch(
+    event: Event
+  ): void {
+    const value =
+      (event.target as HTMLInputElement)
+        .value;
+
+    this.assignForm
+      .get('section')
+      ?.setValue(value, {
+        emitEvent: false,
+      });
+
+    this.sectionSuggestions =
+      this.filterAssignSections(value);
+
+    this.activeSectionIndex =
+      this.sectionSuggestions.length > 0
+        ? 0
+        : -1;
+
+    this.showSectionDropdown = true;
+
+    this.assignForm
+      .get('role')
+      ?.reset();
+
+    this.roleSuggestions = [];
+    this.activeRoleIndex = -1;
     this.showRoleDropdown = false;
   }
 
-  // =========================
-  // Section Autocomplete
-  // =========================
+  selectSection(
+    section: string
+  ): void {
+    this.assignForm
+      .get('section')
+      ?.setValue(section);
 
-  onSectionFocus() {
-    const val = (this.assignForm.get('section')?.value as string) ?? '';
-    this.sectionSuggestions = this.filterAssignSections(val);
-    this.showSectionDropdown = true;
-  }
+    this.assignForm
+      .get('role')
+      ?.reset();
 
-  onSectionSearch(event: Event) {
-    const val = (event.target as HTMLInputElement).value;
-    this.assignForm.get('section')?.setValue(val, { emitEvent: false });
-    this.sectionSuggestions = this.filterAssignSections(val);
-    this.showSectionDropdown = true;
-    // reset role when section changes
-    this.assignForm.get('role')?.reset();
     this.roleSuggestions = [];
-  }
+    this.activeRoleIndex = -1;
+    this.showRoleDropdown = false;
 
-  selectSection(section: string) {
-    this.assignForm.get('section')?.setValue(section);
-    this.assignForm.get('role')?.reset();
-    this.roleSuggestions = [];
+    this.activeSectionIndex = -1;
     this.showSectionDropdown = false;
   }
 
-  hideSectionDropdown() {
-    setTimeout(() => { this.showSectionDropdown = false; }, 150);
+  hideSectionDropdown(): void {
+    setTimeout(() => {
+      this.showSectionDropdown = false;
+      this.activeSectionIndex = -1;
+    }, 150);
   }
 
   private filterSections(query: string): string[] {
@@ -500,30 +889,225 @@ export class StaffDirectoryComponent implements OnInit {
     return available.filter(s => s.toLowerCase().includes(q));
   }
 
-  // =========================
   // Role Autocomplete
-  // =========================
+  private findNextEnabledRoleIndex(
+    roles: string[],
+    startIndex: number,
+    direction: 1 | -1
+  ): number {
+    if (!roles.length) {
+      return -1;
+    }
 
-  onRoleFocus() {
-    const val = (this.assignForm.get('role')?.value as string) ?? '';
-    this.roleSuggestions = this.filterRoles(val);
+    let index = startIndex;
+
+    for (
+      let attempts = 0;
+      attempts < roles.length;
+      attempts += 1
+    ) {
+      index =
+        (
+          index +
+          direction +
+          roles.length
+        ) % roles.length;
+
+      if (
+        !this.isRoleTakenInDropdown(
+          roles[index]
+        )
+      ) {
+        return index;
+      }
+    }
+
+    return -1;
+  }
+
+  onRoleFocus(): void {
+    const value =
+      String(
+        this.assignForm
+          .get('role')
+          ?.value ?? ''
+      );
+
+    this.roleSuggestions =
+      this.filterRoles(value);
+
+    this.activeRoleIndex =
+      this.findNextEnabledRoleIndex(
+        this.roleSuggestions,
+        -1,
+        1
+      );
+
     this.showRoleDropdown = true;
   }
 
-  onRoleSearch(event: Event) {
-    const val = (event.target as HTMLInputElement).value;
-    this.assignForm.get('role')?.setValue(val, { emitEvent: false });
-    this.roleSuggestions = this.filterRoles(val);
+  onRoleSearch(
+    event: Event
+  ): void {
+    const value =
+      (event.target as HTMLInputElement)
+        .value;
+
+    this.assignForm
+      .get('role')
+      ?.setValue(value, {
+        emitEvent: false,
+      });
+
+    this.roleSuggestions =
+      this.filterRoles(value);
+
+    this.activeRoleIndex =
+      this.findNextEnabledRoleIndex(
+        this.roleSuggestions,
+        -1,
+        1
+      );
+
     this.showRoleDropdown = true;
   }
 
-  selectRole(role: string) {
-    this.assignForm.get('role')?.setValue(role);
+  selectRole(
+    role: string
+  ): void {
+    if (
+      this.isRoleTakenInDropdown(role)
+    ) {
+      return;
+    }
+
+    this.assignForm
+      .get('role')
+      ?.setValue(role);
+
+    this.activeRoleIndex = -1;
     this.showRoleDropdown = false;
   }
 
-  hideRoleDropdown() {
-    setTimeout(() => { this.showRoleDropdown = false; }, 150);
+  hideRoleDropdown(): void {
+    setTimeout(() => {
+      this.showRoleDropdown = false;
+      this.activeRoleIndex = -1;
+    }, 150);
+  }
+
+  onAssignRoleKeydown(
+    event: KeyboardEvent
+  ): void {
+    const roles =
+      this.roleSuggestions;
+
+    switch (event.key) {
+      case 'ArrowDown': {
+        event.preventDefault();
+
+        if (!this.showRoleDropdown) {
+          this.showRoleDropdown = true;
+        }
+
+        this.activeRoleIndex =
+          this.findNextEnabledRoleIndex(
+            roles,
+            this.activeRoleIndex,
+            1
+          );
+
+        if (this.activeRoleIndex >= 0) {
+          this.scrollActiveOptionIntoView(
+            'assign-role-option',
+            this.activeRoleIndex
+          );
+        }
+
+        return;
+      }
+
+      case 'ArrowUp': {
+        event.preventDefault();
+
+        if (!this.showRoleDropdown) {
+          this.showRoleDropdown = true;
+        }
+
+        this.activeRoleIndex =
+          this.findNextEnabledRoleIndex(
+            roles,
+            this.activeRoleIndex < 0
+              ? 0
+              : this.activeRoleIndex,
+            -1
+          );
+
+        if (this.activeRoleIndex >= 0) {
+          this.scrollActiveOptionIntoView(
+            'assign-role-option',
+            this.activeRoleIndex
+          );
+        }
+
+        return;
+      }
+
+      case 'Enter': {
+        if (
+          !this.showRoleDropdown ||
+          this.activeRoleIndex < 0 ||
+          this.activeRoleIndex >=
+            roles.length
+        ) {
+          return;
+        }
+
+        const selectedRole =
+          roles[
+            this.activeRoleIndex
+          ];
+
+        if (
+          this.isRoleTakenInDropdown(
+            selectedRole
+          )
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        this.selectRole(
+          selectedRole
+        );
+
+        return;
+      }
+
+      case 'Escape': {
+        if (!this.showRoleDropdown) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.showRoleDropdown = false;
+        this.activeRoleIndex = -1;
+
+        return;
+      }
+
+      case 'Tab': {
+        this.showRoleDropdown = false;
+        this.activeRoleIndex = -1;
+        return;
+      }
+
+      default:
+        return;
+    }
   }
 
   private filterRoles(query: string): string[] {
@@ -533,10 +1117,7 @@ export class StaffDirectoryComponent implements OnInit {
     return roles.filter(r => r.toLowerCase().includes(q));
   }
 
-  // =========================
   // Edit Role Modal
-  // =========================
-
   editingMember: { member: BoardMember; sectionTitle: string } | null = null;
 
   editForm: FormGroup = this.fb.group({
@@ -556,43 +1137,83 @@ export class StaffDirectoryComponent implements OnInit {
   editSubmitError: string | null = null;
 
   editSectionSuggestions: string[] = [];
-  showEditSectionDropdown = false;
+  readonly showEditSectionDropdown = signal(false);
 
   editRoleSuggestions: string[] = [];
-  showEditRoleDropdown = false;
+  readonly showEditRoleDropdown = signal(false);
 
   get editAvailableRoles(): string[] {
     const section = this.editForm.get('section')?.value as string;
     return this.BOARD_SECTION_ROLES[section] ?? [];
   }
 
-  openEditModal(member: BoardMember, sectionTitle: string) {
-    const staffRecord = member.staffId ? this.staffService.getAll().find((s) => s.id === member.staffId) : undefined;
-    this.editingMember = { member, sectionTitle };
+  openEditModal(
+    member: BoardMember,
+    sectionTitle: string
+  ): void {
+    this.previouslyFocusedElement =
+      typeof document !== 'undefined' &&
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    const staffRecord =
+      member.staffId
+        ? this.staffService
+            .getAll()
+            .find(
+              staff =>
+                staff.id === member.staffId
+            )
+        : undefined;
+
+    this.editingMember = {
+      member,
+      sectionTitle,
+    };
+
     this.editForm.reset({
       section: sectionTitle,
       role: member.position,
-      fullName: staffRecord?.fullName ?? member.name ?? '',
-      email: staffRecord?.email ?? '',
-      studentId: staffRecord?.studentId ?? '',
-      yearLevel: staffRecord?.yearLevel ?? '',
-      collegeId: staffRecord?.collegeId ?? '',
-      programId: staffRecord?.programId ?? '',
-      positionId: staffRecord?.positionId ?? '',
-      subRole: staffRecord?.subRole ?? '',
+      fullName:
+        staffRecord?.fullName ??
+        member.name ??
+        '',
+      email:
+        staffRecord?.email ?? '',
+      studentId:
+        staffRecord?.studentId ?? '',
+      yearLevel:
+        staffRecord?.yearLevel ?? '',
+      collegeId:
+        staffRecord?.collegeId ?? '',
+      programId:
+        staffRecord?.programId ?? '',
+      positionId:
+        staffRecord?.positionId ?? '',
+      subRole:
+        staffRecord?.subRole ?? '',
     });
+
     this.editSectionSuggestions = [];
     this.editRoleSuggestions = [];
-    this.showEditSectionDropdown = false;
-    this.showEditRoleDropdown = false;
+
+    this.showEditSectionDropdown.set(false);
+    this.showEditRoleDropdown.set(false);
+    this.activeEditSectionIndex.set(-1);
+    this.activeEditRoleIndex.set(-1);
+
     this.editSubmitting = false;
     this.editSubmitError = null;
+
+    this.lockBodyScroll();
+
+    if (this.viewInitialized) {
+      this.focusEditRoleModal();
+    }
   }
 
-  // =========================
   // Edit Modal: College/Program dropdowns
-  // =========================
-
   get editProgramOptions(): Program[] {
     const collegeId = String(this.editForm.get('collegeId')?.value ?? '').trim();
     if (!collegeId) return [];
@@ -627,13 +1248,24 @@ export class StaffDirectoryComponent implements OnInit {
     }
   }
 
-  closeEditModal() {
+  closeEditModal(): void {
+    if (this.editSubmitting) {
+      return;
+    }
+
     this.editingMember = null;
     this.editForm.reset();
-    this.showEditSectionDropdown = false;
-    this.showEditRoleDropdown = false;
+
+    this.showEditSectionDropdown.set(false);
+    this.showEditRoleDropdown.set(false);
+    this.activeEditSectionIndex.set(-1);
+    this.activeEditRoleIndex.set(-1);
+
     this.editSubmitting = false;
     this.editSubmitError = null;
+
+    this.unlockBodyScroll();
+    this.restorePreviousFocus();
   }
 
   submitEdit() {
@@ -692,14 +1324,6 @@ export class StaffDirectoryComponent implements OnInit {
     boardUpdate$
       .pipe(
         switchMap(() => {
-          // Update the in-memory board immediately so UI stays responsive.
-          this.editorialBoardService.updateMember(
-            editing.sectionTitle,
-            editing.member.name,
-            nextSection,
-            nextRole
-          );
-
           const toNull = (v: unknown) => {
             const s = String(v ?? '').trim();
             return s ? s : null;
@@ -723,68 +1347,453 @@ export class StaffDirectoryComponent implements OnInit {
         })
       )
       .subscribe({
-        next: (updatedStaff) => {
-          if (staffId && updatedStaff) {
-            this.editorialBoardService.patchMembersByStaffId(staffId, {
-              name: updatedStaff.fullName,
-              initials: this.generateInitials(updatedStaff.fullName),
-              yearLevel: updatedStaff.yearLevel,
-            });
-          }
+        next: () => {
           this.closeEditModal();
         },
-        error: () => {
+                error: () => {
           this.editSubmitError = 'Failed to update staff member. Please try again.';
         },
       });
   }
 
-  onEditSectionFocus() {
-    const val = (this.editForm.get('section')?.value as string) ?? '';
-    this.editSectionSuggestions = this.filterSections(val);
-    this.showEditSectionDropdown = true;
+  onEditSectionFocus(): void {
+    const value =
+      String(
+        this.editForm
+          .get('section')
+          ?.value ?? ''
+      );
+
+    this.editSectionSuggestions =
+      this.filterSections(value);
+
+    this.activeEditSectionIndex.set(
+      this.editSectionSuggestions.length > 0
+        ? 0
+        : -1
+    );
+
+    this.showEditSectionDropdown.set(true);
   }
 
-  onEditSectionSearch(event: Event) {
-    const val = (event.target as HTMLInputElement).value;
-    this.editForm.get('section')?.setValue(val, { emitEvent: false });
-    this.editSectionSuggestions = this.filterSections(val);
-    this.showEditSectionDropdown = true;
-    this.editForm.get('role')?.reset();
+  onEditSectionSearch(
+    event: Event
+  ): void {
+    const value =
+      (event.target as HTMLInputElement)
+        .value;
+
+    this.editForm
+      .get('section')
+      ?.setValue(value, {
+        emitEvent: false,
+      });
+
+    this.editSectionSuggestions =
+      this.filterSections(value);
+
+    this.activeEditSectionIndex.set(
+      this.editSectionSuggestions.length > 0
+        ? 0
+        : -1
+    );
+
+    this.showEditSectionDropdown.set(true);
+
+    this.editForm
+      .get('role')
+      ?.reset('', {
+        emitEvent: false,
+      });
+
     this.editRoleSuggestions = [];
+
+    this.activeEditRoleIndex.set(-1);
+    this.showEditRoleDropdown.set(false);
   }
 
-  selectEditSection(section: string) {
-    this.editForm.get('section')?.setValue(section);
-    this.editForm.get('role')?.reset();
+  selectEditSection(
+    section: string
+  ): void {
+    this.editForm
+      .get('section')
+      ?.setValue(section);
+
+    this.editForm
+      .get('role')
+      ?.reset('', {
+        emitEvent: false,
+      });
+
     this.editRoleSuggestions = [];
-    this.showEditSectionDropdown = false;
+
+    this.activeEditRoleIndex.set(-1);
+    this.showEditRoleDropdown.set(false);
+
+    this.activeEditSectionIndex.set(-1);
+    this.showEditSectionDropdown.set(false);
   }
 
-  hideEditSectionDropdown() {
-    setTimeout(() => { this.showEditSectionDropdown = false; }, 150);
+  hideEditSectionDropdown(): void {
+    setTimeout(() => {
+      this.showEditSectionDropdown.set(false);
+      this.activeEditSectionIndex.set(-1);
+    }, 150);
   }
 
-  onEditRoleFocus() {
-    const val = (this.editForm.get('role')?.value as string) ?? '';
-    this.editRoleSuggestions = this.filterEditRoles(val);
-    this.showEditRoleDropdown = true;
+  onEditSectionKeydown(
+    event: KeyboardEvent
+  ): void {
+    const suggestions =
+      this.editSectionSuggestions;
+
+    switch (event.key) {
+      case 'ArrowDown': {
+        event.preventDefault();
+
+        if (
+          !this.showEditSectionDropdown()
+        ) {
+          this.showEditSectionDropdown.set(
+            true
+          );
+        }
+
+        if (!suggestions.length) {
+          this.activeEditSectionIndex.set(
+            -1
+          );
+
+          return;
+        }
+
+        const current =
+          this.activeEditSectionIndex();
+
+        this.activeEditSectionIndex.set(
+          current < 0
+            ? 0
+            : (
+                current + 1
+              ) % suggestions.length
+        );
+
+        this.scrollActiveOptionIntoView(
+          'edit-section-option',
+          this.activeEditSectionIndex()
+        );
+
+        return;
+      }
+
+      case 'ArrowUp': {
+        event.preventDefault();
+
+        if (
+          !this.showEditSectionDropdown()
+        ) {
+          this.showEditSectionDropdown.set(
+            true
+          );
+        }
+
+        if (!suggestions.length) {
+          this.activeEditSectionIndex.set(
+            -1
+          );
+
+          return;
+        }
+
+        const current =
+          this.activeEditSectionIndex();
+
+        this.activeEditSectionIndex.set(
+          current <= 0
+            ? suggestions.length - 1
+            : current - 1
+        );
+
+        this.scrollActiveOptionIntoView(
+          'edit-section-option',
+          this.activeEditSectionIndex()
+        );
+
+        return;
+      }
+
+      case 'Enter': {
+        const current =
+          this.activeEditSectionIndex();
+
+        if (
+          !this.showEditSectionDropdown() ||
+          current < 0 ||
+          current >= suggestions.length
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        this.selectEditSection(
+          suggestions[current]
+        );
+
+        return;
+      }
+
+      case 'Escape': {
+        if (
+          !this.showEditSectionDropdown()
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.showEditSectionDropdown.set(
+          false
+        );
+
+        this.activeEditSectionIndex.set(
+          -1
+        );
+
+        return;
+      }
+
+      case 'Tab': {
+        this.showEditSectionDropdown.set(
+          false
+        );
+
+        this.activeEditSectionIndex.set(
+          -1
+        );
+
+        return;
+      }
+
+      default:
+        return;
+    }
   }
 
-  onEditRoleSearch(event: Event) {
-    const val = (event.target as HTMLInputElement).value;
-    this.editForm.get('role')?.setValue(val, { emitEvent: false });
-    this.editRoleSuggestions = this.filterEditRoles(val);
-    this.showEditRoleDropdown = true;
+  onEditRoleFocus(): void {
+    const value =
+      String(
+        this.editForm
+          .get('role')
+          ?.value ?? ''
+      );
+
+    this.editRoleSuggestions =
+      this.filterEditRoles(value);
+
+    this.activeEditRoleIndex.set(
+      this.findNextEnabledEditRoleIndex(
+        this.editRoleSuggestions,
+        -1,
+        1
+      )
+    );
+
+    this.showEditRoleDropdown.set(true);
   }
 
-  selectEditRole(role: string) {
-    this.editForm.get('role')?.setValue(role);
-    this.showEditRoleDropdown = false;
+  onEditRoleSearch(
+    event: Event
+  ): void {
+    const value =
+      (event.target as HTMLInputElement)
+        .value;
+
+    this.editForm
+      .get('role')
+      ?.setValue(value, {
+        emitEvent: false,
+      });
+
+    this.editRoleSuggestions =
+      this.filterEditRoles(value);
+
+    this.activeEditRoleIndex.set(
+      this.findNextEnabledEditRoleIndex(
+        this.editRoleSuggestions,
+        -1,
+        1
+      )
+    );
+
+    this.showEditRoleDropdown.set(true);
   }
 
-  hideEditRoleDropdown() {
-    setTimeout(() => { this.showEditRoleDropdown = false; }, 150);
+  selectEditRole(
+    role: string
+  ): void {
+    if (
+      this.isEditRoleTakenInDropdown(
+        role
+      )
+    ) {
+      return;
+    }
+
+    this.editForm
+      .get('role')
+      ?.setValue(role);
+
+    this.activeEditRoleIndex.set(-1);
+    this.showEditRoleDropdown.set(false);
+  }
+
+  hideEditRoleDropdown(): void {
+    setTimeout(() => {
+      this.showEditRoleDropdown.set(
+        false
+      );
+
+      this.activeEditRoleIndex.set(-1);
+    }, 150);
+  }
+
+  onEditRoleKeydown(
+    event: KeyboardEvent
+  ): void {
+    const roles =
+      this.editRoleSuggestions;
+
+    switch (event.key) {
+      case 'ArrowDown': {
+        event.preventDefault();
+
+        if (
+          !this.showEditRoleDropdown()
+        ) {
+          this.showEditRoleDropdown.set(
+            true
+          );
+        }
+
+        this.activeEditRoleIndex.set(
+          this.findNextEnabledEditRoleIndex(
+            roles,
+            this.activeEditRoleIndex(),
+            1
+          )
+        );
+
+        if (
+          this.activeEditRoleIndex() >= 0
+        ) {
+          this.scrollActiveOptionIntoView(
+            'edit-role-option',
+            this.activeEditRoleIndex()
+          );
+        }
+
+        return;
+      }
+
+      case 'ArrowUp': {
+        event.preventDefault();
+
+        if (
+          !this.showEditRoleDropdown()
+        ) {
+          this.showEditRoleDropdown.set(
+            true
+          );
+        }
+
+        this.activeEditRoleIndex.set(
+          this.findNextEnabledEditRoleIndex(
+            roles,
+            this.activeEditRoleIndex() < 0
+              ? 0
+              : this.activeEditRoleIndex(),
+            -1
+          )
+        );
+
+        if (
+          this.activeEditRoleIndex() >= 0
+        ) {
+          this.scrollActiveOptionIntoView(
+            'edit-role-option',
+            this.activeEditRoleIndex()
+          );
+        }
+
+        return;
+      }
+
+      case 'Enter': {
+        const activeIndex =
+          this.activeEditRoleIndex();
+
+        if (
+          !this.showEditRoleDropdown() ||
+          activeIndex < 0 ||
+          activeIndex >= roles.length
+        ) {
+          return;
+        }
+
+        const selectedRole =
+          roles[activeIndex];
+
+        if (
+          this.isEditRoleTakenInDropdown(
+            selectedRole
+          )
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        this.selectEditRole(
+          selectedRole
+        );
+
+        return;
+      }
+
+      case 'Escape': {
+        if (
+          !this.showEditRoleDropdown()
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.showEditRoleDropdown.set(
+          false
+        );
+
+        this.activeEditRoleIndex.set(-1);
+
+        return;
+      }
+
+      case 'Tab': {
+        this.showEditRoleDropdown.set(
+          false
+        );
+
+        this.activeEditRoleIndex.set(-1);
+
+        return;
+      }
+
+      default:
+        return;
+    }
   }
 
   private filterEditRoles(query: string): string[] {
@@ -794,10 +1803,42 @@ export class StaffDirectoryComponent implements OnInit {
     return roles.filter(r => r.toLowerCase().includes(q));
   }
 
-  // =========================
-  // Edit Role Conflict
-  // =========================
+  private findNextEnabledEditRoleIndex(
+    roles: string[],
+    startIndex: number,
+    direction: 1 | -1
+  ): number {
+    if (!roles.length) {
+      return -1;
+    }
 
+    let index = startIndex;
+
+    for (
+      let attempts = 0;
+      attempts < roles.length;
+      attempts += 1
+    ) {
+      index =
+        (
+          index +
+          direction +
+          roles.length
+        ) % roles.length;
+
+      if (
+        !this.isEditRoleTakenInDropdown(
+          roles[index]
+        )
+      ) {
+        return index;
+      }
+    }
+
+    return -1;
+  }
+
+  // Edit Role Conflict
   get editRoleConflict(): string | null {
     if (!this.editingMember) return null;
     const section = this.editForm.get('section')?.value as string;
@@ -827,9 +1868,14 @@ export class StaffDirectoryComponent implements OnInit {
     ));
   }
 
-  // =========================
+
   // Assign Unassigned Staff to Board
-  // =========================
+
+  readonly assignStaffSubmitting =
+    signal(false);
+
+  readonly assignStaffSubmitError =
+    signal<string | null>(null);
 
   assigningStaff: StaffMember | null = null;
 
@@ -896,73 +1942,486 @@ export class StaffDirectoryComponent implements OnInit {
     return null;
   }
 
-  openAssignStaffModal(staff: StaffMember): void {
+  openAssignStaffModal(
+    staff: StaffMember
+  ): void {
+    this.previouslyFocusedElement =
+      typeof document !== 'undefined' &&
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
     this.assigningStaff = staff;
-    const current = this.getCurrentBoardAssignments(staff.id, staff.fullName);
-    // Pre-fill previous section/role only when they have no active board assignments
+
+    const current =
+      this.getCurrentBoardAssignments(
+        staff.id,
+        staff.fullName
+      );
+
     this.assignStaffForm.reset({
-      section: current.length === 0 ? (staff.assignedSection ?? '') : '',
-      role:    current.length === 0 ? (staff.assignedRole    ?? '') : '',
+      section:
+        current.length === 0
+          ? staff.assignedSection ?? ''
+          : '',
+      role:
+        current.length === 0
+          ? staff.assignedRole ?? ''
+          : '',
     });
+
     this.assignStaffSectionSuggestions = [];
     this.assignStaffRoleSuggestions = [];
+
     this.showAssignStaffSectionDropdown = false;
     this.showAssignStaffRoleDropdown = false;
+    this.activeAssignStaffSectionIndex = -1;
+    this.activeAssignStaffRoleIndex = -1;
+    this.assignStaffSubmitting.set(false);
+    this.assignStaffSubmitError.set(null);
+
+    this.lockBodyScroll();
+
+    if (this.viewInitialized) {
+      this.focusAssignStaffModal();
+    }
   }
 
   closeAssignStaffModal(): void {
+    if (this.assignStaffSubmitting()) {
+      return;
+    }
+
     this.assigningStaff = null;
     this.assignStaffForm.reset();
+
     this.showAssignStaffSectionDropdown = false;
     this.showAssignStaffRoleDropdown = false;
+    this.activeAssignStaffSectionIndex = -1;
+    this.activeAssignStaffRoleIndex = -1;
+    this.assignStaffSubmitError.set(null);
+
+    this.unlockBodyScroll();
+    this.restorePreviousFocus();
   }
 
   onAssignStaffSectionFocus(): void {
-    const val = (this.assignStaffForm.get('section')?.value as string) ?? '';
-    this.assignStaffSectionSuggestions = this.filterAssignSections(val);
+    const value =
+      String(
+        this.assignStaffForm
+          .get('section')
+          ?.value ?? ''
+      );
+
+    this.assignStaffSectionSuggestions =
+      this.filterAssignSections(value);
+
+    this.activeAssignStaffSectionIndex =
+      this.assignStaffSectionSuggestions.length > 0
+        ? 0
+        : -1;
+
     this.showAssignStaffSectionDropdown = true;
   }
 
-  onAssignStaffSectionSearch(event: Event): void {
-    const val = (event.target as HTMLInputElement).value;
-    this.assignStaffForm.get('section')?.setValue(val, { emitEvent: false });
-    this.assignStaffSectionSuggestions = this.filterAssignSections(val);
+  onAssignStaffSectionSearch(
+    event: Event
+  ): void {
+    const value =
+      (event.target as HTMLInputElement)
+        .value;
+
+    this.assignStaffForm
+      .get('section')
+      ?.setValue(
+        value,
+        {
+          emitEvent: false,
+        }
+      );
+
+    this.assignStaffSectionSuggestions =
+      this.filterAssignSections(value);
+
+    this.activeAssignStaffSectionIndex =
+      this.assignStaffSectionSuggestions.length > 0
+        ? 0
+        : -1;
+
     this.showAssignStaffSectionDropdown = true;
-    this.assignStaffForm.get('role')?.reset();
+
+    this.assignStaffForm
+      .get('role')
+      ?.reset();
+
     this.assignStaffRoleSuggestions = [];
+    this.activeAssignStaffRoleIndex = -1;
+    this.showAssignStaffRoleDropdown = false;
   }
 
-  selectAssignStaffSection(section: string): void {
-    this.assignStaffForm.get('section')?.setValue(section);
-    this.assignStaffForm.get('role')?.reset();
+  selectAssignStaffSection(
+    section: string
+  ): void {
+    this.assignStaffForm
+      .get('section')
+      ?.setValue(section);
+
+    this.assignStaffForm
+      .get('role')
+      ?.reset();
+
     this.assignStaffRoleSuggestions = [];
+    this.activeAssignStaffRoleIndex = -1;
+    this.showAssignStaffRoleDropdown = false;
+
+    this.activeAssignStaffSectionIndex = -1;
     this.showAssignStaffSectionDropdown = false;
   }
 
   hideAssignStaffSectionDropdown(): void {
-    setTimeout(() => { this.showAssignStaffSectionDropdown = false; }, 150);
+    setTimeout(() => {
+      this.showAssignStaffSectionDropdown =
+        false;
+
+      this.activeAssignStaffSectionIndex =
+        -1;
+    }, 150);
+  }
+
+  onAssignStaffSectionKeydown(
+    event: KeyboardEvent
+  ): void {
+    const suggestions =
+      this.assignStaffSectionSuggestions;
+
+    switch (event.key) {
+      case 'ArrowDown': {
+        event.preventDefault();
+
+        if (
+          !this.showAssignStaffSectionDropdown
+        ) {
+          this.showAssignStaffSectionDropdown =
+            true;
+        }
+
+        if (!suggestions.length) {
+          this.activeAssignStaffSectionIndex =
+            -1;
+
+          return;
+        }
+
+        this.activeAssignStaffSectionIndex =
+          this.activeAssignStaffSectionIndex < 0
+            ? 0
+            : (
+                this.activeAssignStaffSectionIndex +
+                1
+              ) % suggestions.length;
+
+        this.scrollActiveOptionIntoView(
+          'assign-staff-section-option',
+          this.activeAssignStaffSectionIndex
+        );
+
+        return;
+      }
+
+      case 'ArrowUp': {
+        event.preventDefault();
+
+        if (
+          !this.showAssignStaffSectionDropdown
+        ) {
+          this.showAssignStaffSectionDropdown =
+            true;
+        }
+
+        if (!suggestions.length) {
+          this.activeAssignStaffSectionIndex =
+            -1;
+
+          return;
+        }
+
+        this.activeAssignStaffSectionIndex =
+          this.activeAssignStaffSectionIndex <= 0
+            ? suggestions.length - 1
+            : this.activeAssignStaffSectionIndex -
+              1;
+
+        this.scrollActiveOptionIntoView(
+          'assign-staff-section-option',
+          this.activeAssignStaffSectionIndex
+        );
+
+        return;
+      }
+
+      case 'Enter': {
+        if (
+          !this.showAssignStaffSectionDropdown ||
+          this.activeAssignStaffSectionIndex <
+            0 ||
+          this.activeAssignStaffSectionIndex >=
+            suggestions.length
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        this.selectAssignStaffSection(
+          suggestions[
+            this.activeAssignStaffSectionIndex
+          ]
+        );
+
+        return;
+      }
+
+      case 'Escape': {
+        if (
+          !this.showAssignStaffSectionDropdown
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.showAssignStaffSectionDropdown =
+          false;
+
+        this.activeAssignStaffSectionIndex =
+          -1;
+
+        return;
+      }
+
+      case 'Tab': {
+        this.showAssignStaffSectionDropdown =
+          false;
+
+        this.activeAssignStaffSectionIndex =
+          -1;
+
+        return;
+      }
+
+      default:
+        return;
+    }
   }
 
   onAssignStaffRoleFocus(): void {
-    const val = (this.assignStaffForm.get('role')?.value as string) ?? '';
-    this.assignStaffRoleSuggestions = this.filterAssignStaffRoles(val);
+    const value =
+      String(
+        this.assignStaffForm
+          .get('role')
+          ?.value ?? ''
+      );
+
+    this.assignStaffRoleSuggestions =
+      this.filterAssignStaffRoles(value);
+
+    this.activeAssignStaffRoleIndex =
+      this.findNextEnabledAssignStaffRoleIndex(
+        this.assignStaffRoleSuggestions,
+        -1,
+        1
+      );
+
     this.showAssignStaffRoleDropdown = true;
   }
 
-  onAssignStaffRoleSearch(event: Event): void {
-    const val = (event.target as HTMLInputElement).value;
-    this.assignStaffForm.get('role')?.setValue(val, { emitEvent: false });
-    this.assignStaffRoleSuggestions = this.filterAssignStaffRoles(val);
+  onAssignStaffRoleSearch(
+    event: Event
+  ): void {
+    const value =
+      (event.target as HTMLInputElement)
+        .value;
+
+    this.assignStaffForm
+      .get('role')
+      ?.setValue(value, {
+        emitEvent: false,
+      });
+
+    this.assignStaffRoleSuggestions =
+      this.filterAssignStaffRoles(value);
+
+    this.activeAssignStaffRoleIndex =
+      this.findNextEnabledAssignStaffRoleIndex(
+        this.assignStaffRoleSuggestions,
+        -1,
+        1
+      );
+
     this.showAssignStaffRoleDropdown = true;
   }
 
-  selectAssignStaffRole(role: string): void {
-    this.assignStaffForm.get('role')?.setValue(role);
+  selectAssignStaffRole(
+    role: string
+  ): void {
+    if (
+      this.isAssignStaffRoleTakenInDropdown(
+        role
+      )
+    ) {
+      return;
+    }
+
+    this.assignStaffForm
+      .get('role')
+      ?.setValue(role);
+
+    this.activeAssignStaffRoleIndex = -1;
     this.showAssignStaffRoleDropdown = false;
   }
 
   hideAssignStaffRoleDropdown(): void {
-    setTimeout(() => { this.showAssignStaffRoleDropdown = false; }, 150);
+    setTimeout(() => {
+      this.showAssignStaffRoleDropdown =
+        false;
+
+      this.activeAssignStaffRoleIndex =
+        -1;
+    }, 150);
+  }
+
+  onAssignStaffRoleKeydown(
+    event: KeyboardEvent
+  ): void {
+    const roles =
+      this.assignStaffRoleSuggestions;
+
+    switch (event.key) {
+      case 'ArrowDown': {
+        event.preventDefault();
+
+        if (
+          !this.showAssignStaffRoleDropdown
+        ) {
+          this.showAssignStaffRoleDropdown =
+            true;
+        }
+
+        this.activeAssignStaffRoleIndex =
+          this.findNextEnabledAssignStaffRoleIndex(
+            roles,
+            this.activeAssignStaffRoleIndex,
+            1
+          );
+
+        if (
+          this.activeAssignStaffRoleIndex >= 0
+        ) {
+          this.scrollActiveOptionIntoView(
+            'assign-staff-role-option',
+            this.activeAssignStaffRoleIndex
+          );
+        }
+
+        return;
+      }
+
+      case 'ArrowUp': {
+        event.preventDefault();
+
+        if (
+          !this.showAssignStaffRoleDropdown
+        ) {
+          this.showAssignStaffRoleDropdown =
+            true;
+        }
+
+        this.activeAssignStaffRoleIndex =
+          this.findNextEnabledAssignStaffRoleIndex(
+            roles,
+            this.activeAssignStaffRoleIndex < 0
+              ? 0
+              : this.activeAssignStaffRoleIndex,
+            -1
+          );
+
+        if (
+          this.activeAssignStaffRoleIndex >= 0
+        ) {
+          this.scrollActiveOptionIntoView(
+            'assign-staff-role-option',
+            this.activeAssignStaffRoleIndex
+          );
+        }
+
+        return;
+      }
+
+      case 'Enter': {
+        if (
+          !this.showAssignStaffRoleDropdown ||
+          this.activeAssignStaffRoleIndex < 0 ||
+          this.activeAssignStaffRoleIndex >=
+            roles.length
+        ) {
+          return;
+        }
+
+        const selectedRole =
+          roles[
+            this.activeAssignStaffRoleIndex
+          ];
+
+        if (
+          this.isAssignStaffRoleTakenInDropdown(
+            selectedRole
+          )
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        this.selectAssignStaffRole(
+          selectedRole
+        );
+
+        return;
+      }
+
+      case 'Escape': {
+        if (
+          !this.showAssignStaffRoleDropdown
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.showAssignStaffRoleDropdown =
+          false;
+
+        this.activeAssignStaffRoleIndex =
+          -1;
+
+        return;
+      }
+
+      case 'Tab': {
+        this.showAssignStaffRoleDropdown =
+          false;
+
+        this.activeAssignStaffRoleIndex =
+          -1;
+
+        return;
+      }
+
+      default:
+        return;
+    }
   }
 
   private filterAssignStaffRoles(query: string): string[] {
@@ -972,52 +2431,219 @@ export class StaffDirectoryComponent implements OnInit {
     return roles.filter(r => r.toLowerCase().includes(q));
   }
 
-  submitAssignStaff(): void {
-    if (this.assignStaffForm.invalid || !this.assigningStaff ||
-        this.assignStaffRoleConflict || this.assignStaffSectionConflict) return;
-    const { section, role } = this.assignStaffForm.value as { section: string; role: string };
-    const staff = this.assigningStaff;
-    const member: BoardMember = {
-      name: staff.fullName,
-      position: role.trim(),
-      initials: this.generateInitials(staff.fullName),
-      staffId: staff.id,
-    };
-    this.editorialBoardService.addMember(section.trim(), member);
-    this.editorialBoardService.addMemberToBoard(staff.id, section.trim(), role.trim())
-      .subscribe({
-        next: (boardMember) => {
-          this.editorialBoardService.patchMemberBoardId(section.trim(), staff.fullName, boardMember.id, staff.id);
-        },
-        error: err => console.error('Failed to add board member:', err)
-      });
-    this.closeAssignStaffModal();
+  private findNextEnabledAssignStaffRoleIndex(
+    roles: string[],
+    startIndex: number,
+    direction: 1 | -1
+  ): number {
+    if (!roles.length) {
+      return -1;
+    }
+
+    let index = startIndex;
+
+    for (
+      let attempts = 0;
+      attempts < roles.length;
+      attempts += 1
+    ) {
+      index =
+        (
+          index +
+          direction +
+          roles.length
+        ) % roles.length;
+
+      if (
+        !this.isAssignStaffRoleTakenInDropdown(
+          roles[index]
+        )
+      ) {
+        return index;
+      }
+    }
+
+    return -1;
   }
 
-  // =========================
-  // Revoke Acceptance
-  // =========================
+  submitAssignStaff(): void {
+    const staff =
+      this.assigningStaff;
 
+    if (
+      !staff ||
+      this.assignStaffForm.invalid ||
+      this.assignStaffRoleConflict ||
+      this.assignStaffSectionConflict ||
+      this.assignStaffSubmitting()
+    ) {
+      this.assignStaffForm.markAllAsTouched();
+      return;
+    }
+
+    const {
+      section,
+      role,
+    } = this.assignStaffForm.value as {
+      section: string;
+      role: string;
+    };
+
+    const trimmedSection =
+      section.trim();
+
+    const trimmedRole =
+      role.trim();
+
+    this.assignStaffSubmitting.set(true);
+    this.assignStaffSubmitError.set(null);
+
+    this.editorialBoardService
+      .addMemberToBoard(
+        staff.id,
+        trimmedSection,
+        trimmedRole
+      )
+      .pipe(
+        finalize(() => {
+          this.assignStaffSubmitting.set(false);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.closeAssignStaffModal();
+        },
+
+        error: error => {
+          console.error(
+            'Failed to add staff member to board:',
+            error
+          );
+
+          this.assignStaffSubmitError.set(
+            error?.error?.error ??
+            'Unable to add this staff member to the board. Please try again.'
+          );
+        },
+      });
+  }
+
+  onAssignDialogKeydown(
+    event: KeyboardEvent
+  ): void {
+    this.trapFocus(
+      event,
+      this.assignDialog?.nativeElement
+    );
+  }
+
+  onAssignStaffDialogKeydown(
+    event: KeyboardEvent
+  ): void {
+    this.trapFocus(
+      event,
+      this.assignStaffDialog
+        ?.nativeElement
+    );
+  }
+
+  onNewBoardDialogKeydown(
+    event: KeyboardEvent
+  ): void {
+    this.trapFocus(
+      event,
+      this.newBoardDialog?.nativeElement
+    );
+  }
+
+  onEditRoleDialogKeydown(
+    event: KeyboardEvent
+  ): void {
+    this.trapFocus(
+      event,
+      this.editRoleDialog?.nativeElement
+    );
+  }
+
+  onRevokeAcceptanceDialogKeydown(
+    event: KeyboardEvent
+  ): void {
+    this.trapFocus(
+      event,
+      this.revokeAcceptanceDialog
+        ?.nativeElement
+    );
+  }
+
+  // Revoke Acceptance
   revokingApp: Application | null = null;
 
-  openRevokeModal(app: Application) {
+  openRevokeModal(
+    app: Application
+  ): void {
+    this.previouslyFocusedElement =
+      typeof document !== 'undefined' &&
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
     this.revokingApp = app;
+    this.revokeAcceptanceError.set(null);
+
+    this.lockBodyScroll();
+
+    if (this.viewInitialized) {
+      this.focusRevokeAcceptanceModal();
+    }
   }
 
-  closeRevokeModal() {
+  closeRevokeModal(): void {
+    if (this.revokeAcceptanceSubmitting()) {
+      return;
+    }
+
     this.revokingApp = null;
+    this.revokeAcceptanceError.set(null);
+
+    this.unlockBodyScroll();
+    this.restorePreviousFocus();
   }
 
-  confirmRevoke() {
-    if (!this.revokingApp) return;
-    this.applicationService.revokeAcceptance(this.revokingApp.id!);
-    this.closeRevokeModal();
+  confirmRevoke(): void {
+    const application = this.revokingApp;
+
+    if (
+      !application?.id ||
+      this.revokeAcceptanceSubmitting()
+    ) {
+      return;
+    }
+
+    this.revokeAcceptanceSubmitting.set(true);
+    this.revokeAcceptanceError.set(null);
+
+    this.applicationService
+      .revokeAcceptance(application.id)
+      .pipe(
+        finalize(() => {
+          this.revokeAcceptanceSubmitting.set(false);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.closeRevokeModal();
+        },
+
+        error: error => {
+          this.revokeAcceptanceError.set(
+            error?.error?.error ??
+            'Unable to revoke this application’s acceptance. Please try again.'
+          );
+        },
+      });
   }
 
-  // =========================
   // Exec Role Validation
-  // =========================
-
   private readonly SINGLE_PERSON_EXEC_ROLES = new Set([
     'Senior Editor-In-Chief',
     'Junior Editor-In-Chief',
@@ -1057,126 +2683,180 @@ export class StaffDirectoryComponent implements OnInit {
     return null;
   }
 
-  // =========================
+
   // Remove Member
-  // =========================
+  revokingMember: {
+    member: BoardMember;
+    sectionTitle: string;
+  } | null = null;
 
-  deletingMember: { member: BoardMember; sectionTitle: string } | null = null;
-  deleteError: string | null = null;
+  revokeError: string | null = null;
+  revokeSubmitting = signal(false);
 
-  openDeleteModal(member: BoardMember, sectionTitle: string) {
-    this.deletingMember = { member, sectionTitle };
-    this.deleteError = null;
-  }
-
-  closeDeleteModal() {
-    this.deletingMember = null;
-    this.deleteError = null;
-  }
-
-  confirmDelete() {
-    if (!this.deletingMember) return;
-    const { member, sectionTitle } = this.deletingMember;
-    const boardId = this.editorialBoardService.activeBoardId;
-
-    // Primary path: remove only the board assignment, staff_member record is kept.
-    // The person will reappear in "Staff Without Board Assignment" for re-assignment.
-    if (boardId && member.boardMemberId) {
-      this.editorialBoardService.removeMemberFromBoard(boardId, member.boardMemberId).subscribe({
-        next: () => {
-          this.editorialBoardService.removeMember(sectionTitle, member.name);
-          // If the board was marked satisfied, un-satisfy it since the composition changed.
-          // This ensures removed members (who now have fewer assignments) re-appear in the panel.
-          if (this.editorialBoardService.isBoardSatisfied) {
-            this.editorialBoardService.satisfyBoard(false).subscribe();
-          }
-          // Refresh eligible list so the removed member reappears in the available panel
-          this.staffService.refresh();
-          this.closeDeleteModal();
-        },
-        error: () => {
-          setTimeout(() => {
-            this.deleteError = 'Failed to remove staff member from board. Please try again.';
-          });
-        }
-      });
-      return;
-    }
-
-    // Fallback: boardMemberId not yet available (member was just added in this session
-    // and the addMemberToBoard response hasn't returned yet).
-    const staffRecord = this.staffService.getAll().find(
-      s => s.fullName?.trim().toLowerCase() === member.name.trim().toLowerCase()
-    );
-
-    if (!staffRecord) {
-      // No DB record at all — just clean up the in-memory display
-      this.editorialBoardService.removeMember(sectionTitle, member.name);
-      this.closeDeleteModal();
-      return;
-    }
-
-    // Has staff record but boardMemberId not yet known — fully delete to avoid orphan DB rows
-    this.staffService.delete(staffRecord.id).subscribe({
-      next: () => {
-        this.editorialBoardService.removeMember(sectionTitle, member.name);
-        this.applicationService.refresh();
-        this.closeDeleteModal();
-      },
-      error: () => {
-        setTimeout(() => {
-          this.deleteError = 'Failed to remove staff member from board. Please try again.';
-        });
-      }
-    });
-  }
-
-  // =========================
-  // Submit
-  // =========================
-
-  submitAssign() {
-    if (this.assignForm.invalid || !this.pendingApp?.id) return;
-    if (this.assignRoleConflict) return;
-
-    const { section, role } = this.assignForm.value as { section: string; role: string };
-    const appId = this.pendingApp.id;
-    const trimmedSection = section.trim();
-    const trimmedRole = role.trim();
-
-    const member: BoardMember = {
-      name: this.pendingApp.fullName,
-      position: trimmedRole,
-      initials: this.generateInitials(this.pendingApp.fullName),
+  openRevokeMemberModal(
+    member: BoardMember,
+    sectionTitle: string
+  ): void {
+    this.revokingMember = {
+      member,
+      sectionTitle,
     };
 
-    // Update in-memory editorial board immediately for responsive UI
-    this.editorialBoardService.addMember(trimmedSection, member);
-
-    // Persist to DB: mark application as assigned + create staff_members record
-    this.applicationService.markAssigned(appId, trimmedSection, trimmedRole);
-    this.staffService.createFromApplication(appId, trimmedSection, trimmedRole).subscribe({
-      next: (newStaff) => {
-        // Also add to board_members table in DB
-        this.editorialBoardService.addMemberToBoard(newStaff.id, trimmedSection, trimmedRole)
-          .subscribe({
-            next: (boardMember) => {
-              // Patch the in-memory member with its DB id so Remove can target it precisely
-              this.editorialBoardService.patchMemberBoardId(trimmedSection, member.name, boardMember.id, newStaff.id);
-            },
-            error: err => console.error('Failed to add board member:', err)
-          });
-      },
-      error: err => console.error('Failed to create staff member record:', err)
-    });
-
-    this.closeAssignModal();
+    this.revokeError = null;
   }
 
-  // =========================
-  // Helper
-  // =========================
+  closeRevokeMemberModal(): void {
+    if (this.revokeSubmitting()) return;
 
+    this.revokingMember = null;
+    this.revokeError = null;
+  }
+
+confirmRevokeMember(): void {
+  if (
+    !this.revokingMember ||
+    this.revokeSubmitting()
+  ) {
+    return;
+  }
+
+  const { member } = this.revokingMember;
+
+  const boardId =
+    this.editorialBoardService.activeBoardId;
+
+  const boardMemberId =
+    member.boardMemberId;
+
+  if (!boardId || !boardMemberId) {
+    this.revokeError =
+      'This staff member is missing a board assignment record. Refresh the page and try again.';
+    return;
+  }
+
+  this.revokeSubmitting.set(true);
+  this.revokeError = null;
+
+  this.editorialBoardService
+    .revokeMember(
+      boardId,
+      boardMemberId
+    )
+    .pipe(
+      finalize(() => {
+        this.revokeSubmitting.set(false);
+      })
+    )
+    .subscribe({
+      next: () => {
+        if (
+          this.editorialBoardService
+            .isBoardSatisfied
+        ) {
+          this.editorialBoardService
+            .satisfyBoard(false)
+            .subscribe({
+              error: error => {
+                console.error(
+                  'Failed to clear board satisfaction:',
+                  error
+                );
+              },
+            });
+        }
+
+        this.revokingMember = null;
+        this.revokeError = null;
+      },
+
+      error: err => {
+        console.error(
+          'Failed to revoke board member:',
+          err
+        );
+
+        this.revokeError =
+          err?.error?.error ??
+          'Failed to revoke this board assignment. Please try again.';
+      },
+    });
+}
+
+  // Submit
+  submitAssign(): void {
+    const application =
+      this.pendingApp;
+
+    if (
+      !application?.id ||
+      this.assignForm.invalid ||
+      this.assignRoleConflict ||
+      this.assignSubmitting()
+    ) {
+      this.assignForm.markAllAsTouched();
+      return;
+    }
+
+    const boardId =
+      this.editorialBoardService.activeBoardId;
+
+    if (!boardId) {
+      this.assignSubmitError.set(
+        'No active editorial board was found.'
+      );
+      return;
+    }
+
+    const {
+      section,
+      role,
+    } = this.assignForm.value as {
+      section: string;
+      role: string;
+    };
+
+    const trimmedSection =
+      section.trim();
+
+    const trimmedRole =
+      role.trim();
+
+    this.assignSubmitting.set(true);
+    this.assignSubmitError.set(null);
+
+    this.editorialBoardService
+      .assignApplicationToBoard(
+        boardId,
+        application.id,
+        trimmedSection,
+        trimmedRole
+      )
+      .pipe(
+        finalize(() => {
+          this.assignSubmitting.set(false);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.closeAssignModal();
+        },
+
+        error: error => {
+          console.error(
+            'Failed to assign applicant:',
+            error
+          );
+
+          this.assignSubmitError.set(
+            error?.error?.error ??
+            'Unable to complete the board assignment. Please try again.'
+          );
+        },
+      });
+  }
+
+
+  // Helper
   generateInitials(name: string): string {
     return name
       .split(' ')
@@ -1186,4 +2866,426 @@ export class StaffDirectoryComponent implements OnInit {
       .toUpperCase();
   }
 
+  private focusAssignModal(): void {
+    queueMicrotask(() => {
+      const closeButton =
+        this.assignCloseButton?.nativeElement;
+
+      const dialog =
+        this.assignDialog?.nativeElement;
+
+      if (closeButton) {
+        closeButton.focus();
+        return;
+      }
+
+      dialog?.focus();
+    });
+  }
+
+  private focusAssignStaffModal(): void {
+    queueMicrotask(() => {
+      const closeButton =
+        this.assignStaffCloseButton
+          ?.nativeElement;
+
+      const dialog =
+        this.assignStaffDialog
+          ?.nativeElement;
+
+      if (closeButton) {
+        closeButton.focus();
+        return;
+      }
+
+      dialog?.focus();
+    });
+  }
+
+  private focusNewBoardModal(): void {
+    queueMicrotask(() => {
+      const closeButton =
+        this.newBoardCloseButton?.nativeElement;
+
+      const dialog =
+        this.newBoardDialog?.nativeElement;
+
+      if (closeButton) {
+        closeButton.focus();
+        return;
+      }
+
+      dialog?.focus();
+    });
+  }
+
+  private focusEditRoleModal(): void {
+    queueMicrotask(() => {
+      const closeButton =
+        this.editRoleCloseButton
+          ?.nativeElement;
+
+      const dialog =
+        this.editRoleDialog
+          ?.nativeElement;
+
+      if (closeButton) {
+        closeButton.focus();
+        return;
+      }
+
+      dialog?.focus();
+    });
+  }
+
+  private focusRevokeAcceptanceModal(): void {
+    queueMicrotask(() => {
+      const closeButton =
+        this.revokeAcceptanceCloseButton
+          ?.nativeElement;
+
+      const dialog =
+        this.revokeAcceptanceDialog
+          ?.nativeElement;
+
+      if (closeButton) {
+        closeButton.focus();
+        return;
+      }
+
+      dialog?.focus();
+    });
+  }
+
+  private lockBodyScroll(): void {
+    if (
+      this.isBodyScrollLocked ||
+      typeof document === 'undefined'
+    ) {
+      return;
+    }
+
+    this.previousBodyOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    this.isBodyScrollLocked = true;
+  }
+
+  private unlockBodyScroll(): void {
+    if (
+      !this.isBodyScrollLocked ||
+      typeof document === 'undefined'
+    ) {
+      return;
+    }
+
+    document.body.style.overflow =
+      this.previousBodyOverflow;
+
+    this.previousBodyOverflow = '';
+    this.isBodyScrollLocked = false;
+  }
+
+  private restorePreviousFocus(): void {
+    const target =
+      this.previouslyFocusedElement;
+
+    this.previouslyFocusedElement = null;
+
+    if (
+      !target ||
+      typeof document === 'undefined' ||
+      !document.contains(target)
+    ) {
+      return;
+    }
+
+    queueMicrotask(() => {
+      target.focus({
+        preventScroll: true
+      });
+    });
+  }
+
+  private trapFocus(
+    event: KeyboardEvent,
+    dialog?: HTMLElement
+  ): void {
+    if (
+      event.key !== 'Tab' ||
+      !dialog
+    ) {
+      return;
+    }
+
+    const focusableElements = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        [
+          'button:not([disabled])',
+          'input:not([disabled])',
+          'select:not([disabled])',
+          'textarea:not([disabled])',
+          'a[href]',
+          '[tabindex]:not([tabindex="-1"])',
+        ].join(',')
+      )
+    ).filter(element =>
+      element.offsetParent !== null &&
+      element.getAttribute(
+        'aria-hidden'
+      ) !== 'true'
+    );
+
+    if (!focusableElements.length) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+
+    const first =
+      focusableElements[0];
+
+    const last =
+      focusableElements[
+        focusableElements.length - 1
+      ];
+
+    const active =
+      document.activeElement;
+
+    if (
+      event.shiftKey &&
+      (
+        active === first ||
+        active === dialog
+      )
+    ) {
+      event.preventDefault();
+      last.focus();
+      return;
+    }
+
+    if (
+      !event.shiftKey &&
+      active === last
+    ) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+
+  //Touch State
+  onSectionTouchStart(event: TouchEvent): void {
+    this.sectionTouchStartX =
+      event.changedTouches[0]?.clientX ?? null;
+  }
+
+  onSectionTouchEnd(
+    event: TouchEvent,
+    total: number
+  ): void {
+    if (
+      this.sectionTouchStartX === null ||
+      total <= 1
+    ) {
+      return;
+    }
+
+    const endX =
+      event.changedTouches[0]?.clientX;
+
+    if (endX === undefined) {
+      this.sectionTouchStartX = null;
+      return;
+    }
+
+    const distance =
+      endX - this.sectionTouchStartX;
+
+    this.sectionTouchStartX = null;
+
+    if (
+      Math.abs(distance) <
+      this.sectionSwipeThreshold
+    ) {
+      return;
+    }
+
+    if (distance > 0) {
+      this.prevSection(total);
+      return;
+    }
+
+    this.nextSection(total);
+  }
+
+  onAssignSectionKeydown(
+    event: KeyboardEvent
+  ): void {
+    const suggestions =
+      this.sectionSuggestions;
+
+    switch (event.key) {
+      case 'ArrowDown': {
+        event.preventDefault();
+
+        if (!this.showSectionDropdown) {
+          this.showSectionDropdown = true;
+        }
+
+        if (!suggestions.length) {
+          this.activeSectionIndex = -1;
+          return;
+        }
+
+        this.activeSectionIndex =
+          this.activeSectionIndex < 0
+            ? 0
+            : (
+                this.activeSectionIndex + 1
+              ) % suggestions.length;
+
+        this.scrollActiveOptionIntoView(
+          'assign-section-option',
+          this.activeSectionIndex
+        );
+
+        return;
+      }
+
+      case 'ArrowUp': {
+        event.preventDefault();
+
+        if (!this.showSectionDropdown) {
+          this.showSectionDropdown = true;
+        }
+
+        if (!suggestions.length) {
+          this.activeSectionIndex = -1;
+          return;
+        }
+
+        this.activeSectionIndex =
+          this.activeSectionIndex <= 0
+            ? suggestions.length - 1
+            : this.activeSectionIndex - 1;
+
+        this.scrollActiveOptionIntoView(
+          'assign-section-option',
+          this.activeSectionIndex
+        );
+
+        return;
+      }
+
+      case 'Enter': {
+        if (
+          !this.showSectionDropdown ||
+          this.activeSectionIndex < 0 ||
+          this.activeSectionIndex >=
+            suggestions.length
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        this.selectSection(
+          suggestions[
+            this.activeSectionIndex
+          ]
+        );
+
+        return;
+      }
+
+      case 'Escape': {
+        if (!this.showSectionDropdown) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.showSectionDropdown = false;
+        this.activeSectionIndex = -1;
+
+        return;
+      }
+
+      case 'Tab': {
+        this.showSectionDropdown = false;
+        this.activeSectionIndex = -1;
+        return;
+      }
+
+      default:
+        return;
+    }
+  }
+
+  private scrollActiveOptionIntoView(
+    optionIdPrefix: string,
+    index: number
+  ): void {
+    queueMicrotask(() => {
+      const option =
+        document.getElementById(
+          `${optionIdPrefix}-${index}`
+        );
+
+      option?.scrollIntoView({
+        block: 'nearest',
+      });
+    });
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+      if (this.revokingApp) {
+        if (this.revokeAcceptanceSubmitting()) {
+          return;
+        }
+
+        this.closeRevokeModal();
+        return;
+      }
+
+    if (this.editingMember) {
+      if (this.editSubmitting) {
+        return;
+      }
+
+      this.closeEditModal();
+      return;
+    }
+
+    if (this.showNewBoardModal()) {
+      if (this.newBoardSubmitting()) {
+        return;
+      }
+
+      this.closeNewBoardModal();
+      return;
+    }
+
+    if (this.assigningStaff) {
+      if (this.assignStaffSubmitting()) {
+        return;
+      }
+
+      this.closeAssignStaffModal();
+      return;
+    }
+
+    if (this.pendingApp) {
+      if (this.assignSubmitting()) {
+        return;
+      }
+
+      this.closeAssignModal();
+    }
+  }
 }

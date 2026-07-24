@@ -18,7 +18,16 @@ export interface ActivityLogFilters {
   action?: string;
   dateFrom?: string;
   search?: string;
+  page?: number;
   limit?: number;
+}
+
+export interface PaginatedActivityLogs {
+  items: ActivityLog[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 export interface CreateActivityLogInput {

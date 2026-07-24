@@ -3,26 +3,124 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import * as service from "./activity-log.service";
 import { ActivityLogFilters, CreateActivityLogInput } from "./activity-log.types";
 
-function parseLimit(raw: unknown): number {
-  const value = Number(raw);
-  if (!Number.isFinite(value) || value <= 0) return 200;
-  return Math.min(Math.floor(value), 1000);
+function parsePage(
+  raw: unknown
+): number {
+  const value =
+    Number(raw);
+
+  if (
+    !Number.isFinite(value) ||
+    value <= 0
+  ) {
+    return 1;
+  }
+
+  return Math.floor(value);
+}
+
+function parseLimit(
+  raw: unknown
+): number {
+  const value =
+    Number(raw);
+
+  if (
+    !Number.isFinite(value) ||
+    value <= 0
+  ) {
+    return 25;
+  }
+
+  return Math.min(
+    Math.floor(value),
+    100
+  );
 }
 
 /** GET /api/activity-logs (admin) */
-export const getActivityLogs = asyncHandler(async (req: Request, res: Response) => {
-  const q = req.query as Record<string, unknown>;
-  const filters: ActivityLogFilters = {
-    ...(typeof q["module"] === "string" && q["module"].trim() ? { module: q["module"].trim() } : {}),
-    ...(typeof q["action"] === "string" && q["action"].trim() ? { action: q["action"].trim() } : {}),
-    ...(typeof q["dateFrom"] === "string" && q["dateFrom"].trim() ? { dateFrom: q["dateFrom"].trim() } : {}),
-    ...(typeof q["search"] === "string" && q["search"].trim() ? { search: q["search"].trim() } : {}),
-    limit: parseLimit(q["limit"]),
-  };
+/** GET /api/activity-logs */
+export const getActivityLogs =
+  asyncHandler(
+    async (
+      req: Request,
+      res: Response
+    ) => {
+      const query =
+        req.query as Record<
+          string,
+          unknown
+        >;
 
-  const logs = await service.listActivityLogs(filters);
-  res.json(logs);
-});
+      const filters:
+        ActivityLogFilters = {
+        page:
+          parsePage(
+            query["page"]
+          ),
+
+        limit:
+          parseLimit(
+            query["limit"]
+          ),
+
+        ...(
+          typeof query["module"] ===
+            "string" &&
+          query["module"].trim()
+            ? {
+                module:
+                  query["module"]
+                    .trim(),
+              }
+            : {}
+        ),
+
+        ...(
+          typeof query["action"] ===
+            "string" &&
+          query["action"].trim()
+            ? {
+                action:
+                  query["action"]
+                    .trim(),
+              }
+            : {}
+        ),
+
+        ...(
+          typeof query["dateFrom"] ===
+            "string" &&
+          query["dateFrom"].trim()
+            ? {
+                dateFrom:
+                  query["dateFrom"]
+                    .trim(),
+              }
+            : {}
+        ),
+
+        ...(
+          typeof query["search"] ===
+            "string" &&
+          query["search"].trim()
+            ? {
+                search:
+                  query["search"]
+                    .trim(),
+              }
+            : {}
+        ),
+      };
+
+      const result =
+        await service.listActivityLogs(
+          filters
+        );
+
+      res.json(result);
+    }
+  );
 
 /** POST /api/activity-logs (admin) */
 export const createActivityLog = asyncHandler(async (req: Request, res: Response) => {

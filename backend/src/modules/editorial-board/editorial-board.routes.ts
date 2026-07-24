@@ -4,20 +4,50 @@ import { authenticate } from "../../middlewares/authenticate";
 
 const router = Router();
 
-// Board routes
+// ---------- Public ----------
 router.get("/active", controller.getActiveBoard);
+
+// ---------- Admin ----------
+router.get("/active/admin", authenticate, controller.getActiveBoardAdmin);
+
 router.get("/", authenticate, controller.getBoards);
 router.get("/:boardId", authenticate, controller.getBoardById);
+
 router.post("/", authenticate, controller.createBoard);
+
 router.put("/:boardId/activate", authenticate, controller.activateBoard);
 router.put("/:boardId/satisfy", authenticate, controller.satisfyBoard);
+
 router.delete("/:boardId", authenticate, controller.deleteBoard);
 
-// Member routes
+// ---------- Members ----------
+
+router.post(
+  "/:boardId/assign-application",
+  authenticate,
+  controller.assignApplication
+);
+
 router.get("/:boardId/members", authenticate, controller.getMembers);
+
 router.post("/:boardId/members", authenticate, controller.addMember);
-router.patch("/:boardId/members/:memberId", authenticate, controller.updateMember);
-router.delete("/:boardId/members/:memberId", authenticate, controller.removeMember);
-router.post("/:boardId/members/:memberId/revoke", authenticate, controller.revokeMember);
+
+router.patch(
+  "/:boardId/members/:memberId",
+  authenticate,
+  controller.updateMember
+);
+
+router.delete(
+  "/:boardId/members/:memberId",
+  authenticate,
+  controller.removeMember
+);
+
+router.post(
+  "/:boardId/members/:memberId/revoke",
+  authenticate,
+  controller.revokeMember
+);
 
 export default router;

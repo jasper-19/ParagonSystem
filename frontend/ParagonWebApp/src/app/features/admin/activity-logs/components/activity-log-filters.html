@@ -1,95 +1,338 @@
-<div class="py-4">
-  <div class="flex flex-wrap gap-2 items-center">
+<section
+  aria-labelledby="activity-log-filters-title"
+  class="rounded-xl border
+         border-slate-200 bg-white
+         p-4 shadow-sm
+         sm:p-5"
+>
+  <div
+    class="flex flex-col gap-4
+           lg:flex-row
+           lg:items-end"
+  >
 
-    <span class="text-[11px] font-medium tracking-widest uppercase text-(--color-text-tertiary) whitespace-nowrap">
-      Filter by
-    </span>
+  <div class="min-w-0 lg:w-48 lg:shrink-0">
+    <p
+      id="activity-log-filters-title"
+      class="text-xs font-bold uppercase
+            tracking-[0.12em]
+            text-slate-400"
+    >
+      Filters
+    </p>
 
-    <div class="w-px h-5.5 bg-(--color-border-tertiary) mx-0.5 shrink-0"></div>
+    <p
+      class="mt-1 text-sm font-semibold
+            text-[#000035]"
+    >
+      Refine activity records
+    </p>
+
+  @if (loading) {
+    <div
+      role="status"
+      aria-live="polite"
+      class="mt-2 inline-flex
+            items-center gap-2
+            text-xs font-medium
+            text-slate-500"
+    >
+      <svg
+        aria-hidden="true"
+        class="h-3.5 w-3.5
+              animate-spin
+              motion-reduce:animate-none"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        />
+
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 0 1 8-8v4
+            a4 4 0 0 0-4 4H4Z"
+        />
+      </svg>
+
+      Updating results…
+    </div>
+  }
+  </div>
+
+  <div
+    class="grid min-w-0 flex-1
+          grid-cols-1 gap-3
+          sm:grid-cols-2
+          xl:grid-cols-4"
+  >
 
     <!-- Module filter -->
-    <div class="relative flex items-center">
-      <span class="absolute left-2.5 pointer-events-none flex text-(--color-text-secondary)" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-        </svg>
-      </span>
-      <select
-        [(ngModel)]="filters.module"
-        (change)="onFilterChange()"
-        class="h-9 appearance-none pl-8 pr-7 text-[13px] text-(--color-text-primary) bg-(--color-background-primary)  border-[0.5px] border-(--color-border-secondary) rounded-(--border-radius-md) outline-none min-w-32.5 transition-[border-color,box-shadow] duration-150 hover:border-(--color-border-primary) focus:border-[#7F77DD] focus:ring-[3px] focus:ring-[rgba(127,119,221,0.15)] cursor-pointer">
-        <option value="">All modules</option>
-        <option *ngFor="let module of modules" [value]="module">{{ module }}</option>
-      </select>
-      <span class="absolute right-2.5 pointer-events-none flex text-(--color-text-secondary)" aria-hidden="true">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </span>
-    </div>
+  <div class="min-w-0">
+    <label
+      for="activity-log-module"
+      class="mb-1.5 block text-xs
+            font-semibold text-slate-600"
+    >
+      Module
+    </label>
+      <div class="relative flex items-center">
+        <span class="pointer-events-none absolute
+       left-3 top-1/2 flex
+       -translate-y-1/2
+       text-slate-400"
+       aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/>
+            <path d="m7 16.5-4.74-2.85"/>
+            <path d="m7 16.5 5-3"/>
+            <path d="M7 16.5v5.17"/>
+            <path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/>
+            <path d="m17 16.5-5-3"/>
+            <path d="m17 16.5 4.74-2.85"/>
+            <path d="M17 16.5v5.17"/>
+            <path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/>
+            <path d="M12 8 7.26 5.15"/>
+            <path d="m12 8 4.74-2.85"/>
+            <path d="M12 13.5V8"/>
+          </svg>
+        </span>
+        <select
+          id="activity-log-module"
+          name="module"
+          [(ngModel)]="filters.module"
+          (change)="onFilterChange()"
+          [disabled]="loading || modules.length === 0"
+          class="min-h-11 w-full appearance-none
+                rounded-xl border border-slate-300
+                bg-white py-2.5 pl-10 pr-9
+                text-sm text-slate-700
+                outline-none transition
+                hover:border-slate-400
+                focus:border-[#F4B400]
+                focus:ring-2
+                focus:ring-[#F4B400]/30
+                disabled:cursor-not-allowed
+                disabled:bg-slate-50
+                disabled:text-slate-400"
+                  >
+          <option value="">
+            All modules
+          </option>
+
+          <option
+            *ngFor="let module of modules"
+            [value]="module"
+          >
+            {{ module }}
+          </option>
+        </select>
+        <span class="pointer-events-none absolute
+       right-3 top-1/2 flex
+       -translate-y-1/2
+       text-slate-400"
+       aria-hidden="true">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+      </div>
+  </div>
 
     <!-- Action filter -->
-    <div class="relative flex items-center">
-      <span class="absolute left-2.5 pointer-events-none flex text-(--color-text-secondary)" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-        </svg>
-      </span>
-      <select
-        [(ngModel)]="filters.action"
-        (change)="onFilterChange()"
-        class="h-9 appearance-none pl-8 pr-7 text-[13px] text-(--color-text-primary) bg-(--color-background-primary) border-[0.5px] border-(--color-border-secondary) rounded-(--border-radius-md) outline-none min-w-32.5 transition-[border-color,box-shadow] duration-150 hover:border-(--color-border-primary) focus:border-[#7F77DD] focus:ring-[3px] focus:ring-[rgba(127,119,221,0.15)] cursor-pointer">
-        <option value="">All actions</option>
-        <option *ngFor="let action of actions" [value]="action">{{ action }}</option>
-      </select>
-      <span class="absolute right-2.5 pointer-events-none flex text-(--color-text-secondary)" aria-hidden="true">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </span>
+    <div class="min-w-0">
+      <label
+        for="activity-log-action"
+        class="mb-1.5 block text-xs
+              font-semibold text-slate-600"
+      >
+        Action
+      </label>
+        <div class="relative flex items-center">
+          <span class="pointer-events-none absolute
+       left-3 top-1/2 flex
+       -translate-y-1/2
+       text-slate-400" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 5h20"/>
+              <path d="M6 12h12"/>
+              <path d="M9 19h6"/>
+            </svg>
+          </span>
+          <select
+            id="activity-log-action"
+            name="action"
+            [(ngModel)]="filters.action"
+            (change)="onFilterChange()"
+            [disabled]="loading || actions.length === 0"
+            class="min-h-11 w-full appearance-none
+                  rounded-xl border border-slate-300
+                  bg-white py-2.5 pl-10 pr-9
+                  text-sm text-slate-700
+                  outline-none transition
+                  hover:border-slate-400
+                  focus:border-[#F4B400]
+                  focus:ring-2
+                  focus:ring-[#F4B400]/30
+                  disabled:cursor-not-allowed
+                  disabled:bg-slate-50
+                  disabled:text-slate-400">
+            <option value="">All actions</option>
+            <option *ngFor="let action of actions" [value]="action">{{ action }}</option>
+          </select>
+          <span class="pointer-events-none absolute
+       right-3 top-1/2 flex
+       -translate-y-1/2
+       text-slate-400" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </span>
+        </div>
     </div>
 
     <!-- Date picker -->
-    <div class="relative flex items-center">
-      <span class="absolute left-2.5 pointer-events-none flex z-10 text-(--color-text-secondary)" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-      </span>
-      <input
-        type="date"
-        [(ngModel)]="filters.dateFrom"
-        (change)="onFilterChange()"
-        class="h-9 pl-8 pr-2.5 text-[13px] text-(--color-text-primary) bg-(--color-background-primary) border-[0.5px] border-(--color-border-secondary) rounded-(--border-radius-md) outline-none min-w-32.5 transition-[border-color,box-shadow] duration-150 hover:border-(--color-border-primary) focus:border-[#7F77DD] focus:ring-[3px] focus:ring-[rgba(127,119,221,0.15)] cursor-pointer" />
+    <div class="min-w-0">
+      <label
+        for="activity-log-date"
+        class="mb-1.5 block text-xs
+              font-semibold text-slate-600"
+      >
+        Date
+      </label>
+        <div class="relative flex items-center">
+          <span class="pointer-events-none absolute
+       left-3 top-1/2 z-10 flex
+       -translate-y-1/2
+       text-slate-400" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 2v4"/>
+              <path d="M16 2v4"/>
+              <rect width="18" height="18" x="3" y="4" rx="2"/>
+              <path d="M3 10h18"/>
+              <path d="M8 14h.01"/>
+              <path d="M12 14h.01"/>
+              <path d="M16 14h.01"/>
+              <path d="M8 18h.01"/>
+              <path d="M12 18h.01"/>
+              <path d="M16 18h.01"/>
+            </svg>
+          </span>
+          <input
+            id="activity-log-date"
+            name="dateFrom"
+            type="date"
+            aria-label="Filter activity logs by date"
+            [disabled]="loading"
+            [(ngModel)]="filters.dateFrom"
+            (change)="onFilterChange()"
+            class="min-h-11 w-full rounded-xl
+                  border border-slate-300
+                  bg-white py-2.5 pl-10 pr-3
+                  text-sm text-slate-700
+                  outline-none transition
+                  hover:border-slate-400
+                  focus:border-[#F4B400]
+                  focus:ring-2
+                  focus:ring-[#F4B400]/30"/>
+        </div>
     </div>
-
-    <div class="w-px h-5.5 bg-(--color-border-tertiary) mx-0.5 shrink-0"></div>
 
     <!-- Search -->
-    <div class="relative flex items-center flex-1 min-w-45">
-      <span class="absolute left-2.5 pointer-events-none flex text-(--color-text-secondary)" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </span>
-      <input
-        type="text"
-        placeholder="Search logs…"
-        [(ngModel)]="filters.search"
-        (input)="onFilterChange()"
-        class="w-full h-9 pl-8 pr-3 text-[13px] text-(--color-text-primary) bg-(--color-background-secondary) border-[0.5px] border-transparent rounded-(--border-radius-md) outline-none placeholder:text-(--color-text-tertiary) transition-[border-color,background,box-shadow] duration-150 focus:bg-(--color-background-primary) focus:border-[#7F77DD] focus:ring-[3px] focus:ring-[rgba(127,119,221,0.15)]" />
+  <div class="min-w-0">
+    <label
+      for="activity-log-search"
+      class="mb-1.5 block text-xs
+            font-semibold text-slate-600"
+    >
+      Search
+    </label>
+      <div class="relative">
+        <span class="pointer-events-none absolute
+       left-3 top-1/2 flex
+       -translate-y-1/2
+       text-slate-400" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21 21-4.34-4.34"/>
+            <circle cx="11" cy="11" r="8"/>
+          </svg>
+        </span>
+        <input
+          #searchInput
+          id="activity-log-search"
+          type="search"
+          name="search"
+          placeholder="Search logs…"
+          autocomplete="off"
+          [disabled]="loading"
+          [(ngModel)]="filters.search"
+          (ngModelChange)="onSearchChange($event)"
+          class="min-h-11 w-full rounded-xl
+                border border-slate-300
+                bg-white py-2.5 pl-10 pr-10
+                text-sm text-slate-700
+                outline-none transition
+                placeholder:text-slate-400
+                hover:border-slate-400
+                focus:border-[#F4B400]
+                focus:ring-2
+                focus:ring-[#F4B400]/30" />
+      </div>
     </div>
+  </div>
 
     <!-- Reset -->
     <button
       type="button"
       (click)="clearFilters()"
-      class="h-9 inline-flex items-center gap-1.5 px-3.5 text-[13px] font-medium text-(--color-text-secondary) bg-transparent  border-[0.5px] border-(--color-border-tertiary) rounded-(--border-radius-md) cursor-pointer whitespace-nowrap transition-all duration-150 hover:text-(--color-text-primary) hover:border-(--color-border-secondary) hover:bg-(--color-background-secondary)">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/>
+      [disabled]="loading || !hasActiveFilters"
+      [attr.aria-label]="
+        hasActiveFilters
+          ? 'Reset all activity log filters'
+          : 'No activity log filters to reset'
+      "
+      class="inline-flex min-h-11 w-full
+            shrink-0 items-center
+            justify-center gap-2
+            rounded-xl border
+            border-slate-300 bg-white
+            px-4 py-2.5
+            text-sm font-semibold
+            text-slate-600
+            transition
+            hover:border-slate-400
+            hover:bg-slate-50
+            hover:text-slate-900
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-[#F4B400]
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+            lg:w-auto"
+    >
+      <svg
+        aria-hidden="true"
+        class="h-4 w-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
       </svg>
+
       Reset
     </button>
 
   </div>
-</div>
+</section>

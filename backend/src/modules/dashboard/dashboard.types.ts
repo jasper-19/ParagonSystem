@@ -1,3 +1,22 @@
+export type DashboardAnalyticsMode = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export type AnalyticsMetric = {
+  label: string;
+  value: number;
+  change: number;
+};
+
+export type AnalyticsTrend = {
+  labels: string[];
+  articles: number[];
+  applications: number[];
+};
+
+export type DashboardAnalytics = {
+  metrics: AnalyticsMetric[];
+  trend: AnalyticsTrend;
+};
+
 export type DashboardFeed = {
   articles: {
     total: number;
@@ -29,4 +48,6 @@ export type DashboardFeed = {
     eligible: number;
     recent: unknown[];
   };
+
+  analytics: DashboardAnalytics;
 };

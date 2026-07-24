@@ -1,5 +1,5 @@
 import db from "../../config/db";
-import { ActivityLog, ActivityLogFilters, CreateActivityLogInput } from "./activity-log.types";
+import { ActivityLog, ActivityLogFilters, CreateActivityLogInput, PaginatedActivityLogs } from "./activity-log.types";
 
 function toIsoString(value: unknown): string {
   if (value instanceof Date) return value.toISOString();
@@ -45,64 +45,205 @@ function mapRow(row: any): ActivityLog {
   };
 }
 
-export async function findAll(filters: ActivityLogFilters = {}): Promise<ActivityLog[]> {
-  const where: string[] = [];
-  const values: Array<string | number> = [];
-  let idx = 1;
+export async function findAll(
+  filters: ActivityLogFilters = {}
+): Promise<PaginatedActivityLogs> {
+  const whereClauses:
+    string[] = [];
 
+  const filterValues:
+    Array<string | number> = [];
+
+  let parameterIndex = 1;
+
+  // Module
   if (filters.module) {
-    where.push(`UPPER(COALESCE(al.resource_type, 'SYSTEM')) = UPPER($${idx++})`);
-    values.push(filters.module);
+    whereClauses.push(
+      `UPPER(
+         COALESCE(
+           al.resource_type,
+           'SYSTEM'
+         )
+       ) = UPPER($${parameterIndex})`
+    );
+
+    filterValues.push(
+      filters.module
+    );
+
+    parameterIndex += 1;
   }
 
+  // Action
   if (filters.action) {
-    where.push(`UPPER(al.action) = UPPER($${idx++})`);
-    values.push(filters.action);
+    whereClauses.push(
+      `UPPER(al.action) =
+       UPPER($${parameterIndex})`
+    );
+
+    filterValues.push(
+      filters.action
+    );
+
+    parameterIndex += 1;
   }
 
+  // Selected calendar day
   if (filters.dateFrom) {
-    where.push(
-      `al.created_at >= $${idx++}::date
-      AND al.created_at < ($${idx++}::date + INTERVAL '1 day')`
+    whereClauses.push(
+      `al.created_at >=
+         $${parameterIndex}::date
+       AND al.created_at <
+         (
+           $${parameterIndex}::date +
+           INTERVAL '1 day'
+         )`
     );
 
-    values.push(filters.dateFrom);
-    values.push(filters.dateFrom);
+    filterValues.push(
+      filters.dateFrom
+    );
+
+    parameterIndex += 1;
   }
 
+  // Search
   if (filters.search) {
-    where.push(
-      `(COALESCE(u.username, '') ILIKE $${idx} OR al.action ILIKE $${idx} OR COALESCE(al.resource_type, '') ILIKE $${idx} OR COALESCE(al.details::text, '') ILIKE $${idx})`
+    whereClauses.push(
+      `(
+        COALESCE(
+          u.username,
+          ''
+        ) ILIKE $${parameterIndex}
+        OR al.action
+          ILIKE $${parameterIndex}
+        OR COALESCE(
+          al.resource_type,
+          ''
+        ) ILIKE $${parameterIndex}
+        OR COALESCE(
+          al.details::text,
+          ''
+        ) ILIKE $${parameterIndex}
+      )`
     );
-    values.push(`%${filters.search}%`);
-    idx++;
+
+    filterValues.push(
+      `%${filters.search}%`
+    );
+
+    parameterIndex += 1;
   }
 
-  const limit = filters.limit ?? 200;
-  values.push(limit);
-  const limitPos = idx;
+  const whereSql =
+    whereClauses.length > 0
+      ? `WHERE ${whereClauses.join(
+          " AND "
+        )}`
+      : "";
 
-  const result = await db.query(
-    `SELECT
-       al.id,
-       al.user_id,
-       u.username AS user_name,
-       al.action,
-       al.resource_type,
-       al.resource_id,
-       al.details,
-       al.ip_address::text AS ip_address,
-       al.user_agent,
-       al.created_at
-     FROM activity_logs al
-     LEFT JOIN users u ON u.id = al.user_id
-     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     ORDER BY al.created_at DESC
-     LIMIT $${limitPos}`,
-    values
-  );
+  const requestedPage =
+    Math.max(
+      1,
+      filters.page ?? 1
+    );
 
-  return result.rows.map(mapRow);
+  const limit =
+    Math.min(
+      Math.max(
+        1,
+        filters.limit ?? 25
+      ),
+      100
+    );
+
+  // Count matching rows first
+  const countResult =
+    await db.query(
+      `SELECT
+         COUNT(*)::int AS total
+       FROM activity_logs al
+       LEFT JOIN users u
+         ON u.id = al.user_id
+       ${whereSql}`,
+      filterValues
+    );
+
+  const total =
+    Number(
+      countResult.rows[0]
+        ?.total ?? 0
+    );
+
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(total / limit)
+    );
+
+  const safePage =
+    Math.min(
+      requestedPage,
+      totalPages
+    );
+
+  const offset =
+    (safePage - 1) * limit;
+
+  const limitPosition =
+    parameterIndex;
+
+  const offsetPosition =
+    parameterIndex + 1;
+
+  const pageValues:
+    Array<string | number> = [
+      ...filterValues,
+      limit,
+      offset,
+    ];
+
+  const result =
+    await db.query(
+      `SELECT
+         al.id,
+         al.user_id,
+         u.username AS user_name,
+         al.action,
+         al.resource_type,
+         al.resource_id,
+         al.details,
+         al.ip_address::text
+           AS ip_address,
+         al.user_agent,
+         al.created_at
+       FROM activity_logs al
+       LEFT JOIN users u
+         ON u.id = al.user_id
+       ${whereSql}
+       ORDER BY
+         al.created_at DESC,
+         al.id DESC
+       LIMIT $${limitPosition}
+       OFFSET $${offsetPosition}`,
+      pageValues
+    );
+
+  return {
+    items:
+      result.rows.map(
+        mapRow
+      ),
+
+    page:
+      safePage,
+
+    limit,
+
+    total,
+
+    totalPages,
+  };
 }
 
 export async function create(input: CreateActivityLogInput): Promise<ActivityLog> {

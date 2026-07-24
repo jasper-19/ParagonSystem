@@ -41,5 +41,15 @@ export function auditLog(
       ...(requestIp ? { ipAddress: requestIp } : {}),
       ...(requestUserAgent ? { userAgent: requestUserAgent } : {}),
     })
-    .catch(() => undefined);
+      .catch(error => {
+        if (
+          process.env.NODE_ENV !==
+          'production'
+        ) {
+          console.error(
+            'Failed to write activity log:',
+            error
+          );
+        }
+      });
 }

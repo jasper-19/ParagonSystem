@@ -1,33 +1,74 @@
 <!-- HEADER SECTION -->
-<section class="relative z-50">
+<header
+  class="relative z-50 border-b border-slate-200 bg-white"
+  aria-label="Administration header"
+>
 
-  <div class="max-w-full px-3 sm:px-5 lg:px-8">
-    <div class="flex items-center justify-between gap-3 h-14 bg-none">
+  <div class="w-full px-3 sm:px-5 lg:px-8">
+    <div
+      class="grid min-h-16 min-w-0
+            grid-cols-[minmax(0,1fr)_auto]
+            items-center gap-2
+            lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+            lg:gap-4"
+    >
 
       <!-- LEFT: Menu Button + Title Breadcrumb -->
-      <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+      <div
+        class="flex min-w-0 items-center gap-2.5
+              sm:gap-3 lg:justify-self-start"
+      >
 
         <!-- Mobile Menu Toggle (original sidebar icon) -->
         <button
-          *ngIf="isMobileView"
+          type="button"
           (click)="menuToggle.emit()"
-          class="md:hidden w-8 h-8 flex items-center justify-center rounded-lg border border-[#000035]/20
-                 text-[#000035] hover:bg-[#000035]/6 hover:border-[#000035]/30
-                 transition-all duration-150 shrink-0"
-          aria-label="Toggle menu"
+          class="inline-flex h-11 w-11 shrink-0
+                items-center justify-center rounded-xl
+                border border-[#000035]/15
+                text-[#000035] transition
+                hover:bg-[#000035]/5
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#F4B400]
+                focus-visible:ring-offset-2
+                md:hidden"
+          [attr.aria-label]="
+            isSidebarOpen
+              ? 'Close navigation menu'
+              : 'Open navigation menu'
+          "
+          [attr.aria-expanded]="isSidebarOpen"
         >
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M13 21h6c1.1046 0 2-.8954 2-2V5c0-1.10457-.8954-2-2-2h-6v18Z"/>
-            <path fill-rule="evenodd" d="M11 3H5c-1.10457 0-2 .89543-2 2v14c0 1.1046.89543 2 2 2h6V3Zm-5.70711 7.7071c-.39052-.3905-.39052-1.02368 0-1.41421.39053-.39052 1.02369-.39052 1.41422 0l1.99994 1.99991c.39052.3906.39052 1.0237 0 1.4142l-1.99994 2c-.39053.3905-1.02369.3905-1.41422 0-.39052-.3905-.39052-1.0237 0-1.4142l1.29284-1.2929-1.29284-1.2928Z" clip-rule="evenodd"/>
+          <svg
+            aria-hidden="true"
+            class="h-5 w-5"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M13 21h6c1.1046 0 2-.8954 2-2V5c0-1.10457-.8954-2-2-2h-6v18Z" />
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M11 3H5c-1.10457 0-2 .89543-2 2v14c0 1.1046.89543 2 2 2h6V3Zm-5.70711 7.7071c-.39052-.3905-.39052-1.02368 0-1.41421.39053-.39052 1.02369-.39052 1.41422 0l1.99994 1.99991c.39052.3906.39052 1.0237 0 1.4142l-1.99994 2c-.39053.3905-1.02369.3905-1.41422 0-.39052-.3905-.39052-1.0237 0-1.4142l1.29284-1.2929-1.29284-1.2928Z"
+            />
           </svg>
         </button>
 
         <!-- Divider (only when menu button is visible) -->
-        <div *ngIf="isMobileView" class="md:hidden w-px h-5 bg-[#000035]/10 shrink-0"></div>
+        <div
+          aria-hidden="true"
+          class="h-5 w-px shrink-0 bg-[#000035]/10 md:hidden"
+        ></div>
 
         <!-- Title + Breadcrumb -->
-        <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <h1 class="text-[13px] sm:text-[15px] font-bold text-[#000035] tracking-tight whitespace-nowrap leading-none">
+        <div class="min-w-0">
+          <h1
+            class="truncate text-sm font-bold
+                  leading-tight tracking-tight text-[#000035]
+                  sm:text-base"
+            title="Publication Dashboard"
+          >
             <span class="hidden sm:inline">Publication Dashboard</span>
             <span class="sm:hidden">Dashboard</span>
           </h1>
@@ -35,20 +76,42 @@
       </div>
 
       <!-- CENTER: Date + Time Pill (Desktop Only) -->
-      <div class="hidden lg:flex items-center justify-center flex-1">
-        <div class="flex items-center gap-2 bg-[#000035]/4 border border-[#000035]/7 rounded-lg px-3 py-1.5">
-          <span class="text-[11px] font-semibold text-[#000035]/50 uppercase tracking-wide whitespace-nowrap">
+      <div
+        class="hidden items-center justify-center
+              lg:flex lg:justify-self-center"
+      >
+        <div
+          class="flex items-center gap-2 rounded-lg
+                border border-[#000035]/10
+                bg-[#000035]/5 px-3 py-1.5"
+        >
+          <span
+            class="whitespace-nowrap text-[11px]
+                  font-semibold uppercase tracking-wide
+                  text-[#000035]/50"
+          >
             {{ now() | date:'EEE, MMM d' }}
           </span>
-          <div class="w-1 h-1 rounded-full bg-[#000035]/20"></div>
-          <span class="text-[13px] font-medium text-[#000035] tracking-wide tabular-nums whitespace-nowrap">
-            {{ now() | date:'h:mm:ss a' }}
+
+          <span
+            aria-hidden="true"
+            class="h-1 w-1 rounded-full bg-[#000035]/20"
+          ></span>
+
+          <span
+            class="whitespace-nowrap text-[13px]
+                  font-medium tabular-nums
+                  tracking-wide text-[#000035]"
+          >
+            {{ now() | date:'h:mm a' }}
           </span>
         </div>
       </div>
 
       <!-- RIGHT: Welcome + Notifications + Profile -->
-      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <div
+        class="flex shrink-0 items-center justify-self-end gap-2"
+      >
 
         <!-- Tablet: Date pill (md only, not lg) -->
         <div class="hidden md:flex lg:hidden items-center gap-1.5 bg-[#000035]/4 border border-[#000035]/7 rounded-lg px-2.5 py-1.5">
@@ -58,19 +121,30 @@
         </div>
 
         <!-- NOTIFICATION BELL -->
-        <div class="relative">
-          <button
-            (click)="toggleNotifications()"
-            class="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-[9px]
-                   border border-[#000035]/10 text-[#000035]
-                   hover:bg-[#000035]/5 hover:border-[#000035]/18
-                   transition-all duration-150 cursor-pointer"
-            aria-label="Toggle notifications"
-            [attr.aria-expanded]="dropdownOpen()"
-          >
-            <svg class="w-4 h-4 sm:w-4.25 sm:h-4.25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        <div
+          #notificationContainer
+          class="relative">
+        <button
+          #notificationButton
+          type="button"
+          (click)="toggleNotifications()"
+          class="relative inline-flex h-11 w-11
+                items-center justify-center rounded-xl
+                border border-[#000035]/10
+                text-[#000035] transition
+                hover:bg-[#000035]/5
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#F4B400]
+                focus-visible:ring-offset-2"
+          aria-label="Open notifications"
+          aria-haspopup="dialog"
+          aria-controls="admin-notification-panel"
+          [attr.aria-expanded]="dropdownOpen()"
+        >
+            <svg class="w-5 h-5 sm:w-4.25 sm:h-4.25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
+              <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
             </svg>
 
             @if (notifications().length > 0) {
@@ -85,14 +159,31 @@
           <!-- Notification Dropdown -->
           @if (dropdownOpen()) {
             <div
-              class="absolute right-0 top-full mt-2 w-[calc(100vw-24px)] sm:w-80 max-w-sm bg-white rounded-2xl shadow-2xl
-                     border border-[#000035]/10 z-50 overflow-hidden"
-              role="menu"
-              aria-label="Notifications"
+              id="admin-notification-panel"
+              #notificationPanel
+              tabindex="-1"
+              role="dialog"
+              aria-modal="false"
+              aria-labelledby="notification-panel-title"
+              tabindex="-1"
+              class="fixed inset-x-3 top-18 z-70
+                    flex max-h-[calc(100dvh-5.5rem)]
+                    flex-col overflow-hidden
+                    rounded-2xl border border-[#000035]/10
+                    bg-white shadow-2xl
+                    sm:absolute sm:inset-x-auto sm:right-0 sm:top-full
+                    sm:mt-2 sm:w-88 sm:max-w-[calc(100vw-2rem)]
+                    sm:max-h-[min(32rem,calc(100dvh-6rem))]"
             >
               <!-- Header -->
-              <div class="px-4 py-3 border-b border-[#000035]/7 flex items-center justify-between">
-                <span class="text-[13px] font-bold text-[#000035]">Notifications</span>
+              <div
+                class="flex shrink-0 items-center justify-between
+                      border-b border-[#000035]/10
+                      px-4 py-3"
+              >
+                <span class="text-[13px] font-bold text-[#000035]"
+                  id="notification-panel-title"
+                >Notifications</span>
                 @if (notifications().length > 0) {
                   <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#f4b400]/15 text-[#b8860b]">
                     {{ notifications().length }} new
@@ -101,10 +192,16 @@
               </div>
 
               <!-- Notification List -->
-              <div class="max-h-72 sm:max-h-80 overflow-y-auto">
+              <div
+                class="min-h-0 flex-1 overflow-y-auto
+                      overscroll-contain"
+              >
                 @for (n of notifications(); track n.id) {
-                  <div class="px-4 py-3 flex items-start gap-3 border-b border-[#000035]/5
-                               last:border-b-0 hover:bg-[#f4b400]/4 cursor-pointer transition-colors">
+                <div
+                  class="flex items-start gap-3
+                        border-b border-[#000035]/5
+                        px-4 py-3 last:border-b-0"
+                >
                     <div class="w-1.5 h-1.5 rounded-full bg-[#f4b400] mt-1.5 shrink-0"></div>
                     <div class="flex-1 min-w-0">
                       <p class="text-[13px] font-medium text-[#000035] leading-snug">{{ n.message }}</p>
@@ -123,8 +220,8 @@
                   <div class="py-10 text-center">
                     <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#000035]/5 mb-3">
                       <svg class="w-5 h-5 text-[#000035]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
+                        <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
                       </svg>
                     </div>
                     <p class="text-[13px] font-semibold text-[#000035]/50">No new notifications</p>
@@ -135,7 +232,10 @@
 
               <!-- Footer -->
               @if (notifications().length > 0) {
-                <div class="px-4 py-2.5 bg-[#000035]/2 border-t border-[#000035]/6 text-center">
+              <div
+                class="shrink-0 border-t border-[#000035]/10
+                      bg-slate-50 px-4 py-3 text-center"
+              >
                   <button
                     (click)="markAllAsRead()"
                     class="text-[12px] font-semibold text-[#000035] hover:text-[#f4b400] transition-colors py-0.5"
@@ -149,10 +249,11 @@
         </div>
 
         <!-- ADMIN PROFILE -->
-        <div class="flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-2 pr-2 sm:pr-3 py-1 rounded-[10px]
-                    border border-[#000035]/10 cursor-pointer
-                    hover:bg-[#000035]/4 hover:border-[#000035]/18
-                    transition-all duration-150">
+        <div
+          class="flex min-w-0 items-center gap-2
+                rounded-xl border border-[#000035]/10
+                px-2 py-1.5"
+        >
 
           <!-- Square Avatar -->
           <div class="w-7 h-7 rounded-[7px] bg-linear-to-br from-[#000035] to-[#1a1a5e]
@@ -178,4 +279,4 @@
     </div>
   </div>
 
-</section>
+</header>

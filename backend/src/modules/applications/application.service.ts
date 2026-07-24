@@ -1,5 +1,7 @@
 import * as repository from "./application.repository";
 
+export type GetApplicationsQuery = repository.ApplicationListQuery;
+
 const ALLOWED_STATUSES = [
   "pending",
   "interview_scheduled",
@@ -11,8 +13,8 @@ const ALLOWED_STATUSES = [
 type ApplicationStatus = (typeof ALLOWED_STATUSES)[number];
 
 /** Retrieve all applications, optionally filtered by status. */
-export async function getApplications(status?: string) {
-  return repository.findAll(status);
+export async function getApplications(query: repository.ApplicationListQuery) {
+  return repository.findAll(query);
 }
 
 /** Retrieve a single application by ID. */
@@ -22,6 +24,18 @@ export async function getApplicationById(id: string) {
 
 /** Submit a new application. */
 export async function createApplication(data: unknown) {
+  const settings = await repository.findApplicationSettings();
+
+  if (!settings.isOpen) {
+    throw Object.assign(
+      new Error(
+        settings.announcement ||
+          "Applications are currently closed."
+      ),
+      { statusCode: 403 }
+    );
+  }
+
   return repository.create(data);
 }
 
@@ -74,4 +88,42 @@ export async function assignApplication(id: string, section: string, role: strin
 /** Permanently delete an application by ID. */
 export async function deleteApplication(id: string) {
   return repository.remove(id);
+}
+
+/** Retrieve the current application settings. */
+export async function getApplicationSettings() {
+  return repository.findApplicationSettings();
+}
+
+/** Update the application settings. */
+export async function updateApplicationSettings(
+  input: repository.UpdateApplicationSettingsInput
+) {
+  const patch: repository.UpdateApplicationSettingsInput = {};
+
+  if (typeof input.isOpen === "boolean") {
+    patch.isOpen = input.isOpen;
+  }
+
+  if (typeof input.announcement === "string") {
+    const announcement = input.announcement.trim();
+
+    if (announcement.length < 10) {
+      throw Object.assign(
+        new Error("Announcement must be at least 10 characters long"),
+        { statusCode: 400 }
+      );
+    }
+
+    if (announcement.length > 500) {
+      throw Object.assign(
+        new Error("Announcement must not exceed 500 characters"),
+        { statusCode: 400 }
+      );
+    }
+
+    patch.announcement = announcement;
+  }
+
+  return repository.updateApplicationSettings(patch);
 }

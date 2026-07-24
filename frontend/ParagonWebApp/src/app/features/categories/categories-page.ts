@@ -20,14 +20,17 @@ import { LoaderService } from '../../shared/services/loader.service';
 })
 export class CategoriesPage {
 
-private readonly articleService = inject(ArticleService);
-private readonly destroyRef = inject(DestroyRef);
+  private lastArticleChangeVersion = 0;
 
-private readonly route = inject(ActivatedRoute);
-private readonly router = inject(Router);
+  private readonly articleService = inject(ArticleService);
+  private readonly destroyRef = inject(DestroyRef);
 
-private readonly loader = inject(LoaderService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
+  private readonly loader = inject(LoaderService);
+
+  private readonly reloadPending = signal(false);
   // -----------------------------------------
   // 🔎 FILTER STATE
   // -----------------------------------------
@@ -90,26 +93,53 @@ private readonly loader = inject(LoaderService);
 
   readonly loadingMore = signal<boolean>(false);
 
-constructor() {
+  constructor() {
+    this.route.queryParamMap
+      .pipe(
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(params => {
+        const category =
+          params.get('category');
 
-  this.route.queryParamMap
-  .pipe(takeUntilDestroyed(this.destroyRef))
-  .subscribe(params => {
-    const category = params.get('category');
+        this.selectedCategory.set(
+          category || undefined
+        );
+      });
 
-    this.selectedCategory.set(category || undefined);
-    this.currentPage.set(1);
-  });
+    /*
+    * Reload when filters change.
+    */
+    effect(() => {
+      this.filters();
 
-  effect(() => {
-    this.filters();
-    this.articleService.articlesChanged();
-
-    untracked(() => {
-      this.resetAndLoad();
+      untracked(() => {
+        this.resetAndLoad(true);
+      });
     });
-  });
-}
+
+    /*
+    * Reload when an article is created, updated,
+    * published, archived, or deleted.
+    */
+    effect(() => {
+      const version =
+        this.articleService.articlesChanged();
+
+      if (
+        version === 0 ||
+        version === this.lastArticleChangeVersion
+      ) {
+        return;
+      }
+
+      this.lastArticleChangeVersion = version;
+
+      untracked(() => {
+        this.resetAndLoad(false);
+      });
+    });
+  }
 
   private readonly filters = computed(() => ({
     search: this.search(),
@@ -125,19 +155,22 @@ constructor() {
   // -----------------------------------------
 
   private loadArticles(): void {
-    const isFirstPage = this.currentPage() === 1;
+    const isFirstPage =
+      this.currentPage() === 1;
 
-    if (this.loading()) return;
+    if (this.loading()) {
+      this.reloadPending.set(true);
+      return;
+    }
 
-    if (!isFirstPage && !this.hasMore()) return;
+    if (
+      !isFirstPage &&
+      !this.hasMore()
+    ) {
+      return;
+    }
 
     this.loading.set(true);
-
-    if (this.initialLoading()) {
-      this.loader.show();
-    } else {
-      this.loadingMore.set(true);
-    }
 
     const params: GetArticlesParams = {
       page: this.currentPage(),
@@ -150,7 +183,10 @@ constructor() {
 
     this.articleService.loadCategoryFeed(params).subscribe({
       next: () => {
-        this.currentPage.update(page => page + 1);
+        this.currentPage.update(
+          page => page + 1
+        );
+
         this.loading.set(false);
 
         if (this.initialLoading()) {
@@ -159,9 +195,18 @@ constructor() {
         } else {
           this.loadingMore.set(false);
         }
-      },
 
-      error: () => {
+        if (this.reloadPending()) {
+          this.reloadPending.set(false);
+          this.resetAndLoad(false);
+        }
+      },
+      error: err => {
+        console.error(
+          'Failed to load category feed',
+          err
+        );
+
         this.loading.set(false);
 
         if (this.initialLoading()) {
@@ -169,6 +214,11 @@ constructor() {
           this.initialLoading.set(false);
         } else {
           this.loadingMore.set(false);
+        }
+
+        if (this.reloadPending()) {
+          this.reloadPending.set(false);
+          this.resetAndLoad(false);
         }
       },
     });
@@ -178,9 +228,17 @@ constructor() {
   // 🔄 RESET PAGINATION
   // -----------------------------------------
 
-  private resetAndLoad(): void {
+  private resetAndLoad(
+    showPageLoader: boolean
+  ): void {
     this.currentPage.set(1);
-    this.initialLoading.set(true);
+
+    if (showPageLoader) {
+      this.initialLoading.set(true);
+    } else {
+      this.initialLoading.set(false);
+      this.loadingMore.set(false);
+    }
 
     this.loadArticles();
   }

@@ -1,17 +1,25 @@
-/*
-  ApplicationService
-  - Purpose: manage application data for the frontend (loading, submitting,
-    and admin-side operations). Only comments/formatting changed; logic intact.
-*/
-
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-
+import { finalize } from 'rxjs/operators';
 import { JoinApplication } from '../../features/join/models/join-application.model';
 import { Application } from '../../models/application.model';
+import { ApplicationSettings, UpdateApplicationSettings } from '../../models/application-settings.model';
 
 import { API_ENDPOINTS } from '../config/api.config';
+
+import { SocketService } from './socket.service';
+
+export interface PaginatedApplications {
+  items: Application[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+type DefinedApplicationStatus =
+  Exclude<Application['status'], null | undefined>;
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +33,65 @@ export class ApplicationService {
   private applicationsSubject = new BehaviorSubject<Application[]>([]);
   readonly applications$ = this.applicationsSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  private readonly applicationSettingsSubject = new BehaviorSubject<ApplicationSettings | null>(null);
+
+  private lastStatus: string | undefined;
+  private lastSearch: string | undefined;
+
+  private applicationsRefreshInProgress = false;
+  private applicationsRefreshPending = false;
+
+  private settingsRefreshInProgress = false;
+
+  readonly applicationSettings$ = this.applicationSettingsSubject.asObservable();
+
+  readonly total = signal(0);
+  readonly totalPages = signal(1);
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+
+  readonly totalApplications = this.total.asReadonly();
+  readonly totalPagesCount = this.totalPages.asReadonly();
+  readonly activePage = this.currentPage.asReadonly();
+  readonly activePageSize = this.pageSize.asReadonly();
+
+  constructor(
+    private http: HttpClient,
+    private socketService: SocketService
+  ) {
+    this.initializeRealtime();
+  }
+
+  private initializeRealtime(): void {
+    this.socketService
+      .onApplicationsUpdated(() => {
+        console.log(
+          '📡 Applications updated'
+        );
+
+        this.refresh();
+      });
+
+    this.socketService
+      .onEditorialBoardUpdated(() => {
+        console.log(
+          '📡 Editorial board changed application assignment state'
+        );
+
+        this.refresh();
+      });
+
+    this.socketService
+      .onApplicationSettingsUpdated(
+        () => {
+          console.log(
+            '📡 Application settings updated'
+          );
+
+          this.refreshApplicationSettings();
+        }
+      );
+  }
 
   // Convert plain objects from the API into Application instances with Date fields
   private parseDates(app: any): Application {
@@ -40,15 +106,111 @@ export class ApplicationService {
   // Data Loading
   // ====================================
 
-  private loadApplications(): void {
-    this.http.get<any[]>(this.apiUrl).subscribe({
-      next: apps => this.applicationsSubject.next(apps.map(a => this.parseDates(a))),
-      error: err => console.error('Failed to load applications:', err)
-    });
+  private loadApplications(
+    page = 1,
+    limit = 10,
+    status?: string,
+    search?: string
+  ): void {
+
+    let params = new HttpParams()
+      .set('page', page)
+      .set('limit', limit);
+
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    if (search) {
+      params = params.set('search', search);
+    }
+
+    this.http
+      .get<PaginatedApplications>(
+        this.apiUrl,
+        { params }
+      )
+      .pipe(
+        finalize(() => {
+          this.applicationsRefreshInProgress =
+            false;
+
+          if (
+            this.applicationsRefreshPending
+          ) {
+            this.applicationsRefreshPending =
+              false;
+
+            this.requestApplicationsRefresh(
+              this.currentPage(),
+              this.pageSize(),
+              this.lastStatus,
+              this.lastSearch
+            );
+          }
+        })
+      )
+      .subscribe({
+        next: response => {
+          this.currentPage.set(response.page);
+          this.pageSize.set(response.limit);
+          this.total.set(response.total);
+          this.totalPages.set(
+            response.totalPages
+          );
+
+          this.applicationsSubject.next(
+            response.items.map(app =>
+              this.parseDates(app)
+            )
+          );
+        },
+
+        error: error => {
+          console.error(
+            'Failed to load applications:',
+            error
+          );
+        },
+      });
   }
 
-  refresh(): void {
-    this.loadApplications();
+  private requestApplicationsRefresh(
+    page: number,
+    limit: number,
+    status?: string,
+    search?: string
+  ): void {
+    if (this.applicationsRefreshInProgress) {
+      this.applicationsRefreshPending = true;
+      return;
+    }
+
+    this.applicationsRefreshInProgress = true;
+
+    this.loadApplications(
+      page,
+      limit,
+      status,
+      search
+    );
+  }
+
+  refresh(
+    page = this.currentPage(),
+    limit = this.pageSize(),
+    status = this.lastStatus,
+    search = this.lastSearch
+  ): void {
+    this.lastStatus = status;
+    this.lastSearch = search;
+
+    this.requestApplicationsRefresh(
+      page,
+      limit,
+      status,
+      search
+    );
   }
 
   // ====================================
@@ -77,9 +239,11 @@ export class ApplicationService {
     return this.applicationsSubject.value.find(app => app.id === id);
   }
 
-  updateStatus(id: string, status: Application['status']): void {
-    if (!status) return;
-    this.patchStatus(id, status);
+  updateStatus(
+    id: string,
+    status: DefinedApplicationStatus
+  ): Observable<Application> {
+    return this.patchStatus(id, status);
   }
 
   // ================================
@@ -90,17 +254,22 @@ export class ApplicationService {
     id: string,
     status: Application['status'],
     localChanges: Partial<Application> = {}
-  ): void {
-    this.http.patch<any>(`${this.apiUrl}/${id}/status`, { status }).subscribe({
-      next: updated => {
-        const parsed = this.parseDates(updated);
-        const apps = this.applicationsSubject.value.map(app =>
-          app.id === id ? { ...app, ...parsed, ...localChanges } : app
-        );
-        this.applicationsSubject.next(apps);
-      },
-      error: err => console.error('Failed to update status:', err)
-    });
+  ): Observable<Application> {
+    return this.http
+      .patch<Application>(
+        `${this.apiUrl}/${id}/status`,
+        { status }
+      )
+      .pipe(
+        tap(updated => {
+          const parsed = this.parseDates(updated);
+
+          this.updateLocalApplication(id, {
+            ...parsed,
+            ...localChanges,
+          });
+        })
+      );
   }
 
   private updateLocalApplication(id: string, changes: Partial<Application>): void {
@@ -110,70 +279,159 @@ export class ApplicationService {
     this.applicationsSubject.next(apps);
   }
 
-  scheduleInterview(id: string, datetime: string): void {
-    this.http.patch<any>(`${this.apiUrl}/${id}/interview`, { interviewDate: datetime }).subscribe({
-      next: updated => {
-        const parsed = this.parseDates(updated);
-        this.updateLocalApplication(id, parsed);
-      },
-      error: err => console.error('Failed to schedule interview:', err)
-    });
+scheduleInterview(
+  id: string,
+  datetime: string
+): Observable<Application> {
+  return this.http
+    .patch<Application>(
+      `${this.apiUrl}/${id}/interview`,
+      {
+        interviewDate: datetime,
+      }
+    )
+    .pipe(
+      tap(updated => {
+        const parsed =
+          this.parseDates(updated);
+
+        this.updateLocalApplication(
+          id,
+          parsed
+        );
+      })
+    );
+}
+
+  clearInterview(
+    id: string
+  ): Observable<Application> {
+    return this.patchStatus(
+      id,
+      'pending',
+      {
+        interviewDate: null,
+      }
+    );
   }
 
-  clearInterview(id: string): void {
-    this.patchStatus(id, 'pending', {
-      interviewDate: null
-    });
-  }
+addInterviewNotes(
+  id: string,
+  notes: string
+): Observable<Application> {
+  return this.http
+    .patch<Application>(
+      `${this.apiUrl}/${id}/interview-notes`,
+      {
+        notes,
+      }
+    )
+    .pipe(
+      tap(updated => {
+        const parsed =
+          this.parseDates(updated);
 
-  addInterviewNotes(id: string, notes: string): void {
-    this.http.patch<any>(`${this.apiUrl}/${id}/interview-notes`, { notes }).subscribe({
-      next: updated => {
-        const parsed = this.parseDates(updated);
-        this.updateLocalApplication(id, parsed);
-      },
-      error: err => console.error('Failed to save interview notes:', err)
-    });
-  }
+        this.updateLocalApplication(
+          id,
+          parsed
+        );
+      })
+    );
+}
 
-  markInterviewed(id: string): void {
-    this.http.patch<any>(`${this.apiUrl}/${id}/interview-complete`, {}).subscribe({
-      next: updated => {
-        const parsed = this.parseDates(updated);
-        this.updateLocalApplication(id, parsed);
-      },
-      error: err => console.error('Failed to mark as interviewed:', err)
-    });
-  }
+markInterviewed(
+  id: string
+): Observable<Application> {
+  return this.http
+    .patch<Application>(
+      `${this.apiUrl}/${id}/interview-complete`,
+      {}
+    )
+    .pipe(
+      tap(updated => {
+        const parsed =
+          this.parseDates(updated);
 
-  acceptApplication(id: string, interviewNotes?: string): void {
-    this.http.patch<any>(`${this.apiUrl}/${id}/accept`, { interviewNotes }).subscribe({
-      next: updated => {
-        const parsed = this.parseDates(updated);
-        this.updateLocalApplication(id, parsed);
-      },
-      error: err => console.error('Failed to accept application:', err)
-    });
-  }
+        this.updateLocalApplication(
+          id,
+          parsed
+        );
+      })
+    );
+}
 
-  rejectApplication(id: string): void {
-    this.http.patch<any>(`${this.apiUrl}/${id}/reject`, {}).subscribe({
-      next: updated => {
-        const parsed = this.parseDates(updated);
-        this.updateLocalApplication(id, parsed);
-      },
-      error: err => console.error('Failed to reject application:', err)
-    });
-  }
+acceptApplication(
+  id: string,
+  interviewNotes?: string
+): Observable<Application> {
+  return this.http
+    .patch<Application>(
+      `${this.apiUrl}/${id}/accept`,
+      {
+        interviewNotes,
+      }
+    )
+    .pipe(
+      tap(updated => {
+        const parsed =
+          this.parseDates(updated);
 
-  markAssigned(id: string, section: string, role: string): void {
-    this.http.patch<any>(`${this.apiUrl}/${id}/assign`, { section, role }).subscribe({
-      next: updated => {
-        const parsed = this.parseDates(updated);
-        this.updateLocalApplication(id, parsed);
-      },
-      error: err => console.error('Failed to assign application:', err)
-    });
+        this.updateLocalApplication(
+          id,
+          parsed
+        );
+      })
+    );
+}
+
+rejectApplication(
+  id: string,
+  interviewNotes?: string
+): Observable<Application> {
+  return this.http
+    .patch<Application>(
+      `${this.apiUrl}/${id}/reject`,
+      {
+        interviewNotes,
+      }
+    )
+    .pipe(
+      tap(updated => {
+        const parsed =
+          this.parseDates(updated);
+
+        this.updateLocalApplication(
+          id,
+          parsed
+        );
+      })
+    );
+}
+
+  markAssigned(
+    id: string,
+    section: string,
+    role: string
+  ): Observable<Application> {
+    return this.http
+      .patch<Application>(
+        `${this.apiUrl}/${id}/assign`,
+        {
+          section,
+          role,
+        }
+      )
+      .pipe(
+        tap(updated => {
+          const parsed =
+            this.parseDates(updated);
+
+          this.updateLocalApplication(
+            id,
+            parsed
+          );
+        })
+      );
   }
 
   getUnassignedAccepted(): Application[] {
@@ -182,8 +440,13 @@ export class ApplicationService {
     );
   }
 
-  revokeAcceptance(id: string): void {
-    this.patchStatus(id, 'interview_completed');
+  revokeAcceptance(
+    id: string
+  ): Observable<Application> {
+    return this.patchStatus(
+      id,
+      'interview_completed'
+    );
   }
 
   deleteApplication(id: string): void {
@@ -195,6 +458,53 @@ export class ApplicationService {
       },
       error: err => console.error('Failed to delete application:', err),
     });
+  }
+
+  getApplicationSettings(): Observable<ApplicationSettings> {
+    return this.http
+      .get<ApplicationSettings>(`${this.apiUrl}/settings`)
+      .pipe(
+        tap(settings => {
+          this.applicationSettingsSubject.next(settings);
+        })
+      );
+  }
+
+  updateApplicationSettings(
+    patch: UpdateApplicationSettings
+  ): Observable<ApplicationSettings> {
+    return this.http
+      .patch<ApplicationSettings>(
+        `${this.apiUrl}/settings`,
+        patch
+      )
+      .pipe(
+        tap(settings => {
+          this.applicationSettingsSubject.next(
+            settings
+          );
+        })
+      );
+  }
+
+  refreshApplicationSettings(): void {
+    if (this.settingsRefreshInProgress) return;
+
+    this.settingsRefreshInProgress = true;
+
+    this.getApplicationSettings()
+      .pipe(
+        finalize(() => {
+          this.settingsRefreshInProgress = false;
+        })
+      )
+      .subscribe({
+        error: err =>
+          console.error(
+            'Failed to refresh application settings:',
+            err
+          ),
+      });
   }
 }
 

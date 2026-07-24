@@ -1,93 +1,165 @@
-<section class="space-y-8 pt-12">
+<section
+  aria-labelledby="applications-overview-title"
+  class="min-w-0 space-y-5 rounded-2xl
+         border border-slate-200 bg-white
+         p-4 shadow-sm
+         sm:space-y-6 sm:p-5
+         lg:p-6"
+>
 
   <!-- Header -->
-  <div class="flex items-center justify-between pb-6 border-b-2 border-slate-100">
-    <div class="space-y-1">
-      <h2 class="text-2xl font-bold text-[#000035]">
-        Applications
-      </h2>
-      <p class="text-sm text-slate-600 font-medium">
-        Recruitment submissions overview
-      </p>
-    </div>
-
-    <a
-      routerLink="/admin/applications"
-      class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#F4B400] text-[#000035]
-             rounded-xl font-bold text-sm hover:bg-[#d69800]
-             transition-all duration-200 shadow-md hover:shadow-lg"
+<div
+  class="flex min-w-0 flex-col gap-4
+         border-b border-slate-200 pb-5
+         sm:flex-row sm:items-center
+         sm:justify-between"
+>
+  <div class="min-w-0 space-y-1">
+    <h2
+      id="applications-overview-title"
+      class="text-lg font-bold tracking-tight
+             text-[#000035] sm:text-xl"
     >
-      <span>View All</span>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-      </svg>
-    </a>
+      Applications
+    </h2>
+
+    <p class="text-sm text-slate-600">
+      Recruitment submissions overview
+    </p>
   </div>
 
+  <a
+    routerLink="/admin/applications"
+    class="inline-flex min-h-11 w-full items-center
+           justify-center gap-2 rounded-xl
+           bg-[#F4B400] px-4 py-2.5
+           text-sm font-bold text-[#000035]
+           shadow-sm transition
+           hover:bg-[#d69800] hover:shadow-md
+           focus-visible:outline-none
+           focus-visible:ring-2
+           focus-visible:ring-[#000035]
+           focus-visible:ring-offset-2
+           sm:w-auto"
+  >
+    <span>View All</span>
+
+    <svg
+      aria-hidden="true"
+      class="h-4 w-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2.5"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M13 7l5 5m0 0-5 5m5-5H6"
+      />
+    </svg>
+  </a>
+</div>
+
   <!-- Summary Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+  <div
+    class="grid min-w-0 grid-cols-1 gap-3
+          min-[480px]:grid-cols-2
+          xl:grid-cols-3
+          sm:gap-4"
+  >
+  <!-- Total Applications Card -->
+    <div class="min-w-0 rounded-xl border border-slate-200
+                bg-white p-4 shadow-sm
+                transition-shadow duration-200
+                hover:shadow-md
+                motion-reduce: transition-none
+                sm:p-5"
+      >
 
-    <div class="group bg-white rounded-2xl border-2 border-slate-200 p-6
-                hover:border-[#F4B400] transition-all duration-300 hover:shadow-lg relative overflow-hidden">
-
-      <div class="relative flex items-start justify-between">
-        <div class="space-y-3">
-          <p class="text-xs uppercase tracking-wider text-slate-500 font-bold">
+      <div class="flex min-w-0 items-start justify-between gap-4">
+        <div class="min-w-0 space-y-2">
+          <p class="truncate text-xs font-semibold uppercase tracking-wider text-slate-500"
+             title="'Total Applications'">
             Total Applications
           </p>
-          <p class="text-4xl font-bold text-[#000035]">
-            {{ totalApplications }}
+          <p class="text-3xl font-bold leading-none text-[#000035]">
+            {{ totalApplications() }}
           </p>
         </div>
 
-        <div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center
-                    group-hover:bg-[#F4B400] transition-all duration-300">
-          <svg class="w-6 h-6 text-slate-400 group-hover:text-[#000035] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        <div class="flex h-11 w-11 shrink-0 items-center
+                justify-center rounded-xl bg-slate-100
+                text-slate-500"
+                aria-hidden="true">
+          <svg class="w-6 h-6 text-slate-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path d="M15 2h-4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/>
+            <path d="M16.706 2.706A2.4 2.4 0 0 0 15 2v5a1 1 0 0 0 1 1h5a2.4 2.4 0 0 0-.706-1.706z"/>
+            <path d="M5 7a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h8a2 2 0 0 0 1.732-1"/>
           </svg>
         </div>
       </div>
     </div>
 
-    <div class="group bg-white rounded-2xl border-2 border-slate-200 p-6
-                hover:border-[#F4B400] transition-all duration-300 hover:shadow-lg relative overflow-hidden">
+    <!-- Pending Review Card -->
+   <div class="min-w-0 rounded-xl border border-slate-200
+                bg-white p-4 shadow-sm
+                transition-shadow duration-200
+                hover:shadow-md
+                motion-reduce: transition-none
+                sm:p-5"
+      >
 
-      <div class="relative flex items-start justify-between">
-        <div class="space-y-3">
-          <p class="text-xs uppercase tracking-wider text-slate-500 font-bold">
+      <div class="flex min-w-0 items-start justify-between gap-4">
+        <div class="min-w-0 space-y-2">
+          <p class="truncate text-xs font-semibold uppercase tracking-wider text-slate-500"
+             title="'Total Applications'">
             Pending Review
           </p>
-          <p class="text-4xl font-bold text-[#F4B400]">
-            {{ pendingApplications }}
+          <p class="text-3xl font-bold leading-none text-amber-600">
+            {{ pendingApplications() }}
           </p>
         </div>
 
-        <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center
-                    group-hover:bg-[#F4B400] transition-all duration-300">
-          <svg class="w-6 h-6 text-yellow-600 group-hover:text-[#000035] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        <div class="flex h-11 w-11 shrink-0 items-center
+                justify-center rounded-xl bg-amber-100
+                text-amber-700"
+                aria-hidden="true">
+          <svg class="w-6 h-6 text-slate-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6h4"/>
           </svg>
         </div>
       </div>
     </div>
 
-    <div class="group bg-white rounded-2xl border-2 border-slate-200 p-6
-                hover:border-[#F4B400] transition-all duration-300 hover:shadow-lg relative overflow-hidden">
+    <!-- Accepted Card -->
+       <div class="min-w-0 rounded-xl border border-slate-200
+                bg-white p-4 shadow-sm
+                transition-shadow duration-200
+                hover:shadow-md
+                motion-reduce: transition-none
+                sm:p-5"
+      >
 
-      <div class="relative flex items-start justify-between">
-        <div class="space-y-3">
-          <p class="text-xs uppercase tracking-wider text-slate-500 font-bold">
+      <div class="flex min-w-0 items-start justify-between gap-4">
+        <div class="min-w-0 space-y-2">
+          <p class="truncate text-xs font-semibold uppercase tracking-wider text-slate-500"
+             title="'Total Applications'">
             Accepted
           </p>
-          <p class="text-4xl font-bold text-green-600">
-            {{ acceptedApplications }}
+          <p class="text-3xl font-bold leading-none text-emerald-700">
+            {{ acceptedApplications() }}
           </p>
         </div>
 
-        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center
-                    group-hover:bg-green-500 transition-all duration-300">
-          <svg class="w-6 h-6 text-green-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        <div class="flex h-11 w-11 shrink-0 items-center
+                justify-center rounded-xl bg-emerald-100
+                text-emerald-700"
+                aria-hidden="true">
+          <svg class="w-6 h-6 text-slate-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m9 12 2 2 4-4"/>
           </svg>
         </div>
       </div>
@@ -96,10 +168,10 @@
   </div>
 
   <!-- Recent Applications Table -->
-  <div class="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-lg">
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 
     <!-- Table Header -->
-    <div class="px-6 py-4 border-b-2 border-slate-100 bg-slate-50">
+    <div class="border-b border-slate-200 bg-slate-50 px-4 py-4 sm:px-5">
       <div class="flex items-center gap-2">
         <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
@@ -108,9 +180,13 @@
       </div>
     </div>
 
-    <div class="overflow-x-auto">
+    <div
+      class="hidden overflow-x-auto xl:block"
+      tabindex="0"
+      aria-label="Recent applications table"
+    >
 
-      <table class="w-full text-sm">
+      <table class="w-full min-w-225 text-sm">
         <thead class="text-xs uppercase tracking-wider text-slate-500 bg-slate-50 border-b-2 border-slate-100">
           <tr>
             <th class="py-4 px-6 text-left font-bold">Name</th>
@@ -123,7 +199,7 @@
 
         <tbody class="divide-y divide-slate-100">
 
-          @if (recentApplications.length === 0) {
+          @if (recentApplications().length === 0) {
             <tr>
               <td colspan="5" class="py-16 text-center">
                 <div class="flex flex-col items-center gap-3">
@@ -138,7 +214,7 @@
             </tr>
           }
 
-          @for (app of recentApplications; track app.id) {
+          @for (app of recentApplications(); track app.id) {
             <tr class="hover:bg-slate-50 transition-colors">
 
               <td class="py-4 px-6">
@@ -152,12 +228,48 @@
                 </div>
               </td>
 
-              <td class="py-4 px-6 text-slate-700 font-medium">
-                {{ app.positionId }}
+              <td class="px-6 py-4">
+                <div class="flex max-w-xs flex-wrap gap-1.5">
+                  @for (
+                    position of getPositionLabels(app);
+                    track position
+                  ) {
+                    <span
+                      class="inline-flex rounded-full
+                            bg-[#000035]/5 px-2.5 py-1
+                            text-xs font-semibold
+                            text-[#000035]"
+                    >
+                      {{ position }}
+                    </span>
+                  } @empty {
+                    <span class="text-sm text-slate-400">
+                      Not specified
+                    </span>
+                  }
+                </div>
               </td>
 
-              <td class="py-4 px-6 text-slate-600">
-                {{ app.subRole || '—' }}
+              <td class="px-6 py-4">
+                <div class="flex max-w-xs flex-wrap gap-1.5">
+                  @for (
+                    category of getCategoryLabels(app);
+                    track category
+                  ) {
+                    <span
+                      class="inline-flex rounded-full
+                            bg-[#F4B400]/10 px-2.5 py-1
+                            text-xs font-medium
+                            text-[#000035]"
+                    >
+                      {{ category }}
+                    </span>
+                  } @empty {
+                    <span class="text-sm text-slate-400">
+                      Not specified
+                    </span>
+                  }
+                </div>
               </td>
 
               <td class="py-4 px-6 text-slate-600">
@@ -185,7 +297,7 @@
                         [class.bg-green-500]="app.status === 'accepted'"
                         [class.bg-red-500]="app.status === 'rejected'">
                   </span>
-                  {{ app.status }}
+                  {{ formatStatus(app.status) }}
                 </span>
               </td>
 
@@ -196,6 +308,144 @@
       </table>
 
     </div>
+
+      <div class="divide-y divide-slate-100 xl:hidden">
+
+        @if (recentApplications().length === 0) {
+          <div class="px-4 py-12 text-center sm:px-5">
+            <div
+              class="mx-auto flex h-14 w-14 items-center
+                    justify-center rounded-2xl bg-slate-100"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-7 w-7 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+                <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+              </svg>
+            </div>
+
+            <p class="mt-3 text-sm font-medium text-slate-500">
+              No recent applications
+            </p>
+          </div>
+        }
+
+        @for (app of recentApplications(); track app.id) {
+          <article class="space-y-4 p-4 sm:p-5">
+
+            <div class="flex min-w-0 items-start gap-3">
+              <div
+                class="flex h-11 w-11 shrink-0 items-center
+                      justify-center rounded-xl bg-[#F4B400]"
+                aria-hidden="true"
+              >
+                <span class="text-sm font-bold text-[#000035]">
+                  {{ app.fullName.charAt(0).toUpperCase() }}
+                </span>
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <h4
+                  class="truncate font-semibold text-[#000035]"
+                  [title]="app.fullName"
+                >
+                  {{ app.fullName }}
+                </h4>
+
+                <p class="mt-0.5 text-xs text-slate-500">
+                  Applied {{ app.createdAt | date:'MMM d, y' }}
+                </p>
+              </div>
+
+              <span
+                class="inline-flex shrink-0 items-center gap-1.5
+                      rounded-full px-2.5 py-1
+                      text-xs font-semibold capitalize"
+                [class.bg-amber-100]="app.status === 'pending'"
+                [class.text-amber-700]="app.status === 'pending'"
+                [class.bg-emerald-100]="app.status === 'accepted'"
+                [class.text-emerald-700]="app.status === 'accepted'"
+                [class.bg-red-100]="app.status === 'rejected'"
+                [class.text-red-700]="app.status === 'rejected'"
+              >
+                <span
+                  class="h-1.5 w-1.5 rounded-full"
+                  aria-hidden="true"
+                  [class.bg-amber-500]="app.status === 'pending'"
+                  [class.bg-emerald-500]="app.status === 'accepted'"
+                  [class.bg-red-500]="app.status === 'rejected'"
+                ></span>
+
+                {{ app.status }}
+              </span>
+            </div>
+
+            <dl
+              class="grid grid-cols-1 gap-3 rounded-xl
+                    bg-slate-50 p-3
+                    min-[480px]:grid-cols-2"
+            >
+              <div class="min-w-0">
+                <dt class="text-xs font-medium text-slate-500">
+                  Position
+                </dt>
+
+                <dd class="mt-2 flex flex-wrap gap-1.5">
+                  @for (
+                    position of getPositionLabels(app);
+                    track position
+                  ) {
+                    <span
+                      class="rounded-full bg-[#000035]/5
+                            px-2.5 py-1 text-xs
+                            font-semibold text-[#000035]"
+                    >
+                      {{ position }}
+                    </span>
+                  } @empty {
+                    <span class="text-sm text-slate-400">
+                      Not specified
+                    </span>
+                  }
+                </dd>
+              </div>
+
+              <div class="min-w-0">
+                <dt class="text-xs font-medium text-slate-500">
+                  Category
+                </dt>
+
+                <dd class="mt-2 flex flex-wrap gap-1.5">
+                  @for (
+                    category of getCategoryLabels(app);
+                    track category
+                  ) {
+                    <span
+                      class="rounded-full bg-[#F4B400]/10
+                            px-2.5 py-1 text-xs
+                            font-medium text-[#000035]"
+                    >
+                      {{ category }}
+                    </span>
+                  } @empty {
+                    <span class="text-sm text-slate-400">
+                      Not specified
+                    </span>
+                  }
+                </dd>
+              </div>
+            </dl>
+
+          </article>
+        }
+
+      </div>
 
   </div>
 

@@ -48,8 +48,8 @@ export class JoinApplicationForm {
   // ========================
 
   private fb = inject(FormBuilder);
-  private applicationService = inject(ApplicationService);
-  private collegeService = inject(CollegeService);
+  private readonly applicationService = inject(ApplicationService);
+  private readonly collegeService = inject(CollegeService);
 
   // ========================
   // UI STATE
@@ -69,6 +69,13 @@ export class JoinApplicationForm {
   readonly colleges = toSignal(
     this.collegeService.getColleges(),
     { initialValue: [] as College[] }
+  );
+
+  //ERROR MODAL STATE
+  readonly showSubmissionError = signal(false);
+  readonly submissionErrorTitle = signal('Unable to Submit Application');
+  readonly submissionErrorMessage = signal(
+    'An unexpected error occurred. Please try again.'
   );
 
   // ========================
@@ -197,10 +204,31 @@ export class JoinApplicationForm {
         this.selectedPositions.set([]);
         this.showSuccessModal.set(true);
       },
-      error: () => {
+      error: (err: unknown) => {
         this.isSubmitting.set(false);
-        this.showErrorModal.set(true);
-      }
+        const httpError = err as {
+          status?: number;
+          error?: {
+            error?: string;
+          };
+        };
+        if (httpError.status === 403) {
+          this.submissionErrorTitle.set('Applications Are Closed');
+          this.submissionErrorMessage.set(
+            httpError.error?.error ??
+            'Applications are no longer accepting submissions.'
+          );
+          this.showSubmissionError.set(true);
+          this.applicationService.refreshApplicationSettings();
+          return;
+        }
+        this.submissionErrorTitle.set('Unable to Submit Application');
+        this.submissionErrorMessage.set(
+          httpError.error?.error ??
+          'An unexpected error occurred while submitting your application. Please try again.'
+        );
+        this.showSubmissionError.set(true);
+      },
     });
   }
 
@@ -256,4 +284,7 @@ export class JoinApplicationForm {
     });
   }
 
+  closeSubmissionError(): void {
+    this.showSubmissionError.set(false);
+  }
 }

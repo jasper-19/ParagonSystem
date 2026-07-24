@@ -1,41 +1,81 @@
-import { Component, computed, effect, inject, signal, OnInit } from "@angular/core";
+import { Component, computed, effect, inject, signal, untracked, DestroyRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import { ArticleService } from "../../../../../core/services/article.service";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { FormsModule } from "@angular/forms";
+import { ArticleService, AdminArticlesParams, AdminArticleDetail } from "../../../../../core/services/article.service";
 import { Article } from "../../../../../models/article.model";
 import { ConfirmationService } from "../../../../../shared/components/confirmation-modal/confirmation.service";
 import { ArticleViewModal } from "../../../../../shared/components/article-view-modal/article-view-modal";
 
 type ArticleStatus = 'all' | 'Draft' | 'Published' | 'Archived';
-type SortField = 'title' | 'views' | 'status' | 'category';
-type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-all-articles',
   standalone: true,
-  imports: [CommonModule, RouterModule, ArticleViewModal],
+  imports: [CommonModule, RouterModule, ArticleViewModal, FormsModule],
   templateUrl: './all-articles.html',
 })
-export class AllArticlesComponent implements OnInit {
+export class AllArticlesComponent {
 
-private readonly articleService = inject(ArticleService);
-private readonly route = inject(ActivatedRoute);
-private readonly router = inject(Router);
-private readonly confirm = inject(ConfirmationService);
+private loadArticles(
+  params: AdminArticlesParams
+): void {
+  this.loading.set(true);
 
-readonly currentPage = signal(1);
-readonly pageSize = signal(5);
+  this.articleService
+    .getAdminArticles(params)
+    .subscribe({
+      next: response => {
+        if (
+          this.currentPage() !== response.page
+        ) {
+          this.currentPage.set(
+            response.page
+          );
+        }
 
-readonly searchQuery = signal('');
+        this.loading.set(false);
+      },
 
-readonly statuses: ArticleStatus[] = [
-  'all',
-  'Published',
-  'Draft',
-  'Archived'
-];
+      error: err => {
+        console.error(
+          'Failed to load admin articles',
+          err
+        );
 
-readonly selectedArticle = signal<Article | null>(null);
+        this.loading.set(false);
+      },
+    });
+}
+
+  private searchTimer?: ReturnType<
+    typeof setTimeout
+  >;
+
+  private readonly articleService = inject(ArticleService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly confirm = inject(ConfirmationService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(5);
+
+  readonly searchQuery = signal('');
+
+  readonly statuses: ArticleStatus[] = [
+    'all',
+    'Published',
+    'Draft',
+    'Archived'
+  ];
+
+  readonly selectedArticle = signal<AdminArticleDetail | null>(null);
+
+  readonly modalLoading = signal(false);
+
+  readonly modalError = signal<string | null>(null);
 
   // ---- Source State ----
   readonly articles = this.articleService.adminArticles;
@@ -43,162 +83,195 @@ readonly selectedArticle = signal<Article | null>(null);
   // ---- Status Filter ----
   readonly statusFilter = signal<ArticleStatus>('all');
 
-  //---- Sort Filter ----
-  readonly sortField = signal<SortField>('title')
-  readonly sortDirection = signal<SortDirection>('asc');
-
   //---- Page Size Options ----
   readonly pageSizeOptions = [5, 10, 20, 50];
 
+  readonly loading = signal(false);
+
   constructor() {
-    // Sync query param → signal
-    effect(() => {
-      const status = this.route.snapshot.queryParamMap.get('status') as ArticleStatus | null;
+    this.route.queryParamMap
+      .pipe(
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(params => {
+        const status =
+          params.get('status');
 
-      if (status && ['Draft', 'Published', 'Archived'].includes(status)) {
-        this.statusFilter.set(status);
-      } else {
-        this.statusFilter.set('all');
-      }
-    });
-      //reset page when filter/search changes
-    effect(() => {
-      this.statusFilter();
-      this.searchQuery();
-      this.sortField();
-      this.sortDirection();
-      this.currentPage.set(1);
-    });
+        const nextStatus: ArticleStatus =
+          status === 'Draft' ||
+          status === 'Published' ||
+          status === 'Archived'
+            ? status
+            : 'all';
+
+        if (
+          this.statusFilter() !== nextStatus
+        ) {
+          this.currentPage.set(1);
+          this.statusFilter.set(nextStatus);
+        }
+      });
 
     effect(() => {
-      this.pageSize();
-      this.currentPage.set(1);
-    });
-  }
+      const page =
+        this.currentPage();
 
-  ngOnInit(): void {
-    this.articleService.getAdminArticles().subscribe({
-      error: err => console.error('Failed to load admin articles', err),
+      const limit =
+        this.pageSize();
+
+      const status =
+        this.statusFilter();
+
+      const search =
+        this.searchQuery()
+          .trim();
+
+      this.articleService.articlesChanged();
+
+      const params: AdminArticlesParams = {
+        page,
+        limit,
+
+        status:
+          status === 'all'
+            ? undefined
+            : status,
+
+        search:
+          search || undefined,
+
+        sort: 'latest',
+      };
+
+      untracked(() => {
+        this.loadArticles(params);
+      });
     });
   }
 
   openArticle(article: Article): void {
-    this.selectedArticle.set(article);
-  }
-
-  // ---- Computed ----
-readonly filteredArticles = computed(() => {
-  const status = this.statusFilter();
-  const query = this.searchQuery().toLowerCase().trim();
-  const list = this.articles();
-
-  return list.filter(article => {
-
-    const matchesStatus =
-      status === 'all' || article.status === status;
-
-    const matchesSearch =
-      query === '' ||
-      article.title.toLowerCase().includes(query) ||
-      article.category.toLowerCase().includes(query);
-
-    return matchesStatus && matchesSearch;
-  });
-
-});
-
-  readonly total = computed(() => this.articles().length);
-  readonly published = computed(() =>
-    this.articles().filter(a => a.status === 'Published').length
-  );
-  readonly drafts = computed(() =>
-    this.articles().filter(a => a.status === 'Draft').length
-  );
-  readonly archived = computed(() =>
-    this.articles().filter(a => a.status === 'Archived').length
-  );
-
-  // Sorting
-  readonly sortedArticles = computed(() => {
-
-  const list = [...this.filteredArticles()];
-  const field = this.sortField();
-  const direction = this.sortDirection();
-
-  return list.sort((a, b) => {
-
-    let valueA: string | number;
-    let valueB: string | number;
-
-    switch (field) {
-      case 'title':
-        valueA = a.title.toLowerCase();
-        valueB = b.title.toLowerCase();
-        break;
-
-      case 'category':
-        valueA = a.category.toLowerCase();
-        valueB = b.category.toLowerCase();
-        break;
-
-      case 'status':
-        valueA = a.status;
-        valueB = b.status;
-        break;
-
-      case 'views':
-        valueA = a.views;
-        valueB = b.views;
-        break;
+    if (this.modalLoading()) {
+      return;
     }
 
-    if (valueA < valueB) return direction === 'asc' ? -1 : 1;
-    if (valueA > valueB) return direction === 'asc' ? 1 : -1;
-    return 0;
-  });
+    this.modalLoading.set(true);
+    this.modalError.set(null);
+    this.selectedArticle.set(null);
 
-});
+    this.articleService
+      .getAdminArticleDetail(article.id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: detail => {
+          this.selectedArticle.set(detail);
+          this.modalLoading.set(false);
+        },
+
+        error: err => {
+          console.error(
+            'Failed to load article details',
+            err
+          );
+
+          this.modalError.set(
+            err?.error?.error ??
+            err?.error?.message ??
+            'Failed to load article details. Please try again.'
+          );
+
+          this.modalLoading.set(false);
+        },
+      });
+  }
+
+  readonly displayedArticles = computed(
+    () => this.articles()?.items ?? []
+  );
+
+  readonly total = computed(
+    () => this.articles()?.total ?? 0
+  );
+  readonly published = computed(() =>
+    (this.articles()?.items ?? []).filter(
+      a => a.status === 'Published'
+    ).length
+  );
+  readonly drafts = computed(() =>
+    (this.articles()?.items ?? []).filter(
+      a => a.status === 'Draft'
+    ).length
+  );
+  readonly archived = computed(() =>
+    (this.articles()?.items ?? []).filter(
+      a => a.status === 'Archived'
+    ).length
+  );
 
   //----Total Pages Computed----
-  readonly totalPages = computed(() => {
-    return Math.max(
-      1,
-      Math.ceil(this.sortedArticles().length / this.pageSize())
+  readonly totalResults = computed(
+    () => this.articles()?.total ?? 0
+  );
+
+  readonly totalPages = computed(
+    () =>
+      Math.max(
+        1,
+        this.articles()?.totalPages ?? 0
+      )
+  );
+
+  readonly pageNumbers = computed(() =>
+    Array.from(
+      {
+        length: this.totalPages(),
+      },
+      (_, index) => index + 1
+    )
+  );
+
+  readonly rangeStart = computed(() => {
+    if (this.totalResults() === 0) {
+      return 0;
+    }
+
+    return (
+      (this.currentPage() - 1) *
+        this.pageSize() +
+      1
     );
   });
 
-  //---- Paginated Articles Computed ----
-  readonly paginatedArticles = computed(() => {
+  readonly rangeEnd = computed(() =>
+    Math.min(
+      this.currentPage() *
+        this.pageSize(),
+      this.totalResults()
+    )
+  );
 
-  const page = this.currentPage();
-  const size = this.pageSize();
-  const list = this.sortedArticles();
+  readonly visiblePageNumbers = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
 
-  const start = (page - 1) * size;
-  const end = start + size;
+    if (total <= 5) {
+      return Array.from(
+        { length: total },
+        (_, index) => index + 1
+      );
+    }
 
-  return list.slice(start, end);
+    const start = Math.max(
+      1,
+      Math.min(current - 2, total - 4)
+    );
 
-});
-
-readonly pageNumbers = computed(() =>
-  Array.from({ length: this.totalPages() }, (_, i) => i + 1)
-)
-
-//---- Range Computed Values ---
-readonly totalResults = computed(() =>
-  this.sortedArticles().length
-);
-
-readonly rangeStart = computed(() => {
-  if (this.totalResults() === 0) return 0;
-  return (this.currentPage() - 1) * this.pageSize() + 1;
-});
-
-readonly rangeEnd = computed(() => {
-  const end = this.currentPage() * this.pageSize();
-  return Math.min(end, this.totalResults());
-});
+    return Array.from(
+      { length: 5 },
+      (_, index) => start + index
+    );
+  });
 
   // ---- Actions ----
   deleteArticle(id: string): void {
@@ -207,39 +280,83 @@ readonly rangeEnd = computed(() => {
     });
   }
 
-  setStatus(status: ArticleStatus): void {
-    this.statusFilter.set(status);
-
+  setStatus(
+    status: ArticleStatus
+  ): void {
     this.router.navigate([], {
-      queryParams: { status: status === 'all' ? null : status },
-      queryParamsHandling: 'merge'
+      relativeTo: this.route,
+      queryParams: {
+        status:
+          status === 'all'
+            ? null
+            : status,
+      },
+      queryParamsHandling: 'merge',
     });
   }
 
   //search method
   onSearch(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.searchQuery.set(input.value);
-  }
+    const input =
+      event.target as HTMLInputElement;
 
-  //sort method
-  setSort(field: SortField): void {
-    if (this.sortField() === field) {
-      this.sortDirection.set(
-        this.sortDirection() === 'asc' ? 'desc' : 'asc'
-      );
-    } else {
-      this.sortField.set(field);
-      this.sortDirection.set('asc');
+    const value = input.value;
+
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
     }
+
+    this.searchTimer = setTimeout(() => {
+      this.currentPage.set(1);
+      this.searchQuery.set(value);
+    }, 300);
   }
-  onPageSizeChange(event: Event): void {
-  const select = event.target as HTMLSelectElement | null;
-  if (!select) return;
 
-  this.pageSize.set(+select.value);
-}
+  onPageSizeChange(size: number): void {
+    if (
+      !Number.isFinite(size) ||
+      !this.pageSizeOptions.includes(size)
+    ) {
+      return;
+    }
 
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    const safePage = Math.min(
+      Math.max(page, 1),
+      this.totalPages()
+    );
+
+    if (
+      this.loading() ||
+      safePage === this.currentPage()
+    ) {
+      return;
+    }
+
+    this.currentPage.set(safePage);
+  }
+
+  goToPreviousPage(): void {
+    this.goToPage(
+      this.currentPage() - 1
+    );
+  }
+
+  goToNextPage(): void {
+    this.goToPage(
+      this.currentPage() + 1
+    );
+  }
+
+  closeArticleModal(): void {
+    this.selectedArticle.set(null);
+    this.modalError.set(null);
+    this.modalLoading.set(false);
+  }
   //request archive
   async requestArchive(article: Article): Promise<void> {
     if (article.status === 'Archived') return;

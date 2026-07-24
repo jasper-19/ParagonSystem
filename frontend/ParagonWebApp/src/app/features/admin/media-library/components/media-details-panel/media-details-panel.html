@@ -3,18 +3,20 @@
     <div class="flex flex-col gap-4">
 
       <!-- Preview -->
-      <div class="relative overflow-hidden rounded-(--border-radius-lg) bg-(--color-background-secondary)">
+      <div class="relative overflow-hidden rounded-(--border-radius-lg)
+       bg-(--color-background-secondary)">
         <ng-container *ngIf="isImage(); else nonImagePreview">
           <img
             [src]="getPreviewUrl()"
             [alt]="media.altText || media.fileName"
-            class="w-full h-44 object-cover block" />
+            class="block aspect-video w-full object-cover
+       sm:aspect-4/3" />
           <div class="absolute inset-0 flex flex-col justify-end px-3 pb-3 pt-10"
             style="background: linear-gradient(to top, rgba(0,0,53,0.72) 0%, rgba(0,0,53,0.2) 60%, transparent 100%);">
             <p class="text-[11px] font-medium truncate m-0" style="color: rgba(244,180,0,0.95); letter-spacing: 0.03em;">
               {{ media.fileName }}
             </p>
-            <p class="text-[10px] m-0 mt-0.5" style="color: rgba(255,255,255,0.45); font-family: var(--font-mono);">
+            <p class="text-[10px] m-0 mt-0.5" style="color: rgba(255,255,255,0.45); ">
               {{ media.mimeType }}
             </p>
           </div>
@@ -60,7 +62,7 @@
         <h2 class="text-sm font-medium text-(--color-text-primary) break-all leading-snug mb-0.5">
           {{ media.fileName }}
         </h2>
-        <p class="text-[11px] text-(--color-text-tertiary)" style="font-family: var(--font-mono);">
+        <p class="text-[11px] text-(--color-text-tertiary)" >
           {{ media.mimeType }}
         </p>
       </div>
@@ -73,40 +75,97 @@
 
       <div *ngIf="editable" class="space-y-4">
         <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">
-            Alt Text
-          </label>
+        <label
+          for="media-alt-text"
+          class="mb-2 block text-sm font-semibold text-slate-700"
+        >
+          Alt text
+        </label>
           <input
+            id="media-alt-text"
+            name="mediaAltText"
             type="text"
-            [(ngModel)]="media!.altText"
+            [ngModel]="altTextDraft()"
+            (ngModelChange)="altTextDraft.set($event)"
             (blur)="onSave()"
-            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            [disabled]="isSaving"
+            class="min-h-11 w-full rounded-xl
+                  border border-slate-300 bg-white
+                  px-4 py-2.5 text-sm text-slate-700
+                  outline-none transition
+                  placeholder:text-slate-400
+                  focus:border-[#F4B400]
+                  focus:ring-2 focus:ring-[#F4B400]/30
+                  disabled:cursor-wait disabled:bg-slate-50
+                  disabled:opacity-70"
             placeholder="Describe the image for accessibility"
           />
         </div>
 
         <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">
+          <label
+            for="media-caption"
+            class="mb-2 block text-sm font-semibold text-slate-700"
+          >
             Caption
           </label>
           <textarea
+            id="media-caption"
+            name="mediaCaption"
             rows="4"
-            [(ngModel)]="media!.caption"
+            [ngModel]="captionDraft()"
+            (ngModelChange)="captionDraft.set($event)"
             (blur)="onSave()"
-            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            [disabled]="isSaving"
+            class="min-h-28 w-full resize-y rounded-xl
+                  border border-slate-300 bg-white
+                  px-4 py-2.5 text-sm leading-6
+                  text-slate-700 outline-none transition
+                  placeholder:text-slate-400
+                  focus:border-[#F4B400]
+                  focus:ring-2 focus:ring-[#F4B400]/30
+                  disabled:cursor-wait disabled:bg-slate-50
+                  disabled:opacity-70"
             placeholder="Add a caption"
           ></textarea>
         </div>
 
-        <div class="flex items-center justify-between">
-          <p class="text-xs text-slate-400">
-            Metadata saves on field blur
-          </p>
+        <button
+          *ngIf="editable"
+          type="button"
+          (click)="onSave()"
+          [disabled]="isSaving || !hasMetadataChanges()"
+          class="inline-flex min-h-11 w-full items-center
+                justify-center gap-2 rounded-xl
+                bg-[#000035] px-4 py-2.5
+                text-sm font-semibold text-[#F4B400]
+                transition-colors
+                hover:bg-[#F4B400] hover:text-[#000035]
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#F4B400]
+                focus-visible:ring-offset-2
+                disabled:cursor-not-allowed
+                disabled:opacity-50"
+        >
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+            <path d="M17 21v-8H7v8" />
+            <path d="M7 3v5h8" />
+          </svg>
 
-          <span *ngIf="isSaving" class="text-xs font-medium text-blue-600">
-            Saving...
-          </span>
-        </div>
+          {{ isSaving ? 'Saving…' : 'Save changes' }}
+        </button>
+
       </div>
 
       <!-- Save status -->
@@ -117,10 +176,23 @@
           </svg>
           Auto-saves on blur
         </p>
-        <span *ngIf="isSaving" class="text-[11px] font-medium flex items-center gap-1.5" style="color: #000035;">
-          <div class="w-2 h-2 rounded-full shrink-0" style="border: 1.5px solid rgba(0,0,53,0.15); border-top-color: #000035; animation: spin 0.8s linear infinite;"></div>
-          Saving...
-        </span>
+          <span
+            *ngIf="isSaving"
+            class="flex items-center gap-1.5
+                  text-[11px] font-medium text-[#000035]"
+            role="status"
+            aria-live="polite"
+          >
+            <span
+              aria-hidden="true"
+              class="h-3 w-3 animate-spin rounded-full
+                    border-2 border-[#000035]/15
+                    border-t-[#000035]
+                    motion-reduce:animate-none"
+            ></span>
+
+            Saving…
+          </span>
         <span *ngIf="!isSaving" class="text-[11px] font-medium text-(--color-text-tertiary) flex items-center gap-1">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"/>

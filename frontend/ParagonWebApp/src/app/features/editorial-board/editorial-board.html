@@ -27,7 +27,7 @@
       <!-- Academic Year Badge -->
       <div class="inline-block mt-6 px-6 py-2 bg-[#F4B400]/10 border border-[#F4B400]/40 rounded-full">
         <p class="text-sm font-semibold text-[#F4B400] tracking-wide uppercase">
-          Academic Year {{ academicYear }}
+          Academic Year {{ academicYear() }}
         </p>
       </div>
 
@@ -40,11 +40,11 @@
   </div>
 
   <!-- ================= BOARD SECTIONS ================= -->
-  <div *ngIf="loading" class="flex justify-center items-center py-40">
+  <div *ngIf="loading()" class="flex justify-center items-center py-40">
     <div class="w-10 h-10 rounded-full border-4 border-[#F4B400] border-t-transparent animate-spin"></div>
   </div>
 
-  <section *ngFor="let section of sections" class="mb-28 mt-16">
+  <section *ngFor="let section of sections()" class="mb-28 mt-16">
 
     <!-- Section Header -->
     <div class="mb-12 flex flex-col items-center text-center">
@@ -98,17 +98,17 @@
 
         <!-- Adviser Avatar -->
         <div class="mx-auto mb-8 w-36 h-36 rounded-2xl bg-linear-to-br from-[#F4B400]/15 to-[#FFD86B]/10 flex items-center justify-center text-sm font-bold uppercase tracking-wider text-[#F4B400] ring-2 ring-[#F4B400]/40 group-hover:ring-[#F4B400] group-hover:scale-105 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[#F4B400]/20">
-          {{ adviser.initials || '—' }}
+          {{ adviser().initials || '—' }}
         </div>
 
         <!-- Name -->
         <h3 class="text-xl font-bold text-[#0b1c2d] group-hover:text-[#F4B400] transition-colors duration-300">
-          {{ adviser.name }}
+          {{ adviser().name }}
         </h3>
 
         <!-- Role -->
         <p class="mt-2 text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
-          {{ adviser.position }}
+          {{ adviser().position }}
         </p>
 
       </div>

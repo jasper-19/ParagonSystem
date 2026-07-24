@@ -1,42 +1,52 @@
-<section class="space-y-6">
-
-  <div class="space-y-2">
-    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+<section
+    aria-labelledby="special-issues-overview-title"
+    class="min-w-0 space-y-4 rounded-2xl border border-slate-200
+          bg-white p-4 shadow-sm
+          sm:space-y-5 sm:p-5
+          lg:p-6"
+  >
+  <div class="space-y-1">
+    <h2
+      id="special-issues-overview-title"
+      class="text-lg font-bold tracking-tight text-[#000035]
+             sm:text-xl"
+    >
       Special Issues Overview
     </h2>
-    <p class="text-sm text-gray-600">
+
+    <p class="text-sm text-slate-600">
       Publication issue statistics
     </p>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div
+    class="grid min-w-0 grid-cols-1 gap-3
+           min-[480px]:grid-cols-2
+           sm:gap-4"
+  >
 
     <app-dashboard-card
       title="Total Issues"
       [value]="totalIssues"
       variant="default"
-      class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-gray-300"
     />
 
     <app-dashboard-card
       title="Published"
       [value]="publishedIssues"
       variant="success"
-      class="bg-linear-to-br from-emerald-50 via-emerald-25 to-white border border-emerald-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-emerald-300"
     />
 
     <app-dashboard-card
       title="Drafts"
       [value]="draftIssues"
       variant="info"
-      class="bg-linear-to-br from-blue-50 via-blue-25 to-white border border-blue-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-blue-300"
     />
 
     <app-dashboard-card
       title="Archived"
       [value]="archivedIssues"
       variant="neutral"
-      class="bg-linear-to-br from-slate-50 via-slate-25 to-white border border-slate-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-slate-300"
     />
 
   </div>

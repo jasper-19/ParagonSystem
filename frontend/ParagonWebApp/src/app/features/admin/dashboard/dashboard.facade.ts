@@ -1,19 +1,9 @@
-import { Injectable, inject, computed, signal } from '@angular/core';
+import { Injectable, inject, computed, signal, DestroyRef } from '@angular/core';
+import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged, switchMap, finalize, tap } from 'rxjs/operators';
 import { DashboardService } from '../../../core/services/dashboard.service';
-
-export interface AnalyticsMetric {
-  label: string;
-  value: number;
-  change: number; // Percentage change compared to a previous period
-}
-
-export interface AnalyticsTrend {
-  labels: string[]; // e.g., dates or categories
-  articles: number[]; // corresponding article counts
-  applications: number[]; // corresponding application counts
-}
-
-export type AnalyticsMode = 'daily' | 'weekly' | 'monthly' | 'yearly';
+import { AnalyticsMetric, AnalyticsTrend, AnalyticsMode } from '../../../models/dashboard-feed.model';
+import { SocketService } from '../../../core/services/socket.service';
 
 export interface ActivityItem {
   id: string;
@@ -21,17 +11,12 @@ export interface ActivityItem {
   title: string; // e.g., article title or application name
   timestamp: Date;
 }
-
 @Injectable({ providedIn: 'root' })
 export class DashboardFacade {
 
-
-  readonly selectedMode = signal<AnalyticsMode>('daily');
-  setMode(mode: AnalyticsMode): void {
-    this.selectedMode.set(mode);
-  }
-
   private dashboardService = inject(DashboardService);
+
+  private socketService = inject(SocketService);
 
   readonly dashboardFeed = this.dashboardService.dashboardFeed;
 
@@ -51,11 +36,43 @@ export class DashboardFacade {
     this.dashboardFeed()?.staff
   );
 
-  constructor() {
-    this.dashboardService.loadDashboardFeed().subscribe({
-      error: err => console.error('Failed to load dashboard feed', err),
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly analyticsLoading = signal(false);
+  readonly selectedMode = signal<AnalyticsMode>('daily');
+
+setMode(mode: AnalyticsMode): void {
+  this.selectedMode.set(mode);
+}
+
+constructor() {
+  toObservable(this.selectedMode)
+    .pipe(
+      distinctUntilChanged(),
+      tap(() => this.analyticsLoading.set(true)),
+      switchMap(mode =>
+        this.dashboardService.loadDashboardFeed(mode).pipe(
+          finalize(() => this.analyticsLoading.set(false))
+        )
+      ),
+      takeUntilDestroyed(this.destroyRef)
+    )
+    .subscribe({
+      error: err => {
+        console.error('Failed to load dashboard feed', err);
+      },
     });
-  }
+
+  this.socketService.onArticlesUpdated(() => {
+    console.log('🟢 Dashboard refreshing after articles update');
+    this.refreshDashboardFeed();
+  });
+
+  this.socketService.onApplicationsUpdated(() => {
+    console.log('🟢 Dashboard refreshing after applications update');
+    this.refreshDashboardFeed();
+  });
+}
 
   //Date Utility Helper
 private countWithinDays<T>(
@@ -84,6 +101,12 @@ private countWithinDays<T>(
 
   }).length;
 }
+
+  private refreshDashboardFeed(): void {
+    this.dashboardService.loadDashboardFeed(this.selectedMode()).subscribe({
+      error: err => console.error('Failed to refresh dashboard feed', err),
+    });
+  }
 
   // ===== Article Metrics =====
 
@@ -168,29 +191,21 @@ private countWithinDays<T>(
   );
 
   //Compute Analytics
-readonly analyticsMetrics = computed<AnalyticsMetric[]>(() => {
-  const mode = this.selectedMode();
+  readonly analyticsSummary = computed(() =>
+    this.dashboardFeed()?.analytics
+  );
 
-  return [
-    {
-      label: `Articles (${mode})`,
-      value: this.publishedArticles(),
-      change: 0,
-    },
-    {
-      label: `Applications (${mode})`,
-      value: this.totalApplications(),
-      change: 0,
-    },
-  ];
-});
+  readonly analyticsMetrics = computed<AnalyticsMetric[]>(() =>
+    this.analyticsSummary()?.metrics ?? []
+  );
 
-  //Analytics Trend Data (for chart)
-readonly analyticsTrend = computed<AnalyticsTrend>(() => ({
-  labels: [],
-  articles: [],
-  applications: [],
-}));
+  readonly analyticsTrend = computed<AnalyticsTrend>(() =>
+    this.analyticsSummary()?.trend ?? {
+      labels: [],
+      articles: [],
+      applications: [],
+    }
+  );
 
   readonly activityFeed = computed<ActivityItem[]>(() => {
     const articles = this.recentArticles();

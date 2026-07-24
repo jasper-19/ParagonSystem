@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, HostListener, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 @Component({
@@ -10,36 +10,100 @@ import { RouterModule } from '@angular/router';
 export class MediaUploaderComponent {
   @Output() filesSelected = new EventEmitter<File[]>();
 
-  isDragging = false;
+  readonly isDragging = signal(false);
+
+  private dragDepth = 0;
 
   onFileInputChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files?.length) return;
+    const input =
+      event.target as HTMLInputElement;
 
-    this.filesSelected.emit(Array.from(input.files));
+    const files = Array.from(
+      input.files ?? []
+    );
+
+    this.emitValidFiles(files);
+
     input.value = '';
   }
 
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragging = true;
+  private containsFiles(
+    event: DragEvent
+  ): boolean {
+    return Array.from(
+      event.dataTransfer?.types ?? []
+    ).includes('Files');
   }
 
-  onDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragging = false;
+  private emitValidFiles(
+    files: File[]
+  ): void {
+    const validImages = files.filter(
+      file =>
+        file.type.startsWith('image/')
+    );
+
+    if (!validImages.length) {
+      return;
+    }
+
+    this.filesSelected.emit(validImages);
   }
 
-  onDrop(event: DragEvent): void {
+  @HostListener('document:dragenter', ['$event'])
+  onDocumentDragEnter(event: DragEvent): void {
+    if (!this.containsFiles(event)) {
+      return;
+    }
+
     event.preventDefault();
-    event.stopPropagation();
-    this.isDragging = false;
 
-    const files = event.dataTransfer?.files;
-    if (!files?.length) return;
+    this.dragDepth++;
+    this.isDragging.set(true);
+  }
 
-    this.filesSelected.emit(Array.from(files));
+  @HostListener('document:dragover', ['$event'])
+  onDocumentDragOver(event: DragEvent): void {
+    if (!this.containsFiles(event)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  @HostListener('document:dragleave', ['$event'])
+  onDocumentDragLeave(event: DragEvent): void {
+    if (!this.containsFiles(event)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    this.dragDepth = Math.max(
+      0,
+      this.dragDepth - 1
+    );
+
+    if (this.dragDepth === 0) {
+      this.isDragging.set(false);
+    }
+  }
+
+  @HostListener('document:drop', ['$event'])
+  onDocumentDrop(event: DragEvent): void {
+    event.preventDefault();
+
+    this.dragDepth = 0;
+    this.isDragging.set(false);
+
+    const files = Array.from(
+      event.dataTransfer?.files ?? []
+    );
+
+    this.emitValidFiles(files);
   }
 }

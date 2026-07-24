@@ -1,38 +1,83 @@
 <div class="min-h-screen bg-slate-50">
 
   <!-- Loading State -->
-  <ng-container *ngIf="openPositions().length === 0; else content">
-
+  @if (loading()) {
     <div class="flex items-center justify-center py-32">
-      <p class="text-slate-500 text-sm tracking-wide">
+      <p class="text-sm tracking-wide text-slate-500">
         Loading opportunities...
       </p>
     </div>
+  } @else {
 
-  </ng-container>
+    <!-- Main Content -->
+    <app-join-hero></app-join-hero>
 
-  <!-- Main Content -->
-  <ng-template #content>
-    <ng-container>
+    <app-join-why></app-join-why>
 
-      <!-- <app-welcome-banner> </app-welcome-banner> -->
+    <app-join-positions
+      [positions]="openPositions()">
+    </app-join-positions>
 
-      <app-join-hero> </app-join-hero>
-
-      <app-join-why></app-join-why>
-
-      <app-join-positions [positions]="openPositions()"> </app-join-positions>
-
+    <!-- Application Form / Closed State -->
+    @if (applicationsOpen()) {
       <app-join-application-form
-      [positions]="openPositions()"
-      [preselectedPosition]="selectedPositionId()"
-      ></app-join-application-form>
+        [positions]="openPositions()"
+        [preselectedPosition]="selectedPositionId()">
+      </app-join-application-form>
+    } @else {
+      <section class="px-4 py-16 sm:px-6 lg:px-8">
 
-      <app-join-faq></app-join-faq>
+        <div
+          class="mx-auto max-w-3xl rounded-3xl border border-[#f4b400]/20 bg-white px-6 py-12 text-center shadow-sm sm:px-12"
+        >
+          <div
+            class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#f4b400]/10"
+          >
+            <svg
+              class="h-8 w-8 text-[#f4b400]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4 9.8V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3"
+              />
+              <path d="M14 2v5a1 1 0 0 0 1 1h5"/>
+              <path d="M9 17v-2a2 2 0 0 0-4 0v2"/>
+              <rect width="8" height="5" x="3" y="17" rx="1"/>
+            </svg>
+          </div>
 
-      <app-join-final-cta></app-join-final-cta>
+          <p
+            class="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#f4b400]"
+          >
+            Recruitment Status
+          </p>
 
-    </ng-container>
-  </ng-template>
+          <h2 class="mt-2 text-2xl font-bold text-[#000035] sm:text-3xl">
+            Applications are currently closed
+          </h2>
+
+          <p
+            class="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base"
+          >
+            {{ applicationAnnouncement() }}
+          </p>
+
+          <p class="mt-6 text-xs text-slate-400">
+            Follow Paragon’s official channels for recruitment updates and reopening announcements.
+          </p>
+        </div>
+      </section>
+    }
+
+    <app-join-faq></app-join-faq>
+
+    <app-join-final-cta></app-join-final-cta>
+  }
 
 </div>

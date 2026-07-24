@@ -66,3 +66,23 @@ export const assignApplicationSchema = z.object({
   section: z.string().min(1, "Section is required").max(100),
   role: z.string().min(1, "Role is required").max(100),
 });
+
+/** Schema for PATCH /api/applications/settings */
+export const updateApplicationSettingsSchema = z
+  .object({
+    isOpen: z.boolean().optional(),
+    announcement: z
+      .string()
+      .trim()
+      .min(10, "Announcement must be at least 10 characters long")
+      .max(500, "Announcement must not exceed 500 characters")
+      .optional(),
+  })
+  .refine(
+    data =>
+      data.isOpen !== undefined ||
+      data.announcement !== undefined,
+    {
+      message: "At least one settings field is required",
+    }
+  );

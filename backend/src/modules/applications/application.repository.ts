@@ -1,5 +1,42 @@
 import db from "../../config/db";
 
+type ApplicationSettingsRow = {
+  id: number;
+  is_open: boolean;
+  announcement: string;
+  updated_at: string;
+};
+
+export type ApplicationSettings = {
+  isOpen: boolean;
+  announcement: string;
+  updatedAt: string;
+};
+
+export type UpdateApplicationSettingsInput = {
+  isOpen?: boolean;
+  announcement?: string;
+};
+
+function mapSettingsRow(
+  row: ApplicationSettingsRow
+): ApplicationSettings {
+  return {
+    isOpen: row.is_open,
+    announcement: row.announcement,
+    updatedAt: row.updated_at,
+  };
+}
+
+export type ApplicationListQuery = {
+  status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  sort?: string;
+  order?: 'asc' | 'desc';
+};
+
 /** Maps a snake_case database row to a camelCase application object. */
 function mapRow(row: any) {
   return {
@@ -27,25 +64,111 @@ function mapRow(row: any) {
   };
 }
 
-export async function findAll(status?: string) {
+function mapListRow(row: any) {
+  return {
+    id: String(row.id),
+    fullName: row.full_name,
+    email: row.email,
+    studentId: row.student_id,
+    yearLevel: row.year_level,
+    collegeId: row.college_id,
+    programId: row.program_id,
+    selectedPositions: row.selected_positions ?? [],
+    positionId: row.position_id ?? undefined,
+    subRole: row.sub_role ?? undefined,
+    motivation: row.motivation,
+    interviewNotes: row.interview_notes ?? undefined,
+    status: row.status,
+    interviewed: row.interviewed ?? false,
+    assigned: row.assigned ?? false,
+    interviewDate: row.interview_date ?? undefined,
+    createdAt: row.created_at,
+  };
+}
 
-  if (status) {
-    const result = await db.query(
-      `SELECT * FROM applications
-       WHERE status = $1
-       ORDER BY created_at DESC`,
-      [status]
-    );
+export async function findAll(query: ApplicationListQuery = {}) {
+  const page = Math.max(Number(query.page ?? 1), 1);
+  const limit = Math.min(Math.max(Number(query.limit ?? 10), 1), 50);
+  const offset = (page - 1) * limit;
 
-    return result.rows.map(mapRow);
+  const where: string[] = [];
+  const values: any[] = [];
+
+  if (query.status && query.status !== 'all') {
+    values.push(query.status);
+    where.push(`status = $${values.length}`);
   }
 
-  const result = await db.query(
-    `SELECT * FROM applications
-     ORDER BY created_at DESC`
-  );
+  if (query.search && query.search.trim() !== '') {
+    values.push(`%${query.search.trim()}%`);
+    where.push(`(
+      full_name ILIKE $${values.length}
+      OR email ILIKE $${values.length}
+      OR student_id ILIKE $${values.length}
+    )`);
+  }
 
-  return result.rows.map(mapRow);
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  const sortMap: Record<string, string> = {
+    createdAt: 'created_at',
+    fullName: 'full_name',
+    status: 'status',
+    studentId: 'student_id',
+  };
+
+  const sortColumn = sortMap[query.sort ?? 'createdAt'] ?? 'created_at';
+  const order = query.order === 'asc' ? 'ASC' : 'DESC';
+
+  const [itemsResult, countResult] = await Promise.all([
+    db.query(
+      `
+      SELECT
+        id,
+        full_name,
+        email,
+        student_id,
+        year_level,
+        college_id,
+        program_id,
+        selected_positions,
+        position_id,
+        sub_role,
+        motivation,
+        status,
+        interviewed,
+        assigned,
+        interview_date,
+        interview_notes,
+        created_at
+      FROM applications
+      ${whereSql}
+      ORDER BY ${sortColumn} ${order}
+      LIMIT $${values.length + 1}
+      OFFSET $${values.length + 2}
+      `,
+      [...values, limit, offset]
+    ),
+
+    db.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM applications
+      ${whereSql}
+      `,
+      values
+    ),
+  ]);
+
+  const total = Number(countResult.rows[0]?.total ?? 0);
+
+  return {
+    items: itemsResult.rows.map(mapListRow),
+    page,
+    limit,
+    total,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
 }
 
 export async function create(data: unknown) {
@@ -289,4 +412,107 @@ export async function getDashboardSummary() {
     rejected: Number(totals.rows[0].rejected),
     recent: recent.rows.map(mapRow),
   };
+}
+
+export async function getCreatedCountsByDate() {
+  const result = await db.query(`
+    SELECT
+      created_at::date AS date,
+      COUNT(*) AS count
+    FROM applications
+    WHERE created_at IS NOT NULL
+    GROUP BY created_at::date
+    ORDER BY date ASC
+  `);
+
+  return result.rows.map(row => ({
+    date: row.date,
+    count: Number(row.count),
+  }));
+}
+
+export async function findApplicationSettings(): Promise<ApplicationSettings> {
+  const result = await db.query(
+    `SELECT
+       id,
+       is_open,
+       announcement,
+       updated_at
+     FROM application_settings
+     WHERE id = 1`
+  );
+
+  if (result.rows.length > 0) {
+    return mapSettingsRow(
+      result.rows[0] as ApplicationSettingsRow
+    );
+  }
+
+  const created = await db.query(
+    `INSERT INTO application_settings (
+       id,
+       is_open,
+       announcement
+     )
+     VALUES (
+       1,
+       false,
+       'Applications are currently closed. Please wait for the next recruitment period.'
+     )
+     RETURNING
+       id,
+       is_open,
+       announcement,
+       updated_at`
+  );
+
+  return mapSettingsRow(
+    created.rows[0] as ApplicationSettingsRow
+  );
+}
+
+export async function updateApplicationSettings(
+  input: UpdateApplicationSettingsInput
+): Promise<ApplicationSettings> {
+  const setClauses: string[] = [];
+  const values: unknown[] = [];
+
+  if (typeof input.isOpen === "boolean") {
+    values.push(input.isOpen);
+    setClauses.push(`is_open = $${values.length}`);
+  }
+
+  if (typeof input.announcement === "string") {
+    values.push(input.announcement.trim());
+    setClauses.push(`announcement = $${values.length}`);
+  }
+
+  if (setClauses.length === 0) {
+    return findApplicationSettings();
+  }
+
+  const result = await db.query(
+    `UPDATE application_settings
+     SET
+       ${setClauses.join(", ")},
+       updated_at = NOW()
+     WHERE id = 1
+     RETURNING
+       id,
+       is_open,
+       announcement,
+       updated_at`,
+    values
+  );
+
+  if (result.rows.length === 0) {
+    throw Object.assign(
+      new Error("Application settings not found"),
+      { statusCode: 404 }
+    );
+  }
+
+  return mapSettingsRow(
+    result.rows[0] as ApplicationSettingsRow
+  );
 }

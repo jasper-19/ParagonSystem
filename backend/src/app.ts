@@ -7,6 +7,9 @@ import pool from "./config/db";
 import path from "path";
 import { xssSanitize } from "./middlewares/sanitize";
 import { errorHandler } from "./middlewares/errorHandler";
+import { performance } from "node:perf_hooks";
+
+
 
 
 const app = express();
@@ -83,6 +86,35 @@ app.get("/ready", async (_req, res) => {
 if (process.env.NODE_ENV !== "production") {
   // Serve uploaded files from the local "uploads" directory in development
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+}
+
+export async function initializeDatabase(): Promise<void> {
+  const startedAt = performance.now();
+
+  const clients = await Promise.all([
+    pool.connect(),
+    pool.connect(),
+    pool.connect(),
+    pool.connect(),
+  ]);
+
+  try {
+    await Promise.all(
+      clients.map(client =>
+        client.query("SELECT 1")
+      )
+    );
+  } finally {
+    clients.forEach(client =>
+      client.release()
+    );
+  }
+
+  console.log(
+    `[DB] Pool warmed in ${(
+      performance.now() - startedAt
+    ).toFixed(2)}ms`
+  );
 }
 
 // Mount all versioned API routes

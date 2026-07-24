@@ -1,5 +1,17 @@
 import * as repository from "./editorial-board.repository";
+import { BOARD_SECTION_ROLES, AssignApplicationToBoardInput } from "./editorial-board.schema";
 
+const SINGLE_PERSON_EXEC_ROLES =
+  new Set<string>([
+    "Senior Editor-In-Chief",
+    "Junior Editor-In-Chief",
+    "Associate Editor (Print)",
+    "Associate Editor (Online)",
+    "Associate Editor (Broadcast)",
+    "Managing Editor",
+  ]);
+
+  
 // ── boards ────────────────────────────────────────────────────────────────────
 
 export async function getAllBoards() {
@@ -22,6 +34,14 @@ export async function activateBoard(id: string) {
     throw Object.assign(new Error("Editorial board not found"), { statusCode: 404 });
   }
   return repository.activateBoard(id);
+}
+
+export async function isActiveBoard(id: string): Promise<boolean> {
+  if (!id) return false;
+
+  const board = await repository.findBoardById(id);
+
+  return board?.isActive === true;
 }
 
 export async function createBoard(academicYear: string, adviserName: string) {
@@ -111,4 +131,129 @@ export async function satisfyBoard(id: string, satisfied: boolean) {
     throw Object.assign(new Error("Editorial board not found"), { statusCode: 404 });
   }
   return repository.satisfyBoard(id, satisfied);
+}
+
+export async function assignApplicationToBoard(
+  boardId: string,
+  input: AssignApplicationToBoardInput
+) {
+  if (!boardId) {
+    throw Object.assign(
+      new Error("Board id is required"),
+      { statusCode: 400 }
+    );
+  }
+
+  const section =
+    input.section.trim();
+
+  const role =
+    input.role.trim();
+
+  const allowedRoles =
+    BOARD_SECTION_ROLES[
+      section as keyof typeof BOARD_SECTION_ROLES
+    ];
+
+  if (!allowedRoles) {
+    throw Object.assign(
+      new Error(
+        `"${section}" is not a valid editorial-board section`
+      ),
+      { statusCode: 400 }
+    );
+  }
+
+  const roleIsAllowed =
+    (allowedRoles as readonly string[])
+      .includes(role);
+
+  if (!roleIsAllowed) {
+    throw Object.assign(
+      new Error(
+        `"${role}" is not valid for ${section}`
+      ),
+      { statusCode: 400 }
+    );
+  }
+
+  const singlePersonRole =
+    section === "Executive Editors" &&
+    SINGLE_PERSON_EXEC_ROLES.has(role);
+
+  return repository
+    .assignApplicationToBoard({
+      boardId,
+      applicationId:
+        input.applicationId,
+      section,
+      role,
+      singlePersonRole,
+    });
+}
+
+//Public Mapper
+
+export function toPublicBoard(board: any) {
+  return{
+    academicYear: board.academicYear,
+    adviserName: board.adviserName,
+    members: board.members.map(toPublicBoardMember)
+  };
+}
+
+export function toPublicBoardMember(member: any) {
+  return {
+    fullName: member.fullName,
+    section: member.section,
+    role: member.role,
+  };
+}
+
+export type ResolvedActiveBoardMember = {
+  staffId: string;
+  fullName: string;
+};
+
+export async function resolveActiveBoardMembers(
+  staffIds: string[]
+): Promise<ResolvedActiveBoardMember[]> {
+  const uniqueIds = [
+    ...new Set(
+      staffIds
+        .map(id => String(id).trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  if (!uniqueIds.length) {
+    return [];
+  }
+
+  const activeMembers =
+    await repository.findActiveBoardMembersByStaffIds(
+      uniqueIds
+    );
+
+  const activeIds = new Set(
+    activeMembers.map(member => member.staffId)
+  );
+
+  const invalidIds = uniqueIds.filter(
+    id => !activeIds.has(id)
+  );
+
+  if (invalidIds.length) {
+    throw Object.assign(
+      new Error(
+        "Only members of the active editorial board can be credited."
+      ),
+      {
+        statusCode: 400,
+        invalidStaffIds: invalidIds,
+      }
+    );
+  }
+
+  return activeMembers;
 }

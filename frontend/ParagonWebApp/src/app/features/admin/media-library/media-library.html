@@ -1,7 +1,15 @@
-<div class="flex min-h-0 flex-1 overflow-hidden bg-(--color-background-tertiary) xl:gap-6">
+<div
+  class="flex min-w-0 flex-col gap-6
+         bg-(--color-background-tertiary)
+         xl:flex-row xl:items-start"
+>
 
   <!-- Media Grid Section -->
-  <div class="min-h-0 flex-1 overflow-y-auto pb-6 flex flex-col gap-8">
+  <main
+    aria-labelledby="media-library-title"
+    class="flex min-w-0 flex-1 flex-col gap-6 pb-6
+          sm:gap-8"
+  >
 
     <!-- Header -->
     <div class="flex flex-col gap-6">
@@ -9,11 +17,15 @@
       <!-- Top Row -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="space-y-2">
-          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+          <h1
+            id="media-library-title"
+            class="text-2xl font-bold tracking-tight
+                  text-[#000035] sm:text-3xl"
+          >
             Media Library
-          </h2>
-          <p class="text-base text-gray-600">
-            Manage images, videos, and documents you've uploaded.
+          </h1>
+          <p class="max-w-2xl text-sm text-slate-600 sm:text-base">
+            Manage images currently used by published articles.
           </p>
         </div>
       </div>
@@ -21,121 +33,204 @@
     </div>
 
     <!-- Search + Upload -->
-    <div class="flex w-full items-center justify-between gap-4">
-      <div class="w-full max-w-md">
-        <input
-          type="text"
-          [ngModel]="searchTerm"
-          (ngModelChange)="onSearchChange($event)"
-          placeholder="Search files by name or type..."
-          class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#f4b400] focus:outline-none text-sm bg-white"
-        />
+    <div
+      class="flex min-w-0 flex-col gap-3
+            rounded-2xl border border-slate-200
+            bg-white p-3 shadow-sm
+            sm:p-4
+            lg:flex-row lg:items-center
+            lg:justify-between"
+    >
+      <div class="min-w-0 flex-1 lg:max-w-md">
+        <label
+            for="media-search"
+            class="sr-only"
+          >
+            Search media
+          </label>
+            <input
+              id="media-search"
+              type="search"
+              [ngModel]="searchTerm"
+              (ngModelChange)="onSearchChange($event)"
+              placeholder="Search images by filename..."
+              class="min-h-11 w-full rounded-xl
+                    border border-slate-300 bg-white
+                    px-4 py-2.5 text-sm text-slate-700
+                    outline-none transition
+                    placeholder:text-slate-400
+                    focus:border-[#F4B400]
+                    focus:ring-2 focus:ring-[#F4B400]/30"
+            />
       </div>
 
-      <div class="shrink-0 flex items-center gap-3">
+      <div
+        class="grid w-full grid-cols-2 gap-2
+              sm:flex sm:flex-wrap
+              lg:w-auto lg:justify-end"
+      >
 
-        <button
-          *ngIf="hasSelection"
-          type="button"
-          (click)="clearSelection()"
-          class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition"
-        >
-          Clear
-        </button>
-
-        <!-- Delete -->
-        <button
-          type="button"
-          (click)="requestDeleteSelected()"
-          [disabled]="!hasSelection"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                border border-red-200
-                bg-white text-red-600
-                hover:bg-red-50 hover:border-red-300
-                disabled:opacity-50 disabled:cursor-not-allowed">
-
-          <svg width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-            <path d="M10 11v6"/>
-            <path d="M14 11v6"/>
-            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-          </svg>
-
-          Delete
-
-          <span *ngIf="hasSelection">
-            ({{ selectedIds.length }})
-          </span>
-
-        </button>
-
-        <!-- Upload -->
-        <app-media-uploader
-          (filesSelected)="onUploadFiles($event)">
-        </app-media-uploader>
-
+          <button
+            *ngIf="hasSelection"
+            type="button"
+            (click)="clearSelection()"
+            class="inline-flex min-h-11 items-center
+                  justify-center rounded-xl
+                  border border-slate-200 bg-white
+                  px-4 py-2.5 text-sm font-semibold
+                  text-slate-700 transition
+                  hover:bg-slate-50
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]
+                  focus-visible:ring-offset-2"
+          >
+            Clear selection
+          </button>
       </div>
     </div>
 
     <!-- Loading State -->
     <div
-      *ngIf="isLoading"
-      class="flex flex-col items-center justify-center h-64 rounded-xl bg-(--color-background-primary)"
-      style="border: 1.5px dashed rgba(0,0,53,0.15);">
-      <div
-        class="w-9 h-9 rounded-full mb-3"
-        style="border: 2.5px solid rgba(0,0,53,0.08); border-top-color: #000035; animation: spin 0.8s linear infinite;">
-      </div>
-      <p class="text-sm font-medium text-(--color-text-secondary)">Loading media assets...</p>
-      <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+      *ngIf="isLoading()"
+      class="grid min-h-72 grid-cols-2 gap-3
+            rounded-2xl border border-dashed
+            border-slate-200 bg-white p-3
+            sm:grid-cols-3 sm:gap-4 sm:p-4
+            lg:grid-cols-4
+            2xl:grid-cols-5"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
+        <div
+          class="overflow-hidden rounded-xl
+                border border-slate-200 bg-slate-50"
+          aria-hidden="true"
+        >
+          <div
+            class="aspect-square animate-pulse bg-slate-200
+                  motion-reduce:animate-none"
+          ></div>
+
+          <div class="space-y-2 p-3">
+            <div
+              class="h-3 w-3/4 animate-pulse
+                    rounded bg-slate-200
+                    motion-reduce:animate-none"
+            ></div>
+
+            <div
+              class="h-2.5 w-1/2 animate-pulse
+                    rounded bg-slate-200
+                    motion-reduce:animate-none"
+            ></div>
+          </div>
+        </div>
+      }
+
+      <span class="sr-only">
+        Loading media assets
+      </span>
     </div>
 
     <!-- Empty State -->
     <div
-      *ngIf="!isLoading && !filteredMedia.length"
-      class="flex flex-col items-center justify-center h-64 rounded-xl bg-(--color-background-primary) text-center px-8"
-      style="border: 1.5px dashed rgba(0,0,53,0.15);">
+      *ngIf="!isLoading() && !filteredMedia().length"
+      class="flex min-h-72 flex-col items-center
+            justify-center rounded-2xl
+            border border-dashed border-slate-300
+            bg-white px-5 py-10 text-center
+            sm:px-8"
+    >
       <div
-        class="w-13 h-13 rounded-full flex items-center justify-center mb-4"
-        style="background: rgba(0,0,53,0.05);">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4">
-          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+        class="flex h-14 w-14 items-center justify-center
+              rounded-2xl bg-[#000035]/5"
+        aria-hidden="true"
+      >
+        <svg
+          class="h-7 w-7 text-[#000035]/40"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <polyline points="21 15 16 10 5 21" />
         </svg>
       </div>
-      <h3 class="text-sm font-medium text-(--color-text-primary) mb-1.5">No media found</h3>
-      <p class="text-xs text-(--color-text-secondary) mb-5 max-w-xs leading-relaxed">
-        Try adjusting your filters, updating your search, or uploading a new file.
+
+      <h2 class="mt-4 text-base font-semibold text-[#000035]">
+        No media found
+      </h2>
+
+      <p class="mt-2 max-w-sm text-sm leading-6 text-slate-600">
+        @if (searchTerm.trim()) {
+          No images match your current search.
+        } @else {
+          Images used by published articles will appear here automatically.
+        }
       </p>
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-(--border-radius-md) cursor-pointer transition-opacity hover:opacity-85"
-        style="background: #000035; color: #f4b400; border: none;">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Upload file
-      </button>
+
+      @if (searchTerm.trim()) {
+        <button
+          type="button"
+          (click)="clearSearch()"
+          class="mt-5 inline-flex min-h-11 items-center
+                justify-center rounded-xl
+                border border-slate-200 bg-white
+                px-4 py-2.5 text-sm font-semibold
+                text-slate-700 transition
+                hover:bg-slate-50
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-[#F4B400]
+                focus-visible:ring-offset-2"
+        >
+          Clear search
+        </button>
+      }
     </div>
 
     <!-- Media Grid -->
-    <app-media-grid
-      *ngIf="!isLoading && filteredMedia.length"
-      [mediaList]="filteredMedia"
-      [selectedIds]="selectedIds"
-      (toggleSelection)="onToggleMediaSelection($event)"
-      (openDetails)="onSelectSingleMedia($event)"
-      class="block">
-    </app-media-grid>
+    <section
+      *ngIf="!isLoading() && filteredMedia().length"
+      aria-labelledby="media-results-title"
+      class="min-w-0"
+    >
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h2
+          id="media-results-title"
+          class="text-sm font-semibold text-slate-700"
+        >
+          Media results
+        </h2>
 
-  </div>
+        <span class="text-sm text-slate-500">
+          {{ filteredMedia().length }}
+          {{ filteredMedia().length === 1 ? 'image' : 'images' }}
+        </span>
+      </div>
+
+      <app-media-grid
+        [mediaList]="filteredMedia()"
+        [selectedIds]="selectedIds()"
+        (toggleSelection)="onToggleMediaSelection($event)"
+        (openDetails)="onSelectSingleMedia($event)"
+        class="block min-w-0"
+      />
+    </section>
+
+  </main>
 
 <!-- Details Panel -->
-<aside class="hidden xl:flex w-85 shrink-0 flex-col overflow-hidden bg-(--color-background-primary)">
+<aside
+  aria-label="Selected media details"
+  class="hidden xl:flex w-85 shrink-0 flex-col overflow-hidden bg-(--color-background-primary)"
+  >
 
   <!-- Panel Header -->
   <div class="shrink-0 px-5 py-4" style="background: #000035;">
@@ -171,9 +266,10 @@
     <ng-container *ngIf="isSingleSelection; else noEditableSelection">
 
       <app-media-details-panel
-        [media]="selectedMedia"
+        [media]="selectedMedia()"
         [isSaving]="isSavingMetadata"
-        (metadataSave)="saveMetadata()">
+        [saveVersion]="metadataSaveVersion()"
+        (metadataSave)="saveMetadata($event)">
       </app-media-details-panel>
 
     </ng-container>
@@ -218,29 +314,6 @@
   <!-- Panel Footer -->
   <div class="shrink-0 px-5 py-4" style="border-top: 1px solid rgba(0,0,53,0.06);">
 
-    <!-- Save button -->
-    <button
-      *ngIf="isSingleSelection"
-      type="button"
-      (click)="saveMetadata()"
-      [disabled]="isSavingMetadata"
-      class="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-medium rounded-(--border-radius-md)
-            transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-      style="background:#000035;color:#f4b400;border:none;"
-      onmouseenter="if(!this.disabled){this.style.background='#f4b400';this.style.color='#000035';}"
-      onmouseleave="this.style.background='#000035';this.style.color='#f4b400';"
-    >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5"
-          stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-        <polyline points="17 21 17 13 7 13 7 21"/>
-        <polyline points="7 3 7 8 15 8"/>
-      </svg>
-
-      Save Changes
-    </button>
-
     <!-- Keyboard hint -->
     <p
       *ngIf="isSingleSelection"
@@ -257,6 +330,106 @@
 
 </aside>
 
+<!-- Mobile Details Panel -->
+@if (
+  isDetailsPanelOpen() &&
+  selectedMedia()
+) {
+  <div
+    class="fixed inset-0 z-70 xl:hidden"
+    role="presentation"
+  >
+    <button
+      type="button"
+      class="absolute inset-0 z-0 bg-slate-950/50
+             backdrop-blur-sm"
+      aria-label="Close media details"
+      (click)="closeDetailsPanel()"
+    ></button>
+
+    <section
+      #mobileDetailsPanel
+      tabindex="-1"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mobile-media-details-title"
+      class="absolute inset-x-0 bottom-0 z-10
+             flex max-h-[90dvh] min-h-0
+             flex-col overflow-hidden
+             rounded-t-3xl bg-white
+             shadow-2xl
+             sm:inset-y-4 sm:left-auto sm:right-4
+             sm:w-105 sm:max-w-[calc(100vw-2rem)]
+             sm:rounded-3xl"
+    >
+      <header
+        class="flex shrink-0 items-center
+               justify-between gap-3
+               border-b border-slate-200
+               bg-[#000035] px-4 py-3"
+      >
+        <div class="min-w-0">
+          <p
+            id="mobile-media-details-title"
+            class="text-sm font-bold
+                   text-[#F4B400]"
+          >
+            File details
+          </p>
+
+          <p
+            class="mt-0.5 truncate text-xs
+                   text-white/60"
+            [title]="selectedMedia()?.fileName"
+          >
+            {{ selectedMedia()?.fileName }}
+          </p>
+        </div>
+
+        <button
+          #mobileDetailsCloseButton
+          type="button"
+          (click)="closeDetailsPanel()"
+          class="inline-flex h-11 w-11 shrink-0
+                 items-center justify-center
+                 rounded-xl text-white
+                 transition hover:bg-white/10
+                 focus-visible:outline-none
+                 focus-visible:ring-2
+                 focus-visible:ring-[#F4B400]"
+          aria-label="Close media details"
+        >
+          <svg
+            aria-hidden="true"
+            class="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </header>
+
+      <div
+        class="min-h-0 flex-1 overflow-y-auto
+               overscroll-contain touch-pan-y p-4 sm:p-5"
+        style="-webkit-overflow-scrolling: touch;"
+      >
+        <app-media-details-panel
+          [media]="selectedMedia()"
+          [isSaving]="isSavingMetadata"
+          [saveVersion]="metadataSaveVersion()"
+          (metadataSave)="saveMetadata($event)"
+        />
+      </div>
+    </section>
+  </div>
+}
+
   <app-confirmation-modal
     [isOpen]="showDeleteConfirm"
     [title]="'Delete Media'"
@@ -266,6 +439,26 @@
     [variant]="'danger'"
     (confirmed)="confirmDeleteSelected()"
     (cancelled)="cancelDelete()">
+  </app-confirmation-modal>
+
+  <app-error-modal
+    [isOpen]="showErrorModal"
+    [title]="errorTitle"
+    [message]="errorMessage"
+    [details]="errorDetails"
+    buttonText="Okay"
+    (closed)="showErrorModal = false">
+  </app-error-modal>
+
+  <app-confirmation-modal
+    [isOpen]="showBlockedDeleteModal"
+    [title]="blockedDeleteTitle"
+    [message]="blockedDeleteMessage"
+    [confirmText]="'Okay'"
+    [cancelText]="''"
+    [variant]="'danger'"
+    (confirmed)="showBlockedDeleteModal = false"
+    (cancelled)="showBlockedDeleteModal = false">
   </app-confirmation-modal>
 
 </div>

@@ -50,6 +50,79 @@ type ApiSearchFeed = {
   categories: string[];
 };
 
+type ApiAdminArticlesResponse = {
+  items: ApiArticle[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+type ApiAdminArticleCredit =
+  Omit<AdminArticleCredit, 'createdAt'> & {
+    createdAt?: string | Date;
+  };
+
+type ApiAdminArticleDetail =
+  Omit<
+    AdminArticleDetail,
+    'createdAt' | 'publishedAt' | 'credits'
+  > & {
+    createdAt?: string | Date;
+    publishedAt?: string | Date | null;
+    credits?: ApiAdminArticleCredit[];
+  };
+
+export type AdminArticlesParams = {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+  sort?: 'latest' | 'oldest' | 'mostViewed';
+  category?: string;
+  featured?: boolean;
+  tags?: string[];
+};
+
+export type AdminArticleCreditType =
+  | 'author'
+  | 'photo'
+  | 'graphic'
+  | 'illustration';
+
+export interface AdminArticleCredit {
+  id: string;
+  articleId: string;
+  staffId: string;
+  creditedName: string;
+  creditType: AdminArticleCreditType;
+  createdAt: Date;
+}
+
+export interface AdminArticleDetail {
+  id: string;
+  title: string;
+  status: Article['status'];
+  featured: boolean;
+  views: number;
+
+  excerpt: string;
+
+  category: ArticleCategory;
+  tags: string[];
+
+  createdAt: Date;
+  publishedAt?: Date;
+
+  credits: AdminArticleCredit[];
+}
+export interface AdminArticlesResponse {
+  items: Article[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
 @Injectable({ providedIn: 'root' })
 export class ArticleService {
   private api = API_ENDPOINTS.articles;
@@ -60,7 +133,6 @@ export class ArticleService {
   private mostViewedCache$?: Observable<Article[]>;
   private categoryCache = new Map<string, Observable<Article[]>>();
   private homepageFeedCache$?: Observable<HomepageFeed>;
-  private adminArticlesCache$?: Observable<Article[]>;
   private articleFeedCache = new Map<string, Observable<ArticleFeed>>();
   private categoryFeedCache = new Map<string, Observable<CategoryPageFeed>>();
   private searchFeedCache$?: Observable<SearchFeed>;
@@ -98,10 +170,8 @@ export class ArticleService {
   readonly searchFeed =
     this.searchFeedState.asReadonly();
 
-
-
   private readonly adminArticlesState =
-    signal<Article[]>([]);
+    signal<AdminArticlesResponse | null>(null);
 
   readonly adminArticles =
     this.adminArticlesState.asReadonly();
@@ -110,14 +180,63 @@ export class ArticleService {
 
     readonly articlesChanged = this.articlesChangedState.asReadonly();
 
+    private readonly slugChangedState = signal<{
+      previousSlug: string;
+      currentSlug: string;
+    } | null>(null);
+
+    readonly slugChanged =
+      this.slugChangedState.asReadonly();
+
   constructor(
     private http: HttpClient,
     private socketService: SocketService
   ) {
-    this.socketService.onArticlesUpdated(() => {
-      console.log('📡 Realtime article update');
-      this.handleArticlesChanged();
-    });
+    this.initializeRealtime();
+  }
+
+  private initializeRealtime(): void {
+    this.socketService.onArticlesUpdated(
+      payload => {
+
+        console.log(
+          '📡 Realtime article update',
+          payload
+        );
+
+        const slugChanged =
+          payload.previousSlug &&
+          payload.currentSlug &&
+          payload.previousSlug !==
+            payload.currentSlug;
+
+        const isCurrentArticle =
+          slugChanged &&
+          this.currentArticleFeedSlug ===
+            payload.previousSlug;
+
+        if (isCurrentArticle) {
+
+          this.currentArticleFeedSlug =
+            payload.currentSlug!;
+
+          this.slugChangedState.set({
+            previousSlug:
+              payload.previousSlug!,
+            currentSlug:
+              payload.currentSlug!,
+          });
+
+          this.handleArticlesChanged(false);
+
+        } else {
+
+          this.handleArticlesChanged(true);
+
+        }
+
+      }
+    );
   }
 
   // Convert API article into client-side Article with proper Date objects
@@ -132,6 +251,61 @@ export class ArticleService {
   private normalizeArticles(list: ApiArticle[]): Article[] {
     return (list ?? []).map((a) => this.normalizeArticle(a));
   }
+
+  private normalizeAdminArticles(
+    response: ApiAdminArticlesResponse
+  ): AdminArticlesResponse {
+
+    return {
+      items: this.normalizeArticles(
+        response.items
+      ),
+      page: response.page,
+      limit: response.limit,
+      total: response.total,
+      totalPages: response.totalPages,
+    };
+
+  }
+
+private normalizeAdminArticleDetail(
+  article: ApiAdminArticleDetail
+): AdminArticleDetail {
+  return {
+    id: String(article.id),
+    title: article.title,
+    status: article.status,
+    featured: article.featured,
+    views: Number(article.views ?? 0),
+
+    excerpt: article.excerpt ?? '',
+
+    category: article.category,
+    tags: article.tags ?? [],
+
+    createdAt: article.createdAt
+      ? new Date(article.createdAt)
+      : new Date(),
+
+    publishedAt: article.publishedAt
+      ? new Date(article.publishedAt)
+      : undefined,
+
+    credits: (article.credits ?? []).map(
+      credit => ({
+        id: String(credit.id),
+        articleId: String(credit.articleId),
+        staffId: String(credit.staffId),
+        creditedName:
+          credit.creditedName ?? '',
+        creditType: credit.creditType,
+        createdAt: credit.createdAt
+          ? new Date(credit.createdAt)
+          : new Date(),
+      })
+    ),
+  };
+}
 
   // Build HttpParams from a plain object, handling arrays and skipping empty values
   private buildParams(obj: Record<string, unknown>): HttpParams {
@@ -160,7 +334,6 @@ export class ArticleService {
     this.featuredCache$ = undefined;
     this.homepageFeedCache$ = undefined;
     this.searchFeedCache$ = undefined;
-    this.adminArticlesCache$ = undefined;
 
     this.articleFeedCache.clear();
     this.categoryFeedCache.clear();
@@ -175,15 +348,23 @@ export class ArticleService {
     this.categoryCache.clear();
   }
 
-  private handleArticlesChanged(): void {
-  this.clearCache();
-  this.articlesChangedState.update(value => value + 1);
-  this.refreshHomepageFeed();
-  this.refreshAdminArticles();
-  this.refreshArticleFeed();
-  this.refreshCategoryFeed();
-  this.refreshSearchFeed();
-}
+  private handleArticlesChanged(
+    refreshCurrentArticle = true
+  ): void {
+    this.clearCache();
+
+    this.articlesChangedState.update(
+      value => value + 1
+    );
+
+    this.refreshHomepageFeed();
+
+    if (refreshCurrentArticle) {
+      this.refreshArticleFeed();
+    }
+
+    this.refreshSearchFeed();
+  }
 
   private buildCategoryFeedCacheKey(params: GetArticlesParams): string {
     return JSON.stringify({
@@ -197,14 +378,38 @@ export class ArticleService {
   }
 
   /** Admin: list all articles across statuses. */
-  getAdminArticles(): Observable<Article[]> {
-    if (!this.adminArticlesCache$) {
-      this.adminArticlesCache$ =
-        this.fetchAdminArticles().pipe(
-          shareReplay(1)
-        );
+  getAdminArticles(
+    params: AdminArticlesParams
+  ): Observable<AdminArticlesResponse> {
+    return this.fetchAdminArticles(params);
+  }
+
+  /**
+   * Admin: retrieve the lightweight detail payload
+   * required by the Article View Modal.
+   */
+  getAdminArticleDetail(
+    articleId: string
+  ): Observable<AdminArticleDetail> {
+    const id = String(articleId ?? '').trim();
+
+    if (!id) {
+      throw new Error(
+        'Article ID is required'
+      );
     }
-    return this.adminArticlesCache$;
+
+    return this.http
+      .get<ApiAdminArticleDetail>(
+        `${this.api}/admin/${encodeURIComponent(id)}`
+      )
+      .pipe(
+        map(article =>
+          this.normalizeAdminArticleDetail(
+            article
+          )
+        )
+      );
   }
 
   /** Public: list published articles with filters/paging. */
@@ -221,23 +426,58 @@ export class ArticleService {
     });
   }
 
-  private fetchHomepageFeed(): Observable<HomepageFeed> {
-    return this.http
-      .get<ApiHomepageFeed>(`${this.api}/homepage-feed`)
-      .pipe(
-        map((feed) => this.normalizeHomepageFeed(feed)),
-        tap((feed) => this.homepageFeedState.set(feed))
-      );
-  }
+private fetchHomepageFeed(
+  forceRefresh = false
+): Observable<HomepageFeed> {
+  const params = forceRefresh
+    ? new HttpParams().set(
+        '_refresh',
+        Date.now().toString()
+      )
+    : undefined;
 
-  private fetchAdminArticles(): Observable<Article[]> {
-    return this.getArticleList({
-      page: 1,
-      limit: 100,
-      sort: 'latest',
-    }).pipe(
-      tap((articles) => this.adminArticlesState.set(articles))
+  return this.http
+    .get<ApiHomepageFeed>(
+      `${this.api}/homepage-feed`,
+      { params }
+    )
+    .pipe(
+      map(feed =>
+        this.normalizeHomepageFeed(feed)
+      ),
+      tap(feed =>
+        this.homepageFeedState.set(feed)
+      )
     );
+}
+
+  private fetchAdminArticles(
+    params: AdminArticlesParams
+  ): Observable<AdminArticlesResponse> {
+    return this.http
+      .get<ApiAdminArticlesResponse>(
+        `${this.api}/admin`,
+        {
+          params: this.buildParams({
+            page: params.page ?? 1,
+            limit: params.limit ?? 20,
+            status: params.status,
+            search: params.search,
+            sort: params.sort ?? 'latest',
+            category: params.category,
+            featured: params.featured,
+            tags: params.tags,
+          }),
+        }
+      )
+      .pipe(
+        map(response =>
+          this.normalizeAdminArticles(response)
+        ),
+        tap(response =>
+          this.adminArticlesState.set(response)
+        )
+      );
   }
 
   getHomepageFeed(): Observable<HomepageFeed> {
@@ -283,15 +523,28 @@ export class ArticleService {
     return this.http.get<ApiArticle>(`${this.api}/${slug}`).pipe(map((a) => this.normalizeArticle(a)));
   }
 
-  private fetchArticleFeed(slug: string): Observable<ArticleFeed> {
-    console.log('[HTTP] Fetching', slug);
+private fetchArticleFeed(
+  slug: string,
+  forceRefresh = false
+): Observable<ArticleFeed> {
+  const params = forceRefresh
+    ? new HttpParams().set(
+        '_refresh',
+        Date.now().toString()
+      )
+    : undefined;
 
-    return this.http
-      .get<ApiArticleFeed>(`${this.api}/${slug}/feed`)
-      .pipe(
-        map(feed => this.normalizeArticleFeed(feed)),
-      );
-  }
+  return this.http
+    .get<ApiArticleFeed>(
+      `${this.api}/${slug}/feed`,
+      { params }
+    )
+    .pipe(
+      map(feed =>
+        this.normalizeArticleFeed(feed)
+      )
+    );
+}
 
   getArticleFeed(slug: string): Observable<ArticleFeed> {
     const cached = this.articleFeedCache.get(slug);
@@ -342,17 +595,29 @@ export class ArticleService {
   }
 
   updateArticle(id: string, updated: Partial<Article>): Observable<Article> {
-    const dto: any = {
+    const dto = {
       title: updated.title,
       slug: updated.slug,
       excerpt: updated.excerpt,
       content: updated.content,
       image: updated.image,
+
+      // Legacy display fields
       author: updated.author,
       photoby: updated.photoby,
       graphicby: updated.graphicby,
-      illusrationby: (updated as any).illusrationby,
-      category: updated.category as ArticleCategory | undefined,
+      illusrationby: updated.illusrationby,
+
+      // Structured active-board credit IDs
+      authorIds: updated.authorIds,
+      photoByIds: updated.photoByIds,
+      graphicByIds: updated.graphicByIds,
+      illustrationByIds: updated.illustrationByIds,
+
+      category: updated.category as
+        | ArticleCategory
+        | undefined,
+
       tags: updated.tags,
       status: updated.status,
       featured: updated.featured,
@@ -427,6 +692,7 @@ export class ArticleService {
     return this.mostViewedCache$;
 
   }
+
   getCategoryArticles(
     category: ArticleCategory,
     limit = 4
@@ -537,27 +803,23 @@ export class ArticleService {
     };
   }
 
-  refreshHomepageFeed(): void {
-    this.fetchHomepageFeed().subscribe({
-      error: (err) => {
-        console.error('Failed to refresh homepage feed', err);
-      },
-    });
-  }
+refreshHomepageFeed(): void {
+  this.homepageFeedCache$ = undefined;
 
-  refreshAdminArticles(): void {
-    this.fetchAdminArticles().subscribe({
-      error: (err) => {
+  this.fetchHomepageFeed(true)
+    .subscribe({
+      error: err => {
         console.error(
-          'Failed to refresh admin articles',
+          'Failed to refresh homepage feed',
           err
         );
       },
     });
-  }
+}
 
   refreshArticleFeed(slug?: string): void {
-    const targetSlug = slug ?? this.currentArticleFeedSlug;
+    const targetSlug =
+      slug ?? this.currentArticleFeedSlug;
 
     if (!targetSlug) {
       return;
@@ -565,23 +827,40 @@ export class ArticleService {
 
     this.articleFeedCache.delete(targetSlug);
 
-    this.fetchArticleFeed(targetSlug).subscribe({
+    this.fetchArticleFeed(
+      targetSlug,
+      true
+    ).subscribe({
+      next: feed => {
+        this.articleFeedState.set(feed);
+      },
+
       error: err => {
-        console.error('Failed to refresh article feed', err);
+        console.error(
+          'Failed to refresh article feed',
+          err
+        );
       },
     });
   }
 
   loadArticleFeed(slug: string): void {
-    this.getArticleFeed(slug).subscribe({
-      next: feed => {
-        this.currentArticleFeedSlug = slug;
-        this.articleFeedState.set(feed);
-      },
-      error: err => {
-        console.error('Failed to load article feed', err);
-      },
-    });
+    this.currentArticleFeedSlug = slug;
+    this.articleFeedState.set(null);
+
+    this.getArticleFeed(slug)
+      .subscribe({
+        next: feed => {
+          this.articleFeedState.set(feed);
+        },
+
+        error: err => {
+          console.error(
+            'Failed to load article feed',
+            err
+          );
+        },
+      });
   }
 
   private fetchCategoryFeed(
@@ -688,5 +967,9 @@ refreshCategoryFeed(): void {
         console.error('Failed to refresh search feed', err);
       },
     });
+  }
+
+  clearSlugChanged(): void {
+    this.slugChangedState.set(null);
   }
 }

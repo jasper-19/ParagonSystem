@@ -7,7 +7,8 @@ export const ARTICLE_STATUS_VALUES = [
   "Archived",
 ] as const;
 
-export type ArticleStatus = (typeof ARTICLE_STATUS_VALUES)[number];
+export type ArticleStatus =
+  (typeof ARTICLE_STATUS_VALUES)[number];
 
 /** Allowed article categories */
 export const ARTICLE_CATEGORY_VALUES = [
@@ -20,71 +21,189 @@ export const ARTICLE_CATEGORY_VALUES = [
   "Literary",
 ] as const;
 
-export type ArticleCategory = (typeof ARTICLE_CATEGORY_VALUES)[number];
+export type ArticleCategory =
+  (typeof ARTICLE_CATEGORY_VALUES)[number];
 
-// Supports base64 data URLs (short-term approach). The overall request body is capped in app.ts.
-// Base64 increases payload size by ~33%, so this needs to be comfortably above expected file sizes.
 const MAX_DATA_URL_CHARS = 130_000_000;
+
+/**
+ * Stable staff references used for validating article credits
+ * against the active editorial board.
+ */
+const articleCreditIdsSchema = z
+  .array(
+    z.string().uuid("Invalid staff member ID")
+  )
+  .max(20, "Too many credited staff members");
 
 /** Schema for POST /api/articles */
 export const createArticleSchema = z.object({
-  title: z.string().min(1, "Title is required").max(255),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(255),
 
   slug: z
     .string()
     .min(1, "Slug is required")
     .max(255)
-    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase and hyphenated"),
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug must be lowercase and hyphenated"
+    ),
 
-  excerpt: z.string().min(1, "Excerpt is required").max(2000),
+  excerpt: z
+    .string()
+    .min(1, "Excerpt is required")
+    .max(2000),
 
-  content: z.string().min(1, "Content is required"),
+  content: z
+    .string()
+    .min(1, "Content is required"),
 
-  image: z.string().max(MAX_DATA_URL_CHARS).optional().or(z.literal("")),
+  image: z
+    .string()
+    .max(MAX_DATA_URL_CHARS)
+    .optional()
+    .or(z.literal("")),
 
-  author: z.string().min(1, "Author is required").max(2000),
+  /**
+   * Existing display-name fields.
+   * Keep these temporarily so current articles and UI do not break.
+   */
+  author: z
+    .string()
+    .min(1, "Author is required")
+    .max(2000),
 
-  photoby: z.string().max(2000).optional(),
-  graphicby: z.string().max(2000).optional(),
-  illusrationby: z.string().max(2000).optional(),
+  photoby: z
+    .string()
+    .max(2000)
+    .optional(),
+
+  graphicby: z
+    .string()
+    .max(2000)
+    .optional(),
+
+  illusrationby: z
+    .string()
+    .max(2000)
+    .optional(),
+
+  /**
+   * New stable staff references.
+   * These will be validated against the active editorial board.
+   */
+  authorIds: articleCreditIdsSchema
+    .min(1, "At least one author is required"),
+
+  photoByIds: articleCreditIdsSchema
+    .optional()
+    .default([]),
+
+  graphicByIds: articleCreditIdsSchema
+    .optional()
+    .default([]),
+
+  illustrationByIds: articleCreditIdsSchema
+    .optional()
+    .default([]),
 
   category: z.enum(ARTICLE_CATEGORY_VALUES, {
-    error: () => ({ message: "Invalid category" }),
+    error: () => ({
+      message: "Invalid category",
+    }),
   }),
 
-  tags: z.array(z.string().max(50)).max(20).optional(),
+  tags: z
+    .array(z.string().max(50))
+    .max(20)
+    .optional(),
 
   status: z.enum(ARTICLE_STATUS_VALUES),
 
-  featured: z.boolean().optional().default(false),
+  featured: z
+    .boolean()
+    .optional()
+    .default(false),
 });
 
 /** Schema for PATCH /api/articles/:id */
 export const updateArticleSchema = z.object({
-  title: z.string().min(1).max(255).optional(),
+  title: z
+    .string()
+    .min(1)
+    .max(255)
+    .optional(),
 
   slug: z
     .string()
     .min(1)
     .max(255)
-    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase and hyphenated")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug must be lowercase and hyphenated"
+    )
     .optional(),
 
-  excerpt: z.string().min(1).max(2000).optional(),
-  content: z.string().min(1).optional(),
-  image: z.string().max(MAX_DATA_URL_CHARS).optional().or(z.literal("")),
+  excerpt: z
+    .string()
+    .min(1)
+    .max(2000)
+    .optional(),
 
-  author: z.string().min(1).max(2000).optional(),
+  content: z
+    .string()
+    .min(1)
+    .optional(),
 
-  photoby: z.string().max(2000).optional(),
-  graphicby: z.string().max(2000).optional(),
-  illusrationby: z.string().max(2000).optional(),
+  image: z
+    .string()
+    .max(MAX_DATA_URL_CHARS)
+    .optional()
+    .or(z.literal("")),
 
-  category: z.enum(ARTICLE_CATEGORY_VALUES).optional(),
+  author: z
+    .string()
+    .min(1)
+    .max(2000)
+    .optional(),
 
-  tags: z.array(z.string().max(50)).max(20).optional(),
+  photoby: z
+    .string()
+    .max(2000)
+    .optional(),
 
-  status: z.enum(ARTICLE_STATUS_VALUES).optional(),
+  graphicby: z
+    .string()
+    .max(2000)
+    .optional(),
+
+  illusrationby: z
+    .string()
+    .max(2000)
+    .optional(),
+
+  authorIds: articleCreditIdsSchema.optional(),
+
+  photoByIds: articleCreditIdsSchema.optional(),
+
+  graphicByIds: articleCreditIdsSchema.optional(),
+
+  illustrationByIds:
+    articleCreditIdsSchema.optional(),
+
+  category:
+    z.enum(ARTICLE_CATEGORY_VALUES).optional(),
+
+  tags: z
+    .array(z.string().max(50))
+    .max(20)
+    .optional(),
+
+  status:
+    z.enum(ARTICLE_STATUS_VALUES).optional(),
 
   featured: z.boolean().optional(),
 });

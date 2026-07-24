@@ -1,287 +1,482 @@
-<section class="bg-white rounded-3xl shadow-lg border-2 border-slate-200 p-8 space-y-6">
+<section
+  aria-labelledby="recent-activity-title"
+  class="min-w-0 space-y-5 rounded-2xl
+         border border-slate-200 bg-white
+         p-4 shadow-sm
+         sm:space-y-6 sm:p-5
+         lg:p-6"
+>
 
   <!-- Header -->
-  <div class="flex items-center justify-between pb-6 border-b-2 border-slate-100">
-    <div class="space-y-1">
-      <h2 class="text-2xl font-bold text-[#000035]">
-        Recent Activity
-      </h2>
-      <p class="text-sm text-slate-600 font-medium">
-        Latest system updates and changes
-      </p>
-    </div>
+  <div
+    class="space-y-1 border-b border-slate-200 pb-5"
+  >
+    <h2
+      id="recent-activity-title"
+      class="text-lg font-bold tracking-tight
+            text-[#000035] sm:text-xl"
+    >
+      Recent Activity
+    </h2>
 
-    <!-- Activity Filter Dots (Optional) -->
-    <div class="flex items-center gap-2">
-      <div class="flex items-center gap-1.5">
-        <div class="w-2.5 h-2.5 bg-[#F4B400] rounded-full"></div>
-        <div class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-        <div class="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-        <div class="w-2.5 h-2.5 bg-purple-500 rounded-full"></div>
-      </div>
-    </div>
+    <p class="text-sm text-slate-600">
+      Latest system updates and changes
+    </p>
   </div>
 
   <!-- Filter Tabs -->
-  <div class="grid grid-cols-3 sm:flex sm:flex-wrap gap-1.5 sm:gap-2">
+  <div
+    class="grid w-full min-w-0 grid-cols-2 gap-2
+          sm:flex sm:flex-wrap"
+    role="group"
+    aria-label="Filter recent activity"
+  >
     <button
       type="button"
-      class="flex items-center justify-center gap-1 px-2 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200"
-      [class.bg-[#000035]]="selectedFilter === 'all'"
-      [class.text-white]="selectedFilter === 'all'"
-      [class.bg-slate-100]="selectedFilter !== 'all'"
-      [class.text-slate-600]="selectedFilter !== 'all'"
-      [class.hover:bg-slate-200]="selectedFilter !== 'all'"
       (click)="setFilter('all')"
+      [attr.aria-pressed]="selectedFilter() === 'all'"
+      class="inline-flex min-h-11 min-w-0
+       items-center justify-center gap-1.5
+       rounded-lg px-3 py-2
+       text-sm font-semibold transition
+       focus-visible:outline-none
+       focus-visible:ring-2
+       focus-visible:ring-[#F4B400]
+       focus-visible:ring-offset-2
+       sm:w-auto"
+      [class.bg-[#000035]]="selectedFilter() === 'all'"
+      [class.text-white]="selectedFilter() === 'all'"
+      [class.bg-slate-100]="selectedFilter() !== 'all'"
+      [class.text-slate-700]="selectedFilter() !== 'all'"
     >
-      <span class="truncate">All</span>
-      <span class="shrink-0 px-1.5 py-0.5 sm:px-2 rounded text-[10px] sm:text-xs"
-            [class.bg-white/20]="selectedFilter === 'all'"
-            [class.bg-slate-200]="selectedFilter !== 'all'">
-        {{ activities.length }}
+      <span>All</span>
+
+      <span
+        class="rounded px-1.5 py-0.5 text-xs"
+        [class.bg-white/20]="selectedFilter() === 'all'"
+        [class.bg-slate-200]="selectedFilter() !== 'all'"
+      >
+        {{ activityCounts().all }}
       </span>
     </button>
 
     <button
       type="button"
-      class="flex items-center justify-center gap-1 px-2 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200"
-      [class.bg-[#F4B400]]="selectedFilter === 'article'"
-      [class.text-white]="selectedFilter === 'article'"
-      [class.bg-[#F4B400]/10]="selectedFilter !== 'article'"
-      [class.text-[#F4B400]]="selectedFilter !== 'article'"
-      [class.hover:bg-[#F4B400]/20]="selectedFilter !== 'article'"
+      [attr.aria-pressed]="selectedFilter() === 'article'"
+      class="inline-flex min-h-11 min-w-0
+       items-center justify-center gap-1.5
+       rounded-lg px-3 py-2
+       text-sm font-semibold transition
+       focus-visible:outline-none
+       focus-visible:ring-2
+       focus-visible:ring-[#F4B400]
+       focus-visible:ring-offset-2
+       sm:w-auto"
+      [class.bg-[#F4B400]]="selectedFilter() === 'article'"
+      [class.text-[#000035]]="selectedFilter() === 'article'"
+      [class.text-[#F4B400]]="selectedFilter() !== 'article'"
+      [class.bg-[#F4B400]/10]="selectedFilter() !== 'article'"
+      [class.hover:bg-[#F4B400]/20]="selectedFilter() !== 'article'"
       (click)="setFilter('article')"
     >
-      <span class="truncate">Articles</span>
-      <span class="shrink-0 px-1.5 py-0.5 sm:px-2 rounded text-[10px] sm:text-xs"
-            [class.bg-white/20]="selectedFilter === 'article'"
-            [class.bg-[#F4B400]/20]="selectedFilter !== 'article'">
-        {{ articleCount }}
+      <span>Articles</span>
+
+      <span
+        class="rounded px-1.5 py-0.5 text-xs"
+        [class.bg-[#000035]/10]="selectedFilter() === 'article'"
+        [class.bg-[#F4B400]/20]="selectedFilter() !== 'article'"
+      >
+        {{ activityCounts().article }}
       </span>
     </button>
 
     <button
       type="button"
-      class="flex items-center justify-center gap-1 px-2 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200"
-      [class.bg-blue-600]="selectedFilter === 'application'"
-      [class.text-white]="selectedFilter === 'application'"
-      [class.bg-blue-100]="selectedFilter !== 'application'"
-      [class.text-blue-600]="selectedFilter !== 'application'"
-      [class.hover:bg-blue-200]="selectedFilter !== 'application'"
+      [attr.aria-pressed]="selectedFilter() === 'application'"
+      class="inline-flex min-h-11 min-w-0
+       items-center justify-center gap-1.5
+       rounded-lg px-3 py-2
+       text-sm font-semibold transition
+       focus-visible:outline-none
+       focus-visible:ring-2
+       focus-visible:ring-[#F4B400]
+       focus-visible:ring-offset-2
+       sm:w-auto"
+      [class.bg-blue-600]="selectedFilter() === 'application'"
+      [class.text-white]="selectedFilter() === 'application'"
+      [class.bg-blue-100]="selectedFilter() !== 'application'"
+      [class.text-blue-600]="selectedFilter() !== 'application'"
+      [class.hover:bg-blue-200]="selectedFilter() !== 'application'"
       (click)="setFilter('application')"
     >
-      <span class="truncate">
-        <span class="hidden sm:inline">Applications</span>
-        <span class="sm:hidden">Apps</span>
-      </span>
-      <span class="shrink-0 px-1.5 py-0.5 sm:px-2 rounded text-[10px] sm:text-xs"
-            [class.bg-white/20]="selectedFilter === 'application'"
-            [class.bg-blue-200]="selectedFilter !== 'application'">
-        {{ applicationCount }}
+
+        <span>Applications</span>
+
+      <span  class="rounded px-1.5 py-0.5 text-xs"
+            [class.bg-white/20]="selectedFilter() === 'application'"
+            [class.bg-blue-200]="selectedFilter() !== 'application'">
+        {{ activityCounts().application }}
       </span>
     </button>
 
     <button
       type="button"
-      class="flex items-center justify-center gap-1 px-2 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200"
-      [class.bg-green-600]="selectedFilter === 'issue'"
-      [class.text-white]="selectedFilter === 'issue'"
-      [class.bg-green-100]="selectedFilter !== 'issue'"
-      [class.text-green-600]="selectedFilter !== 'issue'"
-      [class.hover:bg-green-200]="selectedFilter !== 'issue'"
+      [attr.aria-pressed]="selectedFilter() === 'issue'"
+      class="inline-flex min-h-11 min-w-0
+       items-center justify-center gap-1.5
+       rounded-lg px-3 py-2
+       text-sm font-semibold transition
+       focus-visible:outline-none
+       focus-visible:ring-2
+       focus-visible:ring-[#F4B400]
+       focus-visible:ring-offset-2
+       sm:w-auto"
+      [class.bg-emerald-600]="selectedFilter() === 'issue'"
+      [class.text-white]="selectedFilter() === 'issue'"
+      [class.bg-emerald-100]="selectedFilter() !== 'issue'"
+      [class.text-emerald-600]="selectedFilter() !== 'issue'"
+      [class.hover:bg-emerald-200]="selectedFilter() !== 'issue'"
       (click)="setFilter('issue')"
     >
-      <span class="truncate">
-        <span class="hidden sm:inline">Special Issues</span>
-        <span class="sm:hidden">Issues</span>
-      </span>
-      <span class="shrink-0 px-1.5 py-0.5 sm:px-2 rounded text-[10px] sm:text-xs"
-            [class.bg-white/20]="selectedFilter === 'issue'"
-            [class.bg-green-200]="selectedFilter !== 'issue'">
-        {{ issueCount }}
+
+      <span>Special Issues</span>
+
+      <span  class="rounded px-1.5 py-0.5 text-xs"
+            [class.bg-white/20]="selectedFilter() === 'issue'"
+            [class.bg-green-200]="selectedFilter() !== 'issue'">
+        {{ activityCounts().issue }}
       </span>
     </button>
 
     <button
       type="button"
-      class="flex items-center justify-center gap-1 px-2 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200"
-      [class.bg-purple-600]="selectedFilter === 'staff'"
-      [class.text-white]="selectedFilter === 'staff'"
-      [class.bg-purple-100]="selectedFilter !== 'staff'"
-      [class.text-purple-600]="selectedFilter !== 'staff'"
-      [class.hover:bg-purple-200]="selectedFilter !== 'staff'"
+      [attr.aria-pressed]="selectedFilter() === 'staff'"
+      class="col-span-2 inline-flex min-h-11 min-w-0
+       items-center justify-center gap-1.5
+       rounded-lg px-3 py-2
+       text-sm font-semibold transition
+       focus-visible:outline-none
+       focus-visible:ring-2
+       focus-visible:ring-[#F4B400]
+       focus-visible:ring-offset-2
+       sm:col-span-1 sm:w-auto"
+      [class.bg-purple-600]="selectedFilter() === 'staff'"
+      [class.text-white]="selectedFilter() === 'staff'"
+      [class.bg-purple-100]="selectedFilter() !== 'staff'"
+      [class.text-purple-600]="selectedFilter() !== 'staff'"
+      [class.hover:bg-purple-200]="selectedFilter() !== 'staff'"
       (click)="setFilter('staff')"
     >
       <span class="truncate">Staff</span>
-      <span class="shrink-0 px-1.5 py-0.5 sm:px-2 rounded text-[10px] sm:text-xs"
-            [class.bg-white/20]="selectedFilter === 'staff'"
-            [class.bg-purple-200]="selectedFilter !== 'staff'">
-        {{ staffCount }}
+      <span  class="rounded px-1.5 py-0.5 text-xs"
+            [class.bg-white/20]="selectedFilter() === 'staff'"
+            [class.bg-purple-200]="selectedFilter() !== 'staff'">
+        {{ activityCounts().staff }}
       </span>
     </button>
   </div>
 
-  @if (activities.length > 0) {
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div class="text-xs sm:text-sm text-slate-600 font-medium">
-        Showing
-        <span class="font-semibold text-[#000035]">{{ pageStart + 1 }}</span>
-        -
-        <span class="font-semibold text-[#000035]">{{ pageEndExclusive }}</span>
-        of
-        <span class="font-semibold text-[#000035]">{{ totalItems }}</span>
-      </div>
+  @if (totalItems() > 0) {
+    <div
+      class="rounded-xl bg-slate-50 p-3
+            sm:p-4"
+    >
+      <div
+        class="grid min-w-0 gap-3
+              md:grid-cols-[1fr_auto]
+              md:items-center
+              xl:grid-cols-[1fr_auto_auto]"
+      >
+        <!-- Result summary -->
+        <p
+          class="min-w-0 text-sm text-slate-600"
+          aria-live="polite"
+        >
+          Showing
+          <span class="font-semibold text-[#000035]">
+            {{ pageStart() + 1 }}
+          </span>
+          –
+          <span class="font-semibold text-[#000035]">
+            {{ pageEndExclusive() }}
+          </span>
+          of
+          <span class="font-semibold text-[#000035]">
+            {{ totalItems() }}
+          </span>
+        </p>
 
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2">
-          <label class="text-xs font-semibold text-slate-600">Rows</label>
-          <select
-            #pageSizeSelect
-            class="h-9 rounded-xl border-2 border-slate-200 bg-white px-3 text-sm font-semibold text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/30"
-            [value]="pageSize"
-            (change)="setPageSize(pageSizeSelect.value)"
-            aria-label="Rows per page"
+        <!-- Page size -->
+        <div
+          class="flex min-w-0 items-center justify-between gap-3
+                md:justify-end"
+        >
+          <label
+            for="activity-page-size"
+            class="text-sm font-medium text-slate-600"
           >
-            @for (opt of pageSizeOptions; track opt) {
-              <option [value]="opt">{{ opt }}</option>
+            Rows per page
+          </label>
+
+          <select
+            id="activity-page-size"
+            #pageSizeSelect
+            [value]="pageSize()"
+            (change)="setPageSize(pageSizeSelect.value)"
+            class="min-h-11 min-w-20 rounded-lg
+                  border border-slate-200 bg-white
+                  px-3 py-2 text-sm font-semibold
+                  text-[#000035]
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-[#F4B400]"
+          >
+            @for (
+              option of pageSizeOptions();
+              track option
+            ) {
+              <option [value]="option">
+                {{ option }}
+              </option>
             }
           </select>
         </div>
 
-        <div class="flex items-center gap-2">
+        <!-- Pagination -->
+        <nav
+          class="grid min-w-0 grid-cols-[1fr_auto_1fr]
+                items-center gap-2
+                border-t border-slate-200 pt-3
+                md:col-span-2
+                xl:col-span-1 xl:border-t-0 xl:pt-0"
+          aria-label="Activity pagination"
+        >
           <button
             type="button"
-            class="h-9 px-3 rounded-xl border-2 border-slate-200 bg-white text-sm font-semibold text-[#000035] hover:border-[#F4B400] hover:text-[#F4B400] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             (click)="prevPage()"
-            [disabled]="!canPrev"
-            aria-label="Previous page"
+            [disabled]="!canPrev()"
+            class="inline-flex min-h-11 items-center
+                  justify-center justify-self-start
+                  rounded-lg border border-slate-200
+                  bg-white px-3 py-2
+                  text-sm font-semibold text-[#000035]
+                  transition
+                  hover:border-[#F4B400]
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]
+                  focus-visible:ring-offset-2
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50"
+            aria-label="Go to previous activity page"
           >
-            Prev
+            <span class="hidden min-[380px]:inline">
+              Previous
+            </span>
+
+            <span
+              class="min-[380px]:hidden"
+              aria-hidden="true"
+            >
+              ‹
+            </span>
           </button>
-          <div class="text-xs sm:text-sm text-slate-600 font-medium tabular-nums">
-            Page <span class="font-semibold text-[#000035]">{{ pageIndex + 1 }}</span> of <span class="font-semibold text-[#000035]">{{ totalPages }}</span>
-          </div>
+
+          <span
+            class="whitespace-nowrap text-center
+                  text-xs font-medium text-slate-600
+                  sm:text-sm"
+            aria-current="page"
+          >
+            Page
+            <span class="font-semibold text-[#000035]">
+              {{ pageIndex() + 1 }}
+            </span>
+            of
+            <span class="font-semibold text-[#000035]">
+              {{ totalPages() }}
+            </span>
+          </span>
+
           <button
             type="button"
-            class="h-9 px-3 rounded-xl border-2 border-slate-200 bg-white text-sm font-semibold text-[#000035] hover:border-[#F4B400] hover:text-[#F4B400] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             (click)="nextPage()"
-            [disabled]="!canNext"
-            aria-label="Next page"
+            [disabled]="!canNext()"
+            class="inline-flex min-h-11 items-center
+                  justify-center justify-self-end
+                  rounded-lg border border-slate-200
+                  bg-white px-3 py-2
+                  text-sm font-semibold text-[#000035]
+                  transition
+                  hover:border-[#F4B400]
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#F4B400]
+                  focus-visible:ring-offset-2
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50"
+            aria-label="Go to next activity page"
           >
-            Next
+            <span class="hidden min-[380px]:inline">
+              Next
+            </span>
+
+            <span
+              class="min-[380px]:hidden"
+              aria-hidden="true"
+            >
+              ›
+            </span>
           </button>
-        </div>
+        </nav>
       </div>
     </div>
   }
 
   <!-- Activity List -->
-  <div class="space-y-1">
+  <div class="space-y-3">
 
-    @if (totalItems === 0) {
-      <div class="py-16 text-center">
-        <div class="inline-flex flex-col items-center gap-3">
-          <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center">
-            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    @if (totalItems() === 0) {
+    <div class="rounded-xl bg-slate-50 px-4 py-12 text-center">
+      <div
+        class="mx-auto flex h-14 w-14 items-center
+              justify-center rounded-2xl
+              bg-slate-100"
+      >
+            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-          </div>
-          <p class="text-slate-500 font-medium">
-            @if (selectedFilter === 'all') {
-              No recent activity
-            } @else {
-              No {{ selectedFilter }} activity found
-            }
-          </p>
-        </div>
       </div>
+
+      <p class="mt-3 text-sm font-medium text-slate-500">
+        @if (selectedFilter() === 'all') {
+          No recent activity
+        } @else {
+          No {{ selectedFilter() }} activity found
+        }
+      </p>
+    </div>
     }
 
-    @for (activity of pagedActivities; track activity.id; let isLast = $last) {
+    @for (activity of pagedActivities(); track activity.id) {
 
-      <div class="group relative flex items-start gap-4 p-4 rounded-xl
-                  hover:bg-slate-50 transition-all duration-200 cursor-pointer
-                  border-2 border-transparent hover:border-slate-200">
+    <div
+      class="flex min-w-0 items-start gap-3
+            rounded-xl border border-slate-200
+            bg-white p-3
+            sm:gap-4 sm:p-4"
+    >
 
         <!-- Timeline Line (except for last item) -->
-        @if (!isLast) {
-        }
 
         <!-- Icon Badge -->
         <div class="relative shrink-0 z-10">
           <div
-            class="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm
-                   group-hover:scale-110 transition-transform duration-200"
+            class="flex h-10 w-10 shrink-0 items-center
+                  justify-center rounded-xl"
             [class.bg-[#F4B400]/10]="activity.type === 'article'"
             [class.bg-blue-100]="activity.type === 'application'"
-            [class.bg-green-100]="activity.type === 'issue'"
+            [class.bg-emerald-100]="activity.type === 'issue'"
             [class.bg-purple-100]="activity.type === 'staff'"
+            aria-hidden="true"
           >
             <!-- Article Icon -->
             @if (activity.type === 'article') {
-              <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd"/>
-                <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z"/>
+              <svg class="w-5 h-5 text-[#F4B400]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/>
+                <path d="M14 2v5a1 1 0 0 0 1 1h5"/>
+                <path d="M10 9H8"/>
+                <path d="M16 13H8"/>
+                <path d="M16 17H8"/>
               </svg>
             }
 
             <!-- Application Icon -->
             @if (activity.type === 'application') {
-              <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <path d="M12 11h4"/><path d="M12 16h4"/>
+                <path d="M8 11h.01"/><path d="M8 16h.01"/>
               </svg>
             }
 
             <!-- Issue Icon -->
             @if (activity.type === 'issue') {
-              <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M12 7v14"/>
+                <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>
               </svg>
             }
 
             <!-- Staff Icon -->
             @if (activity.type === 'staff') {
-              <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M18 21a8 8 0 0 0-16 0"/>
+                <circle cx="10" cy="8" r="5"/>
+                <path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/>
               </svg>
             }
           </div>
         </div>
 
         <!-- Content -->
-        <div class="flex-1 min-w-0 pt-1">
+          <div class="min-w-0 flex-1">
+            <div
+              class="flex min-w-0 flex-col gap-2
+                    min-[480px]:flex-row
+                    min-[480px]:items-start
+                    min-[480px]:justify-between"
+            >
+              <p
+                class="wrap-break-word text-sm font-semibold
+                      leading-5 text-[#000035]"
+              >
+                {{ activity.title }}
+              </p>
 
-          <div class="flex items-start justify-between gap-4 mb-2">
-            <p class="text-sm font-semibold text-[#000035] group-hover:text-[#F4B400] transition-colors">
-              {{ activity.title }}
-            </p>
+              <span
+                class="w-fit shrink-0 rounded-full
+                      px-2.5 py-1 text-xs
+                      font-semibold capitalize"
+                [class.bg-[#F4B400]/10]="activity.type === 'article'"
+                [class.text-[#000035]]="activity.type === 'article'"
+                [class.bg-blue-100]="activity.type === 'application'"
+                [class.text-blue-700]="activity.type === 'application'"
+                [class.bg-emerald-100]="activity.type === 'issue'"
+                [class.text-emerald-700]="activity.type === 'issue'"
+                [class.bg-purple-100]="activity.type === 'staff'"
+                [class.text-purple-700]="activity.type === 'staff'"
+              >
+                {{ activity.type }}
+              </span>
+            </div>
 
-            <!-- Type Badge -->
-            <span class="shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold uppercase"
-                  [class.bg-[#F4B400]/10]="activity.type === 'article'"
-                  [class.text-[#F4B400]]="activity.type === 'article'"
-                  [class.bg-blue-100]="activity.type === 'application'"
-                  [class.text-blue-700]="activity.type === 'application'"
-                  [class.bg-green-100]="activity.type === 'issue'"
-                  [class.text-green-700]="activity.type === 'issue'"
-                  [class.bg-purple-100]="activity.type === 'staff'"
-                  [class.text-purple-700]="activity.type === 'staff'">
-              {{ activity.type }}
-            </span>
+            <div class="mt-2 flex items-center gap-1.5">
+
+              <svg
+                aria-hidden="true"
+                class="h-3.5 w-3.5 shrink-0 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0Z"
+                />
+              </svg>
+
+              <time
+                class="text-xs font-medium text-slate-500"
+                [attr.datetime]="activity.timestamp | date:'yyyy-MM-ddTHH:mm:ss'"
+              >
+                {{ activity.timestamp | date:'MMM d, y, h:mm a' }}
+              </time>
+            </div>
           </div>
-
-          <!-- Timestamp -->
-          <div class="flex items-center gap-2">
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <p class="text-xs text-slate-500 font-medium">
-              {{ activity.timestamp | date:'medium' }}
-            </p>
-          </div>
-
-        </div>
 
       </div>
 

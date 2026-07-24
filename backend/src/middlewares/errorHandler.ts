@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 export interface AppError extends Error {
   statusCode?: number;
   status?: number;
+  usage?: unknown;
 }
 
 /**
@@ -28,7 +29,16 @@ export function errorHandler(
   }
 
   // Send a sanitized response — stack traces never reach the client
-  res.status(statusCode).json({
-    error: statusCode === 500 ? "Internal server error" : err.message,
-  });
+  const response: Record<string, unknown> = {
+    error: statusCode === 500
+      ? "Internal server error"
+      : err.message,
+  };
+
+  if (err.usage) {
+    response["usage"] = err.usage;
+  }
+
+  res.status(statusCode).json(response);
+  
 }

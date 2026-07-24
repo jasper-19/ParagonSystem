@@ -1,4 +1,5 @@
 import * as repository from "./article.repository";
+import * as EditorialBoardService from "../editorial-board/editorial-board.service";
 
 const ALLOWED_STATUSES = [
     "Draft",
@@ -25,6 +26,15 @@ const SEARCH_FEED_LIMITS = {
 
 type ArticleStatus = (typeof ALLOWED_STATUSES)[number];
 
+type CreateArticleCreditPayload = {
+  authorIds?: string[];
+  photoByIds?: string[];
+  graphicByIds?: string[];
+  illustrationByIds?: string[];
+
+  [key: string]: unknown;
+};
+
 export type GetArticlesFilters = {
     status?: string;
     category?: string;
@@ -36,6 +46,19 @@ export type GetArticlesFilters = {
     tags?: string[];
 };
 
+export type AdminArticleDetail = {
+  id: string;
+  title: string;
+  status: string;
+  featured: boolean;
+  views: number;
+  excerpt: string;
+  category: string;
+  tags: string[];
+  createdAt: Date | string;
+  publishedAt: Date | string;
+  credits: repository.ArticleCredit[];
+}
 export interface HomepageFeed {
   featured: Awaited<ReturnType<typeof repository.findAllCards>>;
   mostViewed: Awaited<ReturnType<typeof repository.findAllCards>>;
@@ -66,6 +89,15 @@ export interface SearchFeed {
   categories: Awaited<ReturnType<typeof repository.findCategories>>;
 }
 
+export interface AdminArticleResponse {
+  items: Awaited<ReturnType<typeof repository.findAdminArticles>>['items'];
+
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 function excludeUsed<T extends { id: string }>(
   articles: T[],
   used: Set<string>
@@ -78,6 +110,138 @@ function excludeUsed<T extends { id: string }>(
     used.add(article.id);
     return true;
   });
+}
+
+function normalizeStaffIds(
+  ids: unknown
+): string[] {
+  if (!Array.isArray(ids)) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      ids
+        .map(id => String(id).trim())
+        .filter(Boolean)
+    ),
+  ];
+}
+
+function creditNames(
+  credits: repository.ArticleCreditInput[],
+  creditType: repository.ArticleCreditType
+): string {
+  return credits
+    .filter(
+      credit => credit.creditType === creditType
+    )
+    .map(
+      credit => credit.creditedName
+    )
+    .join(", ");
+}
+
+async function resolveCreditGroup(
+  staffIds: string[],
+  creditType: repository.ArticleCreditType
+): Promise<repository.ArticleCreditInput[]> {
+  if (!staffIds.length) {
+    return [];
+  }
+
+  const members =
+    await EditorialBoardService.resolveActiveBoardMembers(
+      staffIds
+    );
+
+  /*
+   * Preserve the order selected by the editor.
+   */
+  const memberById = new Map(
+    members.map(member => [
+      member.staffId,
+      member,
+    ])
+  );
+
+  return staffIds.map(staffId => {
+    const member = memberById.get(staffId);
+
+    if (!member) {
+      throw Object.assign(
+        new Error(
+          "Only members of the active editorial board can be credited."
+        ),
+        { statusCode: 400 }
+      );
+    }
+
+    return {
+      staffId: member.staffId,
+      creditedName: member.fullName,
+      creditType,
+    };
+  });
+}
+
+async function prepareArticleCredits(
+  data: CreateArticleCreditPayload
+): Promise<repository.ArticleCreditInput[]> {
+  const authorIds =
+    normalizeStaffIds(data.authorIds);
+
+  const photoByIds =
+    normalizeStaffIds(data.photoByIds);
+
+  const graphicByIds =
+    normalizeStaffIds(data.graphicByIds);
+
+  const illustrationByIds =
+    normalizeStaffIds(data.illustrationByIds);
+
+  if (!authorIds.length) {
+    throw Object.assign(
+      new Error(
+        "At least one active editorial board member must be credited as an author."
+      ),
+      { statusCode: 400 }
+    );
+  }
+
+  const [
+    authors,
+    photographers,
+    graphicArtists,
+    illustrators,
+  ] = await Promise.all([
+    resolveCreditGroup(
+      authorIds,
+      "author"
+    ),
+
+    resolveCreditGroup(
+      photoByIds,
+      "photo"
+    ),
+
+    resolveCreditGroup(
+      graphicByIds,
+      "graphic"
+    ),
+
+    resolveCreditGroup(
+      illustrationByIds,
+      "illustration"
+    ),
+  ]);
+
+  return [
+    ...authors,
+    ...photographers,
+    ...graphicArtists,
+    ...illustrators,
+  ];
 }
 
 export async function getHomepageFeed(): Promise<HomepageFeed> {
@@ -139,10 +303,16 @@ export async function getHomepageFeed(): Promise<HomepageFeed> {
     ).slice(0, HOMEPAGE_LIMITS.moreStories);
 
     return {
-    featured,
-    mostViewed,
-    categories,
-    moreStories,
+      featured: featured.map(toPublicArticleCard),
+
+      mostViewed: mostViewed.map(toPublicArticleCard),
+
+      categories: categories.map(section => ({
+        category: section.category,
+        articles: section.articles.map(toPublicArticleCard),
+      })),
+
+      moreStories: moreStories.map(toPublicArticleCard),
     };
 }
 
@@ -188,9 +358,9 @@ export async function getArticleFeed(
   ).slice(0, ARTICLE_FEED_LIMITS.otherStories);
 
   return {
-    article,
-    related,
-    otherStories,
+    article: toPublicArticle(article),
+    related: related.map(toPublicArticleCard),
+    otherStories: otherStories.map(toPublicArticleCard),
   };
 }
 
@@ -214,7 +384,7 @@ export async function getCategoryPageFeed(
   ]);
 
   return {
-    articles,
+    articles: articles.map(toPublicArticleCard),
     categories,
     tags,
     page,
@@ -236,7 +406,7 @@ export async function getSearchFeed(): Promise<SearchFeed> {
   ]);
 
   return {
-    recent,
+    recent: recent.map(toPublicArticleCard),
     categories,
   };
 }
@@ -246,10 +416,67 @@ export async function getArticles(filters: GetArticlesFilters = {}) {
     return repository.findAllCards(filters);
 }
 
+//**Retrieve admin articles */
+export async function getAdminArticles(filters: GetArticlesFilters = {}): Promise<AdminArticleResponse> {
+  const page = 
+    filters.page && filters.page > 0 
+      ? filters.page 
+      : 1;
+
+  const limit = 
+    filters.limit && filters.limit > 0 
+      ? filters.limit 
+      : 20;
+
+  return repository.findAdminArticles({
+    ...filters,
+    page,
+    limit,
+  });
+}
+
+export async function getAdminArticleDetail(
+  id: string
+): Promise<AdminArticleDetail> {
+  if (!id) {
+    throw Object.assign(
+      new Error('Article ID is required'),
+      { statusCode: 400 }
+    );
+  }
+
+  const article =
+    await repository.findByIdWithCredits(id);
+
+  if (!article) {
+    throw Object.assign(
+      new Error('Article not found'),
+      { statusCode: 404 }
+    );
+  }
+
+  return {
+    id: article.id,
+    title: article.title,
+    status: article.status,
+    featured: article.featured,
+    views: article.views,
+    excerpt: article.excerpt,
+    category: article.category,
+    tags: article.tags ?? [],
+    createdAt: article.createdAt,
+    publishedAt: article.publishedAt,
+    credits: article.credits ?? [],
+  };
+}
 
 /** Retrieve an article by its slug (Used for article pages) */
-export async function getArticleBySlug(slug: string) {
-    return repository.findBySlug(slug);
+export async function getArticleBySlug(
+  slug: string
+) {
+  return repository.findBySlugWithCredits(
+    slug
+  );
 }
 
 /**Retrieve Article by category (public category pages) */
@@ -262,23 +489,131 @@ export async function getCategories() {
     return repository.findCategories();
 }
 
-
 //**Retrieve Tags */
 export async function getTags() {
     return repository.findTags();
 }
 
+async function prepareArticlePayload(
+  data: unknown
+) {
+  const articleData =
+    data as CreateArticleCreditPayload;
+
+  const credits =
+    await prepareArticleCredits(articleData);
+
+  return {
+    ...articleData,
+
+    author:
+      creditNames(credits, "author"),
+
+    photoby:
+      creditNames(credits, "photo"),
+
+    graphicby:
+      creditNames(credits, "graphic"),
+
+    illusrationby:
+      creditNames(
+        credits,
+        "illustration"
+      ),
+
+    credits,
+  };
+}
+
 /** Create a new article. */
-export async function createArticle(data: unknown) {
-    return repository.create(data);
+export async function createArticle(
+  data: unknown
+) {
+  const repositoryPayload =
+    await prepareArticlePayload(
+      data
+    );
+
+  return repository.create(
+    repositoryPayload
+  );
 }
 
 /**
- *  Update Article Content.
- * Used by the admin editor.
+ * Update article content and credits.
+ * Credits are revalidated against the active board.
  */
- export async function updateArticle(id: string, data: unknown) {
-    return repository.update(id, data);
+export async function updateArticle(
+  id: string,
+  data: unknown
+) {
+  const existing =
+    await repository.findById(id);
+
+  if (!existing) {
+    throw Object.assign(
+      new Error("Article not found"),
+      { statusCode: 404 }
+    );
+  }
+
+  const articleData =
+    data as CreateArticleCreditPayload;
+
+  const credits =
+    await prepareArticleCredits(
+      articleData
+    );
+
+  const repositoryPayload = {
+    ...articleData,
+
+    /*
+     * Keep legacy display fields synchronized
+     * with the structured article credits.
+     */
+    author:
+      creditNames(
+        credits,
+        "author"
+      ),
+
+    photoby:
+      creditNames(
+        credits,
+        "photo"
+      ),
+
+    graphicby:
+      creditNames(
+        credits,
+        "graphic"
+      ),
+
+    /*
+     * Preserve the existing misspelled API field
+     * while the frontend and repository still use it.
+     */
+    illusrationby:
+      creditNames(
+        credits,
+        "illustration"
+      ),
+
+    credits,
+  };
+
+  const updated =
+    await repository.update(
+      id,
+      repositoryPayload
+    );
+
+  return {
+    article: updated,
+    previousSlug: existing.slug,
+    currentSlug: updated.slug,
+  };
 }
 
 /**
@@ -328,4 +663,31 @@ export async function incrementArticleViews(slug: string) {
 /** Delete article permanently (admin action). */
 export async function deleteArticle(id: string) {
     return repository.remove(id);
+}
+/** Convert an article to its public representation. */
+function toPublicArticleCard(article: any) {
+  const {
+    id,
+    status,
+    featured,
+    createdAt,
+    updatedAt,
+    ...publicArticle
+  } = article;
+
+  return publicArticle;
+}
+
+/** Convert an article to its public representation. */
+function toPublicArticle(article: any) {
+  const {
+    id,
+    status,
+    featured,
+    createdAt,
+    updatedAt,
+    ...publicArticle
+  } = article;
+
+  return publicArticle;
 }

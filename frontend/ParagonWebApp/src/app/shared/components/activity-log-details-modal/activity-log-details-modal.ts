@@ -1,6 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, AfterViewInit, ElementRef, HostListener, OnDestroy, ViewChild, inject } from '@angular/core';
 import { ActivityLog } from '../../../models/activity-log.model';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 
 @Component({
   selector: 'app-activity-log-details-modal',
@@ -8,13 +8,144 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   templateUrl: './activity-log-details-modal.html'
 })
-export class ActivityLogDetailsModalComponent {
+export class ActivityLogDetailsModalComponent implements AfterViewInit, OnDestroy {
 
   @Input() log!: ActivityLog;
   @Output() close = new EventEmitter<void>();
 
-  onClose() {
+  private readonly document =
+    inject(DOCUMENT);
+
+  @ViewChild('dialog')
+  private dialog?: ElementRef<HTMLElement>;
+
+  @ViewChild('closeButton')
+  private closeButton?: ElementRef<HTMLButtonElement>;
+
+  private previouslyFocusedElement:
+    HTMLElement | null = null;
+
+  private previousBodyOverflow = '';
+
+  ngAfterViewInit(): void {
+    this.previouslyFocusedElement =
+      this.document.activeElement
+        instanceof HTMLElement
+        ? this.document.activeElement
+        : null;
+
+    this.previousBodyOverflow =
+      this.document.body.style.overflow;
+
+    this.document.body.style.overflow =
+      'hidden';
+
+    queueMicrotask(() => {
+      this.closeButton
+        ?.nativeElement
+        .focus();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.document.body.style.overflow =
+      this.previousBodyOverflow;
+
+    this.previouslyFocusedElement
+      ?.focus();
+  }
+
+  onClose(): void {
     this.close.emit();
+  }
+
+  onBackdropClick(
+    event: MouseEvent
+  ): void {
+    if (
+      event.target ===
+      event.currentTarget
+    ) {
+      this.onClose();
+    }
+  }
+
+  onDialogKeydown(
+    event: Event
+  ): void {
+
+    const keyboardEvent = event as KeyboardEvent;
+
+    if (keyboardEvent.key !== 'Tab') {
+      return;
+    }
+
+    const dialog = this.dialog?.nativeElement;
+
+    if (!dialog) {
+      return;
+    }
+
+    const focusableElements = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        [
+          'button:not([disabled])',
+          '[href]',
+          'input:not([disabled])',
+          'select:not([disabled])',
+          'textarea:not([disabled])',
+          '[tabindex]:not([tabindex="-1"])',
+        ].join(',')
+      )
+    ).filter(element => !element.hasAttribute('aria-hidden'));
+
+    if (!focusableElements.length) {
+      keyboardEvent.preventDefault();
+      return;
+    }
+
+    const first = focusableElements[0];
+    const last = focusableElements[focusableElements.length - 1];
+
+    if (
+      keyboardEvent.shiftKey &&
+      this.document.activeElement === first
+    ) {
+      keyboardEvent.preventDefault();
+      last.focus();
+      return;
+    }
+
+    if (
+      !keyboardEvent.shiftKey &&
+      this.document.activeElement === last
+    ) {
+      keyboardEvent.preventDefault();
+      first.focus();
+    }
+  }
+
+  //Helpers
+  getActorName(): string {
+    return (
+      this.log.userName?.trim() ||
+      'System activity'
+    );
+  }
+
+  getActorType(): string {
+    return this.log.userName
+      ? 'Administrator'
+      : 'Automated system';
+  }
+
+  getInitial(): string {
+    const actor =
+      this.getActorName();
+
+    return actor
+      .charAt(0)
+      .toUpperCase();
   }
 
  // ==========================
@@ -106,17 +237,26 @@ export class ActivityLogDetailsModalComponent {
       .length > 0;
   }
 
-  metadataEntries(): Array<{ key: string; value: unknown }> {
-  if (!this.log.metadata) return [];
+  metadataEntries():
+    Array<{
+      key: string;
+      value: unknown;
+    }> {
+    if (!this.log.metadata) {
+      return [];
+    }
 
-  return Object.entries(this.log.metadata)
-    .filter(([key]) => key !== 'description')
-    .map(([key, value]) => ({
-      key: key
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, c => c.toUpperCase()),
-      value,
-    }));
+    return Object
+      .entries(this.log.metadata)
+      .filter(
+        ([key]) =>
+          key !== 'description'
+      )
+      .map(([key, value]) => ({
+        key:
+          this.formatMetadataKey(key),
+        value,
+      }));
   }
 
   formatDescription(log: ActivityLog): string {
@@ -148,4 +288,82 @@ export class ActivityLogDetailsModalComponent {
   formatJSON(data: any): string {
     return JSON.stringify(data, null, 2);
   }
+
+  formatMetadataValue(
+    value: unknown
+  ): string {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return 'Not recorded';
+    }
+
+    if (value === true) {
+      return 'Yes';
+    }
+
+    if (value === false) {
+      return 'No';
+    }
+
+    if (
+      typeof value === 'object'
+    ) {
+      try {
+        return JSON.stringify(
+          value,
+          null,
+          2
+        );
+      } catch {
+        return 'Unable to display value';
+      }
+    }
+
+    return String(value)
+      .replace(
+        /\btrue\b/gi,
+        'Yes'
+      )
+      .replace(
+        /\bfalse\b/gi,
+        'No'
+      );
+  }
+
+  formatMetadataKey(
+    key: string
+  ): string {
+    return key
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/_/g, ' ')
+      .replace(
+        /\b\w/g,
+        character =>
+          character.toUpperCase()
+      );
+  }
+
+  isStructuredMetadata(
+    value: unknown
+  ): boolean {
+    return (
+      value !== null &&
+      typeof value === 'object'
+    );
+  }
+
+  @HostListener(
+    'document:keydown.escape',
+    ['$event']
+  )
+  onEscape(
+    event: Event
+  ): void {
+    event.preventDefault();
+    this.onClose();
+  }
+
 }

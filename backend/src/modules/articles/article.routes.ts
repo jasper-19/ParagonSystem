@@ -42,6 +42,12 @@ const createLimiter = rateLimit({
 // GET /api/articles
 router.get("/", publicCache(300), controller.getArticles);
 
+// GET /api/articles/admin
+router.get("/admin", authenticate, controller.getAdminArticles);
+
+// GET /api/articles/admin/:id
+router.get("/admin/:id", authenticate, controller.getAdminArticleDetail);
+
 // GET /api/articles/homepage-feed
 router.get("/homepage-feed", publicCache(300), controller.getHomepageFeed);
 

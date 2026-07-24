@@ -40,4 +40,6 @@ export interface ActivityLogFilters {
   action?: string;
   dateFrom?: string;
   search?: string;
+  page?: number;
+  limit?: number;
 }

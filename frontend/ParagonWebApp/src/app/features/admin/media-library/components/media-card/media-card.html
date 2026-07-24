@@ -1,21 +1,32 @@
-<button
-  type="button"
+<article
   (click)="onCardClick()"
-  class="group relative overflow-hidden rounded-(--border-radius-lg) text-left w-full transition-all duration-200 hover:-translate-y-0.5 bg-(--color-background-primary)"
+  class="group relative w-full overflow-hidden
+       rounded-(--border-radius-lg)
+       bg-(--color-background-primary)
+       text-left
+       transition-shadow duration-200
+       hover:shadow-md
+       motion-reduce:transition-none"
   [class.ring-2]="selected"
   [class.shadow-sm]="!selected"
   [ngClass]="selected ? 'shadow-[0_0_0_2px_#f4b400,0_4px_16px_rgba(0,0,53,0.1)]' : 'shadow-[0_1px_4px_rgba(0,0,53,0.07),0_0_0_1px_rgba(0,0,53,0.06)]'"
 >
 
   <!-- Preview -->
-  <div class="relative overflow-hidden bg-(--color-background-secondary) aspect-4/3">
+  <div class="relative overflow-hidden bg-(--color-background-secondary) aspect-square sm:aspect-4/3">
 
     <!-- Image preview -->
     <ng-container *ngIf="isImage; else filePreview">
       <img
         [src]="previewUrl"
         [alt]="media.altText || media.fileName"
-        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+        loading="lazy"
+        decoding="async"
+        class="h-full w-full object-cover
+              transition-transform duration-300
+              group-hover:scale-[1.02]
+              motion-reduce:transition-none"
+      />
     </ng-container>
 
     <!-- Non-image preview -->
@@ -35,25 +46,64 @@
     </ng-template>
 
     <!-- Hover overlay -->
-    <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-linear-to-t from-[rgba(0,0,53,0.45)] to-transparent"></div>
+    <div
+      class="pointer-events-none absolute inset-0
+            bg-linear-to-t
+            from-[rgba(0,0,53,0.38)]
+            to-transparent
+            opacity-0 transition-opacity duration-200
+            group-hover:opacity-100
+            group-focus-within:opacity-100
+            motion-reduce:transition-none"
+      [class.opacity-100]="selected"
+    ></div>
 
     <!-- Selected tint -->
     <div *ngIf="selected" class="absolute inset-0 pointer-events-none bg-[rgba(244,180,0,0.08)]"></div>
 
     <!-- Checkbox -->
-    <div class="absolute top-2.5 left-2.5">
+    <div class="absolute left-2 top-2 sm:left-2.5 sm:top-2.5">
       <button
         type="button"
-        class="flex h-5 w-5 cursor-pointer items-center justify-center rounded transition-all duration-150"
+        class="inline-flex h-10 w-10 items-center
+       justify-center rounded-xl
+       transition-colors
+       focus-visible:outline-none
+       focus-visible:ring-2
+       focus-visible:ring-[#F4B400]
+       focus-visible:ring-offset-2
+       focus-visible:ring-offset-white"
         [ngClass]="selected
           ? 'bg-[#f4b400] shadow-[0_1px_4px_rgba(0,0,53,0.2)]'
           : 'bg-white/90 shadow-[0_1px_3px_rgba(0,0,53,0.15)]'"
         (click)="onCheckBoxClick($event)"
-        aria-label="Select media"
+        [attr.aria-label]="
+          selected
+            ? 'Deselect ' + media.fileName
+            : 'Select ' + media.fileName
+        "
+        [attr.aria-pressed]="selected"
       >
-        <svg *ngIf="selected" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+        <span
+          class="flex h-5 w-5 items-center justify-center rounded"
+          [ngClass]="selected
+            ? 'bg-[#f4b400] shadow-[0_1px_4px_rgba(0,0,53,0.2)]'
+            : 'bg-white/90 shadow-[0_1px_3px_rgba(0,0,53,0.15)]'"
+        >
+          <svg
+            *ngIf="selected"
+            aria-hidden="true"
+            class="h-3 w-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#000035"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </span>
       </button>
     </div>
 
@@ -67,14 +117,40 @@
   </div>
 
   <!-- Info row -->
-  <div class="px-3 py-2.5 flex items-center justify-between gap-2 border-t border-[rgba(0,0,53,0.05)]">
+  <div
+    class="flex min-w-0 flex-col gap-1
+          border-t border-[rgba(0,0,53,0.05)]
+          px-3 py-3
+          min-[480px]:flex-row
+          min-[480px]:items-center
+          min-[480px]:justify-between
+          min-[480px]:gap-2"
+  >
     <div class="min-w-0 flex-1">
-      <p class="truncate text-xs font-medium text-(--color-text-primary) mb-0.5">{{ media.fileName }}</p>
-      <p class="text-[10px] text-(--color-text-tertiary) truncate font-(--font-mono)">{{ media.mimeType }}</p>
+    <p
+      class="line-clamp-2 break-all text-sm
+            font-semibold leading-5
+            text-(--color-text-primary)"
+      [title]="media.fileName"
+    >
+      {{ media.fileName }}
+    </p>
+    <p
+      class="mt-0.5 truncate text-[11px]
+            text-(--color-text-tertiary)
+            font-(--font-mono)"
+    >
+      {{ media.mimeType }}
+    </p>
     </div>
     <div class="shrink-0 text-right">
-      <p class="text-[11px] font-medium text-(--color-text-secondary)">{{ readableSize }}</p>
+      <p
+        class="text-xs font-medium
+              text-(--color-text-secondary)"
+      >
+        {{ readableSize }}
+      </p>
     </div>
   </div>
 
-</button>
+</article>
