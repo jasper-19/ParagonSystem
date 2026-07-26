@@ -1,12 +1,6 @@
-/*
-  AdminAuthService
-  - Purpose: client-side thin wrapper around admin authentication endpoints.
-  - Rules: Formatting and comments only; do NOT change logic or behavior.
-*/
-
 import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
-import { Observable, map, tap } from "rxjs";
+import { Observable, map, tap, catchError, shareReplay, throwError } from "rxjs";
 import { StaffMember } from "../../models/staff-member.model";
 
 // Note: API endpoints are hardcoded here for clarity and to avoid circular imports with api.config.ts
@@ -41,10 +35,23 @@ export interface ActiveSession {
   current: boolean;
 }
 
+export interface AdminMeResponse {
+  user: {
+    id?: string;
+    username?: string;
+    role?: string;
+    twoFaEnabled?: boolean;
+    [key: string]: unknown;
+  } | null;
+
+  staff: StaffMember | null;
+}
+
 @Injectable({ providedIn: "root" })
 export class AdminAuthService {
-  // Key used to persist token in localStorage
-  private readonly tokenKey = 'authToken';
+  constructor() {
+    localStorage.removeItem("authToken");
+  }
 
   // Base API endpoint for auth-related requests
   private readonly  api = API_ENDPOINTS.auth;
@@ -52,45 +59,102 @@ export class AdminAuthService {
   // Inject HttpClient using function-style injection to keep constructor-less service
   private http = inject(HttpClient);
 
+  // Optional cached observable for the current user/staff info; used to avoid duplicate requests
+  private meRequest$: Observable<AdminMeResponse> | null = null;
+
+  // Helper to map the backend response to the AdminMeResponse shape
+  private mapMeResponse( response: any ): AdminMeResponse {
+    const staff = response?.staff ? ({...response.staff,
+            createdAt: response.staff.createdAt
+                ? new Date(
+                    response.staff.createdAt
+                  )
+                : undefined,
+          } as StaffMember)
+        : null;
+
+    return { user: response?.user ?? null, staff,};
+  }
+
   // ===== Authentication actions =====
-  login(username: string, password: string): Observable<void> {
-    // POST credentials and store returned token in localStorage
+  login(
+    username: string,
+    password: string
+  ): Observable<void> {
     return this.http
-      .post<{ token: string }>(`${this.api}/login`, { username, password })
+      .post<{ ok: boolean }>(
+        `${this.api}/login`,
+        {
+          username,
+          password,
+        }
+      )
       .pipe(
-        tap(res => localStorage.setItem(this.tokenKey, res.token))
-      ) as unknown as Observable<void>;
+        tap(() => {
+          this.meRequest$ = null;
+        }),
+
+        map(() => undefined)
+      );
   }
 
-  logout(): void {
-    // Remove persisted token to end the local session
-    localStorage.removeItem(this.tokenKey);
-  }
-
-  // ===== Helpers & checks =====
-  getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
-  }
-
-  isAdminSession(): boolean {
-    // Simple presence check for token
-    return !!this.getToken();
+  logout(): Observable<void> {
+    return this.http
+      .post<void>(`${this.api}/logout`, {})
+      .pipe(
+        tap(() => {
+          this.meRequest$ = null;
+        })
+      );
   }
 
   // ===== User / staff info =====
-  me(): Observable<{ user: any; staff: StaffMember | null }> {
-    // Fetch current user; convert staff.createdAt to Date when present
-    return this.http.get<any>(`${this.api}/me`).pipe(
-      map((res) => {
-        const staff = res?.staff
-          ? ({
-              ...res.staff,
-              createdAt: res.staff.createdAt ? new Date(res.staff.createdAt) : undefined,
-            } as StaffMember)
-          : null;
-        return { user: res?.user, staff };
-      })
-    );
+me(
+  forceRefresh = false
+): Observable<AdminMeResponse> {
+  if (
+    forceRefresh ||
+    !this.meRequest$
+  ) {
+    this.meRequest$ =
+      this.http
+        .get<any>(
+          `${this.api}/me`
+        )
+        .pipe(
+          map(response =>
+            this.mapMeResponse(
+              response
+            )
+          ),
+
+          catchError(error => {
+            this.meRequest$ = null;
+
+            return throwError(
+              () => error
+            );
+          }),
+
+          shareReplay({
+            bufferSize: 1,
+            refCount: false,
+          })
+        );
+  }
+
+  return this.meRequest$;
+}
+
+  // Convenience method to force a refresh of the current user/staff info
+  refreshMe():
+    Observable<AdminMeResponse> {
+    return this.me(true);
+  }
+
+  //  Invalidate the cached me() observable so that the next call will fetch fresh data from the backend
+  invalidateMeCache(): void {
+    this.meRequest$ = null;
   }
 
   // ===== Account management =====

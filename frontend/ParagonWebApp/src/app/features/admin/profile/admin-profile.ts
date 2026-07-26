@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewChild, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ProfileOverview } from './components/profile-overview/profile-overview';
 import { CommonModule } from '@angular/common';
 import { PersonalInformation } from './components/personal-information/personal-information';
@@ -19,15 +19,23 @@ import { ProfileSecuritySettings } from './components/security-settings/profile-
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminProfile {
-  @ViewChild(PersonalInformation) personalInformation?: PersonalInformation;
-
-  private auth = inject(AdminAuthService);
-  private me = toSignal(this.auth.me(), { initialValue: null as any });
+  private readonly auth = inject(AdminAuthService);
+  private readonly me = toSignal(this.auth.me(),{initialValue: null,});
 
   readonly staffMember = computed(() => this.me()?.staff ?? null);
+  readonly adminUser = computed(() => this.me()?.user ?? null);
 
-  openPersonalInfoModal() {
-    this.personalInformation?.openModal();
+  refreshProfile(): void {
+    this.auth
+      .refreshMe()
+      .subscribe({
+        error: error => {
+          console.error(
+            'Unable to refresh profile:',
+            error
+          );
+        },
+      });
   }
 
 }

@@ -4,6 +4,58 @@ import { MEDIA_TYPE_VALUES, MediaType } from "./media.schema";
 import { storageService } from "../../storage/storage.factory";
 import sharp from "sharp";
 
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "video/mp4",
+  "video/webm",
+  "audio/mpeg",
+  "audio/ogg",
+  "audio/wav",
+  "audio/x-wav",
+]);
+
+const CANONICAL_EXTENSIONS: Record<string, string> = {
+  "application/pdf": "pdf",
+  "audio/mpeg": "mp3",
+  "audio/ogg": "ogg",
+  "audio/wav": "wav",
+  "audio/x-wav": "wav",
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+};
+
+function hasExpectedFileSignature(buffer: Buffer, mimeType: string): boolean {
+  switch (mimeType) {
+    case "application/pdf":
+      return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
+    case "video/mp4":
+      return buffer.length >= 12 && buffer.subarray(4, 8).toString("ascii") === "ftyp";
+    case "video/webm":
+      return buffer.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
+    case "audio/ogg":
+      return buffer.subarray(0, 4).toString("ascii") === "OggS";
+    case "audio/wav":
+    case "audio/x-wav":
+      return (
+        buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+        buffer.subarray(8, 12).toString("ascii") === "WAVE"
+      );
+    case "audio/mpeg":
+      return (
+        buffer.subarray(0, 3).toString("ascii") === "ID3" ||
+        (buffer.length >= 2 &&
+          buffer[0]! === 0xff &&
+          (buffer[1]! & 0xe0) === 0xe0)
+      );
+    default:
+      return true;
+  }
+}
+
 export type GetMediaFilters = {
   search?: string;
   type?: string;
@@ -48,7 +100,9 @@ export type UploadInput = {
 };
 
 async function createImageVariants(file: UploadInput) {
-  const base = sharp(file.buffer).rotate();
+  const base = sharp(file.buffer, {
+    limitInputPixels: 40_000_000,
+  }).rotate();
 
   const [thumbnail, medium, large] = await Promise.all([
     base.clone().resize({ width: 400, withoutEnlargement: true }).webp({ quality: 78, effort: 4 }).toBuffer(),
@@ -73,14 +127,32 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
     throw Object.assign(new Error("Uploaded file is empty"), { statusCode: 400 });
   }
 
-  const fileType = detectMediaType(file.mimetype);
+  const mimeType = String(file.mimetype || "").toLowerCase();
+  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+    throw Object.assign(new Error("Unsupported media type"), { statusCode: 415 });
+  }
+
+  const fileType = detectMediaType(mimeType);
   const isImage = fileType === "image";
+
+  if (!isImage && !hasExpectedFileSignature(file.buffer, mimeType)) {
+    throw Object.assign(new Error("File content does not match its media type"), {
+      statusCode: 400,
+    });
+  }
 
   const uploadId = randomUUID();
   const baseName = safeFilename(file.originalname.replace(/\.[^/.]+$/, "")) || uploadId;
 
   if (isImage) {
-    const variants = await createImageVariants(file);
+    let variants;
+    try {
+      variants = await createImageVariants(file);
+    } catch {
+      throw Object.assign(new Error("Invalid or corrupted image"), {
+        statusCode: 400,
+      });
+    }
 
     const paths = {
       thumbnail: `media/${uploadId}/thumbnail.webp`,
@@ -116,11 +188,15 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
     });
   }
 
-  const safeOriginalName = safeFilename(file.originalname) || `${uploadId}.bin`;
-  const objectKey = `media/${uploadId}/${safeOriginalName}`;
+  const extension = CANONICAL_EXTENSIONS[mimeType];
+  if (!extension) {
+    throw Object.assign(new Error("Unsupported media type"), { statusCode: 415 });
+  }
+
+  const objectKey = `media/${uploadId}/${uploadId}.${extension}`;
 
   await storageService.upload(objectKey, file.buffer, {
-    contentType: file.mimetype || "application/octet-stream",
+    contentType: mimeType,
     upsert: false,
   });
 
@@ -129,8 +205,8 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
     diskName: objectKey,
     storagePath: objectKey,
     fileType,
-    mimeType: file.mimetype || "application/octet-stream",
-    size: file.size || file.buffer.length,
+    mimeType,
+    size: file.buffer.length,
   });
 }
 

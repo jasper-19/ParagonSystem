@@ -1,7 +1,9 @@
 import { Router } from "express";
 import * as controller from "./special-issue.controller";
-import { validate } from "../../middlewares/validate";
+import { validate, validateParams } from "../../middlewares/validate";
 import { authenticate } from "../../middlewares/authenticate";
+import { requireAdmin } from "../../middlewares/requireAdmin";
+import { idParamSchema } from "../../schemas/common.schema";
 import {
   createIssueSchema,
   updateIssueSchema,
@@ -20,17 +22,24 @@ router.get("/:slug", controller.getIssueBySlug);
 
 /** ADMIN */
 
-router.post("/", authenticate, validate(createIssueSchema), controller.createIssue);
+router.use(authenticate, requireAdmin);
 
-router.patch("/:id", authenticate, validate(updateIssueSchema), controller.updateIssue);
+router.post("/", validate(createIssueSchema), controller.createIssue);
+
+router.patch(
+  "/:id",
+  validateParams(idParamSchema),
+  validate(updateIssueSchema),
+  controller.updateIssue
+);
 
 router.patch(
   "/:id/status",
-  authenticate,
+  validateParams(idParamSchema),
   validate(updateIssueStatusSchema),
   controller.updateIssueStatus
 );
 
-router.delete("/:id", authenticate, controller.deleteIssue);
+router.delete("/:id", validateParams(idParamSchema), controller.deleteIssue);
 
 export default router;

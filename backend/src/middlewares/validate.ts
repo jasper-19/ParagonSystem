@@ -28,3 +28,23 @@ export function validate(schema: z.ZodTypeAny) {
     next();
   };
 }
+
+export function validateParams(schema: z.ZodTypeAny) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const result = schema.safeParse(req.params);
+
+    if (!result.success) {
+      res.status(400).json({
+        error: "Invalid route parameters",
+        details: result.error.issues.map(issue => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+      return;
+    }
+
+    req.params = result.data as Record<string, string>;
+    next();
+  };
+}

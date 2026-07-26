@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sanitizeArticleHtml } from "../../security/sanitize-html";
 
 /** Allowed article statuses */
 export const ARTICLE_STATUS_VALUES = [
@@ -24,7 +25,29 @@ export const ARTICLE_CATEGORY_VALUES = [
 export type ArticleCategory =
   (typeof ARTICLE_CATEGORY_VALUES)[number];
 
-const MAX_DATA_URL_CHARS = 130_000_000;
+const MAX_DATA_URL_CHARS = 28_000_000;
+const MAX_ARTICLE_CONTENT_CHARS = 1_000_000;
+
+const articleImageSchema = z
+  .string()
+  .max(MAX_DATA_URL_CHARS)
+  .refine(value => {
+    if (value === "") {
+      return true;
+    }
+
+    try {
+      if (new URL(value).protocol === "https:") {
+        return true;
+      }
+    } catch {
+      // Continue with data URL validation.
+    }
+
+    return /^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=\r\n]+$/i.test(
+      value
+    );
+  }, "Image must be an HTTPS URL or supported image data URL");
 
 /**
  * Stable staff references used for validating article credits
@@ -59,13 +82,11 @@ export const createArticleSchema = z.object({
 
   content: z
     .string()
-    .min(1, "Content is required"),
+    .min(1, "Content is required")
+    .max(MAX_ARTICLE_CONTENT_CHARS)
+    .transform(sanitizeArticleHtml),
 
-  image: z
-    .string()
-    .max(MAX_DATA_URL_CHARS)
-    .optional()
-    .or(z.literal("")),
+  image: articleImageSchema.optional(),
 
   /**
    * Existing display-name fields.
@@ -156,13 +177,11 @@ export const updateArticleSchema = z.object({
   content: z
     .string()
     .min(1)
+    .max(MAX_ARTICLE_CONTENT_CHARS)
+    .transform(sanitizeArticleHtml)
     .optional(),
 
-  image: z
-    .string()
-    .max(MAX_DATA_URL_CHARS)
-    .optional()
-    .or(z.literal("")),
+  image: articleImageSchema.optional(),
 
   author: z
     .string()

@@ -1,3 +1,19 @@
+export interface AuthStaffProfile {
+  id: string;
+  applicationId?: string;
+  fullName: string;
+  email: string;
+  studentId?: string;
+  yearLevel?: string;
+  collegeId?: string;
+  programId?: string;
+  positionId?: string;
+  subRole?: string;
+  assignedSection?: string;
+  assignedRole?: string;
+  createdAt?: Date;
+}
+
 export type UserRole = "admin" | "staff";
 
 export interface User {
@@ -13,3 +29,8 @@ export interface User {
 }
 
 export type PublicUser = Omit<User, "passwordHash">;
+
+export interface UserWithStaff {
+  user: User;
+  staff: AuthStaffProfile | null;
+}

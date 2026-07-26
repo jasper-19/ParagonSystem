@@ -1,14 +1,16 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import * as controller from "./article.controller";
-import { validate } from "../../middlewares/validate";
+import { validate, validateParams } from "../../middlewares/validate";
 import { authenticate } from "../../middlewares/authenticate";
+import { requireAdmin } from "../../middlewares/requireAdmin";
 import {
   createArticleSchema,
   updateArticleSchema,
   publishArticleSchema,
 } from "./article.schema";
 import { publicCache } from "../../middlewares/cache";
+import { idParamSchema } from "../../schemas/common.schema";
 
 const router = Router();
 
@@ -43,10 +45,16 @@ const createLimiter = rateLimit({
 router.get("/", publicCache(300), controller.getArticles);
 
 // GET /api/articles/admin
-router.get("/admin", authenticate, controller.getAdminArticles);
+router.get("/admin", authenticate, requireAdmin, controller.getAdminArticles);
 
 // GET /api/articles/admin/:id
-router.get("/admin/:id", authenticate, controller.getAdminArticleDetail);
+router.get(
+  "/admin/:id",
+  authenticate,
+  requireAdmin,
+  validateParams(idParamSchema),
+  controller.getAdminArticleDetail
+);
 
 // GET /api/articles/homepage-feed
 router.get("/homepage-feed", publicCache(300), controller.getHomepageFeed);
@@ -85,6 +93,7 @@ router.patch("/:slug/views", viewLimiter, controller.incrementArticleViews);
 router.post(
   "/",
   authenticate,
+  requireAdmin,
   createLimiter,
   validate(createArticleSchema),
   controller.createArticle
@@ -94,6 +103,8 @@ router.post(
 router.patch(
   "/:id",
   authenticate,
+  requireAdmin,
+  validateParams(idParamSchema),
   validate(updateArticleSchema),
   controller.updateArticle
 );
@@ -102,6 +113,8 @@ router.patch(
 router.patch(
   "/:id/publish",
   authenticate,
+  requireAdmin,
+  validateParams(idParamSchema),
   validate(publishArticleSchema),
   controller.publishArticle
 );
@@ -110,6 +123,8 @@ router.patch(
 router.patch(
   "/:id/archive",
   authenticate,
+  requireAdmin,
+  validateParams(idParamSchema),
   controller.archiveArticle
 );
 
@@ -117,6 +132,8 @@ router.patch(
 router.delete(
   "/:id",
   authenticate,
+  requireAdmin,
+  validateParams(idParamSchema),
   controller.deleteArticle
 );
 

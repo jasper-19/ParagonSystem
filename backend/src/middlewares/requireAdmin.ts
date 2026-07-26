@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from "express";
  * Assumes `authenticate` middleware already ran and set req.user.
  */
 export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
-  const user = (req as any).user as any;
+  const user = req.user;
   if (!user || user.role !== "admin") {
     res.status(403).json({ error: "Admin access required" });
     return;
@@ -13,4 +13,3 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
 
   next();
 }
-

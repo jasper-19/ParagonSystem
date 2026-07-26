@@ -4,9 +4,9 @@
 @import 'quill/dist/quill.snow.css';
 
 :root {
-  --font-sans: "Inter", "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  --font-serif: "Merriweather", Georgia, "Times New Roman", serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+  --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 html,

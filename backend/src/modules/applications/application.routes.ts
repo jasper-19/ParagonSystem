@@ -1,8 +1,10 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import * as controller from "./application.controller";
-import { validate } from "../../middlewares/validate";
+import { validate, validateParams } from "../../middlewares/validate";
 import { authenticate } from "../../middlewares/authenticate";
+import { requireAdmin } from "../../middlewares/requireAdmin";
+import { idParamSchema } from "../../schemas/common.schema";
 import {
   createApplicationSchema,
   updateStatusSchema,
@@ -31,26 +33,57 @@ router.get("/settings", controller.getApplicationSettings);
 router.post("/", submitLimiter, validate(createApplicationSchema), controller.createApplication);
 
 // All routes below are admin-only
-router.patch("/settings", authenticate, validate(updateApplicationSettingsSchema), controller.updateApplicationSettings);
+router.use(authenticate, requireAdmin);
 
-router.get("/", authenticate, controller.getApplications);
+router.patch("/settings", validate(updateApplicationSettingsSchema), controller.updateApplicationSettings);
 
-router.get("/:id", authenticate, controller.getApplicationById);
+router.get("/", controller.getApplications);
 
-router.patch("/:id/status", authenticate, validate(updateStatusSchema), controller.updateStatus);
+router.get("/:id", validateParams(idParamSchema), controller.getApplicationById);
 
-router.patch("/:id/interview", authenticate, validate(scheduleInterviewSchema), controller.scheduleInterview);
+router.patch(
+  "/:id/status",
+  validateParams(idParamSchema),
+  validate(updateStatusSchema),
+  controller.updateStatus
+);
 
-router.patch("/:id/interview-complete", authenticate, controller.markInterviewed);
+router.patch(
+  "/:id/interview",
+  validateParams(idParamSchema),
+  validate(scheduleInterviewSchema),
+  controller.scheduleInterview
+);
 
-router.patch("/:id/interview-notes", authenticate, validate(interviewNotesSchema), controller.addInterviewNotes);
+router.patch(
+  "/:id/interview-complete",
+  validateParams(idParamSchema),
+  controller.markInterviewed
+);
 
-router.patch("/:id/accept", authenticate, validate(acceptApplicationSchema), controller.acceptApplication);
+router.patch(
+  "/:id/interview-notes",
+  validateParams(idParamSchema),
+  validate(interviewNotesSchema),
+  controller.addInterviewNotes
+);
 
-router.patch("/:id/reject", authenticate, controller.rejectApplication);
+router.patch(
+  "/:id/accept",
+  validateParams(idParamSchema),
+  validate(acceptApplicationSchema),
+  controller.acceptApplication
+);
 
-router.patch("/:id/assign", authenticate, validate(assignApplicationSchema), controller.assignApplication);
+router.patch("/:id/reject", validateParams(idParamSchema), controller.rejectApplication);
 
-router.delete("/:id", authenticate, controller.deleteApplication);
+router.patch(
+  "/:id/assign",
+  validateParams(idParamSchema),
+  validate(assignApplicationSchema),
+  controller.assignApplication
+);
+
+router.delete("/:id", validateParams(idParamSchema), controller.deleteApplication);
 
 export default router;

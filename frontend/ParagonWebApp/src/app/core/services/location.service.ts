@@ -48,7 +48,10 @@ export class LocationService {
           return;
         }
 
-        const coords = { latitude, longitude };
+        const coords = {
+          latitude: Math.round(latitude * 100) / 100,
+          longitude: Math.round(longitude * 100) / 100,
+        };
         this.coords.set(coords);
 
         const url =
@@ -104,13 +107,13 @@ export class LocationService {
   }
 
   clearLocation(): void {
-    localStorage.removeItem(this.CACHE_KEY);
+    sessionStorage.removeItem(this.CACHE_KEY);
     this.city.set(null);
     this.coords.set(null);
   }
 
   private loadCachedLocation(): boolean {
-    const raw = localStorage.getItem(this.CACHE_KEY);
+    const raw = sessionStorage.getItem(this.CACHE_KEY);
     if (!raw) return false;
 
     try {
@@ -124,7 +127,7 @@ export class LocationService {
 
       return true;
     } catch {
-      localStorage.removeItem(this.CACHE_KEY);
+      sessionStorage.removeItem(this.CACHE_KEY);
       return false;
     }
   }
@@ -136,6 +139,6 @@ export class LocationService {
       savedAt: Date.now(),
     };
 
-    localStorage.setItem(this.CACHE_KEY, JSON.stringify(data));
+    sessionStorage.setItem(this.CACHE_KEY, JSON.stringify(data));
   }
 }

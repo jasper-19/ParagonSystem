@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as service from "./user.service";
+import * as sessionRepository from "../auth/session.repository";
 import { auditLog } from "../activity-logs/activity-log.audit";
 
 /** GET /api/users (admin) */
@@ -40,6 +41,10 @@ export const patchUser = asyncHandler(async (req: Request, res: Response) => {
   if (!updated) {
     res.status(404).json({ error: "User not found" });
     return;
+  }
+
+  if (password !== undefined || role !== undefined) {
+    await sessionRepository.revokeAllOtherSessions(id);
   }
   auditLog(req, "UPDATE", "USERS", `Updated user: ${updated.username}`, {
     resourceId: updated.id,

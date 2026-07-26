@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import * as service from "./notification.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { auditLog } from "../activity-logs/activity-log.audit";
@@ -18,29 +17,14 @@ export const markAllRead = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/notifications/stream?token=<jwt>
- * Server-Sent Events endpoint. EventSource cannot send headers, so the JWT
- * is accepted as a query parameter and verified here.
+ * GET /api/notifications/stream
+ * Server-Sent Events endpoint authenticated by the HttpOnly session cookie.
  */
 export function streamNotifications(req: Request, res: Response): void {
-  const token = req.query["token"] as string | undefined;
-  const secret = process.env["JWT_SECRET"];
-
-  if (!token || !secret) {
-    res.status(401).end();
-    return;
-  }
-
-  try {
-    jwt.verify(token, secret);
-  } catch {
-    res.status(401).end();
-    return;
-  }
-
   res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Connection", "keep-alive");
+  res.setHeader("Referrer-Policy", "no-referrer");
   res.setHeader("X-Accel-Buffering", "no"); // disable Nginx buffering if proxied
   res.flushHeaders();
 

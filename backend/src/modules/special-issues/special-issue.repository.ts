@@ -1,5 +1,24 @@
 import db from "../../config/db";
 
+function safeStoredMediaUrl(value: unknown, type: "image" | "pdf"): string {
+  const candidate = String(value ?? "");
+
+  try {
+    if (new URL(candidate).protocol === "https:") {
+      return candidate;
+    }
+  } catch {
+    // Continue with data URL validation.
+  }
+
+  const dataUrlPattern =
+    type === "image"
+      ? /^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=\r\n]+$/i
+      : /^data:application\/pdf;base64,[a-z0-9+/=\r\n]+$/i;
+
+  return dataUrlPattern.test(candidate) ? candidate : "";
+}
+
 /** Map DB row -> API response object */
 function mapRow(row: any) {
   return {
@@ -9,8 +28,8 @@ function mapRow(row: any) {
     type: row.type,
     academicYear: row.academic_year,
     description: row.description ?? undefined,
-    coverImage: row.cover_image,
-    pdfUrl: row.pdf_url,
+    coverImage: safeStoredMediaUrl(row.cover_image, "image"),
+    pdfUrl: safeStoredMediaUrl(row.pdf_url, "pdf"),
     status: row.status,
     publishedAt: row.published_at ?? undefined,
     createdAt: row.created_at,

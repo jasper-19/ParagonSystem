@@ -162,7 +162,13 @@ export class AdminLayout implements OnInit, OnDestroy {
 
     if (!ok) return;
 
-    this.auth.logout();
-    this.router.navigateByUrl('/admin/login');
+    this.auth.logout().subscribe({
+      next: () => {
+        this.router.navigateByUrl('/admin/login');
+      },
+      error: () => {
+        this.router.navigateByUrl('/admin/login');
+      },
+    });
   }
 }

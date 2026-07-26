@@ -4,9 +4,26 @@ import { StorageService, UploadFileOptions } from "./storage.interface";
 
 const uploadsRoot = path.join(process.cwd(), "uploads");
 
+function resolveUploadPath(objectKey: string): string {
+  const normalizedRoot = path.resolve(uploadsRoot);
+  const resolvedPath = path.resolve(normalizedRoot, objectKey);
+  const relativePath = path.relative(normalizedRoot, resolvedPath);
+
+  if (
+    relativePath.startsWith("..") ||
+    path.isAbsolute(relativePath)
+  ) {
+    throw Object.assign(new Error("Invalid storage path"), {
+      statusCode: 400,
+    });
+  }
+
+  return resolvedPath;
+}
+
 export class LocalStorageService implements StorageService {
   async upload(objectKey: string, buffer: Buffer, _options: UploadFileOptions): Promise<void> {
-    const filePath = path.join(uploadsRoot, objectKey);
+    const filePath = resolveUploadPath(objectKey);
 
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, buffer);
@@ -16,7 +33,7 @@ export class LocalStorageService implements StorageService {
     await Promise.all(
       paths.map(async (objectKey) => {
         try {
-          await fs.unlink(path.join(uploadsRoot, objectKey));
+          await fs.unlink(resolveUploadPath(objectKey));
         } catch {
           // Ignore missing local files
         }

@@ -46,7 +46,7 @@ node_modules/
 
 # Angular build
 dist/
-.angular/backend/src/config/seed.sql
+**/.angular/
 .env
 
 # Local uploads(development only)

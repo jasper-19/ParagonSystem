@@ -1,6 +1,5 @@
-import { Component, Input, Output } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EventEmitter } from '@angular/core';
 import { StaffMember } from '../../../../../models/staff-member.model';
 @Component({
   selector: 'app-profile-overview',
@@ -29,5 +28,4 @@ export class ProfileOverview {
     reader.readAsDataURL(file);
   }
 
-  @Output() openEdit = new EventEmitter<void>();
 }

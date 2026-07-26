@@ -17,7 +17,19 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
-  const statusCode = err.statusCode ?? err.status ?? 500;
+  const isMulterError = err.name === "MulterError";
+  const multerCode = (err as AppError & { code?: string }).code;
+  const requestedStatusCode = isMulterError
+    ? multerCode === "LIMIT_FILE_SIZE"
+      ? 413
+      : 400
+    : err.statusCode ?? err.status ?? 500;
+  const statusCode =
+    Number.isInteger(requestedStatusCode) &&
+    requestedStatusCode >= 400 &&
+    requestedStatusCode <= 599
+      ? requestedStatusCode
+      : 500;
 
   // Log full error details server-side only
   console.error(
@@ -30,12 +42,17 @@ export function errorHandler(
 
   // Send a sanitized response — stack traces never reach the client
   const response: Record<string, unknown> = {
-    error: statusCode === 500
-      ? "Internal server error"
-      : err.message,
+    error:
+      statusCode >= 500
+        ? "Internal server error"
+        : isMulterError
+          ? multerCode === "LIMIT_FILE_SIZE"
+            ? "Uploaded file is too large"
+            : "Invalid file upload"
+          : err.message,
   };
 
-  if (err.usage) {
+  if (err.usage && statusCode < 500) {
     response["usage"] = err.usage;
   }
 

@@ -14,7 +14,7 @@ import {
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import { SpecialIssue } from "../../../models/special-issue.model";
 import { SpecialIssueService } from "../../../core/services/special-issue.service";
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { finalize } from "rxjs/operators";
 
 @Component({
@@ -109,10 +109,14 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
             if (!this.issue?.pdfUrl) return;
 
             // Set PDF.js worker
-            (pdfjsLib as any).GlobalWorkerOptions.workerSrc = '/assets/pdf.worker.min.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/pdfjs/pdf.worker.min.mjs';
 
             // Load PDF document
-            const loadingTask = pdfjsLib.getDocument(this.issue.pdfUrl);
+            const loadingTask = pdfjsLib.getDocument({
+              url: this.issue.pdfUrl,
+              maxImageSize: 40_000_000,
+              stopAtErrors: true,
+            });
             this.pdfDoc = await loadingTask.promise;
 
             this.totalPages = this.pdfDoc.numPages;
@@ -333,7 +337,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas context not available');
 
-    const task = page.render({ canvasContext: ctx as any, viewport });
+    const task = page.render({ canvas, canvasContext: ctx, viewport });
     await task.promise;
 
     const blob: Blob = await new Promise((resolve, reject) => {

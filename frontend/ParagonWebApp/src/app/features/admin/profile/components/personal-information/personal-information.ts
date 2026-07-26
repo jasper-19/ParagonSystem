@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EditPersonalInfoModal } from './edit-personal-info-modal/edit-personal-info-modal';
+import { RouterModule } from '@angular/router';
 import { StaffMember } from '../../../../../models/staff-member.model';
 import { CollegeService } from '../../../../join/services/college.service';
 import { College } from '../../../../join/models/college.model';
@@ -8,12 +8,10 @@ import { College } from '../../../../join/models/college.model';
 @Component({
   selector: 'app-personal-information',
   standalone: true,
-  imports: [CommonModule, EditPersonalInfoModal],
+  imports: [CommonModule, RouterModule],
   templateUrl: './personal-information.html'
 })
-export class PersonalInformation implements OnChanges {
-
-  isModalOpen = false;
+export class PersonalInformation implements OnChanges, OnInit {
 
   @Input() staff: StaffMember | null = null;
 
@@ -38,20 +36,6 @@ export class PersonalInformation implements OnChanges {
 
   ngOnChanges(): void {
     this.staffData = this.staff ? { ...this.staff } : null;
-    this.updateDerivedNames();
-  }
-
-  openModal(): void {
-    this.isModalOpen = true;
-  }
-
-  closeModal(): void {
-    this.isModalOpen = false;
-  }
-
-  updateStaff(updatedStaff: StaffMember): void {
-    this.staffData = updatedStaff;
-    this.closeModal();
     this.updateDerivedNames();
   }
 

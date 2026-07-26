@@ -1,4 +1,4 @@
-import { getIO } from "./socket";
+import { ADMIN_SOCKET_ROOM, getIO } from "./socket";
 
 export const SocketEvents = {
   ARTICLES_UPDATED: "articles:updated",
@@ -38,13 +38,17 @@ export function emitArticlesUpdated(
 export function emitApplicationsUpdated() {
     console.log("Broadcasting applications: updated")
     
-  getIO().emit(SocketEvents.APPLICATIONS_UPDATED);
+  getIO()
+    .to(ADMIN_SOCKET_ROOM)
+    .emit(SocketEvents.APPLICATIONS_UPDATED);
 }
 
 export function emitMediaUpdated() {
     console.log("Broadcasting media: updated")
 
-  getIO().emit(SocketEvents.MEDIA_UPDATED);
+  getIO()
+    .to(ADMIN_SOCKET_ROOM)
+    .emit(SocketEvents.MEDIA_UPDATED);
 }
 
 export function emitApplicationSettingsUpdated(): void {
@@ -71,7 +75,9 @@ export function emitEditorialBoardUpdated(): void {
       payload
     );
 
-    getIO().emit(
+    getIO()
+      .to(ADMIN_SOCKET_ROOM)
+      .emit(
       SocketEvents.ACTIVITY_LOGS_UPDATED,
       payload
     );

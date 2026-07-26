@@ -5,7 +5,7 @@ export type IssueStatus = (typeof ISSUE_STATUS_VALUES)[number];
 
 // Supports base64 data URLs (short-term approach). The overall request body is capped in app.ts.
 // Base64 increases payload size by ~33%, so this needs to be comfortably above expected file sizes.
-const MAX_DATA_URL_CHARS = 130_000_000;
+const MAX_DATA_URL_CHARS = 28_000_000;
 
 const ACADEMIC_YEAR_REGEX = /^(\d{4})-(\d{4})$/;
 
@@ -26,6 +26,36 @@ const dateLikeStringSchema = z
   .min(1, "Date is required")
   .refine((value) => !Number.isNaN(Date.parse(value)), "Invalid date");
 
+function isHttpsUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+const coverImageSchema = z
+  .string()
+  .min(1, "Cover image is required")
+  .max(MAX_DATA_URL_CHARS)
+  .refine(
+    value =>
+      isHttpsUrl(value) ||
+      /^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=\r\n]+$/i.test(value),
+    "Cover image must be an HTTPS URL or supported image data URL"
+  );
+
+const pdfUrlSchema = z
+  .string()
+  .min(1, "PDF URL is required")
+  .max(MAX_DATA_URL_CHARS)
+  .refine(
+    value =>
+      isHttpsUrl(value) ||
+      /^data:application\/pdf;base64,[a-z0-9+/=\r\n]+$/i.test(value),
+    "PDF must be an HTTPS URL or PDF data URL"
+  );
+
 /** Schema for POST /api/issues */
 export const createIssueSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -42,12 +72,9 @@ export const createIssueSchema = z.object({
 
   description: z.string().max(5000).optional().or(z.literal("")),
 
-  coverImage: z
-    .string()
-    .min(1, "Cover image is required")
-    .max(MAX_DATA_URL_CHARS),
+  coverImage: coverImageSchema,
 
-  pdfUrl: z.string().min(1, "PDF URL is required").max(MAX_DATA_URL_CHARS),
+  pdfUrl: pdfUrlSchema,
 
   publishedAt: dateLikeStringSchema.optional().or(z.literal("")),
 
@@ -74,9 +101,9 @@ export const updateIssueSchema = z
 
     description: z.string().max(5000).optional().or(z.literal("")),
 
-    coverImage: z.string().min(1).max(MAX_DATA_URL_CHARS).optional(),
+    coverImage: coverImageSchema.optional(),
 
-    pdfUrl: z.string().min(1).max(MAX_DATA_URL_CHARS).optional(),
+    pdfUrl: pdfUrlSchema.optional(),
 
     publishedAt: dateLikeStringSchema.optional().or(z.literal("")),
 

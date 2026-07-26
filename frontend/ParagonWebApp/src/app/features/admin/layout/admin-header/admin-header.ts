@@ -41,14 +41,14 @@ export class AdminHeaderComponent implements OnInit, OnDestroy, AfterViewChecked
   private notificationPanel?: ElementRef<HTMLElement>;
 
   private notificationService = inject(NotificationService);
-  private auth = inject(AdminAuthService);
+  private readonly auth = inject(AdminAuthService);
 
   readonly now = signal(new Date());
   private minuteAlignmentTimer?: ReturnType<typeof setTimeout>;
   private minuteTimer?: ReturnType<typeof setInterval>;
   private hasFocusedDropdown = false;
 
-  private readonly me = toSignal(this.auth.me(), { initialValue: null as any });
+  private readonly me = toSignal(this.auth.me(), { initialValue: null, });
 
   readonly adminName = computed(() => String(this.me()?.user?.username ?? 'Admin'));
   readonly adminRole = computed(() => {

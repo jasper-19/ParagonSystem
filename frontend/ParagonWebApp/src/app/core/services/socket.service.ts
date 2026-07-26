@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 
 import { SOCKET_EVENTS } from '../constants/socket-events';
+import { environment } from '../../../environments/environment';
 
 export interface ArticlesUpdatedPayload {
   articleId?: string;
@@ -31,8 +32,10 @@ export class SocketService {
       return;
     }
 
+    const socketUrl = environment.apiUrl.replace(/\/api\/?$/, '');
+
     this.socket = io(
-      'http://localhost:3000',
+      socketUrl,
       {
         transports: ['websocket'],
         withCredentials: true,

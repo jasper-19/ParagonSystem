@@ -64,3 +64,25 @@ export const assignApplicationToBoardSchema = z.object({
 
 export type AssignApplicationToBoardInput =
   z.infer<typeof assignApplicationToBoardSchema>;
+
+const assignmentSchema = z.object({
+  section: z.string().trim().min(1).max(100),
+  role: z.string().trim().min(1).max(100),
+});
+
+export const createBoardSchema = z.object({
+  academicYear: z
+    .string()
+    .regex(/^\d{4}-\d{4}$/, "Academic year must use YYYY-YYYY format"),
+  adviserName: z.string().trim().min(1).max(255),
+});
+
+export const addBoardMemberSchema = assignmentSchema.extend({
+  staffId: z.string().uuid("Invalid staff ID"),
+});
+
+export const updateBoardMemberSchema = assignmentSchema;
+
+export const satisfyBoardSchema = z.object({
+  satisfied: z.boolean(),
+});

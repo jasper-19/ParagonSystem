@@ -1,5 +1,6 @@
 import db from "../../config/db";
 import type {  PoolClient } from "pg";
+import { sanitizeArticleHtml } from "../../security/sanitize-html";
 
 export const ARTICLE_CREDIT_TYPES = [
   "author",
@@ -34,7 +35,7 @@ function mapRow(row: any) {
     title: row.title,
     slug: row.slug,
     excerpt: row.excerpt,
-    content: row.content,
+    content: sanitizeArticleHtml(String(row.content ?? "")),
     image: row.image,
 
     author: row.author,

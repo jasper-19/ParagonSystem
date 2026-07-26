@@ -44,7 +44,13 @@ export class AdminLoginComponent {
       next: () => {
         this.loading.set(false);
 
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/admin';
+        const requestedReturnUrl =
+          this.route.snapshot.queryParamMap.get('returnUrl');
+        const returnUrl =
+          requestedReturnUrl?.startsWith('/admin') &&
+          !requestedReturnUrl.startsWith('//')
+            ? requestedReturnUrl
+            : '/admin';
         this.router.navigateByUrl(returnUrl);
       },
       error: (err: unknown) => {

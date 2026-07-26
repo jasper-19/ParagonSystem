@@ -5,18 +5,39 @@
 
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-7">
-      <div>
-        <h2 class="text-lg font-semibold text-[#000035] tracking-tight">Personal Information</h2>
-        <p class="text-xs text-[#000035]/40 mt-0.5">Staff profile details and assignments</p>
+      <div class="mb-7">
+        <h2
+          class="text-lg font-semibold
+                tracking-tight text-[#000035]"
+        >
+          Personal Information
+        </h2>
+
+        <p
+          class="mt-0.5 text-xs
+                text-[#000035]/40"
+        >
+          Staff profile details and assignments
+        </p>
       </div>
-      <button
-        (click)="openModal()"
-        class="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-5 py-2.5 bg-[#000035] text-white text-sm font-medium rounded-xl hover:bg-[#000035]/90 active:scale-95 transition-all duration-150 shadow-sm cursor-pointer">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#f4b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-        </svg>
-        Edit
-      </button>
+      <a
+        routerLink="/admin/staff-directory"
+        class="inline-flex min-h-10
+              items-center justify-center
+              gap-2 rounded-xl
+              border border-[#000035]/10
+              bg-white px-4 py-2
+              text-sm font-semibold
+              text-[#000035]
+              transition
+              hover:bg-[#000035]/5
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-[#F4B400]
+              focus-visible:ring-offset-2"
+      >
+        Manage in Staff Directory
+      </a>
     </div>
 
     <!-- Info Grid -->
@@ -155,11 +176,3 @@
     </div>
   </div>
 </section>
-
-<!-- MODAL COMPONENT -->
-<app-edit-personal-info-modal
-  [isOpen]="isModalOpen"
-  [user]="staffData"
-  (close)="closeModal()"
-  (save)="updateStaff($event)">
-</app-edit-personal-info-modal>

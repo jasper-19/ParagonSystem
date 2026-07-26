@@ -1,6 +1,5 @@
 import { Injectable, inject, signal, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { AdminAuthService } from './admin-auth.service';
 
 import { API_ENDPOINTS } from '../config/api.config';
 
@@ -24,7 +23,6 @@ export interface NotificationItem {
 export class NotificationService implements OnDestroy {
   // ----- Injected dependencies -----
   private http = inject(HttpClient);
-  private auth = inject(AdminAuthService);
 
   // ----- API endpoints -----
   private readonly apiUrl = API_ENDPOINTS.notifications;
@@ -54,15 +52,14 @@ export class NotificationService implements OnDestroy {
 
   // =====================================================
   // Server-Sent Events (SSE) connection
-  // - Uses AdminAuthService token for authentication via query param
+  // - Uses the HttpOnly session cookie for authentication
   // - Prepends new notifications to the in-memory list
   // - Implements basic reconnect logic on error when closed
   // =====================================================
   private connectSSE(): void {
-    const token = this.auth.getToken();
-    if (!token) return;
-
-    this.eventSource = new EventSource(`${this.apiUrl}/stream?token=${encodeURIComponent(token)}`);
+    this.eventSource = new EventSource(`${this.apiUrl}/stream`, {
+      withCredentials: true,
+    });
 
     // Handle incoming message frames
     this.eventSource.onmessage = (event: MessageEvent) => {

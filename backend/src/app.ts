@@ -5,16 +5,31 @@ import rateLimit from "express-rate-limit";
 import routes from "./routes";
 import pool from "./config/db";
 import path from "path";
-import { xssSanitize } from "./middlewares/sanitize";
 import { errorHandler } from "./middlewares/errorHandler";
 import { performance } from "node:perf_hooks";
-
-
-
+import { getAllowedOrigins } from "./config/security";
+import { csrfProtection } from "./middlewares/csrf";
 
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
 
 app.set("etag", "strong"); // Enable strong ETag headers for caching
+app.disable("x-powered-by");
+app.set(
+  "trust proxy",
+  isProduction
+    ? Math.max(1, Number(process.env.TRUST_PROXY_HOPS) || 1)
+    : false
+);
+
+app.use((req, res, next) => {
+  if (req.method === "TRACE" || req.method === "CONNECT") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  next();
+});
 
 // Secure HTTP response headers (XSS protection, clickjacking, etc.)
 app.use(
@@ -26,39 +41,48 @@ app.use(
 );
 
 // Restrict CORS to the Angular frontend origin only
-const allowedOrigins: string[] = [
-  "http://localhost:4200",
-  "http://localhost:3000",
-  "https://paragon-system-gvlg.vercel.app",
-];
-
-if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
-}
+const allowedOrigins = getAllowedOrigins();
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-CSRF-Protection",
+    ],
     credentials: true,
+    maxAge: 600,
   })
 );
 
 // Increase JSON body size to allow image/PDF uploads as base64 (short-term fix).
 // Consider switching to multipart uploads for files + smaller JSON payloads.
 // NOTE: base64 increases payload size by ~33% over the original file size.
-const requestBodyLimit = process.env.REQUEST_BODY_LIMIT || "5mb";
+const configuredBodyLimitMb = Number(
+  process.env.REQUEST_BODY_LIMIT_MB || "5"
+);
+const requestBodyLimitMb = Number.isFinite(configuredBodyLimitMb)
+  ? Math.min(Math.max(configuredBodyLimitMb, 1), 20)
+  : 5;
+const requestBodyLimit = `${requestBodyLimitMb}mb`;
 app.use(express.json({ limit: requestBodyLimit }));
 app.use(express.urlencoded({ extended: false, limit: requestBodyLimit }));
 
-// Sanitize req.body and req.query to strip XSS payloads
-app.use(xssSanitize);
+app.use("/api", csrfProtection);
 
-// General rate limit: 100 requests per 15 minutes per IP
+// General API rate limit per IP
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later." },
@@ -66,19 +90,21 @@ const apiLimiter = rateLimit({
 app.use("/api", apiLimiter);
 
 // Health check endpoint for load balancers and uptime monitoring
-app.get("/health", (_req, res) => res.status(200).json({ ok: true }));
+app.get("/health", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.status(200).json({ ok: true });
+});
 
 app.get("/ready", async (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   try {
     await pool.query("SELECT 1");
     res.status(200).json({ ready: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Database readiness check failed:", error);
 
     res.status(503).json({
       ready: false,
-      error: error.message,
-      code: error.code,
     });
   }
 });
@@ -119,6 +145,10 @@ export async function initializeDatabase(): Promise<void> {
 
 // Mount all versioned API routes
 app.use("/api", routes);
+
+app.use((_req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
 
 // Centralized error handler — must be the last middleware registered
 app.use(errorHandler);

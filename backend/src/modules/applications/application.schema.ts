@@ -9,11 +9,18 @@ export const YEAR_LEVEL_VALUES = [
 
 export type YearLevel = (typeof YEAR_LEVEL_VALUES)[number];
 
+const httpsUrlSchema = z
+  .string()
+  .url("Invalid portfolio URL")
+  .refine(value => new URL(value).protocol === "https:", {
+    message: "Portfolio URL must use HTTPS",
+  });
+
 /** Schema for POST /api/applications */
 export const createApplicationSchema = z.object({
-  fullName: z.string().min(1, "Full name is required").max(255),
-  email: z.string().email("Invalid email address"),
-  studentId: z.string().min(1, "Student ID is required").max(50),
+  fullName: z.string().trim().min(1, "Full name is required").max(255),
+  email: z.string().trim().email("Invalid email address").max(320),
+  studentId: z.string().trim().min(1, "Student ID is required").max(50),
   yearLevel: z.enum(YEAR_LEVEL_VALUES, { error: () => ({ message: "Invalid year level" }) }),
   collegeId: z.string().min(1, "College is required").max(50),
   programId: z.string().min(1, "Program is required").max(50),
@@ -21,17 +28,17 @@ export const createApplicationSchema = z.object({
     .array(
       z.object({
         positionId: z.string().min(1, "Position is required").max(50),
-        categories: z.array(z.string().min(1).max(100)).default([]),
+        categories: z
+          .array(z.string().trim().min(1).max(100))
+          .max(20)
+          .default([]),
       })
     )
-    .min(1, "At least one position is required"),
+    .min(1, "At least one position is required")
+    .max(10, "Too many selected positions"),
   motivation: z.string().min(1, "Motivation is required").max(5000),
   // Allow empty string or valid URL (some applicants may not have a portfolio)
-  portfolioUrl: z
-    .string()
-    .url("Invalid portfolio URL")
-    .optional()
-    .or(z.literal("")),
+  portfolioUrl: z.union([httpsUrlSchema, z.literal("")]).optional(),
   additionalNotes: z.string().max(2000).optional(),
 });
 

@@ -1,19 +1,10 @@
 <!-- Security Settings Card -->
 <section class="mt-4 bg-white rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,53,0.08),0_8px_32px_rgba(0,0,53,0.06)] border border-[#000035]/10">
-  <app-confirmation-modal
-    [isOpen]="confirmPasswordModalOpen"
-    [title]="'Change password?'"
-    [message]="'This will update your account password. Other active sessions may be logged out for security.'"
-    [confirmText]="'Yes, change'"
-    [cancelText]="'Cancel'"
-    (cancelled)="cancelPasswordChange()"
-    (confirmed)="confirmPasswordChange()"
-  ></app-confirmation-modal>
 
   <app-success-modal
     [isOpen]="successPasswordModalOpen"
     [title]="'Password updated'"
-    [message]="'Your password was changed successfully.'"
+    [message]="'Your password was updated successfully. All other active sessions have been signed out, while this device remains connected.'"
     [buttonText]="'Done'"
     (closed)="closePasswordSuccess()"
   ></app-success-modal>
@@ -37,8 +28,13 @@
     <!-- Divider -->
     <div class="border-t border-[#000035]/6"></div>
 
-    <!-- Password Change -->
-    <div class="space-y-5">
+      <!-- Password Change -->
+      <form
+        [formGroup]="passwordForm"
+        (ngSubmit)="changePassword()"
+        class="space-y-5"
+        novalidate
+      >
       <div class="flex items-center gap-2.5">
         <div class="w-7 h-7 rounded-lg bg-[#f4b400]/15 flex items-center justify-center shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#f4b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -57,8 +53,26 @@
           <label class="text-[11px] font-medium text-[#000035]/40 uppercase tracking-widest mb-1.5 block">Current Password</label>
           <input [type]="showCurrentPassword ? 'text' : 'password'"
             placeholder="••••••••"
-            [(ngModel)]="currentPassword"
-            class="w-full bg-[#000035]/3 border border-[#000035]/10 rounded-xl px-4 pr-11 py-2.5 text-sm text-[#000035] placeholder:text-[#000035]/25 focus:outline-none focus:ring-2 focus:ring-[#000035]/20 focus:border-[#000035]/30 transition-all duration-150"/>
+            formControlName="currentPassword"
+            autocomplete="current-password"
+            class="w-full bg-[#000035]/3 border border-[#000035]/10 rounded-xl px-4 pr-11 py-2.5 text-sm text-[#000035] placeholder:text-[#000035]/25 focus:outline-none focus:ring-2 focus:ring-[#000035]/20 focus:border-[#000035]/30 transition-all duration-150"
+            [class.border-red-400]="
+              currentPasswordControl.touched &&
+              currentPasswordControl.invalid
+            "
+            />
+              <p
+                *ngIf="
+                  currentPasswordControl.touched &&
+                  currentPasswordControl.hasError(
+                    'required'
+                  )
+                "
+                class="mt-1.5 text-xs
+                      font-medium text-red-600"
+              >
+                Current password is required.
+              </p>
           <button
             type="button"
             (click)="togglePasswordVisibility('current')"
@@ -81,8 +95,327 @@
           <label class="text-[11px] font-medium text-[#000035]/40 uppercase tracking-widest mb-1.5 block">New Password</label>
           <input [type]="showNewPassword ? 'text' : 'password'"
             placeholder="••••••••"
-            [(ngModel)]="newPassword"
-            class="w-full bg-[#000035]/3 border border-[#000035]/10 rounded-xl px-4 pr-11 py-2.5 text-sm text-[#000035] placeholder:text-[#000035]/25 focus:outline-none focus:ring-2 focus:ring-[#000035]/20 focus:border-[#000035]/30 transition-all duration-150"/>
+            formControlName="newPassword"
+            autocomplete="new-password"
+            class="w-full bg-[#000035]/3 border border-[#000035]/10 rounded-xl px-4 pr-11 py-2.5 text-sm text-[#000035] placeholder:text-[#000035]/25 focus:outline-none focus:ring-2 focus:ring-[#000035]/20 focus:border-[#000035]/30 transition-all duration-150"
+            [class.border-red-400]="
+              newPasswordControl.touched &&
+              newPasswordControl.invalid
+            "
+          />
+            <p
+              *ngIf="
+                newPasswordControl.touched &&
+                newPasswordControl.hasError(
+                  'required'
+                )
+              "
+              class="mt-1.5 text-xs
+                    font-medium text-red-600"
+            >
+              New password is required.
+            </p>
+
+            <p
+              *ngIf="
+                newPasswordControl.touched &&
+                newPasswordControl.hasError(
+                  'minlength'
+                )
+              "
+              class="mt-1.5 text-xs
+                    font-medium text-red-600"
+            >
+              Use at least 8 characters.
+            </p>
+
+            <p
+              *ngIf="
+                newPasswordControl.touched &&
+                passwordForm.hasError(
+                  'passwordUnchanged'
+                )
+              "
+              class="mt-1.5 text-xs
+                    font-medium text-red-600"
+            >
+              The new password must differ from the current password.
+            </p>
+
+          <div
+            *ngIf="
+              newPasswordControl.dirty ||
+              newPasswordControl.touched
+            "
+            class="mt-3 rounded-xl
+                  border border-[#000035]/8
+                  bg-[#000035]/2
+                  p-3"
+          >
+            <!-- Strength Header -->
+            <div
+              class="flex items-center
+                    justify-between gap-3"
+            >
+              <p
+                class="text-xs font-semibold
+                      text-[#000035]"
+              >
+                Password strength
+              </p>
+
+              <span
+                class="text-xs font-semibold"
+                [ngClass]="{
+                  'text-red-600':
+                    passwordStrengthScore <= 1,
+
+                  'text-orange-600':
+                    passwordStrengthScore === 2,
+
+                  'text-yellow-700':
+                    passwordStrengthScore === 3,
+
+                  'text-blue-700':
+                    passwordStrengthScore === 4,
+
+                  'text-green-700':
+                    passwordStrengthScore === 5
+                }"
+              >
+                {{ passwordStrengthLabel }}
+              </span>
+            </div>
+
+            <!-- Strength Bar -->
+            <div
+              class="mt-2 h-1.5
+                    overflow-hidden rounded-full
+                    bg-[#000035]/8"
+              role="progressbar"
+              [attr.aria-valuenow]="
+                passwordStrengthScore
+              "
+              aria-valuemin="0"
+              aria-valuemax="5"
+              [attr.aria-label]="
+                'Password strength: ' +
+                passwordStrengthLabel
+              "
+            >
+              <div
+                class="h-full rounded-full
+                      transition-all duration-300"
+                [ngClass]="
+                  passwordStrengthClass
+                "
+                [style.width]="
+                  passwordStrengthWidth
+                "
+              ></div>
+            </div>
+
+            <!-- Requirements -->
+            <ul
+              class="mt-3 grid
+                    grid-cols-1 gap-1.5
+                    text-xs sm:grid-cols-2"
+            >
+              <li
+                class="flex items-center gap-2"
+                [ngClass]="
+                  requirementClass(
+                    hasMinimumLength
+                  )
+                "
+              >
+                <span
+                  class="inline-flex h-4 w-4
+                        items-center justify-center
+                        rounded-full border"
+                  [ngClass]="
+                    hasMinimumLength
+                      ? 'border-green-300 bg-green-100'
+                      : 'border-[#000035]/15 bg-white'
+                  "
+                  aria-hidden="true"
+                >
+                  <svg
+                    *ngIf="hasMinimumLength"
+                    class="h-2.5 w-2.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m5 12 4 4L19 6"
+                    />
+                  </svg>
+                </span>
+
+                At least 8 characters
+              </li>
+
+              <li
+                class="flex items-center gap-2"
+                [ngClass]="
+                  requirementClass(
+                    hasUppercase
+                  )
+                "
+              >
+                <span
+                  class="inline-flex h-4 w-4
+                        items-center justify-center
+                        rounded-full border"
+                  [ngClass]="
+                    hasUppercase
+                      ? 'border-green-300 bg-green-100'
+                      : 'border-[#000035]/15 bg-white'
+                  "
+                  aria-hidden="true"
+                >
+                  <svg
+                    *ngIf="hasUppercase"
+                    class="h-2.5 w-2.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m5 12 4 4L19 6"
+                    />
+                  </svg>
+                </span>
+
+                One uppercase letter
+              </li>
+
+              <li
+                class="flex items-center gap-2"
+                [ngClass]="
+                  requirementClass(
+                    hasLowercase
+                  )
+                "
+              >
+                <span
+                  class="inline-flex h-4 w-4
+                        items-center justify-center
+                        rounded-full border"
+                  [ngClass]="
+                    hasLowercase
+                      ? 'border-green-300 bg-green-100'
+                      : 'border-[#000035]/15 bg-white'
+                  "
+                  aria-hidden="true"
+                >
+                  <svg
+                    *ngIf="hasLowercase"
+                    class="h-2.5 w-2.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m5 12 4 4L19 6"
+                    />
+                  </svg>
+                </span>
+
+                One lowercase letter
+              </li>
+
+              <li
+                class="flex items-center gap-2"
+                [ngClass]="
+                  requirementClass(
+                    hasNumber
+                  )
+                "
+              >
+                <span
+                  class="inline-flex h-4 w-4
+                        items-center justify-center
+                        rounded-full border"
+                  [ngClass]="
+                    hasNumber
+                      ? 'border-green-300 bg-green-100'
+                      : 'border-[#000035]/15 bg-white'
+                  "
+                  aria-hidden="true"
+                >
+                  <svg
+                    *ngIf="hasNumber"
+                    class="h-2.5 w-2.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m5 12 4 4L19 6"
+                    />
+                  </svg>
+                </span>
+
+                One number
+              </li>
+
+              <li
+                class="flex items-center gap-2
+                      sm:col-span-2"
+                [ngClass]="
+                  requirementClass(
+                    hasSpecialCharacter
+                  )
+                "
+              >
+                <span
+                  class="inline-flex h-4 w-4
+                        items-center justify-center
+                        rounded-full border"
+                  [ngClass]="
+                    hasSpecialCharacter
+                      ? 'border-green-300 bg-green-100'
+                      : 'border-[#000035]/15 bg-white'
+                  "
+                  aria-hidden="true"
+                >
+                  <svg
+                    *ngIf="
+                      hasSpecialCharacter
+                    "
+                    class="h-2.5 w-2.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m5 12 4 4L19 6"
+                    />
+                  </svg>
+                </span>
+
+                One special character
+              </li>
+            </ul>
+          </div>
+
           <button
             type="button"
             (click)="togglePasswordVisibility('new')"
@@ -105,8 +438,93 @@
           <label class="text-[11px] font-medium text-[#000035]/40 uppercase tracking-widest mb-1.5 block">Confirm Password</label>
           <input [type]="showConfirmPassword ? 'text' : 'password'"
             placeholder="••••••••"
-            [(ngModel)]="confirmPassword"
-            class="w-full bg-[#000035]/3 border border-[#000035]/10 rounded-xl px-4 pr-11 py-2.5 text-sm text-[#000035] placeholder:text-[#000035]/25 focus:outline-none focus:ring-2 focus:ring-[#000035]/20 focus:border-[#000035]/30 transition-all duration-150"/>
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            class="w-full bg-[#000035]/3 border border-[#000035]/10 rounded-xl px-4 pr-11 py-2.5 text-sm text-[#000035] placeholder:text-[#000035]/25 focus:outline-none focus:ring-2 focus:ring-[#000035]/20 focus:border-[#000035]/30 transition-all duration-150"
+            [class.border-red-400]="
+              confirmPasswordControl.touched &&
+              (
+                confirmPasswordControl.invalid ||
+                passwordForm.hasError(
+                  'passwordsMismatch'
+                )
+              )
+            "
+            [class.border-green-400]="
+              confirmPasswordControl.dirty &&
+              passwordsMatch
+            "
+          />
+            <p
+              *ngIf="
+                confirmPasswordControl.touched &&
+                confirmPasswordControl.hasError(
+                  'required'
+                )
+              "
+              class="mt-1.5 text-xs
+                    font-medium text-red-600"
+            >
+              Please confirm the new password.
+            </p>
+
+            <div
+              *ngIf="
+                confirmPasswordControl.dirty &&
+                confirmPasswordValue
+              "
+              class="mt-1.5 flex
+                    items-center gap-1.5
+                    text-xs font-medium"
+              [ngClass]="
+                passwordsMatch
+                  ? 'text-green-700'
+                  : 'text-red-600'
+              "
+              role="status"
+              aria-live="polite"
+            >
+              <svg
+                *ngIf="passwordsMatch"
+                class="h-4 w-4 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="m5 12 4 4L19 6"
+                />
+              </svg>
+
+              <svg
+                *ngIf="passwordsDoNotMatch"
+                class="h-4 w-4 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M6 18 18 6M6 6l12 12"
+                />
+              </svg>
+
+              <span>
+                {{
+                  passwordsMatch
+                    ? 'Passwords match'
+                    : 'Passwords do not match'
+                }}
+              </span>
+            </div>
+
           <button
             type="button"
             (click)="togglePasswordVisibility('confirm')"
@@ -126,19 +544,111 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-4">
+        <div
+          class="flex items-start gap-3
+                rounded-xl border
+                border-blue-200
+                bg-blue-50 px-4 py-3"
+          role="note"
+          aria-label="Password change security information"
+        >
+          <div
+            class="mt-0.5 flex h-8 w-8
+                  shrink-0 items-center
+                  justify-center rounded-lg
+                  bg-blue-100 text-blue-700"
+            aria-hidden="true"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 3 4.5 6v5.25c0 4.6 3.2 8.9 7.5 9.75 4.3-.85 7.5-5.15 7.5-9.75V6L12 3Z"
+              />
+
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m9.75 12 1.5 1.5 3-3"
+              />
+            </svg>
+          </div>
+
+          <div class="min-w-0">
+            <p
+              class="text-sm font-semibold
+                    text-blue-900"
+            >
+              Security notice
+            </p>
+
+            <p
+              class="mt-1 text-xs
+                    leading-5 text-blue-700"
+            >
+              Changing your password will sign out
+              all other active sessions for your
+              account. You will remain signed in on
+              this device.
+            </p>
+          </div>
+        </div>
+
+      <div
+        class="flex flex-col gap-3
+              sm:flex-row
+              sm:items-center"
+      >
         <button
-          (click)="changePassword()"
-          [disabled]="changingPassword"
+          type="submit"
+          [disabled]="
+            !canSubmitPasswordChange
+          "
           class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#000035] text-white text-sm font-medium rounded-xl hover:bg-[#000035]/90 active:scale-95 transition-all duration-150 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#f4b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-          </svg>
-          Update Password
+            <svg
+              *ngIf="changingPassword"
+              aria-hidden="true"
+              class="h-4 w-4 animate-spin
+                    motion-reduce:animate-none"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 0 1 8-8v4
+                  a4 4 0 0 0-4 4H4Z"
+              ></path>
+            </svg>
+
+            <span>
+              {{
+                changingPassword
+                  ? 'Updating Password…'
+                  : 'Update Password'
+              }}
+            </span>
         </button>
         <p
           *ngIf="passwordMessage"
-          class="text-sm flex items-center gap-1.5"
+          role="status"
+          aria-live="polite"
+          class="flex items-start gap-1.5 text-sm sm:flex-1"
           [ngClass]="passwordMessageKind === 'error' ? 'text-red-600' : 'text-green-600'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -147,7 +657,7 @@
           {{ passwordMessage }}
         </p>
       </div>
-    </div>
+    </form>
 
     <!-- Divider -->
     <div class="border-t border-[#000035]/6"></div>
@@ -206,12 +716,116 @@
       </div>
 
       <ul class="space-y-2 max-h-52 overflow-y-auto pr-1">
-        <li *ngIf="sessionsLoading"
-            class="px-4 py-3 rounded-xl bg-[#000035]/2 border border-dashed border-[#000035]/10 text-[#000035]/30 text-sm">
-          Loading sessions...
+        <li
+          *ngIf="sessionsLoading"
+          role="status"
+          aria-live="polite"
+          class="space-y-3 rounded-xl
+                border border-[#000035]/10
+                bg-[#000035]/2 px-4 py-4"
+        >
+          <span class="sr-only">
+            Loading active sessions
+          </span>
+
+          <div
+            *ngFor="let item of [1, 2]"
+            aria-hidden="true"
+            class="flex animate-pulse
+                  items-center gap-3
+                  motion-reduce:animate-none"
+          >
+            <div
+              class="h-9 w-9 shrink-0
+                    rounded-lg bg-[#000035]/10"
+            ></div>
+
+            <div class="flex-1 space-y-2">
+              <div
+                class="h-3.5 w-32
+                      rounded bg-[#000035]/10"
+              ></div>
+
+              <div
+                class="h-3 w-24
+                      rounded bg-[#000035]/6"
+              ></div>
+            </div>
+          </div>
         </li>
-        <li *ngFor="let session of activeSessions; let i = index"
-            class="flex items-center justify-between px-4 py-3 rounded-xl bg-[#000035]/3 border border-[#000035]/6 hover:bg-[#000035]/5 transition-colors duration-150">
+
+        <li
+          *ngIf="
+            !sessionsLoading &&
+            sessionsError
+          "
+          role="alert"
+          class="flex flex-col gap-3
+                rounded-xl border
+                border-red-200
+                bg-red-50 px-4 py-4
+                sm:flex-row
+                sm:items-center
+                sm:justify-between"
+        >
+          <div>
+            <p
+              class="text-sm font-semibold
+                    text-red-700"
+            >
+              Could not load active sessions
+            </p>
+
+            <p
+              class="mt-1 text-xs
+                    text-red-600"
+            >
+              {{ sessionsError }}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            (click)="retrySessions()"
+            class="inline-flex min-h-11
+                  items-center justify-center
+                  rounded-xl border
+                  border-red-300 bg-white
+                  px-4 py-2
+                  text-sm font-semibold
+                  text-red-700 transition
+                  hover:bg-red-100
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-red-500
+                  focus-visible:ring-offset-2"
+          >
+            Retry
+          </button>
+        </li>
+
+  <ng-container
+    *ngIf="
+      !sessionsLoading &&
+      !sessionsError
+    "
+  >
+    <li
+      *ngFor="
+        let session of activeSessions;
+        let i = index
+      "
+      class="flex flex-col gap-3
+            rounded-xl border
+            border-[#000035]/6
+            bg-[#000035]/3
+            px-4 py-3
+            transition-colors
+            hover:bg-[#000035]/5
+            sm:flex-row
+            sm:items-center
+            sm:justify-between"
+    >
           <div class="flex items-center gap-3">
             <div class="w-7 h-7 rounded-lg bg-white border border-[#000035]/10 flex items-center justify-center shadow-sm shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#000035]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -234,29 +848,65 @@
             </div>
           </div>
 
-            <div class="flex items-center justify-between mt-3">
-              <span
-                *ngIf="session.current"
-                class="inline-flex items-center rounded-full
-                      bg-green-100
-                      text-green-700
-                      px-3
-                      py-1
-                      text-xs
-                      font-semibold">
-                  Current Device
-              </span>
-              <button
-                  *ngIf="!session.current"
-                  (click)="logoutSession(i)"
-                  class="text-red-600 hover:text-red-700 font-medium">
-                  Sign Out
-              </button>
-            </div>
-        </li>
+          <div
+            class="flex shrink-0
+                  items-center gap-3"
+          >
+            <span
+              *ngIf="session.current"
+              class="inline-flex items-center
+                    rounded-full bg-green-100
+                    px-3 py-1 text-xs
+                    font-semibold text-green-700"
+            >
+              Current Device
+            </span>
 
-        <li *ngIf="activeSessions.length === 0"
-            class="flex items-center gap-3 px-4 py-4 rounded-xl bg-[#000035]/2 border border-dashed border-[#000035]/10 text-[#000035]/30 text-sm">
+            <button
+              *ngIf="!session.current"
+              type="button"
+              (click)="logoutSession(i)"
+              [disabled]="
+                loggingOutSessionIds[
+                  session.id
+                ]
+              "
+              class="inline-flex min-h-10
+                    items-center justify-center
+                    rounded-lg px-3
+                    text-sm font-semibold
+                    text-red-600 transition
+                    hover:bg-red-50
+                    hover:text-red-700
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50"
+            >
+              {{
+                loggingOutSessionIds[
+                  session.id
+                ]
+                  ? 'Signing out…'
+                  : 'Sign Out'
+              }}
+            </button>
+          </div>
+        </li>
+       </ng-container>
+
+        <li
+          *ngIf="
+            !sessionsLoading &&
+            !sessionsError &&
+            activeSessions.length === 0
+          "
+          class="flex items-center gap-3
+                rounded-xl border
+                border-dashed
+                border-[#000035]/10
+                bg-[#000035]/2
+                px-4 py-4
+                text-sm text-[#000035]/40"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
           </svg>

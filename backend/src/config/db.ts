@@ -8,12 +8,21 @@ const isProduction =
   process.env.NODE_ENV === "production";
 
 const poolMax =
-  Number(process.env.DB_POOL_MAX) ||
-  (isProduction ? 5 : 10);
+  Math.min(
+    Math.max(
+      Number(process.env.DB_POOL_MAX) ||
+        (isProduction ? 5 : 10),
+      1
+    ),
+    20
+  );
 
 const configuredWarmCount =
-  Number(process.env.DB_POOL_WARM_COUNT) ||
-  (isProduction ? 1 : poolMax);
+  Math.max(
+    Number(process.env.DB_POOL_WARM_COUNT) ||
+      (isProduction ? 1 : poolMax),
+    0
+  );
 
 const poolWarmCount = Math.min(
   configuredWarmCount,
@@ -32,6 +41,9 @@ const poolConfig: PoolConfig = {
     : 0,
 
   connectionTimeoutMillis: 5_000,
+  query_timeout: 15_000,
+  statement_timeout: 15_000,
+  idle_in_transaction_session_timeout: 10_000,
 };
 
 if (isProduction) {
@@ -45,7 +57,8 @@ if (isProduction) {
     process.env.DATABASE_URL;
 
   poolConfig.ssl = {
-    rejectUnauthorized: false,
+    rejectUnauthorized:
+      process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false",
   };
 } else {
   poolConfig.user = process.env.DB_USER;
