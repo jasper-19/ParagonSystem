@@ -29,13 +29,24 @@ export class LocalStorageService implements StorageService {
     await fs.writeFile(filePath, buffer);
   }
 
+  async uploadFile(
+    objectKey: string,
+    sourcePath: string,
+    _options: UploadFileOptions
+  ): Promise<void> {
+    const destinationPath = resolveUploadPath(objectKey);
+    await fs.mkdir(path.dirname(destinationPath), { recursive: true });
+    await fs.copyFile(sourcePath, destinationPath);
+  }
+
   async remove(paths: string[]): Promise<void> {
     await Promise.all(
       paths.map(async (objectKey) => {
         try {
           await fs.unlink(resolveUploadPath(objectKey));
-        } catch {
-          // Ignore missing local files
+        } catch (error) {
+          const code = (error as NodeJS.ErrnoException).code;
+          if (code !== "ENOENT") throw error;
         }
       })
     );

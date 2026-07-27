@@ -9,6 +9,10 @@
     "start": "node dist/server.js",
     "migrate": "tsx src/scripts/migrate.ts",
     "test": "tsx --test src/**/*.test.ts",
+    "cleanup:special-issue-storage": "tsx src/scripts/retry-storage-cleanup.ts",
+    "migrate:special-issue-pdfs": "tsx src/scripts/migrate-special-issue-pdfs.ts",
+    "smoke:special-issues": "tsx src/scripts/smoke-special-issues.ts",
+    "verify:special-issue-migration": "tsx src/scripts/verify-special-issue-migration.ts",
     "migrate:article-images": "tsx src/scripts/migrate-article-images.ts",
     "generate:article-image-variants": "tsx src/scripts/generate-existing-article-image-variants.ts"
   },

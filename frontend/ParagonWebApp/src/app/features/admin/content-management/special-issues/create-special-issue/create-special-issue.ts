@@ -32,6 +32,7 @@ export class CreateSpecialIssueComponent {
 	readonly slugManuallyEdited = signal(false);
 	readonly selectedCoverMedia = signal<Media | null>(null);
 	readonly selectedPdfName = signal<string | null>(null);
+	readonly selectedPdfFile = signal<File | null>(null);
 
 	readonly types: SpecialIssueType[] = ['Tabloid', 'Newsletter', 'Literary Folio'];
 	readonly statuses: IssueStatus[] = ['draft', 'published'];
@@ -158,7 +159,7 @@ export class CreateSpecialIssueComponent {
     if (!slug) return;
 
     this.isSubmitting.set(true);
-    this.issueService.getIssueBySlug(slug).pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
+    this.issueService.getAdminIssueBySlug(slug).pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
 			next: (issue) => {
 				this.editingId.set(issue.id);
 				this.loadIssueForEdit(issue.id);
@@ -242,8 +243,8 @@ export class CreateSpecialIssueComponent {
 	};
 
 	const request$ = this.isEditMode()
-		? this.issueService.updateIssue(this.editingId()!, payload)
-		: this.issueService.createIssue(payload);
+		? this.issueService.updateIssue(this.editingId()!, payload, this.selectedPdfFile() ?? undefined)
+		: this.issueService.createIssue(payload, this.selectedPdfFile() ?? undefined);
 
 	request$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
 		next: () => this.router.navigate(['/admin/all-special-issues']),
@@ -283,8 +284,6 @@ export class CreateSpecialIssueComponent {
   this.showConfirmModal.set(false);
 }
 
-	private pdfObjectUrl: string | null = null;
-
 	onCoverMediaChange(media: Media | null): void {
 		this.selectedCoverMedia.set(media);
 		this.form.controls.coverImage.setValue(media?.fileUrl || media?.filePath || '');
@@ -297,25 +296,19 @@ export class CreateSpecialIssueComponent {
   if (!file) return;
 
 	this.selectedPdfName.set(file.name);
+	this.selectedPdfFile.set(file);
 	this.pdfDisplayText.set(file.name);
-
-	const reader = new FileReader();
-	reader.onload = () => {
-		const result = reader.result as string;
-		this.form.controls.pdfUrl.setValue(result);
-		this.form.controls.pdfUrl.markAsDirty();
-		this.form.controls.pdfUrl.markAsTouched();
-	};
-
-	reader.readAsDataURL(file);
+	this.form.controls.pdfUrl.setValue('pending-upload');
+	this.form.controls.pdfUrl.markAsDirty();
+	this.form.controls.pdfUrl.markAsTouched();
 
   if (input) input.value = '';
 }
 
   removePdf(): void {
-  this.pdfObjectUrl = null;
   this.pdfDisplayText.set(null);
 	this.selectedPdfName.set(null);
+	this.selectedPdfFile.set(null);
 
   this.form.controls.pdfUrl.setValue('');
 }

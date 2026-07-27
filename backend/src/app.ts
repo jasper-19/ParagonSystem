@@ -10,6 +10,8 @@ import { performance } from "node:perf_hooks";
 import { getAllowedOrigins } from "./config/security";
 import { csrfProtection } from "./middlewares/csrf";
 import { enforceMaintenanceMode } from "./middlewares/maintenance";
+import { pdfConfig } from "./config/pdf";
+import { pdfProcessor } from "./modules/special-issues/pdf-processing/ghostscript-pdf.processor";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -60,6 +62,7 @@ app.use(
       "Authorization",
       "X-CSRF-Protection",
     ],
+    exposedHeaders: ["X-Page", "X-Page-Size", "X-Has-More"],
     credentials: true,
     maxAge: 600,
   })
@@ -100,10 +103,33 @@ app.get("/health", (_req, res) => {
 app.get("/ready", async (_req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
-    await pool.query("SELECT 1");
-    res.status(200).json({ ready: true });
+    const [, pdfAvailable] = await Promise.all([
+      pool.query("SELECT 1"),
+      pdfConfig.enabled
+        ? pdfProcessor.checkAvailability()
+        : Promise.resolve(false),
+    ]);
+
+    if (pdfConfig.requiredForReadiness && !pdfAvailable) {
+      res.status(503).json({
+        ready: false,
+        dependencies: {
+          database: true,
+          pdfProcessor: false,
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      ready: true,
+      dependencies: {
+        database: true,
+        pdfProcessor: pdfAvailable,
+      },
+    });
   } catch (error) {
-    console.error("Database readiness check failed:", error);
+    console.error("Readiness check failed:", error);
 
     res.status(503).json({
       ready: false,

@@ -3,20 +3,44 @@ import * as service from "./special-issue.service";
 import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
+import type { PdfUploadRequest } from "./special-issue-upload.middleware";
+import type {
+  SpecialIssueListQuery,
+} from "./special-issue.schema";
+
+function validatedListQuery(res: Response): SpecialIssueListQuery {
+  return res.locals["validatedQuery"] as SpecialIssueListQuery;
+}
+
+function sendIssueList(
+  res: Response,
+  result: {
+    items: unknown[];
+    page: number;
+    pageSize: number;
+    hasMore: boolean;
+  }
+): void {
+  res.set({
+    "X-Page": String(result.page),
+    "X-Page-Size": String(result.pageSize),
+    "X-Has-More": String(result.hasMore),
+  });
+  res.json(result.items);
+}
 
 /** GET /api/issues */
 export const getIssues = asyncHandler(
   async (req: Request, res: Response) => {
-    const raw = req.query["status"];
+    const issues = await service.getPublishedIssues(validatedListQuery(res));
+    sendIssueList(res, issues);
+  }
+);
 
-    const status =
-      typeof raw === "string"
-        ? (sanitizeValue(raw) as string)
-        : undefined;
-
-    const issues = await service.getIssues(status);
-
-    res.json(issues);
+export const getAdminIssues = asyncHandler(
+  async (req: Request, res: Response) => {
+    const issues = await service.getAdminIssues(validatedListQuery(res));
+    sendIssueList(res, issues);
   }
 );
 
@@ -26,7 +50,7 @@ export const getIssueBySlug = asyncHandler(
 
     const slug = sanitizeValue(req.params["slug"]) as string;
 
-    const issue = await service.getIssueBySlug(slug);
+    const issue = await service.getPublishedIssueBySlug(slug);
 
     if (!issue) {
       res.status(404).json({ message: "Issue not found" });
@@ -37,25 +61,54 @@ export const getIssueBySlug = asyncHandler(
   }
 );
 
+export const getAdminIssueBySlug = asyncHandler(
+  async (req: Request, res: Response) => {
+    const slug = sanitizeValue(req.params["slug"]) as string;
+    const issue = await service.getAdminIssueBySlug(slug);
+    if (!issue) {
+      res.status(404).json({ message: "Issue not found" });
+      return;
+    }
+    res.json(issue);
+  }
+);
+
 /** GET /api/issues/type/:type */
 export const getIssuesByType = asyncHandler(
   async (req: Request, res: Response) => {
     const type = sanitizeValue(req.params["type"]) as string;
 
-    const issues = await service.getIssuesByType(type);
-
-    res.json(issues);
+    const issues = await service.getIssuesByType(
+      type,
+      validatedListQuery(res)
+    );
+    sendIssueList(res, issues);
   }
 );
 
 /** POST /api/issues - body validated by Zod middleware */
 export const createIssue = asyncHandler(
   async (req: Request, res: Response) => {
+    const uploadRequest = req as PdfUploadRequest;
+    const abortController = new AbortController();
+    const abort = (): void => abortController.abort();
+    req.once("aborted", abort);
 
-    const issue = await service.createIssue(req.body);
-    auditLog(req, "CREATE", "SPECIAL_ISSUES", `Created special issue: ${(issue as any).title ?? "Untitled"}`, {
-      resourceId: String((issue as any).id ?? ""),
-      details: { title: (issue as any).title, slug: (issue as any).slug, type: (issue as any).type },
+    let issue;
+    try {
+      issue = await service.createIssue(
+        req.body,
+        uploadRequest.file,
+        abortController.signal
+      );
+    } finally {
+      req.removeListener("aborted", abort);
+    }
+    const issueTitle =
+      typeof issue.title === "string" ? issue.title : "Untitled";
+    auditLog(req, "CREATE", "SPECIAL_ISSUES", `Created special issue: ${issueTitle}`, {
+      resourceId: issue.id,
+      details: { title: issue.title, slug: issue.slug, type: issue.type },
     });
 
     res.status(201).json(issue);
@@ -69,11 +122,41 @@ export const updateIssue = asyncHandler(
     const id = sanitizeValue(req.params["id"]) as string;
 
     const issue = await service.updateIssue(id, req.body);
-    auditLog(req, "UPDATE", "SPECIAL_ISSUES", `Updated special issue: ${(issue as any).title ?? id}`, {
+    auditLog(req, "UPDATE", "SPECIAL_ISSUES", `Updated special issue: ${issue.title ?? id}`, {
       resourceId: id,
       details: { fields: Object.keys(req.body as Record<string, unknown>) },
     });
 
+    res.json(issue);
+  }
+);
+
+export const replaceIssuePdf = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = sanitizeValue(req.params["id"]) as string;
+    const uploadRequest = req as PdfUploadRequest;
+    const abortController = new AbortController();
+    const abort = (): void => abortController.abort();
+    req.once("aborted", abort);
+
+    let issue;
+    try {
+      issue = await service.replaceIssuePdf(
+        id,
+        uploadRequest.file,
+        abortController.signal
+      );
+    } finally {
+      req.removeListener("aborted", abort);
+    }
+
+    auditLog(
+      req,
+      "REPLACE_PDF",
+      "SPECIAL_ISSUES",
+      `Replaced Special Issue PDF: ${id}`,
+      { resourceId: id }
+    );
     res.json(issue);
   }
 );

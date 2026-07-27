@@ -51,7 +51,7 @@ export class AllSpecialIssuesComponent {
   private issuesStream = toSignal(this.issueService.issues$, { initialValue: [] });
 
   constructor() {
-    this.issueService.refresh().subscribe({ error: () => {} });
+    this.issueService.refreshAdmin().subscribe({ error: () => {} });
 
     // Sync query param → signal
     effect(() => {

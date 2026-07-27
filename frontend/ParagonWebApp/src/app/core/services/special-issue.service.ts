@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import { SpecialIssue, SpecialIssueType } from '../../models/special-issue.model';
 
@@ -16,16 +16,19 @@ type ApiSpecialIssue = Omit<SpecialIssue, 'publishedAt'> & {
 
 // Shorthand for status and upsert DTO shape used for create/update requests
 type IssueStatus = SpecialIssue['status'];
-type UpsertIssueDto = {
+type IssueMetadataDto = {
   title: string;
   slug: string;
   type: string;
   academicYear: string;
   description?: string;
   coverImage: string;
-  pdfUrl: string;
   publishedAt?: string;
   status: IssueStatus;
+};
+
+type LegacyCreateIssueDto = IssueMetadataDto & {
+  pdfUrl: string;
 };
 
 // =====================================================
@@ -41,10 +44,7 @@ export class SpecialIssueService {
   private readonly issuesSubject = new BehaviorSubject<SpecialIssue[]>([]);
   readonly issues$ = this.issuesSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    // Initialize by loading the list and populating the subject
-    this.refresh().subscribe({ error: () => {} });
-  }
+  constructor(private http: HttpClient) {}
 
   // =====================================================
   // Remote API actions
@@ -67,11 +67,28 @@ export class SpecialIssueService {
     );
   }
 
+  refreshAdmin(status?: IssueStatus): Observable<SpecialIssue[]> {
+    const params = this.buildParams({ status, limit: 100 });
+    return this.http.get<ApiSpecialIssue[]>(`${this.api}/admin`, { params }).pipe(
+      map((list) => this.normalizeIssues(list)),
+      tap((issues) => this.issuesSubject.next(issues))
+    );
+  }
+
   getIssueBySlug(slug: string): Observable<SpecialIssue> {
     return this.http.get<ApiSpecialIssue>(`${this.api}/${slug}`).pipe(
       map((a) => this.normalizeIssue(a)),
       tap((issue) => {
         this.issuesSubject.next([issue, ...this.issuesSubject.value.filter((i) => i.id !== issue.id)]);
+      })
+    );
+  }
+
+  getAdminIssueBySlug(slug: string): Observable<SpecialIssue> {
+    return this.http.get<ApiSpecialIssue>(`${this.api}/admin/${encodeURIComponent(slug)}`).pipe(
+      map((issue) => this.normalizeIssue(issue)),
+      tap((issue) => {
+        this.issuesSubject.next([issue, ...this.issuesSubject.value.filter((item) => item.id !== issue.id)]);
       })
     );
   }
@@ -87,7 +104,7 @@ export class SpecialIssueService {
     const normalized = (slug ?? '').trim().toLowerCase();
     if (!normalized) return of(false);
 
-    return this.getIssueBySlug(normalized).pipe(
+    return this.getAdminIssueBySlug(normalized).pipe(
       map((issue) => (ignoreId ? issue.id !== ignoreId : true)),
       catchError((err) => {
         if (err?.status === 404) return of(false);
@@ -96,9 +113,12 @@ export class SpecialIssueService {
     );
   }
 
-  createIssue(payload: Omit<SpecialIssue, 'id'>): Observable<SpecialIssue> {
-    const dto = this.toUpsertDto(payload);
-    return this.http.post<ApiSpecialIssue>(this.api, dto).pipe(
+  createIssue(payload: Omit<SpecialIssue, 'id'>, pdfFile?: File): Observable<SpecialIssue> {
+    const body: FormData | LegacyCreateIssueDto = pdfFile
+      ? this.toMultipartCreatePayload(payload, pdfFile)
+      : { ...this.toMetadataDto(payload), pdfUrl: payload.pdfUrl };
+
+    return this.http.post<ApiSpecialIssue>(this.api, body).pipe(
       map((a) => this.normalizeIssue(a)),
       tap((created) => {
         this.issuesSubject.next([created, ...this.issuesSubject.value.filter((i) => i.id !== created.id)]);
@@ -106,12 +126,40 @@ export class SpecialIssueService {
     );
   }
 
-  updateIssue(id: string, patch: Omit<SpecialIssue, 'id'>): Observable<SpecialIssue> {
-    const dto = this.toUpsertDto(patch);
-    return this.http.patch<ApiSpecialIssue>(`${this.api}/${id}`, dto).pipe(
+  updateIssue(
+    id: string,
+    patch: Omit<SpecialIssue, 'id'>,
+    pdfFile?: File
+  ): Observable<SpecialIssue> {
+    const replace$: Observable<SpecialIssue | null> = pdfFile
+      ? this.replaceIssuePdf(id, pdfFile)
+      : of(null);
+
+    return replace$.pipe(
+      switchMap(() =>
+        this.http.patch<ApiSpecialIssue>(
+          `${this.api}/${id}`,
+          this.toMetadataDto(patch)
+        )
+      ),
       map((a) => this.normalizeIssue(a)),
       tap((updated) => {
         this.issuesSubject.next(this.issuesSubject.value.map((i) => (i.id === updated.id ? updated : i)));
+      })
+    );
+  }
+
+  replaceIssuePdf(id: string, pdfFile: File): Observable<SpecialIssue> {
+    const form = new FormData();
+    form.append('pdf', pdfFile, pdfFile.name);
+    return this.http.patch<ApiSpecialIssue>(`${this.api}/${id}/pdf`, form).pipe(
+      map((issue) => this.normalizeIssue(issue)),
+      tap((updated) => {
+        this.issuesSubject.next(
+          this.issuesSubject.value.map((item) =>
+            item.id === updated.id ? updated : item
+          )
+        );
       })
     );
   }
@@ -199,7 +247,7 @@ export class SpecialIssueService {
     return (list ?? []).map((a) => this.normalizeIssue(a));
   }
 
-  private toUpsertDto(payload: Omit<SpecialIssue, 'id'>): UpsertIssueDto {
+  private toMetadataDto(payload: Omit<SpecialIssue, 'id'>): IssueMetadataDto {
     return {
       title: payload.title,
       slug: payload.slug,
@@ -207,9 +255,23 @@ export class SpecialIssueService {
       academicYear: payload.academicYear,
       description: payload.description ?? undefined,
       coverImage: payload.coverImage,
-      pdfUrl: payload.pdfUrl,
       publishedAt: payload.publishedAt ? payload.publishedAt.toISOString() : undefined,
       status: payload.status,
     };
+  }
+
+  private toMultipartCreatePayload(
+    payload: Omit<SpecialIssue, 'id'>,
+    pdfFile: File
+  ): FormData {
+    const form = new FormData();
+    const metadata = this.toMetadataDto(payload);
+    for (const [key, value] of Object.entries(metadata)) {
+      if (value !== undefined && value !== null) {
+        form.append(key, String(value));
+      }
+    }
+    form.append('pdf', pdfFile, pdfFile.name);
+    return form;
   }
 }

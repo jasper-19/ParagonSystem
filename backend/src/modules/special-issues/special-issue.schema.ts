@@ -2,6 +2,53 @@ import { z } from "zod";
 
 export const ISSUE_STATUS_VALUES = ["draft", "published", "archived"] as const;
 export type IssueStatus = (typeof ISSUE_STATUS_VALUES)[number];
+export const ISSUE_TYPE_VALUES = [
+  "Tabloid",
+  "Newsletter",
+  "Literary Folio",
+] as const;
+export type IssueType = (typeof ISSUE_TYPE_VALUES)[number];
+
+export const SPECIAL_ISSUE_SORT_VALUES = [
+  "publishedAt",
+  "createdAt",
+  "title",
+  "academicYear",
+] as const;
+
+const positiveQueryInteger = (maximum: number, fallback: number) =>
+  z.preprocess(
+    value =>
+      typeof value === "string" && /^\d+$/.test(value)
+        ? Number(value)
+        : value,
+    z.number().int().min(1).max(maximum).default(fallback)
+  );
+
+export const specialIssueListQuerySchema = z.object({
+  page: positiveQueryInteger(100, 1),
+  limit: positiveQueryInteger(100, 50),
+  search: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .transform(value => value || undefined),
+  type: z.enum(ISSUE_TYPE_VALUES).optional(),
+  status: z.enum(ISSUE_STATUS_VALUES).optional(),
+  sortBy: z.enum(SPECIAL_ISSUE_SORT_VALUES).default("publishedAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export type SpecialIssueListQuery = {
+  page: number;
+  limit: number;
+  search?: string;
+  type?: IssueType;
+  status?: IssueStatus;
+  sortBy: (typeof SPECIAL_ISSUE_SORT_VALUES)[number];
+  sortOrder: "asc" | "desc";
+};
 
 // Supports base64 data URLs (short-term approach). The overall request body is capped in app.ts.
 // Base64 increases payload size by ~33%, so this needs to be comfortably above expected file sizes.
@@ -66,7 +113,9 @@ export const createIssueSchema = z.object({
     .max(255)
     .regex(/^[a-z0-9-]+$/, "Slug must be lowercase and hyphenated"),
 
-  type: z.string().min(1, "Type is required").max(100),
+  type: z.enum(ISSUE_TYPE_VALUES, {
+    error: () => ({ message: "Invalid Special Issue type" }),
+  }),
 
   academicYear: academicYearSchema,
 
@@ -83,6 +132,16 @@ export const createIssueSchema = z.object({
   }),
 });
 
+/** Multipart create payload; the PDF is supplied in the `pdf` file part. */
+export const createMultipartIssueSchema = createIssueSchema.omit({
+  pdfUrl: true,
+});
+
+export type CreateIssueInput = z.infer<typeof createIssueSchema>;
+export type CreateMultipartIssueInput = z.infer<
+  typeof createMultipartIssueSchema
+>;
+
 /** Schema for PATCH /api/issues/:id */
 export const updateIssueSchema = z
   .object({
@@ -95,15 +154,13 @@ export const updateIssueSchema = z
       .regex(/^[a-z0-9-]+$/, "Slug must be lowercase and hyphenated")
       .optional(),
 
-    type: z.string().min(1).max(100).optional(),
+    type: z.enum(ISSUE_TYPE_VALUES).optional(),
 
     academicYear: academicYearSchema.optional(),
 
     description: z.string().max(5000).optional().or(z.literal("")),
 
     coverImage: coverImageSchema.optional(),
-
-    pdfUrl: pdfUrlSchema.optional(),
 
     publishedAt: dateLikeStringSchema.optional().or(z.literal("")),
 

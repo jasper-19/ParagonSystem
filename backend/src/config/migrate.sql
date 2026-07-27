@@ -505,3 +505,220 @@ CREATE TABLE IF NOT EXISTS media_files (
 
 CREATE INDEX IF NOT EXISTS idx_media_files_created_at ON media_files(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_media_files_file_type ON media_files(file_type);
+
+-- ============================================================
+-- special_issues table and external PDF storage metadata
+-- ============================================================
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type WHERE typname = 'special_issue_type'
+  ) THEN
+    CREATE TYPE special_issue_type AS ENUM (
+      'Tabloid',
+      'Newsletter',
+      'Literary Folio'
+    );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_type WHERE typname = 'special_issue_status'
+  ) THEN
+    CREATE TYPE special_issue_status AS ENUM (
+      'draft',
+      'published',
+      'archived'
+    );
+  END IF;
+END
+$$;
+
+CREATE TABLE IF NOT EXISTS special_issues (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title           VARCHAR(255) NOT NULL,
+  slug            VARCHAR(255) NOT NULL UNIQUE,
+  type            special_issue_type NOT NULL,
+  academic_year   VARCHAR(20) NOT NULL,
+  description     TEXT,
+  cover_image     TEXT NOT NULL,
+  pdf_url         TEXT NOT NULL,
+  status          special_issue_status NOT NULL DEFAULT 'draft',
+  published_at    TIMESTAMP,
+  created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE special_issues
+  ADD COLUMN IF NOT EXISTS pdf_storage_path TEXT,
+  ADD COLUMN IF NOT EXISTS pdf_original_filename TEXT,
+  ADD COLUMN IF NOT EXISTS pdf_mime_type TEXT,
+  ADD COLUMN IF NOT EXISTS pdf_original_size_bytes BIGINT,
+  ADD COLUMN IF NOT EXISTS pdf_optimized_size_bytes BIGINT,
+  ADD COLUMN IF NOT EXISTS pdf_compression_percent NUMERIC(5, 2),
+  ADD COLUMN IF NOT EXISTS pdf_page_count INTEGER,
+  ADD COLUMN IF NOT EXISTS pdf_sha256 CHAR(64),
+  ADD COLUMN IF NOT EXISTS pdf_compression_profile TEXT,
+  ADD COLUMN IF NOT EXISTS pdf_processor TEXT;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'special_issues_pdf_sizes_nonnegative'
+      AND conrelid = 'special_issues'::regclass
+  ) THEN
+    ALTER TABLE special_issues
+      ADD CONSTRAINT special_issues_pdf_sizes_nonnegative
+      CHECK (
+        (pdf_original_size_bytes IS NULL OR pdf_original_size_bytes > 0)
+        AND
+        (pdf_optimized_size_bytes IS NULL OR pdf_optimized_size_bytes > 0)
+        AND
+        (
+          pdf_original_size_bytes IS NULL
+          OR pdf_optimized_size_bytes IS NULL
+          OR pdf_optimized_size_bytes <= pdf_original_size_bytes
+        )
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'special_issues_pdf_compression_percent_valid'
+      AND conrelid = 'special_issues'::regclass
+  ) THEN
+    ALTER TABLE special_issues
+      ADD CONSTRAINT special_issues_pdf_compression_percent_valid
+      CHECK (
+        pdf_compression_percent IS NULL
+        OR pdf_compression_percent BETWEEN 0 AND 100
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'special_issues_pdf_page_count_positive'
+      AND conrelid = 'special_issues'::regclass
+  ) THEN
+    ALTER TABLE special_issues
+      ADD CONSTRAINT special_issues_pdf_page_count_positive
+      CHECK (pdf_page_count IS NULL OR pdf_page_count > 0);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'special_issues_pdf_mime_type_valid'
+      AND conrelid = 'special_issues'::regclass
+  ) THEN
+    ALTER TABLE special_issues
+      ADD CONSTRAINT special_issues_pdf_mime_type_valid
+      CHECK (
+        pdf_mime_type IS NULL
+        OR pdf_mime_type = 'application/pdf'
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'special_issues_pdf_sha256_valid'
+      AND conrelid = 'special_issues'::regclass
+  ) THEN
+    ALTER TABLE special_issues
+      ADD CONSTRAINT special_issues_pdf_sha256_valid
+      CHECK (
+        pdf_sha256 IS NULL
+        OR pdf_sha256 ~ '^[a-f0-9]{64}$'
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'special_issues_pdf_metadata_complete'
+      AND conrelid = 'special_issues'::regclass
+  ) THEN
+    ALTER TABLE special_issues
+      ADD CONSTRAINT special_issues_pdf_metadata_complete
+      CHECK (
+        (
+          pdf_storage_path IS NULL
+          AND pdf_original_filename IS NULL
+          AND pdf_mime_type IS NULL
+          AND pdf_original_size_bytes IS NULL
+          AND pdf_optimized_size_bytes IS NULL
+          AND pdf_compression_percent IS NULL
+          AND pdf_page_count IS NULL
+          AND pdf_sha256 IS NULL
+          AND pdf_compression_profile IS NULL
+          AND pdf_processor IS NULL
+        )
+        OR
+        (
+          pdf_storage_path IS NOT NULL
+          AND pdf_original_filename IS NOT NULL
+          AND pdf_mime_type IS NOT NULL
+          AND pdf_original_size_bytes IS NOT NULL
+          AND pdf_optimized_size_bytes IS NOT NULL
+          AND pdf_compression_percent IS NOT NULL
+          AND pdf_page_count IS NOT NULL
+          AND pdf_sha256 IS NOT NULL
+          AND pdf_compression_profile IS NOT NULL
+          AND pdf_processor IS NOT NULL
+        )
+      );
+  END IF;
+END
+$$;
+
+CREATE INDEX IF NOT EXISTS idx_special_issues_academic_year
+  ON special_issues(academic_year);
+CREATE INDEX IF NOT EXISTS idx_special_issues_published_at
+  ON special_issues(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_special_issues_status
+  ON special_issues(status);
+CREATE INDEX IF NOT EXISTS idx_special_issues_type
+  ON special_issues(type);
+
+-- Special Issues are served through the authenticated Express API. Keep the
+-- underlying public-schema table inaccessible through Supabase's Data API.
+ALTER TABLE special_issues ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE ALL ON TABLE special_issues FROM anon;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    REVOKE ALL ON TABLE special_issues FROM authenticated;
+  END IF;
+END
+$$;
+
+-- Failed object deletions are kept outside the exposed public schema so they
+-- can be retried without exposing internal storage paths through the Data API.
+CREATE SCHEMA IF NOT EXISTS paragon_internal;
+REVOKE ALL ON SCHEMA paragon_internal FROM PUBLIC;
+
+CREATE TABLE IF NOT EXISTS paragon_internal.storage_cleanup_jobs (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  storage_path TEXT NOT NULL,
+  reason       TEXT NOT NULL,
+  attempts     INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  last_error   TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_storage_cleanup_jobs_pending_path
+  ON paragon_internal.storage_cleanup_jobs(storage_path)
+  WHERE completed_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_storage_cleanup_jobs_pending_created
+  ON paragon_internal.storage_cleanup_jobs(created_at)
+  WHERE completed_at IS NULL;
