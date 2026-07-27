@@ -9,6 +9,7 @@ import {
   OnDestroy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
 import { ImagePlaceholderComponent } from '../../../../shared/components/image-placeholder/image-placeholder';
@@ -16,7 +17,7 @@ import { ImagePlaceholderComponent } from '../../../../shared/components/image-p
 @Component({
   selector: 'app-categories-articles',
   standalone: true,
-  imports: [CommonModule, ImagePlaceholderComponent],
+  imports: [CommonModule, RouterLink, ImagePlaceholderComponent],
   templateUrl: './categories-articles.html'
 })
 export class CategoriesArticles
@@ -36,8 +37,11 @@ export class CategoriesArticles
 
   private observer!: IntersectionObserver;
 
-ngAfterViewInit(): void {
-  setTimeout(() => {
+  ngAfterViewInit(): void {
+    if (typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+
     this.observer = new IntersectionObserver(
       entries => {
         const entry = entries[0];
@@ -54,8 +58,7 @@ ngAfterViewInit(): void {
     );
 
     this.observer.observe(this.anchor.nativeElement);
-  });
-}
+  }
 
   ngOnDestroy(): void {
     this.observer?.disconnect();

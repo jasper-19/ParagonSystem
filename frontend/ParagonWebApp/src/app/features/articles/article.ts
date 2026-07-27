@@ -1,14 +1,13 @@
 import { Component, inject, DestroyRef, DOCUMENT } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { filter, map, tap } from 'rxjs/operators';
-import { Observable, distinctUntilChanged } from 'rxjs';
+import { distinctUntilChanged, shareReplay } from 'rxjs';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { ArticleService } from '../../core/services/article.service';
 import { ArticleViewService } from './services/article-view.service';
 import { Article as ArticleModel } from '../../models/article.model';
-import { ArticleView } from './models/article-view.model';
 import { ArticleSectionComponent } from './components/section/section';
 import { WelcomeBanner } from '../home/components/welcome-banner/welcomebanner';
 import { ArticleMeta } from './components/meta/meta';
@@ -17,9 +16,7 @@ import { OtherStories } from './components/other-stories/other-stories';
 import { StaffApplication } from './components/staff-application/staff-application';
 import { ArticleSkeleton } from './components/skeleton/article-skeleton';
 import { imageVariant } from '../../shared/utils/image-variant.util';
-import { ArticleFeed } from '../../models/article-feed.model';
 import { ImagePlaceholderComponent } from '../../shared/components/image-placeholder/image-placeholder';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-article',
@@ -59,11 +56,25 @@ export class ArticlePage {
 
   article$ = this.articleFeed$.pipe(
     map(feed => feed?.article),
-    filter((article): article is ArticleModel => !!article)
+    filter((article): article is ArticleModel => !!article),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   articleView$ = this.article$.pipe(
-    map(article => this.viewService.transform(article))
+    map(article => this.viewService.transform(article)),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  readingTime$ = this.article$.pipe(
+    map(article => {
+      const words = this.stripHtml(article.content)
+        .split(/\s+/)
+        .filter(Boolean)
+        .length;
+
+      return `${Math.max(1, Math.ceil(words / 220))} min read`;
+    }),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   ngOnInit(): void {
@@ -77,10 +88,11 @@ export class ArticlePage {
             !!slug
         ),
         tap(slug => {
-          console.log(
-            'Loading article:',
-            slug
-          );
+          this.document.defaultView?.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'auto',
+          });
 
           this.articleService
             .loadArticleFeed(slug);

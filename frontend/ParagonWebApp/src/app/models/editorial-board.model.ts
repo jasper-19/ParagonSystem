@@ -21,6 +21,7 @@ export interface EditorialBoardData {
   academicYear: string;
   sections: BoardSection[];
   adviser: BoardMember;
+  coAdviser: BoardMember;
 }
 
 export interface EditorialBoardMember {
@@ -55,6 +56,7 @@ export interface ApiActiveBoard {
   id: string;
   academicYear: string;
   adviserName: string;
+  coAdviserName: string;
   isActive: boolean;
   isSatisfied: boolean;
   createdAt: string;
@@ -66,6 +68,7 @@ export interface ApiBoard {
   id: string;
   academicYear: string;
   adviserName: string;
+  coAdviserName: string;
   isActive: boolean;
   isSatisfied: boolean;
   createdAt: string;

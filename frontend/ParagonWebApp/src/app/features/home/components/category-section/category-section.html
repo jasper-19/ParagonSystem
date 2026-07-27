@@ -1,500 +1,112 @@
-<section class="py-20 bg-[#000035]">
-  <ng-container *ngIf="hasAnyArticles(); else categoriesEmpty">
-
-    <!-- existing category layout -->
-      <!-- ═══════════════════════════════════════════
-       ROW 1 — SPORTS · NEWS · FEATURE
-  ════════════════════════════════════════════ -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6">
-
-    <!-- 3-Column Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border border-white/10 divide-y md:divide-y-0 md:divide-x divide-white/10">
-      <ng-container *ngFor="let block of topSections">
-        <ng-container *ngIf="articlesFor(block.category) as articles">
-        <div class="p-6 lg:p-8 flex flex-col gap-7">
-
-          <div class="flex items-center justify-between">
-            <h3 class="text-white font-black uppercase tracking-[0.3em] text-sm">{{ block.title }}</h3>
-            <span class="block w-8 h-0.5 bg-[#F4B400]"></span>
-          </div>
-
-          <article *ngIf="articlesFor(block.category).length" class="group cursor-pointer">
-            <a [routerLink]="['/article', articles[0].slug]" class="block">
-              <div class="w-full aspect-video overflow-hidden">
-                <ng-container *ngIf="articles[0].image; else mediumPlaceholder">
-                  <img
-                    [src]="imageVariant(articles[0].image, 'medium')"
-                    [alt]="articles[0].title"
-                    loading="lazy"
-                    class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  />
-                </ng-container>
-
-                <ng-template #mediumPlaceholder>
-                  <app-image-placeholder
-                    size="medium"
-                    label="No Image"
-                  ></app-image-placeholder>
-                </ng-template>
-              </div>
-              <div class="mt-4 pb-5 border-b border-white/10">
-                <p class="text-[#F4B400] text-[9px] font-bold uppercase tracking-[0.3em] mb-2">
-                  {{ articles[0].publishedAt | date:'MMM d, yyyy' }}
-                </p>
-                <h4 class="text-white text-lg font-black leading-snug group-hover:text-[#F4B400] transition-colors duration-200">
-                  {{ articles[0].title }}
-                </h4>
-                <div class="mt-3 flex flex-col gap-0.5">
-                  <p *ngIf="articles[0].author" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Written by </span>{{ articles[0].author }}
-                  </p>
-                  <p *ngIf="articles[0].graphicby" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Graphics by </span>{{ articles[0].graphicby }}
-                  </p>
-                  <p *ngIf="articles[0].photoby" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Photo by </span>{{ articles[0].photoby }}
-                  </p>
-                  <p *ngIf="articles[0].illusrationby" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Illustration by </span>{{ articles[0].illusrationby }}
-                  </p>
-                </div>
-              </div>
-            </a>
-          </article>
-
-          <div class="flex flex-col divide-y divide-white/8">
-            <article *ngFor="let a of articles.slice(1, 4); trackBy: trackByArticle" class="group cursor-pointer py-4 first:pt-0 last:pb-0">
-              <a [routerLink]="['/article', a.slug]" class="flex gap-4 items-start">
-                <div class="w-20 h-14 overflow-hidden shrink-0">
-                  <ng-container *ngIf="a.image; else thumbPlaceholder">
-                    <img
-                      [src]="imageVariant(a.image, 'thumbnail')"
-                      [alt]="a.title"
-                      loading="lazy"
-                      class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"
-                    />
-                  </ng-container>
-
-                  <ng-template #thumbPlaceholder>
-                    <app-image-placeholder
-                      size="small"
-                    ></app-image-placeholder>
-                  </ng-template>
-                </div>
-                <div>
-                  <p class="text-[#F4B400]/60 text-[9px] font-bold uppercase tracking-widest mb-1">
-                    {{ a.publishedAt | date:'MMM d, yyyy' }}
-                  </p>
-                  <h5 class="text-white/80 text-sm font-bold leading-snug group-hover:text-white transition-colors duration-200 line-clamp-2">
-                    {{ a.title }}
-                  </h5>
-                </div>
-              </a>
-            </article>
-          </div>
-        </div>
-        </ng-container>
-      </ng-container>
-    </div>
-  </div>
-
-
-  <div class="max-w-7xl mx-auto px-4 sm:px-6">
-
-    <!-- ── Desktop: 4-column bordered panel ── -->
-    <div class="hidden lg:grid grid-cols-4 border border-white/10 divide-x divide-white/10">
-
-      <!-- Column, Editorial, DevCom — identical loop -->
-      <ng-container *ngFor="let block of bottomSections">
-        <ng-container *ngIf="articlesFor(block.category) as articles">
-        <div class="p-6 xl:p-8 flex flex-col gap-6">
-
-          <div class="flex items-center justify-between">
-            <h3 class="text-white font-black uppercase tracking-[0.3em] text-sm">{{ block.title }}</h3>
-            <span class="block w-8 h-0.5 bg-[#F4B400]"></span>
-          </div>
-
-          <article *ngIf="articles.length" class="group cursor-pointer">
-            <a [routerLink]="['/article', articles[0].slug]" class="block">
-              <div class="w-full aspect-video overflow-hidden">
-                <ng-container *ngIf="articles[0].image; else mediumPlaceholder">
-                  <img
-                    [src]="imageVariant(articles[0].image, 'medium')"
-                    [alt]="articles[0].title"
-                    loading="lazy"
-                    class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  />
-                </ng-container>
-
-                <ng-template #mediumPlaceholder>
-                  <app-image-placeholder
-                    size="medium"
-                    label="No Image"
-                  ></app-image-placeholder>
-                </ng-template>
-              </div>
-              <div class="mt-4 pb-4 border-b border-white/10">
-                <p class="text-[#F4B400] text-[9px] font-bold uppercase tracking-[0.3em] mb-2">
-                  {{ block.title }}
-                </p>
-                <h4 class="text-white text-base font-black leading-snug group-hover:text-[#F4B400] transition-colors duration-200">
-                  {{ articles[0].title }}
-                </h4>
-                <div class="mt-3 flex flex-col gap-0.5">
-                  <p *ngIf="articles[0].author" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Written by </span>{{ articles[0].author }}
-                  </p>
-                  <p *ngIf="articles[0].graphicby" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Graphics </span>{{ articles[0].graphicby }}
-                  </p>
-                  <p *ngIf="articles[0].photoby" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Photo </span>{{ articles[0].photoby }}
-                  </p>
-                  <p *ngIf="articles[0].illusrationby" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Illustration </span>{{ articles[0].illusrationby }}
-                  </p>
-                </div>
-              </div>
-            </a>
-          </article>
-
-          <div class="flex flex-col divide-y divide-white/8">
-            <article *ngFor="let a of articles.slice(1, 4); trackBy: trackByArticle" class="group cursor-pointer py-3 first:pt-0 last:pb-0">
-              <a [routerLink]="['/article', a.slug]" class="flex gap-3 items-start">
-                <div class="w-16 h-12 overflow-hidden shrink-0">
-                  <ng-container *ngIf="a.image; else thumbPlaceholder">
-                    <img
-                      [src]="imageVariant(a.image, 'thumbnail')"
-                      [alt]="a.title"
-                      loading="lazy"
-                      class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"
-                    />
-                  </ng-container>
-
-                  <ng-template #thumbPlaceholder>
-                    <app-image-placeholder
-                      size="small"
-                    ></app-image-placeholder>
-                  </ng-template>
-                </div>
-                <div>
-                  <p class="text-[#F4B400]/60 text-[9px] font-bold uppercase tracking-widest mb-1">
-                    {{ a.publishedAt | date:'MMM d, yyyy' }}
-                  </p>
-                  <h5 class="text-white/80 text-xs font-bold leading-snug group-hover:text-white transition-colors duration-200 line-clamp-2">
-                    {{ a.title }}
-                  </h5>
-                </div>
-              </a>
-            </article>
-          </div>
-
-        </div>
-        </ng-container>
-      </ng-container>
-
-      <!-- Literary — 4th column, gold-tinted top accent -->
-      <ng-container *ngIf="articlesFor('Literary') as literary">
-        <ng-container *ngIf="literary.length">
-        <div class="flex flex-col border-t-2 border-t-[#F4B400]">
-
-          <!-- Literary Featured — tall hero -->
-          <article class="group cursor-pointer flex-1">
-            <a [routerLink]="['/article', literary[0].slug]" class="h-full flex flex-col">
-              <div class="w-full aspect-3/2 overflow-hidden">
-                <ng-container *ngIf="literary[0].image; else mediumPlaceholder">
-                  <img
-                    [src]="imageVariant(literary[0].image, 'medium')"
-                    [alt]="literary[0].title"
-                    loading="lazy"
-                    class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  />
-                </ng-container>
-
-                <ng-template #mediumPlaceholder>
-                  <app-image-placeholder
-                    size="medium"
-                    label="No Image"
-                  ></app-image-placeholder>
-                </ng-template>
-              </div>
-              <div class="p-6 xl:p-8 flex flex-col gap-4 flex-1">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-[#F4B400] font-black uppercase tracking-[0.3em] text-sm">Literary</h3>
-                  <span class="block w-8 h-0.5 bg-white/20"></span>
-                </div>
-                <div class="border-b border-white/10 pb-4">
-                  <p class="text-[#F4B400] text-[9px] font-bold uppercase tracking-[0.3em] mb-2">
-                    {{ literary[0].publishedAt | date:'MMM d, yyyy' }}
-                  </p>
-                  <h4 class="text-white text-base font-black leading-snug group-hover:text-[#F4B400] transition-colors duration-200">
-                    {{ literary[0].title }}
-                  </h4>
-                  <div class="mt-3 flex flex-col gap-0.5">
-                    <p *ngIf="literary[0].author" class="text-white/35 text-[10px]">
-                      <span class="text-white/20 font-bold uppercase tracking-wider">Written by </span>{{ literary[0].author }}
-                    </p>
-                    <p *ngIf="literary[0].graphicby" class="text-white/35 text-[10px]">
-                      <span class="text-white/20 font-bold uppercase tracking-wider">Graphics </span>{{ literary[0].graphicby }}
-                    </p>
-                    <p *ngIf="literary[0].photoby" class="text-white/35 text-[10px]">
-                      <span class="text-white/20 font-bold uppercase tracking-wider">Photo </span>{{ literary[0].photoby }}
-                    </p>
-                    <p *ngIf="literary[0].illusrationby" class="text-white/35 text-[10px]">
-                      <span class="text-white/20 font-bold uppercase tracking-wider">Illustration </span>{{ literary[0].illusrationby }}
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Literary mini list -->
-                <div class="flex flex-col divide-y divide-white/8 flex-1">
-                  <article *ngFor="let a of literary.slice(1, 4); trackBy: trackByArticle" class="group/mini cursor-pointer py-3 first:pt-0 last:pb-0">
-                    <a [routerLink]="['/article', a.slug]" class="flex gap-3 items-start">
-                      <div class="w-16 h-12 overflow-hidden shrink-0">
-                        <ng-container *ngIf="a.image; else thumbPlaceholder">
-                          <img
-                            [src]="imageVariant(a.image, 'thumbnail')"
-                            [alt]="a.title"
-                            loading="lazy"
-                            class="w-full h-full object-cover object-center transition-transform duration-300 group-hover/mini:scale-110"/>
-                          </ng-container>
-                          <ng-template #thumbPlaceholder>
-                            <app-image-placeholder
-                              size="small"
-                            ></app-image-placeholder>
-                          </ng-template>
-                      </div>
-                      <div>
-                        <p class="text-[#F4B400]/60 text-[9px] font-bold uppercase tracking-widest mb-1">
-                          {{ a.publishedAt | date:'MMM d, yyyy' }}
-                        </p>
-                        <h5 class="text-white/80 text-xs font-bold leading-snug group-hover/mini:text-white transition-colors duration-200 line-clamp-2">
-                          {{ a.title }}
-                        </h5>
-                      </div>
-                    </a>
-                  </article>
-                </div>
-
-              </div>
-            </a>
-          </article>
-
-        </div>
-        </ng-container>
-      </ng-container>
-
+<section aria-labelledby="sections-heading" class="bg-white py-14 sm:py-18 lg:py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6">
+    <div appScrollReveal="up" class="mb-8 max-w-2xl sm:mb-10">
+      <p class="mb-2 text-xs font-black uppercase tracking-[0.22em] text-[#f4b400]">Explore the publication</p>
+      <h2 id="sections-heading" class="text-3xl font-black tracking-tight text-[#000035] sm:text-4xl">
+        Stories by section
+      </h2>
+      <p class="mt-3 text-sm leading-6 text-[#000035]/65 sm:text-base">
+        Follow the beats, perspectives, and creative work that shape our community.
+      </p>
     </div>
 
-    <!-- ── Tablet (md) + Mobile: stacked 2-col then 1-col ── -->
-    <div class="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-0 border border-white/10 divide-y sm:divide-y-0 divide-white/10">
-
-      <ng-container *ngFor="let block of bottomSections">
-        <ng-container *ngIf="articlesFor(block.category) as articles">
-        <div class="p-6 flex flex-col gap-6 sm:border-r sm:last:border-r-0 border-white/10"
-             [class.sm:col-span-1]="true">
-
-          <div class="flex items-center justify-between">
-            <h3 class="text-white font-black uppercase tracking-[0.3em] text-sm">{{ block.title }}</h3>
-            <span class="block w-8 h-0.5 bg-[#F4B400]"></span>
+    <ng-container *ngIf="visibleSections.length; else categoriesEmpty">
+      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <section
+          *ngFor="let block of visibleSections; let i = index"
+          appScrollReveal="up"
+          [revealDelay]="i * 65"
+          [attr.aria-labelledby]="'category-' + block.category"
+          class="flex min-w-0 flex-col border border-[#000035]/12 bg-[#000035]"
+        >
+          <div class="flex items-center justify-between gap-4 border-b border-white/15 px-5 py-4">
+            <h3 [id]="'category-' + block.category" class="text-sm font-black uppercase tracking-[0.18em] text-white">
+              {{ block.title }}
+            </h3>
+            <a
+              routerLink="/top-stories"
+              [queryParams]="{ category: block.category }"
+              class="inline-flex min-h-11 items-center text-xs font-bold text-[#F4B400] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
+              [attr.aria-label]="'View all ' + block.title + ' stories'"
+            >
+              View all <span aria-hidden="true" class="ml-1">→</span>
+            </a>
           </div>
 
-          <article *ngIf="articles.length" class="group cursor-pointer">
-            <a [routerLink]="['/article', articles[0].slug]" class="block">
-              <div class="w-full aspect-video overflow-hidden">
-                <ng-container *ngIf="articles[0].image; else mediumPlaceholder">
+          <article class="group">
+            <a
+              [routerLink]="['/article', block.articles[0].slug]"
+              class="block focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-[#F4B400]"
+            >
+              <div class="aspect-video overflow-hidden bg-white/5">
+                <ng-container *ngIf="block.articles[0].image; else mediumPlaceholder">
                   <img
-                    [src]="imageVariant(articles[0].image, 'medium')"
-                    [alt]="articles[0].title"
+                    [src]="imageVariant(block.articles[0].image, 'medium')"
+                    [alt]="block.articles[0].title"
                     loading="lazy"
-                    class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                    decoding="async"
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </ng-container>
                 <ng-template #mediumPlaceholder>
-                  <app-image-placeholder
-                    size="medium"
-                    label="No Image"
-                  ></app-image-placeholder>
+                  <app-image-placeholder size="medium" label="No image available" />
                 </ng-template>
-
-                <ng-container *ngIf="!articles[0].image else mediumPlaceholder">
-                  <img
-                    [src]="imageVariant(articles[0].image, 'medium')"
-                    [alt]="articles[0].title"
-                    loading="lazy"
-                    class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"/>
-                  </ng-container>
-
-                  <ng-template #mediumPlaceholder>
-                    <app-image-placeholder
-                      size="medium"
-                      label="No Image"
-                    ></app-image-placeholder>
-                  </ng-template>
-
-                </div>
-              <div class="mt-4 pb-4 border-b border-white/10">
-                <p class="text-[#F4B400] text-[9px] font-bold uppercase tracking-[0.3em] mb-2">
-                  {{ articles[0].publishedAt | date:'MMM d, yyyy' }}
-                </p>
-                <h4 class="text-white text-lg font-black leading-snug group-hover:text-[#F4B400] transition-colors duration-200">
-                  {{ articles[0].title }}
+              </div>
+              <div class="p-5">
+                <time class="text-[0.625rem] font-bold uppercase tracking-widest text-[#F4B400]">
+                  {{ block.articles[0].publishedAt | date:'MMM d, yyyy' }}
+                </time>
+                <h4 class="mt-2 text-pretty text-xl font-black leading-snug text-white transition-colors group-hover:text-[#F4B400]">
+                  {{ block.articles[0].title }}
                 </h4>
-                <div class="mt-3 flex flex-col gap-0.5">
-                  <p *ngIf="articles[0].author" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Written by </span>{{ articles[0].author }}
-                  </p>
-                  <p *ngIf="articles[0].graphicby" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Graphics </span>{{ articles[0].graphicby }}
-                  </p>
-                  <p *ngIf="articles[0].photoby" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Photo </span>{{ articles[0].photoby }}
-                  </p>
-                  <p *ngIf="articles[0].illusrationby" class="text-white/35 text-[10px]">
-                    <span class="text-white/20 font-bold uppercase tracking-wider">Illustration </span>{{ articles[0].illusrationby }}
-                  </p>
+                <div class="mt-3 space-y-1 text-xs text-white/55">
+                  <p *ngIf="block.articles[0].author"><span class="font-semibold text-white/75">Written by</span> {{ block.articles[0].author }}</p>
+                  <p *ngIf="block.articles[0].photoby"><span class="font-semibold text-white/75">Photo by</span> {{ block.articles[0].photoby }}</p>
+                  <p *ngIf="block.articles[0].graphicby"><span class="font-semibold text-white/75">Graphics by</span> {{ block.articles[0].graphicby }}</p>
+                  <p *ngIf="block.articles[0].illusrationby"><span class="font-semibold text-white/75">Illustration by</span> {{ block.articles[0].illusrationby }}</p>
                 </div>
               </div>
             </a>
           </article>
 
-          <div class="flex flex-col divide-y divide-white/8">
-            <article *ngFor="let a of articles.slice(1, 4)" class="group cursor-pointer py-4 first:pt-0 last:pb-0">
-              <a [routerLink]="['/article', a.slug]" class="flex gap-4 items-start">
-                <div class="w-20 h-14 overflow-hidden shrink-0">
-                  <img
-                    [src]="imageVariant(a.image, 'thumbnail')"
-                    [alt]="a.title"
-                    loading="lazy"
-                    class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"/>
-                </div>
-                <div>
-                  <p class="text-[#F4B400]/60 text-[9px] font-bold uppercase tracking-widest mb-1">
-                    {{ a.publishedAt | date:'MMM d, yyyy' }}
-                  </p>
-                  <h5 class="text-white/80 text-sm font-bold leading-snug group-hover:text-white transition-colors duration-200 line-clamp-2">
-                    {{ a.title }}
-                  </h5>
-                </div>
-              </a>
-            </article>
-          </div>
-
-        </div>
-        </ng-container>
-      </ng-container>
-
-      <!-- Literary on mobile/tablet — full-width bottom cell -->
-    <ng-container *ngIf="articlesFor('Literary') as literary">
-      <ng-container *ngIf="literary.length">
-        <div class="sm:col-span-2 border-white/10 border-t-2 border-t-[#F4B400] p-6 flex flex-col gap-6">
-
-          <div class="flex items-center justify-between">
-            <h3 class="text-[#F4B400] font-black uppercase tracking-[0.3em] text-sm">Literary</h3>
-            <span class="block w-8 h-0.5 bg-white/20"></span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <!-- Literary featured -->
-            <article class="group cursor-pointer">
-              <a [routerLink]="['/article', literary[0].slug]" class="block">
-                <div class="w-full aspect-video overflow-hidden">
-                  <ng-container *ngIf="literary[0].image; else mediumPlaceholder">
-                  <img
-                    [src]="imageVariant(literary[0].image, 'medium')"
-                    [alt]="literary[0].title"
-                    loading="lazy"
-                    class="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"/>
-                    </ng-container>
-
-                  <ng-template #mediumPlaceholder>
-                    <app-image-placeholder
-                      size="medium"
-                      label="No Image"
-                    ></app-image-placeholder>
+          <div *ngIf="block.articles.length > 1" class="mt-auto divide-y divide-white/10 border-t border-white/10 px-5">
+            <article *ngFor="let article of block.articles.slice(1, 4); trackBy: trackByArticle">
+              <a
+                [routerLink]="['/article', article.slug]"
+                class="group/brief grid min-h-22 grid-cols-[4.5rem_1fr] items-center gap-3 py-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
+              >
+                <div class="aspect-4/3 overflow-hidden bg-white/5">
+                  <ng-container *ngIf="article.image; else thumbPlaceholder">
+                    <img
+                      [src]="imageVariant(article.image, 'thumbnail')"
+                      [alt]="article.title"
+                      loading="lazy"
+                      decoding="async"
+                      class="h-full w-full object-cover transition-transform duration-300 group-hover/brief:scale-105"
+                    />
+                  </ng-container>
+                  <ng-template #thumbPlaceholder>
+                    <app-image-placeholder size="small" />
                   </ng-template>
-
                 </div>
-                <div class="mt-4 pb-4 border-b border-white/10">
-                  <p class="text-[#F4B400] text-[9px] font-bold uppercase tracking-[0.3em] mb-2">
-                    {{ literary[0].publishedAt | date:'MMM d, yyyy' }}
-                  </p>
-                  <h4 class="text-white text-lg font-black leading-snug group-hover:text-[#F4B400] transition-colors duration-200">
-                    {{ literary[0].title }}
+                <div class="min-w-0">
+                  <time class="text-[0.625rem] text-[#F4B400]/75">{{ article.publishedAt | date:'MMM d' }}</time>
+                  <h4 class="mt-1 line-clamp-2 text-sm font-bold leading-snug text-white/85 group-hover/brief:text-white">
+                    {{ article.title }}
                   </h4>
-                  <div class="mt-3 flex flex-col gap-0.5">
-                    <p *ngIf="literary[0].author" class="text-white/35 text-[10px]">
-                      <span class="text-white/20 font-bold uppercase tracking-wider">Written by </span>{{ literary[0].author }}
-                    </p>
-                    <p *ngIf="literary[0].graphicby" class="text-white/35 text-[10px]">
-                      <span class="text-white/20 font-bold uppercase tracking-wider">Graphics </span>{{ literary[0].graphicby }}
-                    </p>
-                    <p *ngIf="literary[0].photoby" class="text-white/35 text-[10px]">
-                      <span class="text-white/20 font-bold uppercase tracking-wider">Photo </span>{{ literary[0].photoby }}
-                    </p>
-                    <p *ngIf="literary[0].illusrationby" class="text-white/35 text-[10px]">
-                      <span class="text-white/20 font-bold uppercase tracking-wider">Illustration </span>{{ literary[0].illusrationby }}
-                    </p>
-                  </div>
                 </div>
               </a>
             </article>
-
-            <!-- Literary mini list -->
-            <div class="flex flex-col divide-y divide-white/8">
-              <article *ngFor="let a of literary.slice(1, 4)" class="group cursor-pointer py-4 first:pt-0 last:pb-0">
-                <a [routerLink]="['/article', a.slug]" class="flex gap-4 items-start">
-                  <div class="w-20 h-14 overflow-hidden shrink-0">
-                    <ng-container *ngIf="a.image; else thumbPlaceholder">
-                      <img
-                        [src]="imageVariant(a.image, 'thumbnail')"
-                        [alt]="a.title"
-                        loading="lazy"
-                        class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"/>
-                    </ng-container>
-
-                    <ng-template #thumbPlaceholder>
-                      <app-image-placeholder
-                        size="small"
-                      ></app-image-placeholder>
-                    </ng-template>
-
-                  </div>
-                  <div>
-                    <p class="text-[#F4B400]/60 text-[9px] font-bold uppercase tracking-widest mb-1">
-                      {{ a.publishedAt | date:'MMM d, yyyy' }}
-                    </p>
-                    <h5 class="text-white/80 text-sm font-bold leading-snug group-hover:text-white transition-colors duration-200 line-clamp-2">
-                      {{ a.title }}
-                    </h5>
-                  </div>
-                </a>
-              </article>
-            </div>
           </div>
-
-        </div>
-      </ng-container>
+        </section>
+      </div>
     </ng-container>
-
-    </div>
   </div>
-  </ng-container>
 </section>
 
 <ng-template #categoriesEmpty>
-  <div class="max-w-7xl mx-auto px-6 text-center border border-white/10 py-16">
-    <p class="text-xs font-black uppercase tracking-[0.3em] text-[#F4B400] mb-3">
-      Categories
-    </p>
-
-    <h2 class="text-2xl sm:text-3xl font-black text-white">
-      No category stories available.
-    </h2>
-
-    <p class="mt-3 text-sm text-white/50">
-      Published articles will appear in their assigned categories.
-    </p>
+  <div appScrollReveal="up" class="border border-[#000035]/10 bg-[#fffdf7] px-6 py-12 text-center">
+    <h3 class="text-2xl font-black text-[#000035]">Section coverage is being prepared.</h3>
+    <p class="mt-3 text-sm leading-6 text-[#000035]/60">Published stories will appear in their assigned sections.</p>
   </div>
 </ng-template>
-

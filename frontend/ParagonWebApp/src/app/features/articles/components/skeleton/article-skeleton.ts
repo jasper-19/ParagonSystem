@@ -7,4 +7,6 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   templateUrl: './article-skeleton.html'
 })
-export class ArticleSkeleton {}
+export class ArticleSkeleton {
+  readonly lineWidths = ['100%', '92%', '98%', '76%', '94%', '86%', '100%', '68%'];
+}

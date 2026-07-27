@@ -1028,7 +1028,7 @@
               text-[#000035]
               sm:text-xl"
       >
-        Publication Adviser
+        Publication Adviser{{ board.coAdviser.name ? 's' : '' }}
       </h2>
 
       <p
@@ -1036,7 +1036,7 @@
               text-sm leading-6
               text-slate-500"
       >
-        The faculty adviser providing guidance,
+        The faculty adviser{{ board.coAdviser.name ? 's' : '' }} providing guidance,
         oversight, and institutional support to
         the editorial board.
       </p>
@@ -1096,7 +1096,7 @@
                 uppercase tracking-[0.14em]
                 text-[#000035]"
         >
-           Adviser Profile
+           Adviser Profile{{ board.coAdviser.name ? 's' : '' }}
         </h3>
       </div>
 
@@ -1174,6 +1174,53 @@
         </p>
       </div>
     </div>
+
+    @if (board.coAdviser.name) {
+      <div
+        class="grid gap-5 border-t border-slate-200 px-4 py-5
+              sm:grid-cols-[auto_minmax(0,1fr)]
+              sm:items-center
+              sm:px-6"
+      >
+        <div
+          aria-hidden="true"
+          class="mx-auto flex h-20 w-20
+                shrink-0 items-center
+                justify-center rounded-full
+                bg-linear-to-br
+                from-[#000035] to-[#1a1a4d]
+                text-2xl font-extrabold
+                text-[#F4B400]
+                ring-4 ring-[#F4B400]/25
+                sm:mx-0"
+        >
+          {{
+            board.coAdviser.initials ||
+            board.coAdviser.name.charAt(0)
+          }}
+        </div>
+
+        <div class="min-w-0 text-center sm:text-left">
+          <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9a6700]">
+            Co-adviser
+          </p>
+          <h3
+            class="mt-1 wrap-break-word
+                  text-xl font-extrabold
+                  leading-tight text-[#000035]
+                  sm:text-2xl"
+          >
+            {{ board.coAdviser.name }}
+          </h3>
+          <p class="mt-1 text-sm font-semibold text-slate-600">
+            {{ board.coAdviser.position }}
+          </p>
+          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+            Works alongside the publication adviser to guide and support the editorial board.
+          </p>
+        </div>
+      </div>
+    }
   </section>
 
       </div>

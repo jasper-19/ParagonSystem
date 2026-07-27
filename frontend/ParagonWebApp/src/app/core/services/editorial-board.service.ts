@@ -10,6 +10,7 @@ export type AssignApplicationToBoardResponse = {
     id: string;
     academicYear: string;
     adviserName: string;
+    coAdviserName: string;
     isActive: boolean;
     isSatisfied: boolean;
     createdAt?: string;
@@ -219,6 +220,7 @@ export class EditorialBoardService {
     academicYear: '',
     sections: [],
     adviser: { name: '', position: 'Publication Adviser', initials: '' },
+    coAdviser: { name: '', position: 'Publication Co-adviser', initials: '' },
   });
 
   readonly board$ = this.boardSubject.asObservable();
@@ -445,6 +447,11 @@ loadActiveBoard(): Observable<void> {
           apiBoard.adviserName
         ),
       },
+      coAdviser: {
+        name: apiBoard.coAdviserName ?? '',
+        position: 'Publication Co-adviser',
+        initials: this.toInitials(apiBoard.coAdviserName ?? ''),
+      },
 
     });
 
@@ -527,12 +534,20 @@ loadActiveBoard(): Observable<void> {
    * Returns the newly created ApiBoard so callers can update their local lists
    * without an extra round-trip.
    */
-  createBoard(academicYear: string, adviserName: string): Observable<ApiBoard> {
-    return this.http.post<ApiActiveBoard>(this.apiUrl, { academicYear, adviserName }).pipe(
+  createBoard(
+    academicYear: string,
+    adviserName: string,
+    coAdviserName?: string
+  ): Observable<ApiBoard> {
+    return this.http.post<ApiActiveBoard>(
+      this.apiUrl,
+      { academicYear, adviserName, coAdviserName: coAdviserName || undefined }
+    ).pipe(
       map((board) => ({
         id: board.id,
         academicYear: board.academicYear,
         adviserName: board.adviserName,
+        coAdviserName: board.coAdviserName ?? '',
         isActive: board.isActive,
         isSatisfied: board.isSatisfied ?? false,
         createdAt: board.createdAt,
@@ -588,10 +603,16 @@ loadActiveBoard(): Observable<void> {
     );
   }
 
-  updateMemberOnBoard(boardId: string, memberId: string, section: string, role: string): Observable<ApiBoardMember> {
+  updateMemberOnBoard(
+    boardId: string,
+    memberId: string,
+    section: string,
+    role: string,
+    yearLevel?: string | null
+  ): Observable<ApiBoardMember> {
     return this.http.patch<ApiBoardMember>(
       `${this.apiUrl}/${boardId}/members/${memberId}`,
-      { section, role }
+      { section, role, yearLevel }
     );
   }
 
@@ -635,6 +656,11 @@ loadActiveBoard(): Observable<void> {
         name: '',
         position:
           'Publication Adviser',
+        initials: '',
+      },
+      coAdviser: {
+        name: '',
+        position: 'Publication Co-adviser',
         initials: '',
       },
     });

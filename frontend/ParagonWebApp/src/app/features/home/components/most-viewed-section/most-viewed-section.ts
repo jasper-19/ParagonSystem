@@ -4,11 +4,12 @@ import { RouterModule } from '@angular/router';
 import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
 import { ImagePlaceholderComponent } from '../../../../shared/components/image-placeholder/image-placeholder';
+import { ScrollRevealDirective } from '../../scroll-reveal.directive';
 
 @Component({
   selector: 'app-most-viewed-section',
   standalone: true,
-  imports: [CommonModule, RouterModule, ImagePlaceholderComponent],
+  imports: [CommonModule, RouterModule, ImagePlaceholderComponent, ScrollRevealDirective],
   templateUrl: './most-viewed-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

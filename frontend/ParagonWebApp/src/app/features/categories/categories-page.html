@@ -1,214 +1,182 @@
-<!-- ========================================= -->
-<!-- HERO SECTION -->
-<!-- ========================================= -->
+<div class="min-h-screen bg-slate-50 text-slate-950">
+  <app-categories-hero
+    [title]="selectedCategory() ?? 'Top Stories'"
+    label="Paragon"
+    subtitle="Explore timely reporting, thoughtful perspectives, and stories from across the community."
+  />
 
-<app-categories-hero
-  [title]="selectedCategory() ?? 'ALL STORIES'"
-  label="CURATED CONTENT">
-</app-categories-hero>
-
-<!-- ========================================= -->
-<!-- SEARCH SECTION (Overlapping Hero) -->
-<!-- ========================================= -->
-
-<section class="relative -mt-20 z-10">
-
-  <div class="max-w-7xl mx-auto px-6">
-
-    <div class="bg-white rounded-3xl shadow-2xl border-2 border-slate-200 p-8 md:p-10 backdrop-blur-sm">
-
-      <!-- Top Row -->
-      <div class="flex flex-col lg:flex-row gap-4 lg:items-center">
-
-        <!-- 🔎 Search Input -->
-        <div class="flex-1 relative group">
-          <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg class="w-5 h-5 text-slate-400 group-focus-within:text-[#F4B400] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-          </div>
-          <input
-            #searchInput
-            type="text"
-            placeholder="Search articles..."
-            class="w-full border-2 border-slate-200 rounded-xl pl-12 pr-4 py-3.5
-                   focus:outline-none focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10
-                   transition-all duration-200 bg-slate-50/50 placeholder:text-slate-400"
-            [value]="search()"
-            (input)="search.set(searchInput.value)"
-          />
-        </div>
-
-        <!-- 🔄 Sort Dropdown -->
-        <div class="w-full lg:w-64 relative">
-          <select
-            #sortSelect
-            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3.5
-                   focus:outline-none focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10
-                   transition-all duration-200 bg-slate-50/50 appearance-none cursor-pointer
-                   font-medium text-[#000035]"
-            [value]="sort()"
-            (change)="setSort(sortSelect.value)"
-          >
-            <option value="latest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="mostViewed">Most Viewed</option>
-          </select>
-          <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- ❌ Clear Filters -->
-        <button
-          class="px-6 py-3.5 border-2 border-slate-200 rounded-xl font-semibold text-slate-700
-                 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200
-                 flex items-center justify-center gap-2"
-          (click)="clearFilters()"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-          <span>Clear</span>
-        </button>
-
-      </div>
-
-      <!-- Divider -->
-      <div class="relative my-8">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t-2 border-slate-100"></div>
-        </div>
-      </div>
-
-      <!-- 📂 Category Section -->
-      <div class="space-y-4">
-
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
-            </svg>
-            <span class="text-sm font-bold text-[#000035] uppercase tracking-wider">
-              Categories
-            </span>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap gap-3">
-
-          <!-- ALL STORIES -->
-          <button
-            class="px-5 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 shadow-sm"
-            [class.bg-gradient-to-r]="!selectedCategory()"
-            [class.from-[#000035]]="!selectedCategory()"
-            [class.to-[#001f5c]]="!selectedCategory()"
-            [class.text-white]="!selectedCategory()"
-            [class.shadow-lg]="!selectedCategory()"
-            [class.shadow-[#000035]/20]="!selectedCategory()"
-            [class.bg-white]="selectedCategory()"
-            [class.border-2]="selectedCategory()"
-            [class.border-slate-200]="selectedCategory()"
-            [class.text-slate-700]="selectedCategory()"
-            [class.hover:border-slate-300]="selectedCategory()"
-            [class.hover:bg-slate-50]="selectedCategory()"
-            (click)="setCategory(undefined)"
-          >
-            ALL STORIES
-          </button>
-
-          <!-- Dynamic Categories -->
-          <button
-            *ngFor="let cat of categories()"
-            class="px-5 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 shadow-sm"
-            [class.bg-gradient-to-r]="selectedCategory() === cat"
-            [class.from-[#000035]]="selectedCategory() === cat"
-            [class.to-[#001f5c]]="selectedCategory() === cat"
-            [class.text-white]="selectedCategory() === cat"
-            [class.shadow-lg]="selectedCategory() === cat"
-            [class.shadow-[#000035]/20]="selectedCategory() === cat"
-            [class.bg-white]="selectedCategory() !== cat"
-            [class.border-2]="selectedCategory() !== cat"
-            [class.border-slate-200]="selectedCategory() !== cat"
-            [class.text-slate-700]="selectedCategory() !== cat"
-            [class.hover:border-slate-300]="selectedCategory() !== cat"
-            [class.hover:bg-slate-50]="selectedCategory() !== cat"
-            (click)="setCategory(cat)"
-          >
-            {{ cat }}
-          </button>
-
-        </div>
-
-      </div>
-
-      <!-- Divider -->
-      <div class="relative my-8">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t-2 border-slate-100"></div>
-        </div>
-      </div>
-
-      <!-- 🏷 Tags Section -->
-      <div class="space-y-4">
-
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
-            </svg>
-            <span class="text-sm font-bold text-[#000035] uppercase tracking-wider">
-              Tags
-            </span>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap gap-3">
-
-          <button
-            *ngFor="let tag of visibleTags()"
-            class="px-5 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 shadow-sm"
-            [class.bg-[#F4B400]]="selectedTags().includes(tag)"
-            [class.text-[#000035]]="selectedTags().includes(tag)"
-            [class.shadow-lg]="selectedTags().includes(tag)"
-            [class.shadow-[#F4B400]/30]="selectedTags().includes(tag)"
-            [class.bg-white]="!selectedTags().includes(tag)"
-            [class.border-2]="!selectedTags().includes(tag)"
-            [class.border-slate-200]="!selectedTags().includes(tag)"
-            [class.text-slate-700]="!selectedTags().includes(tag)"
-            [class.hover:border-slate-300]="!selectedTags().includes(tag)"
-            [class.hover:bg-slate-50]="!selectedTags().includes(tag)"
-            (click)="toggleTag(tag)"
-          >
-            {{ formatTag(tag) }}
-          </button>
-
-            <p *ngIf="tags().length > visibleTags().length" class="text-xs text-gray-500 mt-3">
-              +{{ tags().length - visibleTags().length }} more tags
+  <main class="relative">
+    <section
+      class="relative z-10 mx-auto -mt-12 w-full max-w-7xl px-4 sm:-mt-16 sm:px-6 lg:-mt-20"
+      aria-labelledby="story-filters-title"
+    >
+      <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.35)] sm:rounded-3xl">
+        <header class="flex flex-col gap-4 border-b border-slate-200 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <div class="min-w-0">
+            <p class="mb-1 text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#f4b400]">
+              Discover
             </p>
+            <h2 id="story-filters-title" class="text-lg font-black tracking-tight text-[#000035] sm:text-xl">
+              Find the stories that matter to you
+            </h2>
+          </div>
 
+          <button
+            type="button"
+            class="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+            [disabled]="!hasActiveFilters()"
+            (click)="clearFilters()"
+          >
+            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+            <span>Clear filters</span>
+            <span *ngIf="activeFilterCount() > 0" class="tabular-nums">({{ activeFilterCount() }})</span>
+          </button>
+        </header>
+
+        <div class="space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+          <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_17rem]">
+            <label class="grid gap-2">
+              <span class="text-xs font-extrabold text-slate-700">Search stories</span>
+              <span class="relative">
+                <svg class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="11" cy="11" r="7" stroke-width="2" />
+                  <path d="m20 20-3.5-3.5" stroke-linecap="round" stroke-width="2" />
+                </svg>
+                <input
+                  #searchInput
+                  type="search"
+                  inputmode="search"
+                  autocomplete="off"
+                  placeholder="Search by title, topic, or author"
+                  class="min-h-12 w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-11 pr-4 text-[0.9375rem] text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
+                  [value]="searchQuery()"
+                  (input)="onSearchInput(searchInput.value)"
+                />
+              </span>
+            </label>
+
+            <label class="grid gap-2">
+              <span class="text-xs font-extrabold text-slate-700">Sort by</span>
+              <span class="relative">
+                <select
+                  #sortSelect
+                  class="min-h-12 w-full appearance-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 pr-11 text-[0.9375rem] font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
+                  [value]="sort()"
+                  (change)="setSort(sortSelect.value)"
+                >
+                  <option value="latest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="mostViewed">Most viewed</option>
+                </select>
+                <svg class="pointer-events-none absolute right-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="m7 10 5 5 5-5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                </svg>
+              </span>
+            </label>
+          </div>
+
+          <fieldset class="min-w-0 border-t border-slate-200 pt-5">
+            <legend class="flex items-center gap-2 pr-3 text-xs font-extrabold tracking-wide text-slate-700">
+              <svg aria-hidden="true" class="h-4 w-4 text-[#f4b400]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="7" height="7" x="3" y="3" rx="1"/>
+                <rect width="7" height="7" x="14" y="3" rx="1"/>
+                <rect width="7" height="7" x="14" y="14" rx="1"/>
+                <rect width="7" height="7" x="3" y="14" rx="1"/>
+              </svg>
+              Browse by category
+            </legend>
+
+            <div class="-mx-4 mt-3 flex snap-x gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+              <button
+                type="button"
+                class="min-h-11 shrink-0 snap-start rounded-xl border px-4 py-2 text-sm font-bold transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
+                [ngClass]="!selectedCategory()
+                  ? 'border-[#000035] bg-[#000035] text-white shadow-md'
+                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'"
+                [attr.aria-pressed]="!selectedCategory()"
+                (click)="setCategory(undefined)"
+              >
+                All stories
+              </button>
+
+              <button
+                *ngFor="let category of categories()"
+                type="button"
+                class="min-h-11 shrink-0 snap-start rounded-xl border px-4 py-2 text-sm font-bold transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
+                [ngClass]="selectedCategory() === category
+                  ? 'border-[#000035] bg-[#000035] text-white shadow-md'
+                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'"
+                [attr.aria-pressed]="selectedCategory() === category"
+                (click)="setCategory(category)"
+              >
+                {{ category }}
+              </button>
+            </div>
+          </fieldset>
+
+          <fieldset *ngIf="tags().length > 0" class="min-w-0 border-t border-slate-200 pt-5">
+            <legend class="flex items-center gap-2 pr-3 text-xs font-extrabold tracking-wide text-slate-700">
+              <svg aria-hidden="true" class="h-4 w-4 text-[#f4b400]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 5h20"/>
+                <path d="M6 12h12"/>
+                <path d="M9 19h6"/>
+              </svg>
+              Refine by topic
+            </legend>
+
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button
+                *ngFor="let tag of visibleTags()"
+                type="button"
+                class="min-h-11 rounded-full border px-4 py-2 text-sm font-bold transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
+                [ngClass]="selectedTags().includes(tag)
+                  ? 'border-[#F4B400] bg-[#F4B400] text-[#000035] shadow-md'
+                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'"
+                [attr.aria-pressed]="selectedTags().includes(tag)"
+                (click)="toggleTag(tag)"
+              >
+                {{ formatTag(tag) }}
+              </button>
+
+              <button
+                *ngIf="hiddenTagCount() > 0"
+                type="button"
+                class="min-h-11 rounded-full border border-dashed border-slate-400 bg-white px-4 py-2 text-sm font-bold text-[#000035] transition hover:border-[#000035] hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
+                [attr.aria-expanded]="showAllTags()"
+                (click)="toggleTagVisibility()"
+              >
+                {{ showAllTags() ? 'Show fewer' : 'Show ' + hiddenTagCount() + ' more' }}
+              </button>
+            </div>
+          </fieldset>
         </div>
-
       </div>
+    </section>
 
-    </div>
+    <section class="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20" aria-labelledby="stories-heading">
+      <header class="mb-6 flex flex-col gap-2 border-b border-slate-200 pb-5 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+        <div>
+          <p class="mb-1 text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#f4b400]">
+            {{ selectedCategory() || 'Latest coverage' }}
+          </p>
+          <h2 id="stories-heading" class="text-3xl font-black tracking-tight text-[#000035] sm:text-4xl">
+            {{ selectedCategory() ? selectedCategory() + ' stories' : 'Top stories' }}
+          </h2>
+        </div>
+        <p class="text-sm font-semibold tabular-nums text-slate-500" aria-live="polite">
+          {{ total() }} {{ total() === 1 ? 'story' : 'stories' }} loaded
+        </p>
+      </header>
 
-  </div>
-
-</section>
-
-<!-- ========================================= -->
-<!-- ARTICLES SECTION -->
-<!-- ========================================= -->
-
- <section class="max-w-7xl mx-auto px-6 py-16">
-  <app-categories-articles
-    [articles]="articles()"
-    [loading]="loading()"
-    [initialLoading]="initialLoading()"
-    [hasMore]="hasMore()"
-    (loadMore)="onLoadMore()">
-  </app-categories-articles>
-</section>
+      <app-categories-articles
+        [articles]="articles()"
+        [loading]="loading()"
+        [initialLoading]="initialLoading()"
+        [hasMore]="hasMore()"
+        (loadMore)="onLoadMore()"
+      />
+    </section>
+  </main>
+</div>

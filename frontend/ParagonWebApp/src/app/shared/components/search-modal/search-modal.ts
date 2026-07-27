@@ -1,9 +1,24 @@
-import { Component, EventEmitter, Output, inject, OnInit, ElementRef, ViewChild, AfterViewInit, computed, effect, untracked, DestroyRef } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  Output,
+  untracked,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, catchError, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ArticleService } from '../../../core/services/article.service';
@@ -22,7 +37,7 @@ type SearchMode =
   imports: [CommonModule, FormsModule, ImagePlaceholderComponent],
   templateUrl: './search-modal.html'
 })
-export class SearchModal implements OnInit, AfterViewInit {
+export class SearchModal implements OnInit, AfterViewInit, OnDestroy {
   protected readonly imageVariant = imageVariant;
 
   private readonly sanitizer = inject(DomSanitizer);
@@ -33,49 +48,59 @@ export class SearchModal implements OnInit, AfterViewInit {
   @ViewChild('searchInput')
   searchInput!: ElementRef<HTMLInputElement>;
 
+  @ViewChild('dialogPanel')
+  dialogPanel!: ElementRef<HTMLElement>;
+
   private articleService = inject(ArticleService);
   private router = inject(Router);
+  private previouslyFocusedElement: HTMLElement | null = null;
+  private interactionVersion = 0;
 
   private searchMode: SearchMode = 'idle';
   private runTextSearch(
-  query: string,
-  showLoading = true
-): void {
-  const term = query.trim();
+    query: string,
+    showLoading = true
+  ): void {
+    const term = query.trim();
 
-  if (term.length < 2) {
-    this.results = [];
-    this.hasSearched = false;
-    this.isLoading = false;
-    this.searchMode = 'idle';
-    return;
-  }
-
-  this.searchMode = 'query';
-  this.hasSearched = true;
-
-  if (showLoading) {
-    this.isLoading = true;
-  }
-
-  this.articleService
-    .searchArticles(term)
-    .pipe(
-      catchError(err => {
-        console.error(
-          'Failed to search articles',
-          err
-        );
-
-        return of([]);
-      }),
-      takeUntilDestroyed(this.destroyRef)
-    )
-    .subscribe(articles => {
-      this.results = articles;
+    if (term.length < 2) {
+      this.results = [];
+      this.hasSearched = false;
       this.isLoading = false;
-    });
-}
+      this.searchMode = 'idle';
+      return;
+    }
+
+    const version = ++this.interactionVersion;
+    this.searchMode = 'query';
+    this.hasSearched = true;
+
+    if (showLoading) {
+      this.isLoading = true;
+    }
+
+    this.articleService
+      .searchArticles(term)
+      .pipe(
+        catchError(err => {
+          console.error(
+            'Failed to search articles',
+            err
+          );
+
+          return of([]);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(articles => {
+        if (version !== this.interactionVersion) {
+          return;
+        }
+
+        this.results = articles;
+        this.isLoading = false;
+      });
+  }
 
 
   readonly recentArticles = computed(() =>
@@ -93,15 +118,19 @@ export class SearchModal implements OnInit, AfterViewInit {
 
   readonly searchFeed = this.articleService.searchFeed;
 
-  private search$ = new Subject<string>();
+  private search$ = new Subject<{ value: string; version: number }>();
 
   constructor() {
     this.search$
       .pipe(
         debounceTime(300),
-        distinctUntilChanged(),
-        tap(term => {
-          const query = term.trim();
+        distinctUntilChanged((previous, current) => previous.value === current.value),
+        tap(({ value, version }) => {
+          if (version !== this.interactionVersion) {
+            return;
+          }
+
+          const query = value.trim();
 
           if (query.length < 2) {
             this.results = [];
@@ -115,29 +144,34 @@ export class SearchModal implements OnInit, AfterViewInit {
           this.hasSearched = true;
           this.searchMode = 'query';
         }),
-        switchMap(term => {
-          const query = term.trim();
+        switchMap(({ value, version }) => {
+          const query = value.trim();
 
-          if (query.length < 2) {
-            return of([]);
+          if (version !== this.interactionVersion || query.length < 2) {
+            return of({ articles: [] as Article[], version });
           }
 
           return this.articleService
             .searchArticles(query)
             .pipe(
+              map(articles => ({ articles, version })),
               catchError(err => {
                 console.error(
                   'Failed to search articles',
                   err
                 );
 
-                return of([]);
+                return of({ articles: [] as Article[], version });
               })
             );
         }),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(articles => {
+      .subscribe(({ articles, version }) => {
+        if (version !== this.interactionVersion) {
+          return;
+        }
+
         this.results = articles;
         this.isLoading = false;
       });
@@ -161,16 +195,35 @@ export class SearchModal implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Small delay ensures the modal animation/layout is complete
+    this.previouslyFocusedElement = document.activeElement as HTMLElement | null;
+
     setTimeout(() => {
       this.searchInput?.nativeElement.focus();
     });
   }
 
+  ngOnDestroy(): void {
+    setTimeout(() => this.previouslyFocusedElement?.focus());
+  }
+
   onSearchChange(value: string): void {
     this.query = value;
-    this.selectedCategory = null; // Reset selected category when typing a new query
-    this.search$.next(value);
+    this.selectedCategory = null;
+    const version = ++this.interactionVersion;
+
+    if (value.trim().length < 2) {
+      this.results = [];
+      this.hasSearched = false;
+      this.isLoading = false;
+      this.searchMode = 'idle';
+    }
+
+    this.search$.next({ value, version });
+  }
+
+  clearSearch(): void {
+    this.onSearchChange('');
+    this.searchInput?.nativeElement.focus();
   }
 
   openArticle(article: Article): void {
@@ -181,15 +234,53 @@ export class SearchModal implements OnInit, AfterViewInit {
   selectedCategory: string | null = null;
 
   selectCategory(category: string): void {
+    this.interactionVersion++;
     this.selectedCategory = category;
     this.query = category;
 
     this.runCategorySearch(category);
   }
 
-    onBackdropClick(): void {
-      this.close.emit();
+  closeModal(): void {
+    this.close.emit();
+  }
+
+  onBackdropClick(): void {
+    this.closeModal();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeModal();
+      return;
     }
+
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const focusableElements = this.dialogPanel?.nativeElement.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+    );
+
+    if (!focusableElements?.length) {
+      event.preventDefault();
+      return;
+    }
+
+    const first = focusableElements[0];
+    const last = focusableElements[focusableElements.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 
   getCategoryIcon(category: string): SafeHtml {
 
@@ -230,6 +321,7 @@ export class SearchModal implements OnInit, AfterViewInit {
     category: string,
     showLoading = true
   ): void {
+    const version = ++this.interactionVersion;
     this.searchMode = 'category';
     this.hasSearched = true;
 
@@ -256,6 +348,10 @@ export class SearchModal implements OnInit, AfterViewInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(articles => {
+        if (version !== this.interactionVersion) {
+          return;
+        }
+
         this.results = articles;
         this.isLoading = false;
       });

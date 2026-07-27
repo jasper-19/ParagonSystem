@@ -16,7 +16,7 @@ import { SpecialIssueReader } from './features/special-issues/reader/special-iss
 import { PublicLayout } from './features/public-layout/public-layout';
 
 // add near the top with other imports
-import { adminAuthGuard, adminLoginRedirectGuard } from './core/guards/admin-auth.guard';
+import { adminAuthGuard } from './core/guards/admin-auth.guard';
 
 export const routes: Routes = [
   {
@@ -56,7 +56,6 @@ export const routes: Routes = [
     path: 'admin/login',
     loadComponent: () =>
       import('./features/admin/login/admin-login').then(m => m.AdminLoginComponent),
-    canMatch: [adminLoginRedirectGuard],
     data: { breadcrumb: 'Admin Login' }
   },
 

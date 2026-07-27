@@ -23,7 +23,7 @@ export class StaffService {
   private staffSubject = new BehaviorSubject<StaffMember[]>([]);
   readonly staff$ = this.staffSubject.asObservable();
 
-  // ----- Staff eligible for board assignment (year_level !== '4th_year') -----
+  // ----- Staff eligible for assignment to a future editorial board -----
   private eligibleSubject = new BehaviorSubject<StaffMember[]>([]);
   readonly eligibleForBoard$ = this.eligibleSubject.asObservable();
 
@@ -87,6 +87,7 @@ export class StaffService {
     return {
       ...member,
       createdAt: member.createdAt ? new Date(member.createdAt) : undefined,
+      graduatedAt: member.graduatedAt ? new Date(member.graduatedAt) : undefined,
     };
   }
 
@@ -152,7 +153,7 @@ export class StaffService {
         tap(member => {
           const parsed = this.parseDates(member);
           this.staffSubject.next([parsed, ...this.staffSubject.value]);
-          if (parsed.yearLevel !== '4th_year') {
+          if (parsed.isBoardEligible !== false) {
             this.eligibleSubject.next([parsed, ...this.eligibleSubject.value]);
           }
         })
@@ -197,7 +198,7 @@ export class StaffService {
         const nextAll = this.staffSubject.value.map((m) => (m.id === id ? { ...m, ...parsed } : m));
         this.staffSubject.next(nextAll);
 
-        const shouldBeEligible = parsed.yearLevel !== '4th_year';
+        const shouldBeEligible = parsed.isBoardEligible !== false;
         const currentlyEligible = this.eligibleSubject.value.some((m) => m.id === id);
 
         if (shouldBeEligible && !currentlyEligible) {

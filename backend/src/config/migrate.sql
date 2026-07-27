@@ -91,6 +91,9 @@ CREATE TABLE IF NOT EXISTS staff_members (
   sub_role         VARCHAR(100),
   assigned_section VARCHAR(100),
   assigned_role    VARCHAR(100),
+  is_board_eligible BOOLEAN NOT NULL DEFAULT TRUE,
+  graduated_at     TIMESTAMPTZ,
+  last_year_level_transition_academic_year VARCHAR(50),
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -117,6 +120,37 @@ BEGIN
   ) THEN
     ALTER TABLE staff_members ADD COLUMN year_level VARCHAR(50);
   END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'staff_members' AND column_name = 'is_board_eligible'
+  ) THEN
+    ALTER TABLE staff_members
+      ADD COLUMN is_board_eligible BOOLEAN NOT NULL DEFAULT TRUE;
+
+    -- Preserve the previous eligibility behavior for existing fourth-year
+    -- records. Current-board members remain visible through their membership
+    -- and can retain an existing assignment; future promotions start eligible.
+    UPDATE staff_members sm
+    SET is_board_eligible = FALSE
+    WHERE sm.year_level = '4th_year';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'staff_members' AND column_name = 'graduated_at'
+  ) THEN
+    ALTER TABLE staff_members ADD COLUMN graduated_at TIMESTAMPTZ;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'staff_members'
+      AND column_name = 'last_year_level_transition_academic_year'
+  ) THEN
+    ALTER TABLE staff_members
+      ADD COLUMN last_year_level_transition_academic_year VARCHAR(50);
+  END IF;
 END
 $$;
 
@@ -127,8 +161,11 @@ CREATE TABLE IF NOT EXISTS editorial_boards (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   academic_year VARCHAR(50)  NOT NULL,
   adviser_name  VARCHAR(255) NOT NULL,
+  co_adviser_name VARCHAR(255),
   is_active     BOOLEAN      NOT NULL DEFAULT FALSE,
   is_satisfied  BOOLEAN      NOT NULL DEFAULT FALSE,
+  staff_transition_applied_at TIMESTAMPTZ,
+  transition_from_board_id UUID REFERENCES editorial_boards(id) ON DELETE SET NULL,
   created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
@@ -155,8 +192,39 @@ BEGIN
   ) THEN
     ALTER TABLE editorial_boards ADD COLUMN is_satisfied BOOLEAN NOT NULL DEFAULT FALSE;
   END IF;
+
+  -- Optional co-adviser for new and existing editorial boards
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'editorial_boards' AND column_name = 'co_adviser_name'
+  ) THEN
+    ALTER TABLE editorial_boards ADD COLUMN co_adviser_name VARCHAR(255);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'editorial_boards'
+      AND column_name = 'staff_transition_applied_at'
+  ) THEN
+    ALTER TABLE editorial_boards
+      ADD COLUMN staff_transition_applied_at TIMESTAMPTZ;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'editorial_boards'
+      AND column_name = 'transition_from_board_id'
+  ) THEN
+    ALTER TABLE editorial_boards
+      ADD COLUMN transition_from_board_id UUID
+      REFERENCES editorial_boards(id) ON DELETE SET NULL;
+  END IF;
 END
 $$;
+
+CREATE INDEX IF NOT EXISTS idx_staff_members_board_eligible
+  ON staff_members (created_at DESC)
+  WHERE is_board_eligible = TRUE;
 
 -- ============================================================
 -- board_members table
@@ -167,12 +235,29 @@ CREATE TABLE IF NOT EXISTS editorial_board_members (
   staff_id   UUID NOT NULL REFERENCES staff_members(id)   ON DELETE CASCADE,
   section    VARCHAR(100) NOT NULL,
   role       VARCHAR(100) NOT NULL,
+  year_level_at_assignment VARCHAR(50),
   created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
 -- Ensure the staff_id FK has ON DELETE CASCADE (fix for tables created before this was added)
 DO $$
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'editorial_board_members'
+      AND column_name = 'year_level_at_assignment'
+  ) THEN
+    ALTER TABLE editorial_board_members
+      ADD COLUMN year_level_at_assignment VARCHAR(50);
+
+    -- Preserve the year level held by existing members before future
+    -- editorial-board transitions begin updating their staff profile.
+    UPDATE editorial_board_members ebm
+    SET year_level_at_assignment = sm.year_level
+    FROM staff_members sm
+    WHERE sm.id = ebm.staff_id;
+  END IF;
+
   IF EXISTS (
     SELECT 1 FROM information_schema.table_constraints
     WHERE constraint_name = 'editorial_board_members_staff_id_fkey'

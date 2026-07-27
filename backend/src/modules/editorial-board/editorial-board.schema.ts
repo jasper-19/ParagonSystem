@@ -73,15 +73,41 @@ const assignmentSchema = z.object({
 export const createBoardSchema = z.object({
   academicYear: z
     .string()
-    .regex(/^\d{4}-\d{4}$/, "Academic year must use YYYY-YYYY format"),
+    .trim()
+    .regex(
+      /^\d{4}[-\u2013]\d{4}$/,
+      "Academic year must use YYYY-YYYY format"
+    )
+    .refine(value => {
+      const [start, end] = value
+        .split(/[-\u2013]/)
+        .map(Number);
+      return (
+        Number.isInteger(start) &&
+        Number.isInteger(end) &&
+        end === (start as number) + 1
+      );
+    }, "Academic years must be consecutive"),
   adviserName: z.string().trim().min(1).max(255),
+  coAdviserName: z.string().trim().max(255).optional().default(""),
 });
 
 export const addBoardMemberSchema = assignmentSchema.extend({
   staffId: z.string().uuid("Invalid staff ID"),
 });
 
-export const updateBoardMemberSchema = assignmentSchema;
+export const updateBoardMemberSchema = assignmentSchema.extend({
+  yearLevel: z
+    .enum([
+      "1st_year",
+      "2nd_year",
+      "3rd_year",
+      "4th_year",
+      "unspecified",
+    ])
+    .nullable()
+    .optional(),
+});
 
 export const satisfyBoardSchema = z.object({
   satisfied: z.boolean(),

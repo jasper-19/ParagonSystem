@@ -54,3 +54,5 @@ backend/uploads/
 
 #Temporary image processing files
 /backend/tmp/
+frontend/ParagonWebApp/dev-server.log
+frontend/ParagonWebApp/dev-server-error.log

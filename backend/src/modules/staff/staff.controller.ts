@@ -9,7 +9,7 @@ export const getStaff = asyncHandler(async (req: Request, res: Response) => {
   res.json(staff);
 });
 
-/** GET /api/staff/eligible-for-board — excludes 4th-year staff */
+/** GET /api/staff/eligible-for-board — excludes graduated/ineligible staff */
 export const getEligibleStaff = asyncHandler(async (req: Request, res: Response) => {
   const staff = await service.getEligibleStaffMembers();
   res.json(staff);

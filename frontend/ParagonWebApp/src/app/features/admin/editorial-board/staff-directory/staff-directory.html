@@ -3350,8 +3350,8 @@
               class="mt-1 text-sm
                     leading-5 text-white/70"
             >
-              Set the academic year and adviser
-              for the new board.
+              Set the academic year, adviser, and
+              optional co-adviser for the new board.
             </p>
           </div>
 
@@ -3504,6 +3504,34 @@
             class="text-xs text-red-500"
           >
             Adviser name is required.
+          </p>
+        </div>
+
+        <!-- Co-adviser Name -->
+        <div class="space-y-1.5">
+          <label for="board-co-adviser" class="block text-sm font-semibold text-gray-700">
+            Co-adviser Name
+            <span class="ml-1 text-xs font-normal text-slate-500">(Optional)</span>
+          </label>
+          <input
+            id="board-co-adviser"
+            type="text"
+            formControlName="coAdviserName"
+            autocomplete="name"
+            maxlength="255"
+            placeholder="e.g. Prof. Maria Santos"
+            aria-describedby="board-co-adviser-help"
+            class="min-h-11 w-full rounded-xl
+                    border border-gray-200 bg-white px-4 py-2.5
+                    text-sm text-slate-700
+                    outline-none transition
+                    placeholder:text-slate-400
+                    focus:border-[#F4B400]
+                    focus:ring-2
+                    focus:ring-[#F4B400]/30"
+          />
+          <p id="board-co-adviser-help" class="text-xs leading-5 text-slate-500">
+            Leave blank when the board has no co-adviser.
           </p>
         </div>
 

@@ -1,107 +1,74 @@
-<ng-container *ngIf="articles.length; else moreStoriesEmpty">
-
-  <!-- existing More Stories section -->
-  <section class="py-20 bg-white">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6">
-
-    <!-- Section Header -->
-    <div class="flex items-end justify-between mb-12 pb-6 border-b border-white/10">
+<section aria-labelledby="more-stories-heading" class="bg-[#f7f6f2] py-14 sm:py-18 lg:py-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6">
+    <div appScrollReveal="up" class="mb-8 flex flex-col gap-5 border-b border-[#000035]/15 pb-6 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h2 class="text-4xl font-black text-[#000035] tracking-tight leading-none">
-          More <span class="text-[#F4B400]">Stories</span>
+        <p class="mb-2 text-xs font-black uppercase tracking-[0.22em] text-[#f4b400]">From the newsroom</p>
+        <h2 id="more-stories-heading" class="text-3xl font-black tracking-tight text-[#000035] sm:text-4xl">
+          More stories
         </h2>
       </div>
-      <a class="group flex items-center gap-2 text-[#000035] hover:text-[#F4B400] text-sm font-semibold uppercase tracking-widest transition-all duration-300 cursor-pointer">
-        <span>View All</span>
-        <span class="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+      <a
+        routerLink="/top-stories"
+        class="inline-flex min-h-11 w-fit items-center gap-2 text-sm font-bold text-[#000035] underline-offset-4 transition-colors hover:text-[#9c6900] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F4B400]"
+      >
+        Browse the archive <span aria-hidden="true">→</span>
       </a>
     </div>
 
-    <!-- ── STORIES GRID ── -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10">
-
-      <article
-        *ngFor="let story of articles; trackBy: trackByArticle"
-        class="relative overflow-hidden group cursor-pointer bg-[#000035]"
-      >
-        <a [routerLink]="['/article', story.slug]" class="block">
-
-          <!-- IMAGE -->
-          <div class="w-full aspect-4/3 overflow-hidden">\\
-            <ng-container *ngIf="story.image; else imagePlaceholder">
-            <img
-              [src]="imageVariant(story.image, 'medium')"
-              [alt]="story.title"
-              loading="lazy"
-              decoding="async"
-              class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
-            />
-            </ng-container>
-            <ng-template #imagePlaceholder>
-              <app-image-placeholder
-                size="medium"
-                label="No Image"
-              ></app-image-placeholder>
-            </ng-template>
-          </div>
-
-          <!-- CARD BODY -->
-          <div class="p-5 ">
-
-            <!-- Meta row -->
-            <div class="flex items-center gap-2 mb-3">
-              <span class="bg-[#F4B400] text-[#000035] text-[9px] font-black uppercase tracking-widest px-2 py-0.5">
-                {{ story.category }}
-              </span>
-              <span class="text-white/30 text-[9px] font-bold uppercase tracking-widest">
-                {{ story.publishedAt | date:'MMM d, yyyy' }}
-              </span>
+    <ng-container *ngIf="articles.length; else moreStoriesEmpty">
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <article
+          *ngFor="let story of articles; let i = index; trackBy: trackByArticle"
+          appScrollReveal="up"
+          [revealDelay]="i * 65"
+          class="min-w-0 bg-white shadow-[0_1px_0_rgba(0,0,53,0.12)]"
+        >
+          <a
+            [routerLink]="['/article', story.slug]"
+            class="group flex h-full flex-col focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#F4B400]"
+          >
+            <div class="aspect-4/3 overflow-hidden bg-[#000035]/5">
+              <ng-container *ngIf="story.image; else imagePlaceholder">
+                <img
+                  [src]="imageVariant(story.image, 'medium')"
+                  [alt]="story.title"
+                  loading="lazy"
+                  decoding="async"
+                  class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </ng-container>
+              <ng-template #imagePlaceholder>
+                <app-image-placeholder size="medium" label="No image available" />
+              </ng-template>
             </div>
-
-            <!-- Title -->
-            <h3 class="text-white font-black text-base leading-snug group-hover:text-[#F4B400] transition-colors duration-300 line-clamp-2 mb-4">
-              {{ story.title }}
-            </h3>
-
-            <!-- Credits -->
-            <div class="pt-3 flex flex-col gap-0.5">
-              <p *ngIf="story.author" class="text-white/35 text-[10px]">
-                <span class="text-white/20 font-bold uppercase tracking-wider">Written by </span>{{ story.author }}
-              </p>
-              <p *ngIf="story.graphicby" class="text-white/35 text-[10px]">
-                <span class="text-white/20 font-bold uppercase tracking-wider">Graphics </span>{{ story.graphicby }}
-              </p>
-              <p *ngIf="story.photoby" class="text-white/35 text-[10px]">
-                <span class="text-white/20 font-bold uppercase tracking-wider">Photo </span>{{ story.photoby }}
-              </p>
-              <p *ngIf="story.illusrationby" class="text-white/35 text-[10px]">
-                <span class="text-white/20 font-bold uppercase tracking-wider">Illustration </span>{{ story.illusrationby }}
-              </p>
+            <div class="flex flex-1 flex-col p-5 sm:p-6">
+              <div class="mb-3 flex flex-wrap items-center gap-2">
+                <span class="bg-[#F4B400] px-2 py-1 text-[0.625rem] font-black uppercase tracking-widest text-[#000035]">
+                  {{ story.category }}
+                </span>
+                <time class="text-xs font-medium text-[#000035]/50">{{ story.publishedAt | date:'MMM d, yyyy' }}</time>
+              </div>
+              <h3 class="text-pretty text-xl font-black leading-snug text-[#000035] transition-colors group-hover:text-[#f4b400]">
+                {{ story.title }}
+              </h3>
+              <p *ngIf="story.excerpt" class="mt-3 line-clamp-2 text-sm leading-6 text-[#000035]/65">{{ story.excerpt }}</p>
+              <div class="mt-auto space-y-1 border-t border-[#000035]/10 pt-4 text-xs text-[#000035]/60">
+                <p *ngIf="story.author"><span class="font-bold text-[#000035]/80">Written by</span> {{ story.author }}</p>
+                <p *ngIf="story.photoby"><span class="font-bold text-[#000035]/80">Photo by</span> {{ story.photoby }}</p>
+                <p *ngIf="story.graphicby"><span class="font-bold text-[#000035]/80">Graphics by</span> {{ story.graphicby }}</p>
+                <p *ngIf="story.illusrationby"><span class="font-bold text-[#000035]/80">Illustration by</span> {{ story.illusrationby }}</p>
+              </div>
             </div>
-
-          </div>
-
-        </a>
-      </article>
-
-    </div>
-
+          </a>
+        </article>
+      </div>
+    </ng-container>
   </div>
-  </section>
-</ng-container>
+</section>
 
 <ng-template #moreStoriesEmpty>
-  <section class="py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-6 text-center border border-[#000035]/10 py-16">
-      <p class="text-xs font-black uppercase tracking-[0.3em] text-[#F4B400] mb-3">
-        More Stories
-      </p>
-
-      <h2 class="text-2xl sm:text-3xl font-black text-[#000035]">
-        No additional stories yet.
-      </h2>
-    </div>
-  </section>
+  <div appScrollReveal="up" class="border border-[#000035]/10 bg-white px-6 py-12 text-center">
+    <h3 class="text-2xl font-black text-[#000035]">More reporting is coming soon.</h3>
+    <p class="mt-3 text-sm leading-6 text-[#000035]/60">Check back for the latest stories from the newsroom.</p>
+  </div>
 </ng-template>
-
-

@@ -2,6 +2,7 @@ import { Component, signal, computed, effect, inject, DestroyRef, untracked } fr
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { GetArticlesParams, ArticleSortOption } from '../../models/article-query.model';
 import { ArticleService } from '../../core/services/article.service';
 import { CategoriesHero } from './components/hero-section/categories-hero';
@@ -36,9 +37,12 @@ export class CategoriesPage {
   // -----------------------------------------
 
   readonly search = signal<string>('');
+  readonly searchQuery = signal<string>('');
   readonly selectedCategory = signal<string | undefined>(undefined);
   readonly sort = signal<ArticleSortOption>('latest');
   readonly selectedTags = signal<string[]>([]);
+  readonly showAllTags = signal(false);
+  private readonly searchChanges = new Subject<string>();
 
   // -----------------------------------------
   // 📂 AVAILABLE CATEGORIES (Observable → Signal)
@@ -65,10 +69,26 @@ export class CategoriesPage {
   );
 
   readonly visibleTags = computed(() =>
-    this.tags()
-      .filter(tag => tag.trim().length > 0)
-      .slice(0, 12)
+    this.showAllTags()
+      ? this.tags().filter(tag => tag.trim().length > 0)
+      : this.tags().filter(tag => tag.trim().length > 0).slice(0, 10)
   );
+
+  readonly hiddenTagCount = computed(() =>
+    Math.max(
+      0,
+      this.tags().filter(tag => tag.trim().length > 0).length - 10
+    )
+  );
+
+  readonly activeFilterCount = computed(() =>
+    (this.search().trim() ? 1 : 0) +
+    (this.selectedCategory() ? 1 : 0) +
+    (this.sort() !== 'latest' ? 1 : 0) +
+    this.selectedTags().length
+  );
+
+  readonly hasActiveFilters = computed(() => this.activeFilterCount() > 0);
 
   // -----------------------------------------
   // 📄 PAGINATION STATE
@@ -94,6 +114,14 @@ export class CategoriesPage {
   readonly loadingMore = signal<boolean>(false);
 
   constructor() {
+    this.searchChanges
+      .pipe(
+        debounceTime(350),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(value => this.search.set(value.trim()));
+
     this.route.queryParamMap
       .pipe(
         takeUntilDestroyed(this.destroyRef)
@@ -267,18 +295,27 @@ export class CategoriesPage {
   }
 
   setSort(value: string): void {
-  this.sort.set(value as ArticleSortOption);
+    this.sort.set(value as ArticleSortOption);
+  }
+
+  onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    this.searchChanges.next(value);
   }
 
   toggleTag(tag: string): void {
-  const current = this.selectedTags();
+    const current = this.selectedTags();
 
-  if (current.includes(tag)) {
-    this.selectedTags.set(current.filter(t => t !== tag));
-  } else {
-    this.selectedTags.set([...current, tag]);
+    if (current.includes(tag)) {
+      this.selectedTags.set(current.filter(t => t !== tag));
+    } else {
+      this.selectedTags.set([...current, tag]);
+    }
   }
-}
+
+  toggleTagVisibility(): void {
+    this.showAllTags.update(value => !value);
+  }
 
   setCategory(category?: string): void {
     this.selectedCategory.set(category);
@@ -294,9 +331,11 @@ export class CategoriesPage {
 
   clearFilters(): void {
     this.search.set('');
+    this.searchQuery.set('');
     this.sort.set('latest');
     this.selectedCategory.set(undefined);
     this.selectedTags.set([]);
+    this.showAllTags.set(false);
 
     this.router.navigate([], {
       relativeTo: this.route,

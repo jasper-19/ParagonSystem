@@ -8,6 +8,10 @@ function mapRow(row: any) {
     email: row.email,
     studentId: row.student_id,
     yearLevel: row.year_level ?? undefined,
+    isBoardEligible:
+      (row.is_board_eligible ?? true) as boolean,
+    graduatedAt:
+      row.graduated_at ?? undefined,
     collegeId: row.college_id,
     programId: row.program_id,
     positionId: row.position_id,
@@ -29,14 +33,15 @@ export async function findAll() {
 }
 
 /**
- * Returns only staff members eligible for a new editorial board:
- * excludes anyone whose year_level is '4th_year'.
+ * Returns staff members eligible for a future editorial board.
+ * Newly promoted fourth-year staff remain eligible for their final board;
+ * staff graduating from a board are explicitly marked ineligible.
  */
 export async function findEligibleForBoard() {
   const result = await db.query(
     `SELECT *
      FROM staff_members
-     WHERE year_level IS DISTINCT FROM '4th_year'
+     WHERE is_board_eligible = TRUE
      ORDER BY created_at DESC`
   );
 
@@ -190,7 +195,7 @@ export async function getDashboardSummary() {
       SELECT
         COUNT(*) AS total,
         COUNT(*) FILTER (WHERE application_id IS NOT NULL) AS assigned,
-        COUNT(*) FILTER (WHERE year_level IS DISTINCT FROM '4th_year') AS eligible
+        COUNT(*) FILTER (WHERE is_board_eligible = TRUE) AS eligible
       FROM staff_members
     `),
 
@@ -201,6 +206,8 @@ export async function getDashboardSummary() {
         email,
         student_id,
         year_level,
+        is_board_eligible,
+        graduated_at,
         assigned_section,
         assigned_role,
         created_at
@@ -220,6 +227,10 @@ export async function getDashboardSummary() {
       email: row.email,
       studentId: row.student_id,
       yearLevel: row.year_level ?? undefined,
+      isBoardEligible:
+        (row.is_board_eligible ?? true) as boolean,
+      graduatedAt:
+        row.graduated_at ?? undefined,
       assignedSection: row.assigned_section ?? undefined,
       assignedRole: row.assigned_role ?? undefined,
       createdAt: row.created_at,

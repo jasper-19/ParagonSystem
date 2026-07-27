@@ -4,7 +4,7 @@ export async function getStaffMembers() {
   return repository.findAll();
 }
 
-/** Returns only non-4th-year staff members (eligible for board assignment). */
+/** Returns staff who remain eligible for assignment to a future board. */
 export async function getEligibleStaffMembers() {
   return repository.findEligibleForBoard();
 }

@@ -23,7 +23,7 @@ export class WhyJoin {
         'Cover events, initiatives, and stories that shape CSU Gonzaga. Gain hands-on experience reporting, interviewing, and documenting the student experience from the ground up.',
     },
     {
-      title: 'Collaborate in a Real with Peers',
+      title: 'Collaborate with a Real Editorial Team',
       description:
         'Work alongside student writers, editors, photographers, and designers. Pitch ideas, edit articles, and contribute to special issues.',
     },

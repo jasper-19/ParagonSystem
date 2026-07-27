@@ -1,421 +1,356 @@
-<section id="application" class="py-20 bg-linear-to-b from-slate-50 via-white to-slate-50 relative overflow-hidden">
-
-  <div class="max-w-4xl mx-auto px-6 space-y-12 relative">
-
-    <!-- Section Header -->
-    <div class="text-center space-y-4">
-
-      <h2 class="text-3xl md:text-4xl font-bold text-[#000035] tracking-tight">
-        Application Form
+<section id="application" class="scroll-mt-20 bg-slate-50 px-4 py-16 sm:px-6 sm:py-20 lg:py-24" aria-labelledby="application-form-heading">
+  <div class="mx-auto max-w-7xl">
+    <div class="max-w-2xl">
+      <p class="text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#F4B400]">Application</p>
+      <h2 id="application-form-heading" class="mt-2 text-balance text-3xl font-black tracking-tight text-[#000035] sm:text-4xl">
+        Tell us about yourself
       </h2>
-
-      <p class="text-slate-600 max-w-xl mx-auto">
-        Complete the form below to begin your application journey with us.
+      <p class="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
+        Complete each section below. Fields marked with an asterisk are required.
       </p>
-
     </div>
 
-    <!-- Form -->
-    <form
-      [formGroup]="form"
-      (ngSubmit)="submit()"
-      class="bg-white p-8 md:p-10 rounded-3xl border-2 border-slate-200 shadow-xl space-y-8"
-    >
+    <div class="mt-10 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-8">
+      <form
+        #applicationForm
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        novalidate
+        class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_70px_-40px_rgba(15,23,42,0.35)]"
+      >
+        <div class="h-1.5 bg-[#F4B400]"></div>
 
-      <!-- Personal Information Section -->
-      <div class="space-y-6">
-        <div class="flex items-center gap-3 pb-4 border-b-2 border-slate-100">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-          <h3 class="text-lg font-bold text-[#000035]">Personal Information</h3>
-        </div>
-
-        <!-- Name & Email Grid -->
-        <div class="grid md:grid-cols-2 gap-6">
-
-          <!-- Full Name -->
-          <div>
-            <label class="block text-sm font-bold text-[#000035] mb-2">
-              Full Name <span class="text-red-500">*</span>
-            </label>
-
-            <input
-              type="text"
-              formControlName="fullName"
-              placeholder="John Emerson"
-              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
-                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
-                     transition-all duration-200 bg-slate-50/50
-                     placeholder:text-slate-400"
-            />
-
-            <p *ngIf="form.controls.fullName.touched && form.controls.fullName.invalid"
-               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              Please enter your full name.
-            </p>
+        <fieldset class="px-5 py-7 sm:px-8 sm:py-8">
+          <legend class="sr-only">Personal information</legend>
+          <div class="flex items-center gap-3 border-b border-slate-200 pb-5">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#000035] text-sm font-black text-white">
+              01
+            </span>
+            <div>
+              <h3 class="text-lg font-black text-[#000035]">Personal information</h3>
+              <p class="mt-0.5 text-xs text-slate-500">Your contact and student details</p>
+            </div>
           </div>
 
-          <!-- Email -->
-          <div>
-            <label class="block text-sm font-bold text-[#000035] mb-2">
-              Email Address <span class="text-red-500">*</span>
-            </label>
+          <div class="mt-6 grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="join-full-name" class="mb-2 block text-sm font-bold text-slate-800">
+                Full name <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="join-full-name"
+                type="text"
+                formControlName="fullName"
+                autocomplete="name"
+                autocapitalize="words"
+                placeholder="Juan Dela Cruz"
+                class="min-h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
+                [class.border-red-400]="form.controls.fullName.touched && form.controls.fullName.invalid"
+                [attr.aria-invalid]="form.controls.fullName.touched && form.controls.fullName.invalid"
+                aria-describedby="join-full-name-error"
+              />
+              <p id="join-full-name-error" *ngIf="form.controls.fullName.touched && form.controls.fullName.invalid" class="mt-2 flex gap-1.5 text-xs font-semibold text-red-600">
+                <span aria-hidden="true">●</span> Enter your complete name using at least 3 characters.
+              </p>
+            </div>
 
-            <input
-              type="email"
-              formControlName="email"
-              placeholder="john@example.com"
-              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
-                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
-                     transition-all duration-200 bg-slate-50/50
-                     placeholder:text-slate-400"
-            />
+            <div>
+              <label for="join-email" class="mb-2 block text-sm font-bold text-slate-800">
+                Email address <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="join-email"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                inputmode="email"
+                autocapitalize="none"
+                spellcheck="false"
+                placeholder="name@example.com"
+                class="min-h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
+                [class.border-red-400]="form.controls.email.touched && form.controls.email.invalid"
+                [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
+                aria-describedby="join-email-error"
+              />
+              <p id="join-email-error" *ngIf="form.controls.email.touched && form.controls.email.invalid" class="mt-2 flex gap-1.5 text-xs font-semibold text-red-600">
+                <span aria-hidden="true">●</span> Enter a valid email address.
+              </p>
+            </div>
 
-            <p *ngIf="form.controls.email.touched && form.controls.email.invalid"
-               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              Please enter a valid email.
-            </p>
+            <div>
+              <label for="join-student-id" class="mb-2 block text-sm font-bold text-slate-800">
+                Student ID <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="join-student-id"
+                type="text"
+                formControlName="studentId"
+                autocomplete="off"
+                inputmode="text"
+                maxlength="8"
+                placeholder="01-00001"
+                class="min-h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 font-mono text-base text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
+                [class.border-red-400]="form.controls.studentId.touched && form.controls.studentId.invalid"
+                [attr.aria-invalid]="form.controls.studentId.touched && form.controls.studentId.invalid"
+                aria-describedby="join-student-id-help join-student-id-error"
+              />
+              <p id="join-student-id-help" class="mt-2 text-xs text-slate-500">Required format: YY-12345</p>
+              <p id="join-student-id-error" *ngIf="form.controls.studentId.touched && form.controls.studentId.invalid" class="mt-1 flex gap-1.5 text-xs font-semibold text-red-600">
+                <span aria-hidden="true">●</span>
+                {{ form.controls.studentId.errors?.['required'] ? 'Student ID is required.' : 'Use the format YY-12345, such as 01-00001.' }}
+              </p>
+            </div>
+
+            <div>
+              <label for="join-year-level" class="mb-2 block text-sm font-bold text-slate-800">
+                Year level <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <select
+                id="join-year-level"
+                formControlName="yearLevel"
+                class="min-h-12 w-full cursor-pointer rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
+                [class.border-red-400]="form.controls.yearLevel.touched && form.controls.yearLevel.invalid"
+                [attr.aria-invalid]="form.controls.yearLevel.touched && form.controls.yearLevel.invalid"
+                aria-describedby="join-year-level-error"
+              >
+                <option value="">Select year level</option>
+                <option *ngFor="let level of YEAR_LEVEL_OPTIONS" [value]="level.value">{{ level.label }}</option>
+              </select>
+              <p id="join-year-level-error" *ngIf="form.controls.yearLevel.touched && form.controls.yearLevel.invalid" class="mt-2 flex gap-1.5 text-xs font-semibold text-red-600">
+                <span aria-hidden="true">●</span> Select your current year level.
+              </p>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="border-t border-slate-200 px-5 py-7 sm:px-8 sm:py-8">
+          <legend class="sr-only">Academic information</legend>
+          <div class="flex items-center gap-3 border-b border-slate-200 pb-5">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#000035] text-sm font-black text-white">02</span>
+            <div>
+              <h3 class="text-lg font-black text-[#000035]">Academic information</h3>
+              <p class="mt-0.5 text-xs text-slate-500">Your college and program</p>
+            </div>
           </div>
 
-        </div>
+          <div class="mt-6 grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="join-college" class="mb-2 block text-sm font-bold text-slate-800">
+                College <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <select
+                id="join-college"
+                formControlName="collegeId"
+                class="min-h-12 w-full cursor-pointer rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
+                [class.border-red-400]="form.controls.collegeId.touched && form.controls.collegeId.invalid"
+                [attr.aria-invalid]="form.controls.collegeId.touched && form.controls.collegeId.invalid"
+                aria-describedby="join-college-error"
+              >
+                <option value="">Select college</option>
+                <option *ngFor="let college of colleges()" [value]="college.id">{{ college.name }}</option>
+              </select>
+              <p id="join-college-error" *ngIf="form.controls.collegeId.touched && form.controls.collegeId.invalid" class="mt-2 flex gap-1.5 text-xs font-semibold text-red-600">
+                <span aria-hidden="true">●</span> Select your college.
+              </p>
+            </div>
 
-        <!-- Student ID -->
-        <div>
-          <label class="block text-sm font-bold text-[#000035] mb-2">
-            Student ID <span class="text-red-500">*</span>
-          </label>
-
-          <input
-            type="text"
-            formControlName="studentId"
-            placeholder="01-00001"
-            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
-                   focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
-                   transition-all duration-200 bg-slate-50/50
-                   placeholder:text-slate-400"
-          />
-
-          <p *ngIf="form.controls.studentId.touched && form.controls.studentId.invalid"
-            class="text-red-500 text-xs mt-2">
-
-            <ng-container *ngIf="form.controls.studentId.errors?.['required']">
-              Student ID is required.
-            </ng-container>
-
-            <ng-container *ngIf="form.controls.studentId.errors?.['pattern']">
-              Format must be YY-12345 (e.g. 01-00001).
-            </ng-container>
-
-          </p>
-        </div>
-
-        <!-- Year Level -->
-        <div>
-          <label class="block text-sm font-bold text-[#000035] mb-2">
-            Year Level <span class="text-red-500">*</span>
-          </label>
-
-          <select
-            formControlName="yearLevel"
-            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
-                   focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
-                   transition-all duration-200 bg-slate-50/50 cursor-pointer"
-          >
-            <option value="">Select Year Level</option>
-            <ng-container *ngFor="let level of YEAR_LEVEL_OPTIONS">
-              <option [value]="level.value">{{ level.label }}</option>
-            </ng-container>
-          </select>
-
-          <p *ngIf="form.controls.yearLevel.touched && form.controls.yearLevel.invalid"
-             class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-            </svg>
-            Please select your year level.
-          </p>
-        </div>
-
-      </div>
-
-      <!-- Academic Information Section -->
-      <div class="space-y-6">
-        <div class="flex items-center gap-3 pb-4 border-b-2 border-slate-100">
-          <div class="w-8 h-8  rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
-            </svg>
+            <div>
+              <label for="join-program" class="mb-2 block text-sm font-bold text-slate-800">
+                Course or program <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <select
+                id="join-program"
+                formControlName="programId"
+                class="min-h-12 w-full cursor-pointer rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 outline-none transition hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20 disabled:cursor-not-allowed disabled:opacity-55"
+                [class.border-red-400]="form.controls.programId.touched && form.controls.programId.invalid"
+                [attr.aria-invalid]="form.controls.programId.touched && form.controls.programId.invalid"
+                aria-describedby="join-program-help join-program-error"
+              >
+                <option value="">{{ availablePrograms().length ? 'Select program' : 'Select a college first' }}</option>
+                <option *ngFor="let program of availablePrograms()" [value]="program.id">{{ program.name }}</option>
+              </select>
+              <p id="join-program-help" *ngIf="availablePrograms().length === 0" class="mt-2 text-xs text-slate-500">
+                Program options appear after you choose a college.
+              </p>
+              <p id="join-program-error" *ngIf="form.controls.programId.touched && form.controls.programId.invalid" class="mt-2 flex gap-1.5 text-xs font-semibold text-red-600">
+                <span aria-hidden="true">●</span> Select your course or program.
+              </p>
+            </div>
           </div>
-          <h3 class="text-lg font-bold text-[#000035]">Academic Information</h3>
-        </div>
+        </fieldset>
 
-        <!-- College & Program Grid -->
-        <div class="grid md:grid-cols-2 gap-6">
-
-          <!-- College -->
-          <div>
-            <label class="block text-sm font-bold text-[#000035] mb-2">
-              College <span class="text-red-500">*</span>
-            </label>
-
-            <select
-              formControlName="collegeId"
-              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
-                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
-                     transition-all duration-200 bg-slate-50/50 cursor-pointer"
-            >
-              <option value="">Select College</option>
-
-              <ng-container *ngFor="let college of colleges()">
-                <option [value]="college.id">
-                  {{ college.name }}
-                </option>
-              </ng-container>
-            </select>
-
-            <p *ngIf="form.controls.collegeId.touched && form.controls.collegeId.invalid"
-               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              Please select a college.
-            </p>
+        <fieldset class="border-t border-slate-200 px-5 py-7 sm:px-8 sm:py-8" aria-describedby="join-position-help join-position-error">
+          <legend class="sr-only">Position preferences</legend>
+          <div class="flex items-center gap-3 border-b border-slate-200 pb-5">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#000035] text-sm font-black text-white">03</span>
+            <div>
+              <h3 class="text-lg font-black text-[#000035]">Position preferences</h3>
+              <p id="join-position-help" class="mt-0.5 text-xs text-slate-500">Select one or more roles and their specializations</p>
+            </div>
           </div>
 
-          <!-- Program -->
-          <div>
-            <label class="block text-sm font-bold text-[#000035] mb-2">
-              Course / Program <span class="text-red-500">*</span>
-            </label>
-
-            <select
-              formControlName="programId"
-              [disabled]="availablePrograms().length === 0"
-              class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
-                     focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
-                     transition-all duration-200 bg-slate-50/50 cursor-pointer
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <option value="">Select Program</option>
-
-              <ng-container *ngFor="let program of availablePrograms()">
-                <option [value]="program.id">
-                  {{ program.name }}
-                </option>
-              </ng-container>
-            </select>
-
-            <p *ngIf="form.controls.programId.touched && form.controls.programId.invalid"
-               class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              Please select a program.
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-
-      <!-- Position Section -->
-      <div class="space-y-6">
-        <div class="flex items-center gap-3 pb-4 border-b-2 border-slate-100">
-          <div class="w-8 h-8  rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/>
-              <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/>
-            </svg>
-          </div>
-          <h3 class="text-lg font-bold text-[#000035]">Position Details</h3>
-        </div>
-
-        <!-- Position Selection -->
-        <div>
-          <label class="block text-sm font-bold text-[#000035] mb-3">
-            Positions <span class="text-red-500">*</span>
-          </label>
-
-          <div class="space-y-4">
+          <div class="mt-6 space-y-4">
             <div
               *ngFor="let position of positions"
-              class="rounded-2xl border-2 border-slate-200 bg-slate-50/50 p-5 transition-all duration-200"
-              [class.border-[#F4B400]]="isPositionSelected(position.id)"
-              [class.bg-[#F4B400]/5]="isPositionSelected(position.id)"
+              class="overflow-hidden rounded-2xl border bg-white transition"
+              [ngClass]="isPositionSelected(position.id) ? 'border-[#F4B400] ring-2 ring-[#F4B400]/15' : 'border-slate-200'"
             >
-              <!-- Position checkbox -->
-              <label class="flex items-start gap-3 cursor-pointer">
+              <label class="flex min-h-20 cursor-pointer items-start gap-3 p-4 hover:bg-slate-50 sm:p-5">
                 <input
                   type="checkbox"
-                  class="mt-1 h-4 w-4 accent-[#F4B400]"
+                  name="position"
+                  data-position-input
+                  class="mt-0.5 h-5 w-5 shrink-0 accent-[#F4B400] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
                   [checked]="isPositionSelected(position.id)"
                   (change)="togglePosition(position.id)"
+                  [attr.aria-expanded]="isPositionSelected(position.id)"
                 />
-
-                <div>
-                  <p class="font-bold text-[#000035]">
-                    {{ position.title }}
-                  </p>
-
-                  <p
-                    *ngIf="position.description"
-                    class="text-sm text-slate-600 mt-1"
-                  >
-                    {{ position.description }}
-                  </p>
-                </div>
+                <span class="min-w-0">
+                  <span class="block font-black text-[#000035]">{{ position.title }}</span>
+                  <span class="mt-1 block text-sm leading-6 text-slate-600">{{ position.description }}</span>
+                </span>
               </label>
 
-              <!-- Categories -->
-              <div
-                *ngIf="isPositionSelected(position.id) && position.subRoles?.length"
-                class="mt-5 pl-7 space-y-3"
-              >
-                <p class="text-sm font-bold text-[#000035]">
-                  Select categories for {{ position.title }}
+              <div *ngIf="isPositionSelected(position.id) && position.subRoles?.length" class="border-t border-slate-200 bg-slate-50 px-4 py-5 sm:px-5">
+                <p class="text-sm font-black text-[#000035]">
+                  Choose at least one specialization
+                  <span class="text-red-600" aria-hidden="true">*</span>
                 </p>
-
-                <div class="grid sm:grid-cols-2 gap-3">
+                <div class="mt-3 grid gap-2 sm:grid-cols-2">
                   <label
                     *ngFor="let category of position.subRoles"
-                    class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:border-[#F4B400] transition"
+                    class="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border bg-white px-3.5 py-2.5 transition hover:border-[#F4B400]"
+                    [ngClass]="isCategorySelected(position.id, category.name) ? 'border-[#F4B400] bg-[#F4B400]/8' : 'border-slate-200'"
                   >
                     <input
                       type="checkbox"
-                      class="h-4 w-4 accent-[#F4B400]"
+                      class="h-5 w-5 shrink-0 accent-[#F4B400] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
                       [checked]="isCategorySelected(position.id, category.name)"
                       (change)="toggleCategory(position.id, category.name)"
                     />
-
-                    <span class="text-sm font-medium text-slate-700">
-                      {{ category.name }}
-                    </span>
+                    <span class="text-sm font-bold text-slate-700">{{ category.name }}</span>
                   </label>
                 </div>
               </div>
             </div>
           </div>
 
-          <p
-            *ngIf="selectedPositions().length === 0 && form.touched"
-            class="text-red-500 text-xs mt-2"
-          >
-            Please select at least one position.
-          </p>
-
-          <p
-            *ngIf="hasInvalidSelectedPosition() && form.touched"
-            class="text-red-500 text-xs mt-2"
-          >
-            Please select at least one category for every selected position that has categories.
-          </p>
-        </div>
-
-        <!-- Motivation -->
-        <div>
-          <label class="block text-sm font-bold text-[#000035] mb-2">
-            Why do you want to join? <span class="text-red-500">*</span>
-          </label>
-
-          <textarea
-            rows="5"
-            formControlName="motivation"
-            placeholder="Tell us about your interest and what you hope to contribute..."
-            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200
-                   focus:border-[#F4B400] focus:ring-4 focus:ring-[#F4B400]/10 focus:outline-none
-                   transition-all duration-200 resize-none bg-slate-50/50
-                   placeholder:text-slate-400"
-          ></textarea>
-
-          <div class="flex justify-between items-center mt-2">
-            <p *ngIf="form.controls.motivation.touched && form.controls.motivation.invalid"
-               class="text-red-500 text-xs flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              Please provide at least 30 characters.
-            </p>
-            <p class="text-xs text-slate-500 ml-auto font-medium">
-              Minimum 30 characters
+          <div id="join-position-error" *ngIf="attemptedSubmit() && (selectedPositions().length === 0 || hasInvalidSelectedPosition())" class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3" role="alert">
+            <p class="text-sm font-bold text-red-700">
+              {{ selectedPositions().length === 0
+                ? 'Select at least one position.'
+                : 'Choose at least one specialization for every selected position.' }}
             </p>
           </div>
+        </fieldset>
+
+        <fieldset class="border-t border-slate-200 px-5 py-7 sm:px-8 sm:py-8">
+          <legend class="sr-only">Motivation</legend>
+          <div class="flex items-center gap-3 border-b border-slate-200 pb-5">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#000035] text-sm font-black text-white">04</span>
+            <div>
+              <h3 class="text-lg font-black text-[#000035]">Your motivation</h3>
+              <p class="mt-0.5 text-xs text-slate-500">Share what you hope to contribute</p>
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <label for="join-motivation" class="mb-2 block text-sm font-bold text-slate-800">
+              Why do you want to join Paragon? <span class="text-red-600" aria-hidden="true">*</span>
+            </label>
+            <textarea
+              id="join-motivation"
+              rows="7"
+              formControlName="motivation"
+              placeholder="Tell us about your interests, relevant experiences, and what you hope to contribute…"
+              class="min-h-44 w-full resize-y rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base leading-7 text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
+              [class.border-red-400]="form.controls.motivation.touched && form.controls.motivation.invalid"
+              [attr.aria-invalid]="form.controls.motivation.touched && form.controls.motivation.invalid"
+              aria-describedby="join-motivation-help join-motivation-error"
+            ></textarea>
+            <div class="mt-2 flex flex-wrap items-start justify-between gap-2">
+              <p id="join-motivation-error" *ngIf="form.controls.motivation.touched && form.controls.motivation.invalid" class="flex gap-1.5 text-xs font-semibold text-red-600">
+                <span aria-hidden="true">●</span> Write at least 30 characters.
+              </p>
+              <p id="join-motivation-help" class="ml-auto text-xs font-semibold tabular-nums text-slate-500">
+                {{ form.controls.motivation.value.length }} / 30 minimum
+              </p>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="border-t border-slate-200 bg-slate-50 px-5 py-6 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-8">
+          <p class="mb-4 text-xs leading-5 text-slate-500 sm:mb-0 sm:max-w-md">
+            By submitting, you confirm that the information provided is accurate and may be used for recruitment review.
+          </p>
+          <button
+            type="submit"
+            [disabled]="isSubmitting()"
+            class="group inline-flex min-h-13 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#000035] px-6 py-3 text-sm font-black text-white shadow-lg shadow-[#000035]/15 transition hover:-translate-y-0.5 hover:bg-[#001f5c] hover:shadow-xl focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#F4B400] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none sm:w-auto sm:text-base"
+          >
+            <ng-container *ngIf="!isSubmitting(); else submitting">
+              Submit application
+              <svg class="h-5 w-5 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0-7 7m7-7H3" />
+              </svg>
+            </ng-container>
+            <ng-template #submitting>
+              <svg class="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z"></path>
+              </svg>
+              Submitting…
+            </ng-template>
+          </button>
         </div>
+      </form>
 
-      </div>
+      <aside class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24 lg:p-6" aria-labelledby="application-checklist-heading">
+        <p class="text-[0.6875rem] font-black uppercase tracking-[0.18em] text-[#F4B400]">Before submitting</p>
+        <h3 id="application-checklist-heading" class="mt-2 text-xl font-black tracking-tight text-[#000035]">Application checklist</h3>
+        <ul class="mt-5 space-y-4 text-sm leading-6 text-slate-600">
+          <li class="flex gap-3"><span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F4B400]/15 text-[#765000]" aria-hidden="true">✓</span><span>Use an email address you check regularly.</span></li>
+          <li class="flex gap-3"><span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F4B400]/15 text-[#765000]" aria-hidden="true">✓</span><span>Select specializations for each chosen role.</span></li>
+          <li class="flex gap-3"><span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F4B400]/15 text-[#765000]" aria-hidden="true">✓</span><span>Explain your interests in your own words.</span></li>
+          <li class="flex gap-3"><span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F4B400]/15 text-[#765000]" aria-hidden="true">✓</span><span>Review everything before confirming submission.</span></li>
+        </ul>
+        <div class="mt-6 rounded-2xl bg-[#fffaf0] p-4">
+          <p class="text-sm font-black text-[#000035]">What happens next?</p>
+          <p class="mt-2 text-xs leading-5 text-slate-600">The editorial board reviews submissions and contacts shortlisted applicants using the email provided.</p>
+        </div>
+      </aside>
+    </div>
 
-      <!-- Submit Button -->
-      <button
-        type="submit"
-        [disabled]="isSubmitting()"
-        class="w-full bg-linear-to-r from-[#000035] to-[#001f5c] text-white py-4 rounded-xl font-bold text-base
-               shadow-lg shadow-[#000035]/20
-               hover:shadow-xl hover:shadow-[#000035]/30
-               hover:-translate-y-0.5
-               active:translate-y-0
-               transition-all duration-300
-               disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-               flex items-center justify-center gap-3 group"
-      >
-        <ng-container *ngIf="!isSubmitting(); else loading">
-          <span>Submit Application</span>
-          <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-          </svg>
-        </ng-container>
-
-        <ng-template #loading>
-          <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Submitting...</span>
-        </ng-template>
-      </button>
-
-    </form>
-
-    <!-- Modals -->
     <app-confirmation-modal
       [isOpen]="showConfirmModal()"
-      title="Submit Application?"
-      message="You will not be able to edit this after submission."
+      title="Submit application?"
+      message="Please confirm that your details are complete. You will not be able to edit this application after submission."
       confirmText="Submit"
       cancelText="Review"
       (confirmed)="confirmSubmission()"
       (cancelled)="showConfirmModal.set(false)"
-    ></app-confirmation-modal>
+    />
 
     <app-success-modal
       [isOpen]="showSuccessModal()"
-      title="Application Submitted"
-      message="Our editorial board will review your application."
+      title="Application submitted"
+      message="Your application has been received. The editorial board will review it and contact you with the next steps."
       (closed)="showSuccessModal.set(false)"
-    ></app-success-modal>
+    />
 
     <app-error-modal
       [isOpen]="showErrorModal()"
-      title="Submission Failed"
+      title="Submission failed"
       message="Something went wrong. Please try again."
       (closed)="showErrorModal.set(false)"
-    ></app-error-modal>
+    />
 
     <app-error-modal
-    [isOpen]="showSubmissionError()"
-    [title]="submissionErrorTitle()"
-    [message]="submissionErrorMessage()"
-    buttonText="Close"
-    (closed)="closeSubmissionError()">
-  </app-error-modal>
-
+      [isOpen]="showSubmissionError()"
+      [title]="submissionErrorTitle()"
+      [message]="submissionErrorMessage()"
+      buttonText="Close"
+      (closed)="closeSubmissionError()"
+    />
   </div>
-
 </section>

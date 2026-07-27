@@ -16,6 +16,7 @@ export class JoinPositions {
 
   // Signal-based input
   positions = input.required<JoinPosition[]>();
+  applicationsOpen = input(true);
 
   readonly showInfoModal = signal(false);
   readonly selectedPosition = signal<JoinPosition | null>(null);

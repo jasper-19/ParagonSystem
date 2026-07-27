@@ -30,3 +30,49 @@ samp {
   -ms-overflow-style: none;  /* IE & Edge */
   scrollbar-width: none;     /* Firefox */
 }
+
+/* Home publication reveal system: compositor-only and progressively enhanced. */
+.home-reveal.home-reveal--ready {
+  --home-reveal-x: 0;
+  --home-reveal-y: 0;
+  --home-reveal-scale: 1;
+  opacity: 0;
+  transform: translate3d(var(--home-reveal-x), var(--home-reveal-y), 0)
+    scale(var(--home-reveal-scale));
+  transition:
+    opacity 560ms cubic-bezier(.22, 1, .36, 1) var(--home-reveal-delay, 0ms),
+    transform 560ms cubic-bezier(.22, 1, .36, 1) var(--home-reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.home-reveal--ready.home-reveal--up {
+  --home-reveal-y: 1.25rem;
+}
+
+.home-reveal--ready.home-reveal--left {
+  --home-reveal-x: -1.25rem;
+}
+
+.home-reveal--ready.home-reveal--right {
+  --home-reveal-x: 1.25rem;
+}
+
+.home-reveal--ready.home-reveal--scale {
+  --home-reveal-scale: .975;
+}
+
+.home-reveal--ready.home-reveal--visible {
+  --home-reveal-x: 0;
+  --home-reveal-y: 0;
+  --home-reveal-scale: 1;
+  opacity: 1;
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce), print {
+  .home-reveal.home-reveal--ready {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

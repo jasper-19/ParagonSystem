@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, DestroyRef, Input, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -9,10 +9,6 @@ import { RouterModule } from '@angular/router';
   templateUrl: './meta.html',
 })
 export class ArticleMeta {
-
-
-
-
   @Input() title!: string;
   @Input() excerpt?: string;
 
@@ -28,10 +24,38 @@ export class ArticleMeta {
   @Input() readingTime?: string; // optional (e.g. "1 min read")
 
   readonly linkCopied = signal(false);
+  readonly canUseNativeShare =
+    typeof navigator !== 'undefined' &&
+    typeof navigator.share === 'function';
+
+  private readonly destroyRef = inject(DestroyRef);
 
   private copyFeedbackTimer?: ReturnType<
     typeof setTimeout
   >;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.copyFeedbackTimer) {
+        clearTimeout(this.copyFeedbackTimer);
+      }
+    });
+  }
+
+  async shareArticle(): Promise<void> {
+    if (!this.canUseNativeShare) return;
+
+    try {
+      await navigator.share({
+        title: this.title,
+        text: this.excerpt,
+        url: window.location.href,
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      await this.copyArticleLink();
+    }
+  }
 
   async copyArticleLink(): Promise<void> {
     const url = window.location.href;

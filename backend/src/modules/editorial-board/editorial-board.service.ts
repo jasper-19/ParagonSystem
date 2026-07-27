@@ -33,7 +33,14 @@ export async function activateBoard(id: string) {
   if (!board) {
     throw Object.assign(new Error("Editorial board not found"), { statusCode: 404 });
   }
-  return repository.activateBoard(id);
+  const activated = await repository.activateBoard(id);
+  if (!activated) {
+    throw Object.assign(
+      new Error("Editorial board not found"),
+      { statusCode: 404 }
+    );
+  }
+  return activated;
 }
 
 export async function isActiveBoard(id: string): Promise<boolean> {
@@ -44,18 +51,30 @@ export async function isActiveBoard(id: string): Promise<boolean> {
   return board?.isActive === true;
 }
 
-export async function createBoard(academicYear: string, adviserName: string) {
+export async function createBoard(
+  academicYear: string,
+  adviserName: string,
+  coAdviserName?: string
+) {
   if (!academicYear || !adviserName) {
     throw Object.assign(new Error("academicYear and adviserName are required"), { statusCode: 400 });
   }
-  const existing = await repository.findBoardByAcademicYear(academicYear.trim());
+  const normalizedAcademicYear =
+    academicYear.trim().replace(/\u2013/g, "-");
+  const existing = await repository.findBoardByAcademicYear(
+    normalizedAcademicYear
+  );
   if (existing) {
     throw Object.assign(
-      new Error(`A board for academic year "${academicYear.trim()}" already exists`),
+      new Error(`A board for academic year "${normalizedAcademicYear}" already exists`),
       { statusCode: 409 }
     );
   }
-  return repository.createBoard(academicYear.trim(), adviserName.trim());
+  return repository.createBoard(
+    normalizedAcademicYear,
+    adviserName.trim(),
+    coAdviserName?.trim()
+  );
 }
 
 export async function deleteBoard(id: string) {
@@ -87,7 +106,21 @@ export async function addBoardMember(boardId: string, staffId: string, section: 
     throw Object.assign(new Error("Editorial board not found"), { statusCode: 404 });
   }
 
-  return repository.addMember(boardId, staffId, section, role);
+  const member = await repository.addMember(
+    boardId,
+    staffId,
+    section,
+    role
+  );
+  if (!member) {
+    throw Object.assign(
+      new Error(
+        "Staff member not found or no longer eligible for editorial-board assignment"
+      ),
+      { statusCode: 409 }
+    );
+  }
+  return member;
 }
 
 export async function removeBoardMember(memberId: string) {
@@ -98,7 +131,13 @@ export async function removeBoardMember(memberId: string) {
   }
 }
 
-export async function updateBoardMember(boardId: string, memberId: string, section: string, role: string) {
+export async function updateBoardMember(
+  boardId: string,
+  memberId: string,
+  section: string,
+  role: string,
+  yearLevel?: string | null
+) {
   if (!boardId || !memberId || !section || !role) {
     throw Object.assign(new Error("boardId, memberId, section, and role are required"), { statusCode: 400 });
   }
@@ -108,7 +147,13 @@ export async function updateBoardMember(boardId: string, memberId: string, secti
     throw Object.assign(new Error("Editorial board not found"), { statusCode: 404 });
   }
 
-  const updated = await repository.updateMember(boardId, memberId, section.trim(), role.trim());
+  const updated = await repository.updateMember(
+    boardId,
+    memberId,
+    section.trim(),
+    role.trim(),
+    yearLevel
+  );
   if (!updated) {
     throw Object.assign(new Error("Board member not found"), { statusCode: 404 });
   }
@@ -198,6 +243,7 @@ export function toPublicBoard(board: any) {
   return{
     academicYear: board.academicYear,
     adviserName: board.adviserName,
+    coAdviserName: board.coAdviserName ?? "",
     members: board.members.map(toPublicBoardMember)
   };
 }

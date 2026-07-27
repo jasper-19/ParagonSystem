@@ -5,11 +5,12 @@ import { Article } from './../../../../models/article.model';
 import { CategoryFeedSection } from './../../../../models/homepage-feed.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
 import { ImagePlaceholderComponent } from '../../../../shared/components/image-placeholder/image-placeholder';
+import { ScrollRevealDirective } from '../../scroll-reveal.directive';
 
 @Component({
   selector: 'app-category-section',
   standalone: true,
-  imports: [CommonModule, RouterModule, ImagePlaceholderComponent],
+  imports: [CommonModule, RouterModule, ImagePlaceholderComponent, ScrollRevealDirective],
   templateUrl: './category-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -20,6 +21,11 @@ export class CategorySection {
     private _sections: CategoryFeedSection[] = [];
 
     private readonly sectionMap = new Map<string, Article[]>();
+    visibleSections: Array<{
+      title: string;
+      category: string;
+      articles: Article[];
+    }> = [];
 
     private normalizeCategory(category: string): string {
       return category.trim().toLowerCase();
@@ -38,22 +44,27 @@ export class CategorySection {
           section.articles
         );
       }
+
+      this.visibleSections = this.sectionDefinitions
+        .map(block => ({
+          ...block,
+          articles: this.articlesFor(block.category),
+        }))
+        .filter(block => block.articles.length > 0);
     }
 
     get sections(): CategoryFeedSection[] {
       return this._sections;
     }
 
-    readonly topSections = [
+    private readonly sectionDefinitions = [
       { title: 'Sports', category: 'Sports' },
       { title: 'News', category: 'News' },
       { title: 'Feature', category: 'Feature' },
-    ] as const;
-
-    readonly bottomSections = [
       { title: 'Column', category: 'Column' },
       { title: 'Editorial', category: 'Editorial' },
       { title: 'DevCom', category: 'DevCom' },
+      { title: 'Literary', category: 'Literary' },
     ] as const;
 
     articlesFor(category: string): Article[] {

@@ -32,8 +32,31 @@ export class ArticleViewService {
       return [];
     }
 
-    return content
-      .split('\n\n')
+    const normalized = content
+      .replace(
+        /<p>\s*(?:&nbsp;|\u00a0|<br\s*\/?>|\s)*<\/p>/gi,
+        ''
+      )
+      .trim();
+
+    if (!normalized) {
+      return [];
+    }
+
+    /*
+     * Quill stores the full document as one HTML fragment. Keep that
+     * fragment together so paragraph spacing is controlled consistently
+     * by the article typography rather than source-code line breaks.
+     */
+    if (/<[a-z][\s\S]*>/i.test(normalized)) {
+      return [{
+        type: 'paragraph',
+        content: normalized,
+      }];
+    }
+
+    return normalized
+      .split(/\r?\n\s*\r?\n/)
       .map(p => p.trim())
       .filter(p => p.length > 0)
       .map<ParagraphSection>((paragraph) => ({

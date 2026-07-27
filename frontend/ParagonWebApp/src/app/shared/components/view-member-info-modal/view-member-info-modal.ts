@@ -32,6 +32,7 @@ export class ViewMemberInfoModalComponent implements OnDestroy, AfterViewInit {
   member       = input<BoardMember | null>(null);
   sectionTitle = input<string | null>(null);
   isOpen       = input<boolean>(false);
+  showEditAction = input<boolean>(true);
 
   // Outputs
   closed        = output<void>();

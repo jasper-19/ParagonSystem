@@ -32,17 +32,3 @@ export const adminAuthGuard: CanMatchFn = (
     )
   );
 };
-
-export const adminLoginRedirectGuard: CanMatchFn = (): Observable<boolean | UrlTree> => {
-  const auth = inject(AdminAuthService);
-  const router = inject(Router);
-
-  return auth.me().pipe(
-    map(response =>
-      response.user?.role === 'admin'
-        ? router.createUrlTree(['/admin'])
-        : true
-    ),
-    catchError(() => of(true))
-  );
-};

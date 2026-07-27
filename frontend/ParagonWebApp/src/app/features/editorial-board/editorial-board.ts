@@ -51,7 +51,25 @@ export class EditorialBoard implements OnInit, OnDestroy {
     () => this.boardSignal().adviser
   );
 
+  readonly coAdviser = computed(
+    () => this.boardSignal().coAdviser
+  );
+
   readonly loading = signal(true);
+  readonly loadError = signal(false);
+
+  readonly totalMembers = computed(() =>
+    this.sections().reduce(
+      (total, section) => total + section.members.length,
+      0
+    )
+  );
+
+  readonly hasBoard = computed(() =>
+    this.sections().length > 0 ||
+    this.adviser().name.trim().length > 0 ||
+    this.coAdviser().name.trim().length > 0
+  );
 
   private readonly handleEditorialBoardUpdated = (): void => {
     console.log('📡 Refreshing public editorial board');
@@ -77,6 +95,8 @@ export class EditorialBoard implements OnInit, OnDestroy {
   }
 
   private loadActiveBoard(showPageLoader: boolean): void {
+    this.loadError.set(false);
+
     if (showPageLoader) {
       this.loading.set(true);
       this.loaderService.show();
@@ -94,11 +114,29 @@ export class EditorialBoard implements OnInit, OnDestroy {
       )
       .subscribe({
         error: (err: unknown) => {
+          if (showPageLoader || !this.hasBoard()) {
+            this.loadError.set(true);
+          }
+
           console.error(
             'Failed to load the public editorial board',
             err
           );
         },
       });
+  }
+
+  retry(): void {
+    this.loadActiveBoard(true);
+  }
+
+  sectionId(title: string, index: number): string {
+    const slug = title
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    return `board-section-${slug || index + 1}`;
   }
 }

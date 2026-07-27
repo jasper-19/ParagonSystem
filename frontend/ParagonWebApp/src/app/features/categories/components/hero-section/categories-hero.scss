@@ -1,0 +1,134 @@
+:host {
+  display: block;
+}
+
+.hero {
+  position: relative;
+  min-height: clamp(24rem, 50vw, 34rem);
+  padding: clamp(5.5rem, 10vw, 8rem) 0 8rem;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(120deg, rgb(0 0 53 / 98%), rgb(0 31 92 / 96%)),
+    #000035;
+  color: #fff;
+}
+
+.hero::after {
+  position: absolute;
+  z-index: -1;
+  right: -8rem;
+  bottom: -12rem;
+  width: 30rem;
+  height: 30rem;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 4rem rgb(255 255 255 / 2.5%),
+    0 0 0 8rem rgb(255 255 255 / 2%);
+  content: '';
+}
+
+.hero__grid {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  opacity: 0.12;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 10%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 10%) 1px, transparent 1px);
+  background-size: 3.5rem 3.5rem;
+  mask-image: linear-gradient(to right, black, transparent 72%);
+}
+
+.hero__glow {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.hero__glow--gold {
+  top: -8rem;
+  left: -10rem;
+  width: 30rem;
+  height: 30rem;
+  background: radial-gradient(circle, rgb(244 180 0 / 19%), transparent 68%);
+}
+
+.hero__glow--blue {
+  top: 25%;
+  right: 5%;
+  width: 25rem;
+  height: 25rem;
+  background: radial-gradient(circle, rgb(59 130 246 / 14%), transparent 68%);
+}
+
+.hero__inner {
+  width: min(100% - 2rem, 80rem);
+  margin-inline: auto;
+}
+
+.hero__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.35rem;
+  color: #ffd45c;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hero__kicker-mark {
+  width: 1.8rem;
+  height: 2px;
+  border-radius: 999px;
+  background: #f4b400;
+}
+
+h1 {
+  max-width: 13ch;
+  margin: 0;
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-weight: 850;
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+  text-wrap: balance;
+}
+
+.hero__subtitle {
+  max-width: 42rem;
+  margin: 1.5rem 0 0;
+  color: rgb(226 232 240 / 88%);
+  font-size: clamp(1rem, 2vw, 1.16rem);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+@media (max-width: 47.99rem) {
+  .hero {
+    min-height: 23rem;
+    padding: 5rem 0 5.5rem;
+  }
+
+  .hero__inner {
+    width: min(100% - 1.5rem, 80rem);
+  }
+
+  h1 {
+    line-height: 1;
+  }
+
+  .hero::after {
+    right: -20rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__glow {
+    filter: none;
+  }
+}

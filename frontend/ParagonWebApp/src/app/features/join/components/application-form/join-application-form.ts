@@ -1,4 +1,13 @@
-import { Component, inject, Input, signal, computed, effect } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  Input,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -20,6 +29,8 @@ import { College } from '../../models/college.model';
 })
 
 export class JoinApplicationForm {
+  @ViewChild('applicationForm')
+  private applicationForm?: ElementRef<HTMLFormElement>;
 
   // ========================
   // INPUTS (Signal-backed)
@@ -63,6 +74,7 @@ export class JoinApplicationForm {
   ];
 
   readonly isSubmitting = signal(false);
+  readonly attemptedSubmit = signal(false);
   readonly showConfirmModal = signal(false);
   readonly showSuccessModal = signal(false);
   readonly showErrorModal = signal(false);
@@ -158,15 +170,19 @@ export class JoinApplicationForm {
   // ========================
 
   submit() {
+    this.attemptedSubmit.set(true);
+
     if (
       this.form.invalid ||
       this.selectedPositions().length === 0 ||
       this.hasInvalidSelectedPosition()
     ) {
       this.form.markAllAsTouched();
+      this.focusFirstInvalidField();
       return;
     }
 
+    this.attemptedSubmit.set(false);
     this.showConfirmModal.set(true);
   }
 
@@ -177,7 +193,9 @@ export class JoinApplicationForm {
       this.hasInvalidSelectedPosition()
     ) {
       this.showConfirmModal.set(false);
+      this.attemptedSubmit.set(true);
       this.form.markAllAsTouched();
+      this.focusFirstInvalidField();
       return;
     }
 
@@ -202,6 +220,7 @@ export class JoinApplicationForm {
         this.isSubmitting.set(false);
         this.form.reset();
         this.selectedPositions.set([]);
+        this.attemptedSubmit.set(false);
         this.showSuccessModal.set(true);
       },
       error: (err: unknown) => {
@@ -280,7 +299,22 @@ export class JoinApplicationForm {
       const position = this.positions.find(p => p.id === selected.positionId);
       const requiresCategories = (position?.subRoles?.length ?? 0) > 0;
 
-      return requiresCategories && selected.categories.length === 0;
+      return !position || (requiresCategories && selected.categories.length === 0);
+    });
+  }
+
+  private focusFirstInvalidField(): void {
+    setTimeout(() => {
+      const form = this.applicationForm?.nativeElement;
+      const target = form?.querySelector<HTMLElement>(
+        '.ng-invalid:not(form), [data-position-input]'
+      );
+
+      target?.focus();
+      target?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
     });
   }
 

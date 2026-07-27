@@ -1,119 +1,205 @@
-<section class="bg-white">
+<main class="min-h-screen bg-slate-50 text-slate-950">
+  <section class="relative isolate overflow-hidden bg-[#000035] text-white" aria-labelledby="editorial-board-title">
+    <img
+      src="assets/ebheader.png"
+      alt=""
+      aria-hidden="true"
+      class="absolute inset-0 -z-30 h-full w-full object-cover object-center"
+    />
+    <div class="absolute inset-0 -z-20 bg-linear-to-br from-[#000035]/98 via-[#001f5c]/92 to-[#000035]/85" aria-hidden="true"></div>
+    <div class="absolute inset-0 -z-10 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.1)_1px,transparent_1px)] [background-size:3.5rem_3.5rem] [mask-image:linear-gradient(to_right,black,transparent_78%)]" aria-hidden="true"></div>
+    <div class="absolute -right-40 -top-48 -z-10 h-[32rem] w-[32rem] rounded-full bg-[#F4B400]/20 blur-3xl" aria-hidden="true"></div>
 
-  <!-- ================= HERO SECTION ================= -->
-  <div class="relative overflow-hidden bg-linear-to-b from-[#0b1c2d] via-[#0d2438] to-white">
+    <div class="mx-auto grid min-h-[31rem] max-w-7xl items-center gap-10 px-4 py-20 sm:min-h-[36rem] sm:px-6 sm:py-24 lg:grid-cols-[minmax(0,1fr)_auto] lg:py-28">
+      <div class="max-w-4xl">
+        <div class="inline-flex min-h-10 items-center gap-2 rounded-full border border-[#F4B400]/30 bg-white/5 px-4 py-2 text-[0.6875rem] font-black uppercase tracking-[0.22em] text-[#F4B400] backdrop-blur-sm">
+          Paragon
+        </div>
 
-<!-- BACKGROUND IMAGE -->
-<div class="absolute inset-0 bg-cover bg-center bg-no-repeat">
-  <img src="assets/ebheader.png" alt="Paragon Header" class="w-full h-full object-cover">
-</div>
+        <h1 id="editorial-board-title" class="mt-6 text-balance text-5xl font-black leading-[0.98] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
+          Editorial Board
+        </h1>
 
-<!-- GRADIENT OVERLAY (keeps text readable) -->
-<div class="absolute inset-0 bg-linear-to-b from-[#0b1c2d]/90 via-[#0d2438]/80 to-white"></div>
-
-
-    <div class="relative z-10 max-w-7xl mx-auto px-6 py-20 md:py-28 text-center">
-
-      <!-- Accent Line -->
-      <div class="flex items-center justify-center gap-4 mb-8">
-        <span class="text-3xl md:text-sm uppercase tracking-[0.2em] text-[#F4B400] font-semibold">Paragon </span>
-      </div>
-
-      <!-- Title -->
-      <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-white mb-4">
-        Editorial Board
-      </h1>
-
-      <!-- Academic Year Badge -->
-      <div class="inline-block mt-6 px-6 py-2 bg-[#F4B400]/10 border border-[#F4B400]/40 rounded-full">
-        <p class="text-sm font-semibold text-[#F4B400] tracking-wide uppercase">
-          Academic Year {{ academicYear() }}
+        <p class="mt-6 max-w-2xl text-pretty text-base leading-7 text-slate-200 sm:text-lg sm:leading-8">
+          Meet the campus journalists and creative leaders responsible for liberating voices, upholding editorial standards, and amplifying the truth.
         </p>
+
+        <div *ngIf="academicYear()" class="mt-7 inline-flex min-h-11 items-center rounded-xl border border-[#F4B400]/35 bg-[#F4B400]/10 px-4 py-2 text-sm font-black text-[#F4B400]">
+          Academic Year {{ academicYear() }}
+        </div>
       </div>
 
-      <!-- Description -->
-      <p class="mt-8 text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
-       Meet the campus journalists leading <span class="text-[#F4B400] font-bold">Paragon's</span> mission of liberating voices and amplifying the truth
-      </p>
-
+      <dl *ngIf="!loading() && hasBoard()" class="grid grid-cols-2 gap-3 sm:w-80 lg:grid-cols-1" aria-label="Board overview">
+        <div class="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm sm:p-5">
+          <dt class="text-[0.6875rem] font-black uppercase tracking-[0.16em] text-slate-300">Board members</dt>
+          <dd class="mt-2 text-3xl font-black tabular-nums text-white">{{ totalMembers() }}</dd>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm sm:p-5">
+          <dt class="text-[0.6875rem] font-black uppercase tracking-[0.16em] text-slate-300">Teams</dt>
+          <dd class="mt-2 text-3xl font-black tabular-nums text-white">{{ sections().length }}</dd>
+        </div>
+      </dl>
     </div>
-  </div>
+  </section>
 
-  <!-- ================= BOARD SECTIONS ================= -->
-  <div *ngIf="loading()" class="flex justify-center items-center py-40">
-    <div class="w-10 h-10 rounded-full border-4 border-[#F4B400] border-t-transparent animate-spin"></div>
-  </div>
-
-  <section *ngFor="let section of sections()" class="mb-28 mt-16">
-
-    <!-- Section Header -->
-    <div class="mb-12 flex flex-col items-center text-center">
-      <h2 class="text-2xl md:text-3xl font-bold text-[#0b1c2d] tracking-tight">
-        {{ section.title }}
-      </h2>
-      <span class="mt-3 w-12 h-1 bg-linear-to-r from-[#F4B400] to-[#FFD86B] rounded-full"></span>
+  <section class="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18 lg:py-20" [attr.aria-busy]="loading()" aria-live="polite">
+    <div *ngIf="loading()" role="status">
+      <div class="flex items-center gap-3">
+        <svg class="h-5 w-5 animate-spin text-[#a87300] motion-reduce:animate-none" aria-hidden="true" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z"></path>
+        </svg>
+        <p class="text-sm font-bold text-slate-700">Loading the editorial board…</p>
+      </div>
+      <div class="mt-8 space-y-12">
+        <div *ngFor="let item of [1, 2]" class="animate-pulse motion-reduce:animate-none">
+          <div class="h-7 w-52 rounded-lg bg-slate-200"></div>
+          <div class="mt-6 grid gap-4 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div *ngFor="let card of [1, 2, 3, 4]" class="h-64 rounded-2xl border border-slate-200 bg-white p-5">
+              <div class="mx-auto h-24 w-24 rounded-full bg-slate-200"></div>
+              <div class="mx-auto mt-5 h-4 w-2/3 rounded bg-slate-200"></div>
+              <div class="mx-auto mt-3 h-3 w-1/2 rounded bg-slate-100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Members -->
-    <div class="flex justify-center">
-      <div class="flex flex-wrap justify-center gap-12 max-w-6xl">
+    <div *ngIf="!loading() && loadError()" class="rounded-3xl border border-red-200 bg-white px-5 py-14 text-center shadow-sm sm:px-10" role="alert">
+      <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+        <svg class="h-8 w-8" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.8 2.5 18a2 2 0 0 0 1.75 3h15.5a2 2 0 0 0 1.75-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
+        </svg>
+      </span>
+      <h2 class="mt-5 text-2xl font-black tracking-tight text-[#000035]">We couldn’t load the board</h2>
+      <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Check your connection and try again. Existing board information will remain unchanged.</p>
+      <button
+        type="button"
+        (click)="retry()"
+        class="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-[#000035] px-6 py-3 text-sm font-black text-white transition hover:bg-[#001f5c] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#F4B400]"
+      >
+        Try again
+      </button>
+    </div>
 
-        <div *ngFor="let member of section.members" class="group w-65 text-center transition-all duration-300 cursor-pointer"
-        >
+    <div *ngIf="!loading() && !loadError() && !hasBoard()" class="rounded-3xl border border-dashed border-slate-300 bg-white px-5 py-16 text-center sm:px-10">
+      <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+        <svg class="h-8 w-8" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87m-2-12a4 4 0 0 1 0 7.75" />
+        </svg>
+      </span>
+      <h2 class="mt-5 text-2xl font-black tracking-tight text-[#000035]">Board information is coming soon</h2>
+      <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">The active editorial board has not been published yet. Please check back later.</p>
+    </div>
 
-          <!-- Avatar / Initials -->
-          <div class="mx-auto mb-5 w-28 h-28 rounded-2xl bg-linear-to-br from-[#F4B400]/15 to-[#FFD86B]/10 flex items-center justify-center text-sm font-bold uppercase tracking-wider text-[#F4B400] ring-2 ring-[#F4B400]/30 group-hover:ring-[#F4B400] group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-[#F4B400]/20 transition-all duration-300">
-            {{ member.initials || '—' }}
+    <div *ngIf="!loading() && !loadError() && hasBoard()" class="space-y-16 sm:space-y-20">
+      <section
+        *ngFor="let section of sections(); let sectionIndex = index"
+        [id]="sectionId(section.title, sectionIndex)"
+        class="scroll-mt-24"
+        [attr.aria-labelledby]="sectionId(section.title, sectionIndex) + '-heading'"
+      >
+        <header class="flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+          <div>
+            <p class="text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#F4B400]">Editorial team</p>
+            <h2 [id]="sectionId(section.title, sectionIndex) + '-heading'" class="mt-1 text-2xl font-black tracking-tight text-[#000035] sm:text-3xl">
+              {{ section.title }}
+            </h2>
+          </div>
+          <p class="text-sm font-semibold tabular-nums text-slate-500">
+            {{ section.members.length }} {{ section.members.length === 1 ? 'member' : 'members' }}
+          </p>
+        </header>
+
+        <div *ngIf="section.members.length; else emptySection" class="mt-6 grid gap-4 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
+          <article
+            *ngFor="let member of section.members"
+            class="flex min-h-60 min-w-0 flex-col items-center rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6"
+          >
+            <span
+              class="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#000035] text-2xl font-black uppercase tracking-tight text-[#F4B400] shadow-md ring-1 ring-slate-200 sm:h-28 sm:w-28"
+            >
+              <img *ngIf="member.image; else memberInitials" [src]="member.image" [alt]="member.name + ' profile photo'" loading="lazy" decoding="async" class="h-full w-full object-cover" />
+              <ng-template #memberInitials>{{ member.initials || member.name.charAt(0) || '—' }}</ng-template>
+            </span>
+
+            <h3 class="mt-5 line-clamp-2 text-lg font-black leading-snug tracking-tight text-[#000035]">
+              {{ member.name }}
+            </h3>
+            <p class="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-500">{{ member.position }}</p>
+            <p *ngIf="member.yearLevel" class="mt-auto pt-4 text-xs font-bold uppercase tracking-wider text-[#9a6700]">
+              {{ member.yearLevel.replace('_', ' ') }}
+            </p>
+          </article>
+        </div>
+
+        <ng-template #emptySection>
+          <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center text-sm text-slate-500">
+            Members for this section have not been published.
+          </div>
+        </ng-template>
+      </section>
+
+      <section
+        *ngIf="adviser().name"
+        id="board-adviser"
+        class="scroll-mt-24 overflow-hidden rounded-3xl border border-[#F4B400]/25 bg-[#fffaf0]"
+        aria-labelledby="board-adviser-heading"
+      >
+        <div class="grid items-center gap-7 p-5 sm:p-8 md:grid-cols-[auto_minmax(0,1fr)] lg:p-10">
+          <div class="mx-auto rounded-full md:mx-0">
+            <span class="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#000035] text-3xl font-black uppercase text-[#F4B400] shadow-lg ring-1 ring-[#F4B400]/30 sm:h-32 sm:w-32">
+              <img *ngIf="adviser().image; else adviserInitials" [src]="adviser().image" [alt]="adviser().name + ' profile photo'" loading="lazy" decoding="async" class="h-full w-full object-cover" />
+              <ng-template #adviserInitials>{{ adviser().initials || adviser().name.charAt(0) || '—' }}</ng-template>
+            </span>
           </div>
 
-          <!-- Name -->
-          <h3 class="text-lg font-bold text-[#0b1c2d] group-hover:text-[#F4B400] transition-colors duration-300">
-            {{ member.name }}
-          </h3>
-
-          <!-- Role -->
-          <p class="mt-1 text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
-            {{ member.position }}
-          </p>
+          <div class="text-center md:text-left">
+            <p class="text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#F4B400]">Faculty guidance</p>
+            <h2 id="board-adviser-heading" class="mt-1 text-2xl font-black tracking-tight text-[#000035] sm:text-3xl">Publication adviser</h2>
+            <h3 class="mt-4 text-xl font-black text-[#000035]">{{ adviser().name }}</h3>
+            <p class="mt-1 text-sm font-semibold text-slate-600">{{ adviser().position }}</p>
+            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Provides institutional guidance and supports the publication’s standards, development, and editorial independence.</p>
+          </div>
 
         </div>
 
-      </div>
-    </div>
+        <div
+          *ngIf="coAdviser().name"
+          class="grid items-center gap-7 border-t border-[#F4B400]/25 p-5 sm:p-8 md:grid-cols-[auto_minmax(0,1fr)] lg:p-10"
+        >
+          <div class="mx-auto rounded-full md:mx-0">
+            <span class="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#000035] text-3xl font-black uppercase text-[#F4B400] shadow-lg ring-1 ring-[#F4B400]/30 sm:h-32 sm:w-32">
+              <img
+                *ngIf="coAdviser().image; else coAdviserInitials"
+                [src]="coAdviser().image"
+                [alt]="coAdviser().name + ' profile photo'"
+                loading="lazy"
+                decoding="async"
+                class="h-full w-full object-cover"
+              />
+              <ng-template #coAdviserInitials>{{ coAdviser().initials || coAdviser().name.charAt(0) || '—' }}</ng-template>
+            </span>
+          </div>
 
-  </section>
-
-  <!-- ================= ADVISER ================= -->
-  <section *ngIf="adviser" class="mt-32 mb-32 text-center">
-
-    <div class="mb-14 flex flex-col items-center">
-      <h2 class="text-2xl md:text-3xl font-bold text-[#0b1c2d] tracking-tight">
-        Adviser
-      </h2>
-      <span class="mt-3 w-12 h-1 bg-linear-to-r from-[#F4B400] to-[#FFD86B] rounded-full"></span>
-    </div>
-
-    <div class="flex justify-center">
-      <div class="group bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl hover:border-[#F4B400]/50 transition-all duration-300 max-w-md border border-gray-200">
-
-        <!-- Adviser Avatar -->
-        <div class="mx-auto mb-8 w-36 h-36 rounded-2xl bg-linear-to-br from-[#F4B400]/15 to-[#FFD86B]/10 flex items-center justify-center text-sm font-bold uppercase tracking-wider text-[#F4B400] ring-2 ring-[#F4B400]/40 group-hover:ring-[#F4B400] group-hover:scale-105 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[#F4B400]/20">
-          {{ adviser().initials || '—' }}
+          <div class="text-center md:text-left">
+            <p class="text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#9a6700]">Faculty guidance</p>
+            <h2 class="mt-1 text-2xl font-black tracking-tight text-[#000035] sm:text-3xl">Publication co-adviser</h2>
+            <h3 class="mt-4 text-xl font-black text-[#000035]">{{ coAdviser().name }}</h3>
+            <p class="mt-1 text-sm font-semibold text-slate-600">{{ coAdviser().position }}</p>
+            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Works alongside the publication adviser to guide and support the editorial board.</p>
+          </div>
         </div>
-
-        <!-- Name -->
-        <h3 class="text-xl font-bold text-[#0b1c2d] group-hover:text-[#F4B400] transition-colors duration-300">
-          {{ adviser().name }}
-        </h3>
-
-        <!-- Role -->
-        <p class="mt-2 text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
-          {{ adviser().position }}
-        </p>
-
-      </div>
+      </section>
     </div>
-
   </section>
 
-</section>
+  <section *ngIf="!loading() && hasBoard()" class="relative isolate overflow-hidden bg-[#000035] px-4 py-14 text-white sm:px-6 sm:py-16" aria-labelledby="board-mission-heading">
+    <div class="absolute -right-32 -top-40 -z-10 h-80 w-80 rounded-full bg-[#F4B400]/15 blur-3xl" aria-hidden="true"></div>
+    <div class="mx-auto max-w-4xl text-center">
+      <p class="text-[0.6875rem] font-black uppercase tracking-[0.22em] text-[#ffd45c]">Our responsibility</p>
+      <h2 id="board-mission-heading" class="mt-3 text-balance text-2xl font-black tracking-tight sm:text-4xl">Journalism in service of the student community</h2>
+      <p class="mx-auto mt-4 max-w-2xl text-pretty text-sm leading-7 text-slate-300 sm:text-base">The editorial board works collectively to uphold accuracy, fairness, accountability, and the public trust in every story Paragon publishes.</p>
+    </div>
+  </section>
+</main>

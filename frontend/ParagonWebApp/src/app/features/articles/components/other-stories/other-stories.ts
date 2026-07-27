@@ -15,4 +15,8 @@ export class OtherStories {
   protected readonly imageVariant = imageVariant;
 
   @Input() articles: Article[] = [];
+
+  trackByArticle(index: number, article: Article): string {
+    return article.id;
+  }
 }

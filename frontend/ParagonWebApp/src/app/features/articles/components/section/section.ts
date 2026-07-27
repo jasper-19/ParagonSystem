@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, DOCUMENT, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   ArticleSection,
   ParagraphSection,
@@ -13,11 +14,29 @@ import {
   selector: 'app-article-section',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './section.html'
+  templateUrl: './section.html',
+  styleUrl: './section.scss',
 })
 export class ArticleSectionComponent {
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly document = inject(DOCUMENT);
+  private _section!: ArticleSection;
 
-  @Input() section!: ArticleSection;
+  @Input({ required: true })
+  set section(value: ArticleSection) {
+    this._section = value;
+    this.safeEmbedUrl = this.isEmbed(value)
+      ? this.sanitizeEmbedUrl(value.url)
+      : undefined;
+  }
+
+  get section(): ArticleSection {
+    return this._section;
+  }
+
+  @Input() isFirst = false;
+
+  safeEmbedUrl?: SafeResourceUrl;
 
   // ===== TYPE GUARDS =====
 
@@ -39,5 +58,16 @@ export class ArticleSectionComponent {
 
   isEmbed(section: ArticleSection): section is EmbedSection {
     return section.type === 'embed';
+  }
+
+  private sanitizeEmbedUrl(value: string): SafeResourceUrl | undefined {
+    try {
+      const url = new URL(value, this.document.baseURI);
+      if (!['http:', 'https:'].includes(url.protocol)) return undefined;
+
+      return this.sanitizer.bypassSecurityTrustResourceUrl(url.toString());
+    } catch {
+      return undefined;
+    }
   }
 }

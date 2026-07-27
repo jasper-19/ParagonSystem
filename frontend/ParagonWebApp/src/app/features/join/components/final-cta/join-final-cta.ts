@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -9,6 +9,7 @@ import { RouterModule } from '@angular/router';
   templateUrl: './join-final-cta.html',
 })
 export class JoinFinalCta {
+  readonly applicationsOpen = input(true);
 
   readonly title = signal('Ready to Make an Impact?');
 

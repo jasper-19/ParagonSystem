@@ -5,6 +5,8 @@ export interface StaffMember {
   email: string;
   studentId?: string;
   yearLevel?: string;
+  isBoardEligible?: boolean;
+  graduatedAt?: Date;
   collegeId?: string;
   programId?: string;
   positionId?: string;

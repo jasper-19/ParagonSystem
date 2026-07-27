@@ -1,70 +1,30 @@
-<section
-  class="w-full bg-gradient-to-br from-[#000035] via-[#000045] to-[#000035] text-white pt-10 pb-12 md:pt-12 md:pb-12 relative overflow-hidden"
-  aria-labelledby="staff-application-title"
->
-
-  <!-- Decorative Elements -->
-  <div class="absolute inset-0 opacity-10">
-    <div class="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
-    <div class="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-x-1/2 translate-y-1/2"></div>
-  </div>
-
-  <div class="max-w-5xl mx-auto px-6 text-center relative z-10">
-
-    <!-- Badge -->
-    <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-sm font-medium mb-6">
-      <span>Official Student Publication of Cagayan State University Gonzaga</span>
+<aside class="relative overflow-hidden bg-[#000035] py-14 text-white sm:py-18" aria-labelledby="staff-application-title">
+  <div aria-hidden="true" class="absolute -right-32 -top-32 h-80 w-80 rounded-full bg-[#F4B400]/12 blur-3xl"></div>
+  <div class="relative mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8">
+    <div class="max-w-3xl">
+      <p class="mb-3 text-xs font-black uppercase tracking-[0.2em] text-[#F4B400]">Join the newsroom</p>
+      <h2 id="staff-application-title" class="text-balance text-3xl font-black leading-tight sm:text-4xl">
+        Help tell the stories that matter.
+      </h2>
+      <p class="mt-4 max-w-2xl text-pretty text-base leading-7 text-white/72">
+        Paragon welcomes CSU Gonzaga students passionate about journalism, storytelling, photography, illustration, and design.
+      </p>
     </div>
 
-    <!-- Headline -->
-    <h2
-      id="staff-application-title"
-      class="text-4xl md:text-3xl font-bold mb-6 tracking-tight uppercase"
-    >
-      Join Paragon 
-      <br>
-      <span class="text-[#F4B400] font-black text-5xl">Now</span>
-    </h2>
-
-    <!-- Description -->
-    <p class="text-white/80 text-lg md:text-m max-w-3xl mx-auto mb-10 leading-relaxed font-light">
-      Help liberate voices and amplify the truth on campus.
-      <br>
-      Paragon invites students who are passionate about journalism, storytelling, photography, or design to become part of CSU Gonzaga's official student publication and contribute to stories that matter.
-    </p>
-
-    <!-- CTA Buttons -->
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-      
-      <!-- Apply Now Button with Enhanced Shine Effect -->
+    <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
       <a
         routerLink="/join"
-        class="group relative inline-flex items-center gap-2 px-8 py-4 bg-[#F4B400] text-[#000035] font-semibold rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#F4B400]/30"
+        class="inline-flex min-h-12 items-center justify-center gap-2 bg-[#F4B400] px-6 py-3 text-sm font-black text-[#000035] transition-colors hover:bg-[#ffd044] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
       >
-        <!-- Animated Shine Effect -->
-        <div class="absolute inset-0 w-full h-full">
-          <div class="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"></div>
-        </div>
-        
-        <!-- Subtle Glow on Hover -->
-        <div class="absolute inset-0 bg-gradient-to-r from-[#F4B400] to-[#FFD700] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        
-        <span class="relative z-10">Apply Now</span>
-        <svg class="relative z-10 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-        </svg>
+        Apply to Paragon
+        <span aria-hidden="true">→</span>
       </a>
-
-      <!-- Learn More Button  -->
       <a
-        routerLink="/about"
-        class="relative border border-white/20 hover:border-[#F4B400] duration-500 group cursor-pointer text-white overflow-hidden h-14 px-8 rounded-lg bg-white/10 backdrop-blur-sm flex justify-center items-center font-semibold transition-all"
+        routerLink="/editorial-board"
+        class="inline-flex min-h-12 items-center justify-center border border-white/30 px-6 py-3 text-sm font-bold text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F4B400]"
       >
-       <span class="text-lg">Learn More</span>
+        Meet the editorial board
       </a>
-
     </div>
-
   </div>
-
-</section>
+</aside>

@@ -1,36 +1,24 @@
 <section
-  class="relative bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000849] text-white pb-32 pt-24 overflow-hidden"
+  class="relative isolate min-h-[23rem] overflow-hidden bg-[#000035] pb-24 pt-20 text-white sm:min-h-[28rem] sm:pb-32 sm:pt-28 lg:min-h-[32rem] lg:pb-36 lg:pt-32"
   aria-labelledby="categories-hero-title"
 >
+  <div class="absolute inset-0 -z-30 bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035]" aria-hidden="true"></div>
+  <div class="absolute inset-0 -z-20 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.12)_1px,transparent_1px)] [background-size:3.5rem_3.5rem] [mask-image:linear-gradient(to_right,black,transparent_75%)]" aria-hidden="true"></div>
+  <div class="absolute -left-32 -top-40 -z-10 h-[28rem] w-[28rem] rounded-full bg-[#F4B400]/20 blur-3xl" aria-hidden="true"></div>
+  <div class="absolute -right-32 top-12 -z-10 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl sm:right-0" aria-hidden="true"></div>
+  <div class="absolute -bottom-60 -right-32 -z-10 h-[32rem] w-[32rem] rounded-full border border-white/10 ring-[4rem] ring-white/[0.025]" aria-hidden="true"></div>
 
-  <!-- Grid Pattern Overlay -->
-  <div class="absolute inset-0 opacity-[0.02]"></div>
-
-  <!-- Background Big Text (Subtle Overlay Effect) -->
-  <div class="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-    <h2 class="text-[120px] sm:text-[150px] md:text-[180px] lg:text-[200px] font-bold opacity-[0.05] select-none tracking-tight text-white">
-      {{ title() }}
-    </h2>
-  </div>
-
-  <div class="relative max-w-7xl mx-auto px-6 space-y-8">
-
-    <!-- Small Label with Enhanced Design -->
-    <div class="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-[#F4B400]/30 shadow-lg shadow-[#F4B400]/10">
-      <span class="text-[#F4B400] text-xs font-bold tracking-[0.2em] uppercase">
-        {{ label() }}
-      </span>
+  <div class="mx-auto w-full max-w-7xl px-4 sm:px-6">
+    <div class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.22em] text-[#f4b400]">
+      {{ label() }}
     </div>
 
-    <!-- Main Title with Enhanced Typography -->
-    <h1
-      id="categories-hero-title"
-      class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.1] tracking-tight
-             text-white drop-shadow-2xl"
-    >
+    <h1 id="categories-hero-title" class="mt-5 max-w-[13ch] text-balance text-5xl font-black leading-[0.95] tracking-[-0.05em] sm:text-6xl lg:text-7xl xl:text-8xl">
       {{ title() }}
     </h1>
 
+    <p *ngIf="subtitle()" class="mt-5 max-w-2xl text-pretty text-base leading-7 text-slate-200/90 sm:mt-6 sm:text-lg sm:leading-8">
+      {{ subtitle() }}
+    </p>
   </div>
-
 </section>

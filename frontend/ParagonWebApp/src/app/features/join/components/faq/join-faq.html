@@ -1,99 +1,65 @@
-<section class="py-12 bg-linear-to-b from-slate-50 to-white">
-
-  <div class="max-w-4xl mx-auto px-6 space-y-12">
-
-    <!-- Section Header -->
-    <div class="text-center space-y-4">
-
-      <h2 class="text-3xl md:text-4xl font-bold text-[#000035] tracking-tight">
+<section class="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:py-24" aria-labelledby="join-faq-heading">
+  <div class="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(16rem,0.65fr)_minmax(0,1.35fr)] lg:gap-16">
+    <div>
+      <p class="text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#F4B400]">Before you apply</p>
+      <h2 id="join-faq-heading" class="mt-2 text-balance text-3xl font-black tracking-tight text-[#000035] sm:text-4xl">
         {{ sectionTitle() }}
       </h2>
-
+      <p class="mt-4 max-w-md text-base leading-7 text-slate-600">
+        Get quick answers about eligibility, experience, commitment, and the review process.
+      </p>
     </div>
 
-    <!-- FAQ List -->
     <div class="space-y-3">
-
-      <ng-container *ngFor="let faq of faqs(); let i = index">
-
-        <div
-          class="bg-white border-2 rounded-2xl overflow-hidden shadow-sm"
-          [class.border-[#F4B400]]="activeIndex() === i"
-          [class.border-slate-200]="activeIndex() !== i"
-        >
-
-          <!-- Question -->
+      <article
+        *ngFor="let faq of faqs(); let i = index"
+        class="overflow-hidden rounded-2xl border bg-white transition"
+        [ngClass]="activeIndex() === i ? 'border-[#F4B400] shadow-md' : 'border-slate-200 shadow-sm'"
+      >
+        <h3>
           <button
             type="button"
             (click)="toggle(i)"
-            class="w-full flex items-center justify-between gap-4
-                   px-8 py-6
-                   text-left"
+            class="flex min-h-16 w-full items-center justify-between gap-4 px-4 py-4 text-left focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-[#F4B400] sm:px-6"
+            [attr.aria-expanded]="activeIndex() === i"
+            [attr.aria-controls]="'join-faq-answer-' + i"
+            [id]="'join-faq-question-' + i"
           >
-
-            <div class="flex items-center gap-4 flex-1">
-              <!-- Number Badge -->
-              <div
-                class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
-                [class.bg-[#F4B400]]="activeIndex() === i"
-                [class.text-white]="activeIndex() === i"
-                [class.bg-slate-100]="activeIndex() !== i"
-                [class.text-slate-500]="activeIndex() !== i"
-              >
-                {{ i + 1 }}
-              </div>
-
+            <span class="flex min-w-0 items-center gap-3 sm:gap-4">
               <span
-                class="font-semibold text-lg"
-                [class.text-[#000035]]="activeIndex() === i"
-                [class.text-slate-700]="activeIndex() !== i"
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black tabular-nums transition"
+                [ngClass]="activeIndex() === i ? 'bg-[#F4B400] text-[#000035]' : 'bg-slate-100 text-slate-500'"
+                aria-hidden="true"
               >
-                {{ faq.question }}
+                0{{ i + 1 }}
               </span>
-            </div>
+              <span class="text-base font-black text-[#000035] sm:text-lg">{{ faq.question }}</span>
+            </span>
 
-            <!-- Toggle Icon -->
-            <div
-              class="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-              [class.bg-[#F4B400]]="activeIndex() === i"
-              [class.bg-slate-100]="activeIndex() !== i"
+            <span
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition"
+              [ngClass]="activeIndex() === i ? 'bg-[#000035] text-white' : 'bg-slate-100 text-slate-500'"
+              aria-hidden="true"
             >
-              <svg
-                class="w-5 h-5 transition-transform duration-300"
-                [class.rotate-180]="activeIndex() === i"
-                [class.text-white]="activeIndex() === i"
-                [class.text-slate-500]="activeIndex() !== i"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2.5"
-                  d="M19 9l-7 7-7-7"
-                />
+              <svg class="h-5 w-5 transition-transform duration-200 motion-reduce:transition-none" [class.rotate-180]="activeIndex() === i" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m6 9 6 6 6-6" />
               </svg>
-            </div>
+            </span>
           </button>
+        </h3>
 
-          <!-- Answer -->
-          <ng-container *ngIf="activeIndex() === i">
-            <div class="px-8 pb-6 pt-2">
-              <div class="pl-12 border-l-2 border-[#F4B400]/20 ml-4">
-                <p class="text-slate-600 leading-relaxed">
-                  {{ faq.answer }}
-                </p>
-              </div>
-            </div>
-          </ng-container>
-
+        <div
+          *ngIf="activeIndex() === i"
+          [id]="'join-faq-answer-' + i"
+          role="region"
+          [attr.aria-labelledby]="'join-faq-question-' + i"
+          class="px-4 pb-5 sm:px-6 sm:pb-6"
+        >
+          <p class="border-l-2 border-[#F4B400] pl-4 text-sm leading-7 text-slate-600 sm:ml-13 sm:text-base">
+            {{ faq.answer }}
+          </p>
         </div>
-
-      </ng-container>
-
+      </article>
     </div>
-
   </div>
-
 </section>

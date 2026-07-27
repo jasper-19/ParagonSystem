@@ -106,10 +106,10 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       );
       return (staff as StaffMember[]).filter((s: StaffMember) => {
         const n = countById.get(s.id) ?? countByName.get(s.fullName.trim().toLowerCase()) ?? 0;
-        // 4th-year staff cannot be freshly assigned to a board (n === 0).
-        // However, if they already hold 1 position on the current board (n >= 1),
-        // they are still eligible for their 2nd slot.
-        if (s.yearLevel === '4th_year' && n === 0) return false;
+        // Graduated staff stay in historical records but cannot be freshly
+        // assigned. Newly promoted fourth-years remain eligible for a final
+        // board because eligibility is tracked separately from year level.
+        if (s.isBoardEligible === false && n === 0) return false;
         // Each staff member may hold up to 2 board positions.
         // When board is "satisfied", hide those who already have 1 assignment.
         return satisfied ? n === 0 : n < 2;
@@ -500,6 +500,7 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
   newBoardForm: FormGroup = this.fb.group({
     academicYear: ['', [Validators.required, this.academicYearValidator()]],
     adviserName:  ['', [Validators.required, Validators.minLength(2)]],
+    coAdviserName: ['', [Validators.maxLength(255)]],
   });
 
   /** Validates YYYY-YYYY or YYYY–YYYY format with exactly one-year gap. */
@@ -549,7 +550,11 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
 
   submitNewBoard() {
     if (this.newBoardForm.invalid || this.newBoardSubmitting()) return;
-    const { academicYear, adviserName } = this.newBoardForm.value as { academicYear: string; adviserName: string };
+    const { academicYear, adviserName, coAdviserName } = this.newBoardForm.value as {
+      academicYear: string;
+      adviserName: string;
+      coAdviserName?: string;
+    };
 
     // Duplicate check on the client side
     const duplicate = this.allBoards().some(
@@ -562,7 +567,11 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     this.newBoardSubmitting.set(true);
-    this.editorialBoardService.createBoard(academicYear.trim(), adviserName.trim()).subscribe({
+    this.editorialBoardService.createBoard(
+      academicYear.trim(),
+      adviserName.trim(),
+      coAdviserName?.trim()
+    ).subscribe({
       next: () => {
         this.newBoardSubmitting.set(false);
         this.closeNewBoardModal();
@@ -1184,7 +1193,9 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       studentId:
         staffRecord?.studentId ?? '',
       yearLevel:
-        staffRecord?.yearLevel ?? '',
+        member.yearLevel ??
+        staffRecord?.yearLevel ??
+        '',
       collegeId:
         staffRecord?.collegeId ?? '',
       programId:
@@ -1300,6 +1311,7 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
     const nextRole = role.trim();
     const nextFullName = String(fullName ?? '').trim();
     const nextEmail = String(email ?? '').trim();
+    const nextYearLevel = String(yearLevel ?? '').trim() || null;
 
     const editing = this.editingMember;
     const boardId = this.editorialBoardService.activeBoardId;
@@ -1318,7 +1330,8 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       boardId,
       boardMemberId,
       nextSection,
-      nextRole
+      nextRole,
+      nextYearLevel
     );
 
     boardUpdate$
@@ -1333,7 +1346,6 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
             fullName: nextFullName,
             email: nextEmail,
             studentId: toNull(studentId),
-            yearLevel: toNull(yearLevel),
             collegeId: toNull(collegeId),
             programId: toNull(programId),
             positionId: toNull(positionId),

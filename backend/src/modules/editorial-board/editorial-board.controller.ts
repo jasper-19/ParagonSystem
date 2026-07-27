@@ -64,7 +64,7 @@ export const getBoardById = asyncHandler(async (req: Request, res: Response) => 
 });
 
 /** POST /api/editorial-boards
- *  Body: { academicYear: string, adviserName: string }
+ *  Body: { academicYear: string, adviserName: string, coAdviserName?: string }
  */
 export const createBoard = asyncHandler(
   async (
@@ -74,15 +74,18 @@ export const createBoard = asyncHandler(
     const {
       academicYear,
       adviserName,
+      coAdviserName,
     } = req.body as {
       academicYear: string;
       adviserName: string;
+      coAdviserName?: string;
     };
 
     const board =
       await service.createBoard(
         academicYear,
-        adviserName
+        adviserName,
+        coAdviserName
       );
 
     emitEditorialBoardUpdated();
@@ -107,6 +110,7 @@ export const createBoard = asyncHandler(
         details: {
           academicYear,
           adviserName,
+          coAdviserName: coAdviserName?.trim() || null,
         },
       }
     );
@@ -131,6 +135,10 @@ export const activateBoard = asyncHandler(
       "Activated the editorial board.",
       {
         resourceId: boardId,
+        details: {
+          yearLevelTransition:
+            (board as any).yearLevelTransition,
+        },
       }
     );
 
@@ -309,9 +317,10 @@ export const updateMember = asyncHandler(
       memberId: string;
     };
 
-    const { section, role } = req.body as {
+    const { section, role, yearLevel } = req.body as {
       section?: string;
       role?: string;
+      yearLevel?: string | null;
     };
 
     if (!section || !role) {
@@ -325,7 +334,8 @@ export const updateMember = asyncHandler(
       boardId,
       memberId,
       section,
-      role
+      role,
+      yearLevel
     );
 
     if (await service.isActiveBoard(boardId)) {
@@ -343,6 +353,7 @@ export const updateMember = asyncHandler(
           boardId,
           section,
           role,
+          yearLevel,
         },
       }
     );

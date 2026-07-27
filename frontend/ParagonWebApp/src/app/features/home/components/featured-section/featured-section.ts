@@ -4,29 +4,19 @@ import { RouterModule } from '@angular/router';
 import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
 import { ImagePlaceholderComponent } from '../../../../shared/components/image-placeholder/image-placeholder';
+import { ScrollRevealDirective } from '../../scroll-reveal.directive';
 
 @Component({
   selector: 'app-featured-section',
   standalone: true,
   templateUrl: './featured-section.html',
-  imports: [CommonModule, RouterModule, ImagePlaceholderComponent],
+  styleUrl: './featured-section.scss',
+  imports: [CommonModule, RouterModule, ImagePlaceholderComponent, ScrollRevealDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeaturedSection implements OnDestroy {
   protected readonly imageVariant = imageVariant;
-
-  protected readonly Math = Math;
-
-private readonly CAROUSEL = {
-  heroWidth: 'min(68vw, 980px)',
-  sideScale: 0.82,
-  sideOffset: 52,
-  sideBlur: 5,
-  hiddenScale: 0.72,
-  animationDuration: 520,
-  autoplayInterval: 6000,
-  shadow: '0 18px 45px rgba(0,0,53,0.22), 0 35px 90px rgba(0,0,53,0.18)',
-} as const;
+  private readonly autoplayInterval = 7000;
 
 private _articles: Article[] = [];
 
@@ -46,9 +36,10 @@ set articles(value: Article[]) {
 
   currentIndex = 0;
   offsets: number[] = [];
-  slideStyles: Array<Record<string, string>> = [];
 
   private autoplayTimer: ReturnType<typeof setInterval> | null = null;
+  private pointerStartX: number | null = null;
+  private interactionPaused = false;
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -74,94 +65,20 @@ set articles(value: Article[]) {
     return diff;
   }
 
-private computeSlideStyles(offset: number): Record<string, string> {
-
-  const {
-    heroWidth,
-    sideScale,
-    sideOffset,
-    sideBlur,
-    hiddenScale,
-    animationDuration,
-  } = this.CAROUSEL;
-
-  const base = {
-    top: '0',
-    left: '50%',
-    width: heroWidth,
-    height: '100%',
-    'transform-origin': 'center',
-    transition: `
-      transform ${animationDuration}ms ease,
-      opacity ${animationDuration}ms ease,
-      filter ${animationDuration}ms ease
-    `,
-  };
-
-  if (offset === 0) {
-    return {
-      ...base,
-      transform: 'translateX(-50%) scale(1)',
-      'z-index': '30',
-      opacity: '1',
-      filter: 'blur(0)',
-      'pointer-events': 'auto',
-      'box-shadow':
-        this.CAROUSEL.shadow,
-    };
-  }
-
-  if (offset === -1) {
-    return {
-      ...base,
-      transform: `translateX(-${sideOffset + 50}%) scale(${sideScale})`,
-      'z-index': '10',
-      opacity: '0.55',
-      filter: `blur(${sideBlur}px)`,
-      'pointer-events': 'auto',
-    };
-  }
-
-  if (offset === 1) {
-    return {
-      ...base,
-      transform: `translateX(${sideOffset - 50}%) scale(${sideScale})`,
-      'z-index': '10',
-      opacity: '0.55',
-      filter: `blur(${sideBlur}px)`,
-      'pointer-events': 'auto',
-    };
-  }
-
-  return {
-    ...base,
-    transform: `translateX(${offset > 0 ? '80%' : '-180%'}) scale(${hiddenScale})`,
-    'z-index': '0',
-    opacity: '0',
-    filter: `blur(${sideBlur + 3}px)`,
-    'pointer-events': 'none',
-  };
-}
-
   private updateDerivedState(): void {
     const len = this.articles.length;
     if (!len) {
       this.offsets = [];
-      this.slideStyles = [];
       return;
     }
 
     const offsets = new Array<number>(len);
-    const slideStyles = new Array<Record<string, string>>(len);
 
     for (let i = 0; i < len; i++) {
-      const offset = this.computeOffset(i, len);
-      offsets[i] = offset;
-      slideStyles[i] = this.computeSlideStyles(offset);
+      offsets[i] = this.computeOffset(i, len);
     }
 
     this.offsets = offsets;
-    this.slideStyles = slideStyles;
   }
 
   private initializeCarousel(): void {
@@ -211,6 +128,14 @@ private computeSlideStyles(offset: number): Record<string, string> {
   }
 
   private startAutoplay(): void {
+    if (
+      this.interactionPaused ||
+      typeof window === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
+    }
+
     this.autoplayTimer = setInterval(() => {
       const len = this.articles.length;
       if (!len) return;
@@ -218,7 +143,7 @@ private computeSlideStyles(offset: number): Record<string, string> {
       this.currentIndex = (this.currentIndex + 1) % len;
       this.updateDerivedState();
       this.cdr.markForCheck();
-    }, this.CAROUSEL.autoplayInterval);
+    }, this.autoplayInterval);
   }
 
   private stopAutoplay(): void {
@@ -231,5 +156,41 @@ private computeSlideStyles(offset: number): Record<string, string> {
     if (this.articles.length > 1) {
       this.startAutoplay();
     }
+  }
+
+  pauseAutoplay(): void {
+    this.interactionPaused = true;
+    this.stopAutoplay();
+  }
+
+  resumeAutoplay(): void {
+    this.interactionPaused = false;
+    if (this.articles.length > 1) {
+      this.startAutoplay();
+    }
+  }
+
+  onPointerDown(event: PointerEvent): void {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    this.pointerStartX = event.clientX;
+    this.pauseAutoplay();
+  }
+
+  onPointerUp(event: PointerEvent): void {
+    if (this.pointerStartX === null) return;
+
+    const distance = event.clientX - this.pointerStartX;
+    this.pointerStartX = null;
+
+    if (Math.abs(distance) >= 48) {
+      distance < 0 ? this.next() : this.prev();
+    }
+
+    this.resumeAutoplay();
+  }
+
+  cancelPointer(): void {
+    this.pointerStartX = null;
+    this.resumeAutoplay();
   }
 }
