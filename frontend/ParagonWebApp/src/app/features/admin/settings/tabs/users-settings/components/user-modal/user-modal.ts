@@ -1,91 +1,161 @@
-import {Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges} from "@angular/core";
-import { CommonModule } from "@angular/common";
-import {  ReactiveFormsModule, FormBuilder, FormGroup, Validators, } from "@angular/forms";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
+import { EligibleAdminStaff } from '../../../../../../../models/user-account.model';
+import { UserAccountsService } from '../../../../../../../core/services/user-accounts.service';
 
 export interface UserFormValue {
-  id?: number;
-  name: string;
-  email: string;
-  role: string;
-  status: 'active' | 'inactive';
-  password?: string;
+  staffId: string;
+  username: string;
 }
 
 @Component({
   selector: 'app-user-modal',
   standalone: true,
-  imports : [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './user-modal.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserModalComponent implements OnInit, OnChanges {
+export class UserModalComponent implements OnChanges {
+  private readonly fb = inject(FormBuilder);
+  private readonly service = inject(UserAccountsService);
+  private readonly destroyRef = inject(DestroyRef);
 
   @Input() isOpen = false;
-  @Input() userData: UserFormValue | null = null
+  @Input() eligibleStaff: EligibleAdminStaff[] = [];
+  @Output() readonly save = new EventEmitter<UserFormValue>();
+  @Output() readonly close = new EventEmitter<void>();
+  @ViewChild('dialog') private dialog?: ElementRef<HTMLElement>;
 
-  @Output() save = new EventEmitter<UserFormValue>();
-  @Output() close = new EventEmitter<void>();
+  readonly isSubmitting = signal(false);
+  readonly errorMessage = signal('');
+  readonly showPassword = signal(false);
 
-  form!: FormGroup;
-  isEditMode = false;
-  isSubmitting = false;
+  readonly form = this.fb.nonNullable.group({
+    staffId: ['', Validators.required],
+    username: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(3),
+        Validators.maxLength(100),
+        Validators.pattern(/^[a-zA-Z0-9._-]+$/),
+      ],
+    ],
+    password: [
+      '',
+      [Validators.required, Validators.minLength(12), Validators.maxLength(72)],
+    ],
+  });
 
-  roles = ['Admin', 'User', 'Editor'];
-
-  constructor(private fb: FormBuilder) {}
-
-  ngOnInit(): void {
-    this.initializeForm();
-  }
-
-  ngOnChanges(changes?: SimpleChanges): void {
-    if (this.userData) {
-      this.isEditMode = true;
-      this.form.patchValue(this.userData);
-    } else {
-      this.isEditMode = false;
-      this.form.reset({  status: 'active' , role: 'Staff' });
-    }
-  }
-
-  initializeForm(): void {
-    this.form = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
-      role: ['Staff', Validators.required],
-      status: ['active', Validators.required],
-      password: ['', []], // Conditional
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['isOpen'] || !this.isOpen) return;
+    queueMicrotask(() => {
+      this.dialog?.nativeElement.querySelector<HTMLElement>('select')?.focus();
     });
   }
 
-  submit(): void {
-    if (!this.isEditMode) {
-      this.form.get('password')?.setValidators([
-        Validators.required,
-        Validators.minLength(6)
-      ]);
-      this.form.get('password')?.updateValueAndValidity();
+  @HostListener('document:keydown', ['$event'])
+  handleDialogKeydown(event: KeyboardEvent): void {
+    if (!this.isOpen) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.onClose();
+      return;
     }
+    if (event.key !== 'Tab') return;
+    this.keepFocusInDialog(event);
+  }
 
-    if (this.form.invalid) {
+  staffChanged(): void {
+    const staff = this.eligibleStaff.find(item => item.id === this.form.controls.staffId.value);
+    if (!staff) return;
+    const emailUsername = staff.email.split('@')[0] ?? '';
+    const fallback = staff.fullName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '.')
+      .replace(/^\.+|\.+$/g, '');
+    this.form.controls.username.setValue(emailUsername || fallback);
+    this.form.controls.username.markAsDirty();
+  }
+
+  generatePassword(): void {
+    const alphabet =
+      'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
+    const random = new Uint32Array(16);
+    crypto.getRandomValues(random);
+    const password = Array.from(random, value => alphabet[value % alphabet.length]).join('');
+    this.form.controls.password.setValue(password);
+    this.form.controls.password.markAsDirty();
+    this.showPassword.set(true);
+  }
+
+  submit(): void {
+    if (this.form.invalid || this.isSubmitting()) {
       this.form.markAllAsTouched();
       return;
     }
-
-    this.isSubmitting = true;
-
-    const value: UserFormValue = {
-      ...this.form.value,
-      id: this.userData?.id
-    };
-
-    setTimeout(() => {
-      this.save.emit(value);
-      this.isSubmitting = false;
-      this.close.emit();
-    }, 500);
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
+    const value = this.form.getRawValue();
+    this.service
+      .createAdmin({ ...value, role: 'admin' })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isSubmitting.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.save.emit({ staffId: value.staffId, username: value.username });
+          this.form.reset();
+          this.showPassword.set(false);
+        },
+        error: error => {
+          this.errorMessage.set(
+            error?.error?.error ?? 'The administrator account could not be created.',
+          );
+        },
+      });
   }
 
   onClose(): void {
+    if (this.isSubmitting()) return;
+    this.errorMessage.set('');
+    this.form.reset();
+    this.showPassword.set(false);
     this.close.emit();
+  }
+
+  private keepFocusInDialog(event: KeyboardEvent): void {
+    const focusable = Array.from(
+      this.dialog?.nativeElement.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), select:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    );
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 }

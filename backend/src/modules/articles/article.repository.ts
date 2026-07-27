@@ -82,8 +82,6 @@ function mapAdminRow(row: any): AdminArticleSummary {
     id: String(row.id),
     title: row.title,
     slug: row.slug,
-    image: row.image,
-    author: row.author,
     category: row.category,
     status: row.status,
     featured: row.featured,
@@ -177,8 +175,6 @@ export type AdminArticleSummary = {
   id: string;
   title: string;
   slug: string;
-  image: string;
-  author: string;
   category: string;
   status: string;
   featured: boolean;
@@ -378,14 +374,14 @@ export async function findAdminArticles(
 
   if (filters.status) {
     addCondition(
-      "LOWER(status::text) = LOWER(?)",
+      "status = ?",
       filters.status
     );
   }
 
   if (filters.category) {
     addCondition(
-      "LOWER(category::text) = LOWER(?)",
+      "category = ?",
       filters.category
     );
   }
@@ -446,7 +442,7 @@ export async function findAdminArticles(
   const offset = (page - 1) * limit;
 
   let orderBy =
-    "published_at DESC NULLS LAST, created_at DESC";
+    "published_at DESC NULLS LAST, created_at DESC, id DESC";
 
   switch (filters.sort) {
     case "oldest":
@@ -456,13 +452,13 @@ export async function findAdminArticles(
 
     case "mostViewed":
       orderBy =
-        "views DESC NULLS LAST, created_at DESC";
+        "views DESC NULLS LAST, created_at DESC, id DESC";
       break;
 
     case "latest":
     default:
       orderBy =
-        "published_at DESC NULLS LAST, created_at DESC";
+        "published_at DESC NULLS LAST, created_at DESC, id DESC";
       break;
   }
 
@@ -502,8 +498,6 @@ export async function findAdminArticles(
            id,
            title,
            slug,
-           image,
-           author,
            category,
            status,
            featured,

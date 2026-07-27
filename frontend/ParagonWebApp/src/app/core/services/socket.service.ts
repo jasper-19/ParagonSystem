@@ -16,6 +16,12 @@ export interface ActivityLogsUpdatedPayload {
   module?: string;
 }
 
+export interface GlobalSettingsUpdatedPayload {
+  section: 'general' | 'publishingMedia' | 'notifications' | 'maintenance';
+  version: number;
+  updatedAt: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -73,6 +79,16 @@ export class SocketService {
 
   disconnect(): void {
     this.socket?.disconnect();
+  }
+
+  reconnectWithCurrentSession(): void {
+    if (!this.socket) {
+      this.connect();
+      return;
+    }
+
+    this.socket.disconnect();
+    this.socket.connect();
   }
 
   on<T>(
@@ -171,6 +187,21 @@ export class SocketService {
         .ACTIVITY_LOGS_UPDATED,
       callback
     );
+  }
+
+  onGlobalSettingsUpdated(
+    callback: (payload: GlobalSettingsUpdatedPayload) => void
+  ): () => void {
+    this.connect();
+    return this.on<GlobalSettingsUpdatedPayload>(
+      SOCKET_EVENTS.GLOBAL_SETTINGS_UPDATED,
+      callback
+    );
+  }
+
+  onUserAccountsUpdated(callback: () => void): () => void {
+    this.connect();
+    return this.on<void>(SOCKET_EVENTS.USER_ACCOUNTS_UPDATED, callback);
   }
 
 }

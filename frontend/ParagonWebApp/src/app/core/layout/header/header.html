@@ -67,7 +67,11 @@
 
       <!-- ===== CENTER LOGO ===== -->
       <div class="flex items-center space-x-2 select-none absolute left-1/2 -translate-x-1/2 md:absolute md:left-1/2 md:-translate-x-1/2">
-        <img src="assets/PRG_Logo.png" alt="Paragon Logo" class="h-8 w-auto object-contain" />
+        <img
+          [src]="globalSettings()?.general?.logoUrl || 'assets/PRG_Logo.png'"
+          [alt]="(globalSettings()?.general?.siteName || 'Paragon') + ' logo'"
+          class="h-8 w-auto object-contain"
+        />
       </div>
 
       <!-- ===== RIGHT ACTIONS ===== -->

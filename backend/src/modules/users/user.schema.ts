@@ -26,6 +26,7 @@ export const updateUserSchema = z
     password: passwordSchema.optional(),
     role: z.enum(["admin", "staff"]).optional(),
     staffId: z.string().uuid().nullable().optional(),
+    isActive: z.boolean().optional(),
   })
   .refine((obj) => Object.keys(obj).length > 0, {
     message: "At least one field is required",

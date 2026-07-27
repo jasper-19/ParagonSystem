@@ -1,5 +1,6 @@
 import { Response } from "express";
 import * as repository from "./notification.repository";
+import * as settingsService from "../settings/settings.service";
 
 // ── SSE client registry ───────────────────────────────────────────────────────
 
@@ -30,6 +31,17 @@ export async function create(message: string, type: string = "info") {
   const notification = await repository.create(message, type);
   broadcast(notification);
   return notification;
+}
+
+export async function createForEvent(
+  event: "application" | "articleCreated" | "articlePublished",
+  message: string,
+  type: string = "info"
+) {
+  if (!await settingsService.shouldCreateNotification(event)) {
+    return null;
+  }
+  return create(message, type);
 }
 
 export async function markAllRead() {

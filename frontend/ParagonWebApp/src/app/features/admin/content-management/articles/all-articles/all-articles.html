@@ -68,6 +68,34 @@
         />
       </div>
 
+      <div class="w-full sm:w-auto">
+        <label
+          for="article-sort"
+          class="mb-1.5 block text-sm font-medium text-gray-700"
+        >
+          Sort articles
+        </label>
+
+        <select
+          id="article-sort"
+          [ngModel]="sortOrder()"
+          (ngModelChange)="onSortChange($event)"
+          class="min-h-11 w-full rounded-lg border border-gray-200
+                bg-white px-3 py-2 text-sm text-gray-700
+                focus:border-[#f4b400]
+                focus:outline-none
+                focus:ring-2
+                focus:ring-[#f4b400]/30
+                sm:min-w-40"
+        >
+          @for (option of sortOptions; track option.value) {
+            <option [ngValue]="option.value">
+              {{ option.label }}
+            </option>
+          }
+        </select>
+      </div>
+
       <div class="min-w-0">
         <span
           class="mb-1.5 block text-sm font-medium text-gray-700"
@@ -136,6 +164,25 @@
     </svg>
 
     <span>Loading articles...</span>
+  </div>
+} @else if (loadError()) {
+  <div
+    class="flex flex-col items-center justify-center gap-4 px-6 py-16 text-center"
+    role="alert"
+  >
+    <p class="text-sm font-medium text-red-700">
+      {{ loadError() }}
+    </p>
+    <button
+      type="button"
+      (click)="retryLoad()"
+      class="min-h-10 rounded-lg bg-[#000035] px-4 py-2
+            text-sm font-semibold text-white
+            focus-visible:outline-none focus-visible:ring-2
+            focus-visible:ring-[#f4b400]"
+    >
+      Try again
+    </button>
   </div>
 } @else if (displayedArticles().length === 0) {
 

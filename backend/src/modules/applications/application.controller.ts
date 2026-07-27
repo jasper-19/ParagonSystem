@@ -68,7 +68,8 @@ export const createApplication = asyncHandler(
 
     emitApplicationsUpdated(); // Notify clients that applications have been updated
 
-    notificationService.create(
+    notificationService.createForEvent(
+      "application",
       `New application received from ${(application as any).fullName ?? 'an applicant'}.`,
       "application"
     ).catch(() => {});
@@ -166,7 +167,8 @@ export const acceptApplication = asyncHandler(
 
     emitApplicationsUpdated(); // Notify clients that applications have been updated
 
-    notificationService.create(
+    notificationService.createForEvent(
+      "application",
       `Application accepted: ${(updated as any).fullName ?? id}.`,
       "application"
     ).catch(() => {});
@@ -186,7 +188,8 @@ export const rejectApplication = asyncHandler(
 
     emitApplicationsUpdated(); // Notify clients that applications have been updated
     
-    notificationService.create(
+    notificationService.createForEvent(
+      "application",
       `Application rejected: ${(updated as any).fullName ?? id}.`,
       "application"
     ).catch(() => {});

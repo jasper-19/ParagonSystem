@@ -26,12 +26,17 @@
     Upload media
     <input
       type="file"
-      accept="image/*"
+      [accept]="acceptFormats()"
       multiple
       class="sr-only"
       (change)="onFileInputChange($event)"
     />
   </label>
+  @if (validationError()) {
+    <p class="mt-2 max-w-xs text-xs font-semibold text-red-700" role="alert">
+      {{ validationError() }}
+    </p>
+  }
 
   <!-- Drag Overlay -->
   <div

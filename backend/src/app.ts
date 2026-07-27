@@ -9,6 +9,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import { performance } from "node:perf_hooks";
 import { getAllowedOrigins } from "./config/security";
 import { csrfProtection } from "./middlewares/csrf";
+import { enforceMaintenanceMode } from "./middlewares/maintenance";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -88,6 +89,7 @@ const apiLimiter = rateLimit({
   message: { error: "Too many requests, please try again later." },
 });
 app.use("/api", apiLimiter);
+app.use("/api", enforceMaintenanceMode);
 
 // Health check endpoint for load balancers and uptime monitoring
 app.get("/health", (_req, res) => {

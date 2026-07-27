@@ -1,6 +1,8 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, NavigationEnd, RouterModule } from '@angular/router';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
 
 interface Breadcrumb {
@@ -11,46 +13,58 @@ interface Breadcrumb {
 @Component({
   selector: 'app-breadcrumb',
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [RouterLink, NgClass],
   templateUrl: './breadcrumb.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Breadcrumbs implements OnInit {
-  breadcrumbs: Breadcrumb[] = [];
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  readonly breadcrumbs = signal<Breadcrumb[]>([]);
 
- ngOnInit() {
+  ngOnInit(): void {
+    this.updateBreadcrumbs();
 
-  // ✅ Build immediately (for refresh / first load)
-  this.breadcrumbs = this.buildBreadcrumbs(this.route.root);
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.updateBreadcrumbs());
+  }
 
-  // ✅ Rebuild on route change
-  this.router.events
-    .pipe(filter(event => event instanceof NavigationEnd))
-    .subscribe(() => {
-      this.breadcrumbs = this.buildBreadcrumbs(this.route.root);
-    });
-}
+  trackBreadcrumb(index: number, breadcrumb: Breadcrumb): string {
+    return `${index}-${breadcrumb.url}-${breadcrumb.label}`;
+  }
 
+  private updateBreadcrumbs(): void {
+    this.breadcrumbs.set(this.buildBreadcrumbs(this.route.root));
+  }
 
-  private buildBreadcrumbs(route: ActivatedRoute, url: string = '', breadcrumbs: Breadcrumb[] = []): Breadcrumb[] {
-    const children: ActivatedRoute[] = route.children;
-    if (children.length === 0) {
-      return breadcrumbs;
-    }
-
-    for (const child of children) {
-      const routeURL = child.snapshot.url.map(segment => segment.path).join('/');
-      let nextUrl = url;
-      if (routeURL) {
-        nextUrl += `/${routeURL}`;
-      }
+  private buildBreadcrumbs(
+    route: ActivatedRoute,
+    url = '',
+    breadcrumbs: Breadcrumb[] = [],
+  ): Breadcrumb[] {
+    for (const child of route.children) {
+      const routeUrl = child.snapshot.url.map(segment => segment.path).join('/');
+      const nextUrl = routeUrl ? `${url}/${routeUrl}` : url;
       const label = child.snapshot.data['breadcrumb'];
-      if (label !== undefined && label !== null && label !== '') {
-        breadcrumbs.push({ label, url: nextUrl });
+
+      if (typeof label === 'string' && label.trim()) {
+        const breadcrumb = { label: label.trim(), url: nextUrl || '/' };
+        const previous = breadcrumbs.at(-1);
+
+        if (!previous || previous.label !== breadcrumb.label || previous.url !== breadcrumb.url) {
+          breadcrumbs.push(breadcrumb);
+        }
       }
+
       this.buildBreadcrumbs(child, nextUrl, breadcrumbs);
     }
+
     return breadcrumbs;
   }
 }

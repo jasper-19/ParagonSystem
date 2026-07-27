@@ -3,6 +3,7 @@ import * as repository from "./media.repository";
 import { MEDIA_TYPE_VALUES, MediaType } from "./media.schema";
 import { storageService } from "../../storage/storage.factory";
 import sharp from "sharp";
+import * as settingsService from "../settings/settings.service";
 
 const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
@@ -19,6 +20,10 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 
 const CANONICAL_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
   "application/pdf": "pdf",
   "audio/mpeg": "mp3",
   "audio/ogg": "ogg",
@@ -128,8 +133,17 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
   }
 
   const mimeType = String(file.mimetype || "").toLowerCase();
-  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+  const { publishingMedia } = await settingsService.getSettings();
+  if (
+    !ALLOWED_MIME_TYPES.has(mimeType) ||
+    !publishingMedia.allowedMimeTypes.includes(mimeType as never)
+  ) {
     throw Object.assign(new Error("Unsupported media type"), { statusCode: 415 });
+  }
+  if (file.size > publishingMedia.maxUploadSizeMb * 1024 * 1024) {
+    throw Object.assign(new Error("File exceeds the configured upload limit"), {
+      statusCode: 413,
+    });
   }
 
   const fileType = detectMediaType(mimeType);
@@ -144,7 +158,7 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
   const uploadId = randomUUID();
   const baseName = safeFilename(file.originalname.replace(/\.[^/.]+$/, "")) || uploadId;
 
-  if (isImage) {
+  if (isImage && publishingMedia.optimizeImages) {
     let variants;
     try {
       variants = await createImageVariants(file);
@@ -194,6 +208,16 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
   }
 
   const objectKey = `media/${uploadId}/${uploadId}.${extension}`;
+
+  if (isImage) {
+    try {
+      await sharp(file.buffer, { limitInputPixels: 40_000_000 }).metadata();
+    } catch {
+      throw Object.assign(new Error("Invalid or corrupted image"), {
+        statusCode: 400,
+      });
+    }
+  }
 
   await storageService.upload(objectKey, file.buffer, {
     contentType: mimeType,

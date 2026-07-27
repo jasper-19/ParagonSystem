@@ -1,9 +1,10 @@
 import { NgIf, NgClass } from '@angular/common';
-import {Component, EventEmitter, Input, Output, signal, ElementRef, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, computed, inject, signal, ElementRef, ViewChild} from '@angular/core';
 
 import { Media } from '../../../../../models/media.model';
 import { MediaService } from '../../../../../core/services/media.service';
 import { MediaPickerModalComponent } from '../../../../../shared/components/media-picker-modal/media-picker-modal';
+import { GlobalSettingsService } from '../../../../../core/services/global-settings.service';
 
 @Component({
   selector: 'app-cover-image-selector',
@@ -26,9 +27,22 @@ export class CoverImagSelectorComponent {
   @ViewChild('selectorContainer')
   private selectorContainer?: ElementRef<HTMLElement>;
 
-  private readonly maxImageSizeBytes = 2 * 1024 * 1024; // 2MB
-
-  private readonly allowedImageTypes = new Set(['image/jpeg', 'image/png', 'image/gif']);
+  private readonly globalSettings = inject(GlobalSettingsService);
+  readonly allowedImageTypes = computed(
+    () =>
+      new Set(
+        (this.globalSettings.settings()?.publishingMedia.allowedMimeTypes ?? [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif',
+        ]).filter(type => type.startsWith('image/')),
+      ),
+  );
+  readonly acceptFormats = computed(() => Array.from(this.allowedImageTypes()).join(','));
+  readonly maxImageSizeMb = computed(
+    () => this.globalSettings.settings()?.publishingMedia.maxUploadSizeMb ?? 2,
+  );
 
   private lastUploadedFileFingerprint: string | null = null;
 
@@ -189,22 +203,22 @@ onFileSelected(event: Event): void {
     }
 
     if (
-      !this.allowedImageTypes.has(
+      !this.allowedImageTypes().has(
         file.type
       )
     ) {
       this.uploadError.set(
-        'Please select a JPEG, PNG, WebP, or AVIF image.'
+        'This image format is not allowed by the current upload policy.'
       );
       return;
     }
 
     if (
       file.size >
-      this.maxImageSizeBytes
+      this.maxImageSizeMb() * 1024 * 1024
     ) {
       this.uploadError.set(
-        'The cover image must be 2 MB or smaller.'
+        `The cover image must be ${this.maxImageSizeMb()} MB or smaller.`
       );
       return;
     }

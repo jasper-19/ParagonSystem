@@ -1,4 +1,5 @@
 import { ADMIN_SOCKET_ROOM, getIO } from "./socket";
+import { SettingsSection } from "../modules/settings/settings.types";
 
 export const SocketEvents = {
   ARTICLES_UPDATED: "articles:updated",
@@ -7,6 +8,8 @@ export const SocketEvents = {
   APPLICATION_SETTINGS_UPDATED: "applications:settings-updated",
   EDITORIAL_BOARD_UPDATED: "editorial-board:updated",
   ACTIVITY_LOGS_UPDATED: "activity-logs:updated",
+  GLOBAL_SETTINGS_UPDATED: "settings:updated",
+  USER_ACCOUNTS_UPDATED: "users:updated",
 } as const;
 
 export type ArticlesUpdatedPayload = {
@@ -19,6 +22,12 @@ export type ActivityLogsUpdatedPayload = {
   activityLogId?: string;
   action?: string;
   module?: string;
+};
+
+export type GlobalSettingsUpdatedPayload = {
+  section: SettingsSection;
+  version: number;
+  updatedAt: string;
 };
 
 export function emitArticlesUpdated(
@@ -65,6 +74,20 @@ export function emitEditorialBoardUpdated(): void {
   getIO().emit(
     SocketEvents.EDITORIAL_BOARD_UPDATED
   );
+}
+
+export function emitGlobalSettingsUpdated(
+  payload: GlobalSettingsUpdatedPayload
+): void {
+  console.log("Broadcasting settings:updated", payload);
+  getIO().emit(SocketEvents.GLOBAL_SETTINGS_UPDATED, payload);
+}
+
+export function emitUserAccountsUpdated(): void {
+  console.log("Broadcasting users:updated");
+  getIO()
+    .to(ADMIN_SOCKET_ROOM)
+    .emit(SocketEvents.USER_ACCOUNTS_UPDATED);
 }
 
   export function emitActivityLogsUpdated(

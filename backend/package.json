@@ -7,6 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "migrate": "tsx src/scripts/migrate.ts",
+    "test": "tsx --test src/**/*.test.ts",
     "migrate:article-images": "tsx src/scripts/migrate-article-images.ts",
     "generate:article-image-variants": "tsx src/scripts/generate-existing-article-image-variants.ts"
   },

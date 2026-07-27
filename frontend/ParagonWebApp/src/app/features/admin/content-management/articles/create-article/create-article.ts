@@ -22,6 +22,7 @@ import { Media } from '../../../../../models/media.model';
 import { EditorialBoardService } from '../../../../../core/services/editorial-board.service';
 import { SidebarService } from '../../../../../core/services/sidebar.service';
 import { SocketService } from '../../../../../core/services/socket.service';
+import { GlobalSettingsService } from '../../../../../core/services/global-settings.service';
 
 interface CreateArticleForm {
   title: string;
@@ -65,6 +66,8 @@ export class CreateArticleComponent implements OnDestroy {
   private editorialBoardService = inject(EditorialBoardService);
   private socketService = inject(SocketService);
   private sidebarService = inject(SidebarService);
+  private globalSettingsService = inject(GlobalSettingsService);
+  readonly globalSettings = this.globalSettingsService.settings;
 
   readonly editingId = signal<string | null>(null);
   readonly isEditMode = computed(() => this.editingId() !== null);
@@ -167,6 +170,14 @@ export class CreateArticleComponent implements OnDestroy {
 
   //Image State
   readonly selectedImageMedia = signal<Media | null>(null);
+  readonly publishingPolicyBlocked = computed(() => {
+    const policy = this.globalSettings()?.publishingMedia;
+    if (!policy || this.form.controls.status.value !== 'Published') return false;
+    return (
+      !policy.allowDirectPublishing ||
+      (policy.requireFeaturedImage && !this.selectedImageMedia())
+    );
+  });
 
   //Confirm Modal
   readonly showConfirmModal = signal(false);

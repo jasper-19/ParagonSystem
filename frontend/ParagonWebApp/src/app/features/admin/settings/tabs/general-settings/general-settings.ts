@@ -1,136 +1,134 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit } from "@angular/core";
-import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule } from "@angular/forms";
-import { RouterModule } from "@angular/router";
-
-interface GeneralSettingsFormValue {
-  logo: File | string | null;
-  timezone: string;
-  dateFormat: string;
-  timeFormat: string;
-  pagination: number;
-  landingPage: string;
-  breadcrumbs: boolean;
-}
-
-interface GeneralSettings {
-  logo: string | null;
-  timezone: string;
-  dateFormat: string;
-  timeFormat: string;
-  pagination: number;
-  landingPage: string;
-  breadcrumbs: boolean;
-}
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import {
+  ReactiveFormsModule,
+  FormControl,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
+import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  DateFormat,
+  GeneralGlobalSettings,
+  TimeFormat,
+} from '../../../../../models/global-settings.model';
+import { GlobalSettingsService } from '../../../../../core/services/global-settings.service';
 
 @Component({
   selector: 'app-general-settings',
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  standalone: true,
+  imports: [ReactiveFormsModule],
   templateUrl: './general-settings.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GeneralSettingsComponent implements OnInit {
-  logoPreview: string | null = null;
-  isSubmitting = false;
+  private readonly service = inject(GlobalSettingsService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  form!: FormGroup<{
-    logo: FormControl<File | string | null>;
-    timezone: FormControl<string>;
-    dateFormat: FormControl<string>;
-    timeFormat: FormControl<string>;
-    pagination: FormControl<number>;
-    landingPage: FormControl<string>;
-    breadcrumbs: FormControl<boolean>;
-  }>;
+  readonly settings = input.required<GeneralGlobalSettings>();
+  readonly version = input.required<number>();
+  readonly saving = signal(false);
+  readonly message = signal('');
+  readonly messageKind = signal<'success' | 'error' | ''>('');
+  readonly externalUpdate = signal(false);
+  private acceptedVersion: number | null = null;
 
-  readonly systemInfo = {
-    systemName: 'CSU Gonzaga Paragon Publication System',
-    organization: 'Cagayan State University - Gonzaga'
-  }
+  readonly form = new FormGroup({
+    siteName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(120)],
+    }),
+    organizationName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2), Validators.maxLength(160)],
+    }),
+    contactEmail: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.email, Validators.maxLength(254)],
+    }),
+    logoUrl: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(2048), Validators.pattern(/^$|^https:\/\//i)],
+    }),
+    timezone: new FormControl('Asia/Manila', {
+      nonNullable: true,
+      validators: Validators.required,
+    }),
+    dateFormat: new FormControl<DateFormat>('YYYY-MM-DD', {
+      nonNullable: true,
+      validators: Validators.required,
+    }),
+    timeFormat: new FormControl<TimeFormat>('12h', {
+      nonNullable: true,
+      validators: Validators.required,
+    }),
+  });
 
-  constructor(private fb: FormBuilder) {}
-
-  ngOnInit() {
-    this.initializeForm();
-    this.loadSettings();
-  }
-
-  private initializeForm() {
-    this.form = new FormGroup({
-      logo: new FormControl<File | string | null>(null),
-      timezone: new FormControl<string>('Asia/Manila', { nonNullable: true, validators: Validators.required }),
-      dateFormat: new FormControl<string>('YYYY-MM-DD', { nonNullable: true, validators: Validators.required }),
-      timeFormat: new FormControl<string>('12h', { nonNullable: true, validators: Validators.required }),
-      pagination: new FormControl<number>(10, { nonNullable: true, validators: [Validators.required, Validators.min(5), Validators.max(100)] }),
-      landingPage: new FormControl<string>('dashboard', { nonNullable: true, validators: Validators.required }),
-      breadcrumbs: new FormControl<boolean>(true, { nonNullable: true })
+  constructor() {
+    effect(() => {
+      const version = this.version();
+      const settings = this.settings();
+      if (this.acceptedVersion === null) return;
+      if (version === this.acceptedVersion) return;
+      if (this.form.dirty) {
+        this.externalUpdate.set(true);
+        return;
+      }
+      this.acceptLatest(settings, version);
     });
   }
 
-  private loadSettings() {
-    //TODO: Replace with API call to load settings from backend
-    const mockData: GeneralSettings = {
-      logo: null,
-      timezone: 'Asia/Manila',
-      dateFormat: 'YYYY-MM-DD',
-      timeFormat: '12h',
-      pagination: 10,
-      landingPage: 'dashboard',
-      breadcrumbs: true
-    }
-    this.form.patchValue(mockData);
-    this.logoPreview = mockData.logo;
+  ngOnInit(): void {
+    this.acceptLatest(this.settings(), this.version());
   }
 
-  onFileChange(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-
-    this.form.controls.logo.setValue(file);
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        this.logoPreview = reader.result;
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-  submit() {
-    if (this.form.invalid) {
+  save(): void {
+    if (this.form.invalid || this.saving() || this.externalUpdate()) {
       this.form.markAllAsTouched();
       return;
     }
+    this.saving.set(true);
+    this.message.set('');
+    this.messageKind.set('');
+    this.service
+      .updateSection('general', this.form.getRawValue(), this.version())
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe({
+        next: snapshot => {
+          this.acceptLatest(snapshot.general, snapshot.version);
+          this.message.set('General settings saved and applied.');
+          this.messageKind.set('success');
+        },
+        error: error => {
+          this.message.set(
+            error?.error?.error ?? 'General settings could not be saved. Please try again.',
+          );
+          this.messageKind.set('error');
+        },
+      });
+  }
 
-    this.isSubmitting = true;
+  loadLatest(): void {
+    this.acceptLatest(this.settings(), this.version());
+    this.message.set('');
+    this.messageKind.set('');
+  }
 
-    const formData = new FormData();
-    const values = this.form.getRawValue() as {
-      logo: File | string | null;
-      timezone: string;
-      dateFormat: string;
-      timeFormat: string;
-      pagination: number;
-      landingPage: string;
-      breadcrumbs: boolean;
-    };
-
-    (Object.keys(values) as Array<keyof typeof values>).forEach((key) => {
-      const val = values[key];
-
-      if (val instanceof File) {
-        formData.append(String(key), val);
-      } else if (val !== null && typeof val === 'object') {
-        formData.append(String(key), JSON.stringify(val));
-      } else {
-        formData.append(String(key), String(val ?? ''));
-      }
-    });
-
-    // TODO: Replace with API call to save settings to backend
-    setTimeout(() => {
-      console.log('Settings saved:', values);
-      this.isSubmitting = false;
-      alert('Settings saved successfully!');
-    }, 1000);
+  private acceptLatest(settings: GeneralGlobalSettings, version: number): void {
+    this.acceptedVersion = version;
+    this.externalUpdate.set(false);
+    this.form.reset(settings);
   }
 }

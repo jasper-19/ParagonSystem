@@ -249,7 +249,7 @@
 
       <!-- Saving indicator -->
       <span
-        *ngIf="isSavingMetadata"
+        *ngIf="isSavingMetadata()"
         class="flex items-center gap-1.5 text-[11px] font-medium"
         style="color: rgba(244,180,0,0.6);">
         <div class="w-1.5 h-1.5 rounded-full" style="border: 1.5px solid rgba(244,180,0,0.25); border-top-color: #f4b400; animation: spin 0.8s linear infinite;"></div>
@@ -267,7 +267,7 @@
 
       <app-media-details-panel
         [media]="selectedMedia()"
-        [isSaving]="isSavingMetadata"
+        [isSaving]="isSavingMetadata()"
         [saveVersion]="metadataSaveVersion()"
         (metadataSave)="saveMetadata($event)">
       </app-media-details-panel>
@@ -421,7 +421,7 @@
       >
         <app-media-details-panel
           [media]="selectedMedia()"
-          [isSaving]="isSavingMetadata"
+          [isSaving]="isSavingMetadata()"
           [saveVersion]="metadataSaveVersion()"
           (metadataSave)="saveMetadata($event)"
         />
@@ -449,16 +449,5 @@
     buttonText="Okay"
     (closed)="showErrorModal = false">
   </app-error-modal>
-
-  <app-confirmation-modal
-    [isOpen]="showBlockedDeleteModal"
-    [title]="blockedDeleteTitle"
-    [message]="blockedDeleteMessage"
-    [confirmText]="'Okay'"
-    [cancelText]="''"
-    [variant]="'danger'"
-    (confirmed)="showBlockedDeleteModal = false"
-    (cancelled)="showBlockedDeleteModal = false">
-  </app-confirmation-modal>
 
 </div>

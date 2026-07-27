@@ -3,12 +3,27 @@ import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { ArticleService, AdminArticlesParams, AdminArticleDetail } from "../../../../../core/services/article.service";
-import { Article } from "../../../../../models/article.model";
+import {
+  ArticleService,
+  AdminArticlesParams,
+  AdminArticleDetail,
+  AdminArticleSummary,
+  AdminArticlesResponse,
+} from "../../../../../core/services/article.service";
 import { ConfirmationService } from "../../../../../shared/components/confirmation-modal/confirmation.service";
 import { ArticleViewModal } from "../../../../../shared/components/article-view-modal/article-view-modal";
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  EMPTY,
+  finalize,
+  Subject,
+  switchMap,
+} from "rxjs";
 
 type ArticleStatus = 'all' | 'Draft' | 'Published' | 'Archived';
+type ArticleSort = 'latest' | 'oldest' | 'mostViewed';
 
 @Component({
   selector: 'app-all-articles',
@@ -17,52 +32,20 @@ type ArticleStatus = 'all' | 'Draft' | 'Published' | 'Archived';
   templateUrl: './all-articles.html',
 })
 export class AllArticlesComponent {
-
-private loadArticles(
-  params: AdminArticlesParams
-): void {
-  this.loading.set(true);
-
-  this.articleService
-    .getAdminArticles(params)
-    .subscribe({
-      next: response => {
-        if (
-          this.currentPage() !== response.page
-        ) {
-          this.currentPage.set(
-            response.page
-          );
-        }
-
-        this.loading.set(false);
-      },
-
-      error: err => {
-        console.error(
-          'Failed to load admin articles',
-          err
-        );
-
-        this.loading.set(false);
-      },
-    });
-}
-
-  private searchTimer?: ReturnType<
-    typeof setTimeout
-  >;
-
   private readonly articleService = inject(ArticleService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly confirm = inject(ConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly request$ = new Subject<AdminArticlesParams>();
+  private readonly searchInput$ = new Subject<string>();
 
   readonly currentPage = signal(1);
-  readonly pageSize = signal(5);
-
+  readonly pageSize = signal(10);
   readonly searchQuery = signal('');
+  readonly sortOrder = signal<ArticleSort>('latest');
+  readonly articles = signal<AdminArticlesResponse | null>(null);
+  readonly loadError = signal('');
 
   readonly statuses: ArticleStatus[] = [
     'all',
@@ -77,18 +60,26 @@ private loadArticles(
 
   readonly modalError = signal<string | null>(null);
 
-  // ---- Source State ----
-  readonly articles = this.articleService.adminArticles;
-
   // ---- Status Filter ----
   readonly statusFilter = signal<ArticleStatus>('all');
 
   //---- Page Size Options ----
   readonly pageSizeOptions = [5, 10, 20, 50];
+  readonly sortOptions: ReadonlyArray<{
+    value: ArticleSort;
+    label: string;
+  }> = [
+    { value: 'latest', label: 'Latest first' },
+    { value: 'oldest', label: 'Oldest first' },
+    { value: 'mostViewed', label: 'Most viewed' },
+  ];
 
   readonly loading = signal(false);
 
   constructor() {
+    this.initializeLoading();
+    this.initializeSearch();
+
     this.route.queryParamMap
       .pipe(
         takeUntilDestroyed(this.destroyRef)
@@ -126,6 +117,8 @@ private loadArticles(
         this.searchQuery()
           .trim();
 
+      const sort = this.sortOrder();
+
       this.articleService.articlesChanged();
 
       const params: AdminArticlesParams = {
@@ -140,16 +133,16 @@ private loadArticles(
         search:
           search || undefined,
 
-        sort: 'latest',
+        sort,
       };
 
       untracked(() => {
-        this.loadArticles(params);
+        this.request$.next(params);
       });
     });
   }
 
-  openArticle(article: Article): void {
+  openArticle(article: AdminArticleSummary): void {
     if (this.modalLoading()) {
       return;
     }
@@ -231,6 +224,55 @@ private loadArticles(
     )
   );
 
+  private initializeLoading(): void {
+    this.request$
+      .pipe(
+        switchMap(params => {
+          this.loading.set(true);
+          this.loadError.set('');
+
+          return this.articleService
+            .getAdminArticles(params)
+            .pipe(
+              catchError(err => {
+                console.error(
+                  'Failed to load admin articles',
+                  err
+                );
+                this.loadError.set(
+                  'Unable to load articles. Please try again.'
+                );
+                return EMPTY;
+              }),
+              finalize(() => this.loading.set(false))
+            );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(response => {
+        this.articles.set(response);
+
+        const lastPage = Math.max(response.totalPages, 1);
+        const safePage = Math.min(response.page, lastPage);
+        if (safePage !== this.currentPage()) {
+          this.currentPage.set(safePage);
+        }
+      });
+  }
+
+  private initializeSearch(): void {
+    this.searchInput$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(value => {
+        this.currentPage.set(1);
+        this.searchQuery.set(value.trim());
+      });
+  }
+
   readonly rangeStart = computed(() => {
     if (this.totalResults() === 0) {
       return 0;
@@ -300,16 +342,28 @@ private loadArticles(
     const input =
       event.target as HTMLInputElement;
 
-    const value = input.value;
+    this.searchInput$.next(input.value);
+  }
 
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
+  onSortChange(sort: ArticleSort): void {
+    if (!this.sortOptions.some(option => option.value === sort)) {
+      return;
     }
 
-    this.searchTimer = setTimeout(() => {
-      this.currentPage.set(1);
-      this.searchQuery.set(value);
-    }, 300);
+    this.sortOrder.set(sort);
+    this.currentPage.set(1);
+  }
+
+  retryLoad(): void {
+    const status = this.statusFilter();
+
+    this.request$.next({
+      page: this.currentPage(),
+      limit: this.pageSize(),
+      status: status === 'all' ? undefined : status,
+      search: this.searchQuery().trim() || undefined,
+      sort: this.sortOrder(),
+    });
   }
 
   onPageSizeChange(size: number): void {
@@ -358,7 +412,7 @@ private loadArticles(
     this.modalLoading.set(false);
   }
   //request archive
-  async requestArchive(article: Article): Promise<void> {
+  async requestArchive(article: AdminArticleSummary): Promise<void> {
     if (article.status === 'Archived') return;
     const ok = await this.confirm.confirm({
       title: 'Archive Article',
@@ -377,7 +431,7 @@ private loadArticles(
 
   }
 
-  async requestDelete(article: Article): Promise<void> {
+  async requestDelete(article: AdminArticleSummary): Promise<void> {
     if (article.status !== 'Archived') return;
 
     const ok = await this.confirm.confirm({

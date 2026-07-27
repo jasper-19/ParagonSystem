@@ -1,5 +1,11 @@
 import db from "../../config/db";
-import { User, AuthStaffProfile, UserWithStaff } from "./user.types";
+import {
+  User,
+  AuthStaffProfile,
+  EligibleAdminStaff,
+  ManagedUser,
+  UserWithStaff,
+} from "./user.types";
 
 function mapRow(row: any): User {
   const base: User = {
@@ -7,6 +13,7 @@ function mapRow(row: any): User {
     username: row.username,
     passwordHash: row.password_hash,
     role: row.role,
+    isActive: row.is_active !== false,
   };
 
   return {
@@ -272,6 +279,104 @@ export async function listAll(): Promise<User[]> {
   return result.rows.map(mapRow);
 }
 
+export async function listManagedUsers(): Promise<ManagedUser[]> {
+  const result = await db.query(
+    `SELECT
+       u.*,
+       sm.id AS staff_profile_id,
+       sm.application_id AS staff_application_id,
+       sm.full_name AS staff_full_name,
+       sm.email AS staff_email,
+       sm.student_id AS staff_student_id,
+       sm.year_level AS staff_year_level,
+       sm.college_id AS staff_college_id,
+       sm.program_id AS staff_program_id,
+       sm.position_id AS staff_position_id,
+       sm.sub_role AS staff_sub_role,
+       sm.assigned_section AS staff_assigned_section,
+       sm.assigned_role AS staff_assigned_role,
+       sm.created_at AS staff_created_at
+     FROM users u
+     LEFT JOIN staff_members sm ON sm.id = u.staff_id
+     ORDER BY u.is_active DESC, u.created_at DESC`
+  );
+
+  return result.rows.map(row => {
+    const { passwordHash: _passwordHash, ...user } = mapRow(row);
+    return {
+      ...user,
+      staff: mapJoinedStaff(row),
+    };
+  });
+}
+
+export async function listEligibleAdminStaff(): Promise<EligibleAdminStaff[]> {
+  const result = await db.query(
+    `SELECT DISTINCT ON (sm.id)
+       sm.*,
+       ebm.section AS board_section,
+       ebm.role AS board_role
+     FROM staff_members sm
+     JOIN editorial_board_members ebm ON ebm.staff_id = sm.id
+     JOIN editorial_boards eb
+       ON eb.id = ebm.board_id
+      AND eb.is_active = TRUE
+     LEFT JOIN users u ON u.staff_id = sm.id
+     WHERE u.id IS NULL
+     ORDER BY sm.id, ebm.created_at DESC`
+  );
+
+  return result.rows.map(row => ({
+    id: String(row.id),
+    ...(row.application_id
+      ? { applicationId: String(row.application_id) }
+      : {}),
+    fullName: String(row.full_name),
+    email: String(row.email),
+    ...(row.student_id ? { studentId: String(row.student_id) } : {}),
+    ...(row.year_level ? { yearLevel: String(row.year_level) } : {}),
+    ...(row.college_id ? { collegeId: String(row.college_id) } : {}),
+    ...(row.program_id ? { programId: String(row.program_id) } : {}),
+    ...(row.position_id ? { positionId: String(row.position_id) } : {}),
+    ...(row.sub_role ? { subRole: String(row.sub_role) } : {}),
+    ...(row.assigned_section
+      ? { assignedSection: String(row.assigned_section) }
+      : {}),
+    ...(row.assigned_role
+      ? { assignedRole: String(row.assigned_role) }
+      : {}),
+    ...(row.created_at ? { createdAt: new Date(row.created_at) } : {}),
+    boardSection: String(row.board_section),
+    boardRole: String(row.board_role),
+  }));
+}
+
+export async function isEligibleAdminStaff(staffId: string): Promise<boolean> {
+  const result = await db.query(
+    `SELECT 1
+       FROM editorial_board_members ebm
+       JOIN editorial_boards eb
+         ON eb.id = ebm.board_id
+        AND eb.is_active = TRUE
+       LEFT JOIN users u ON u.staff_id = ebm.staff_id
+      WHERE ebm.staff_id = $1
+        AND u.id IS NULL
+      LIMIT 1`,
+    [staffId]
+  );
+  return Boolean(result.rowCount);
+}
+
+export async function countActiveAdmins(): Promise<number> {
+  const result = await db.query(
+    `SELECT COUNT(*) AS count
+       FROM users
+      WHERE role = 'admin'
+        AND is_active = TRUE`
+  );
+  return Number(result.rows[0]?.count ?? 0);
+}
+
 export async function create(input: {
   username: string;
   passwordHash: string;
@@ -295,6 +400,7 @@ export async function updateUser(
     role: string;
     staffId: string | null;
     twoFaEnabled: boolean;
+    isActive: boolean;
   }>
 ): Promise<User | undefined> {
   const sets: string[] = [];
@@ -316,6 +422,10 @@ export async function updateUser(
   if (patch.twoFaEnabled !== undefined) {
     sets.push(`two_fa_enabled = $${idx++}`);
     values.push(patch.twoFaEnabled);
+  }
+  if (patch.isActive !== undefined) {
+    sets.push(`is_active = $${idx++}`);
+    values.push(patch.isActive);
   }
 
   if (sets.length === 0) return await findById(id);

@@ -50,8 +50,14 @@ type ApiSearchFeed = {
   categories: string[];
 };
 
+type ApiAdminArticleSummary =
+  Omit<AdminArticleSummary, 'createdAt' | 'publishedAt'> & {
+    createdAt?: string | Date;
+    publishedAt?: string | Date | null;
+  };
+
 type ApiAdminArticlesResponse = {
-  items: ApiArticle[];
+  items: ApiAdminArticleSummary[];
   page: number;
   limit: number;
   total: number;
@@ -116,8 +122,21 @@ export interface AdminArticleDetail {
 
   credits: AdminArticleCredit[];
 }
+
+export interface AdminArticleSummary {
+  id: string;
+  title: string;
+  slug: string;
+  category: ArticleCategory;
+  status: Article['status'];
+  featured: boolean;
+  views: number;
+  createdAt: Date;
+  publishedAt?: Date;
+}
+
 export interface AdminArticlesResponse {
-  items: Article[];
+  items: AdminArticleSummary[];
   page: number;
   limit: number;
   total: number;
@@ -169,12 +188,6 @@ export class ArticleService {
 
   readonly searchFeed =
     this.searchFeedState.asReadonly();
-
-  private readonly adminArticlesState =
-    signal<AdminArticlesResponse | null>(null);
-
-  readonly adminArticles =
-    this.adminArticlesState.asReadonly();
 
     private readonly articlesChangedState = signal(0);
 
@@ -255,11 +268,22 @@ export class ArticleService {
   private normalizeAdminArticles(
     response: ApiAdminArticlesResponse
   ): AdminArticlesResponse {
-
     return {
-      items: this.normalizeArticles(
-        response.items
-      ),
+      items: (response.items ?? []).map(article => ({
+        id: String(article.id),
+        title: article.title,
+        slug: article.slug,
+        category: article.category,
+        status: article.status,
+        featured: Boolean(article.featured),
+        views: Number(article.views ?? 0),
+        createdAt: article.createdAt
+          ? new Date(article.createdAt)
+          : new Date(),
+        publishedAt: article.publishedAt
+          ? new Date(article.publishedAt)
+          : undefined,
+      })),
       page: response.page,
       limit: response.limit,
       total: response.total,
@@ -473,9 +497,6 @@ private fetchHomepageFeed(
       .pipe(
         map(response =>
           this.normalizeAdminArticles(response)
-        ),
-        tap(response =>
-          this.adminArticlesState.set(response)
         )
       );
   }

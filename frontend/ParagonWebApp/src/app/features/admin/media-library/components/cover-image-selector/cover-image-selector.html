@@ -173,7 +173,7 @@
           Upload Image
         <input
           type="file"
-          accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
+          [accept]="acceptFormats()"
           class="sr-only"
           [disabled]="isUploading()"
           (change)="onFileSelected($event)"
@@ -295,7 +295,7 @@
           Replace
         <input
           type="file"
-          accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
+          [accept]="acceptFormats()"
           class="sr-only"
           [disabled]="isUploading()"
           (change)="onFileSelected($event)"
@@ -365,7 +365,7 @@
 
           <input
             type="file"
-            accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
+            [accept]="acceptFormats()"
             class="sr-only"
             (change)="onFileSelected($event)"
             [disabled]="isUploading()"

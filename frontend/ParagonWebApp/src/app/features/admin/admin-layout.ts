@@ -19,6 +19,7 @@ import { SidebarService } from '../../core/services/sidebar.service';
 import { AdminLoaderService } from '../../core/services/admin-loader.service';
 import { Subscription } from 'rxjs';
 import { skip } from 'rxjs/operators';
+import { GlobalSettingsService } from '../../core/services/global-settings.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -41,6 +42,7 @@ export class AdminLayout implements OnInit, OnDestroy {
   private readonly sidebarService = inject(SidebarService);
   private readonly loader = inject(AdminLoaderService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly globalSettings = inject(GlobalSettingsService);
   isSidebarOpen = this.sidebarService.value;
   private sidebarSub?: Subscription;
   private routerSub?: Subscription;
@@ -64,6 +66,9 @@ export class AdminLayout implements OnInit, OnDestroy {
   protected readonly confirm = inject(ConfirmationService);
 
   ngOnInit(): void {
+    this.globalSettings.load().subscribe({
+      error: error => console.error('Unable to load global settings:', error),
+    });
     // `NavigationStart` can fire before this component initializes.
     // If we're being created as part of an in-flight navigation, start in loading state.
     this.isAdminNavigating = !!this.router.getCurrentNavigation();

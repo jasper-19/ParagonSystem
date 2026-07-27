@@ -1,4 +1,5 @@
 import * as repository from "./article.repository";
+import * as settingsService from "../settings/settings.service";
 import * as EditorialBoardService from "../editorial-board/editorial-board.service";
 
 const ALLOWED_STATUSES = [
@@ -417,22 +418,10 @@ export async function getArticles(filters: GetArticlesFilters = {}) {
 }
 
 //**Retrieve admin articles */
-export async function getAdminArticles(filters: GetArticlesFilters = {}): Promise<AdminArticleResponse> {
-  const page = 
-    filters.page && filters.page > 0 
-      ? filters.page 
-      : 1;
-
-  const limit = 
-    filters.limit && filters.limit > 0 
-      ? filters.limit 
-      : 20;
-
-  return repository.findAdminArticles({
-    ...filters,
-    page,
-    limit,
-  });
+export async function getAdminArticles(
+  filters: GetArticlesFilters = {}
+): Promise<AdminArticleResponse> {
+  return repository.findAdminArticles(filters);
 }
 
 export async function getAdminArticleDetail(
@@ -529,6 +518,25 @@ async function prepareArticlePayload(
 export async function createArticle(
   data: unknown
 ) {
+  const input = data as { status?: string; image?: string };
+  const { publishingMedia } = await settingsService.getSettings();
+  if (input.status === "Published" && !publishingMedia.allowDirectPublishing) {
+    throw Object.assign(
+      new Error("Direct publishing is disabled by the global publishing policy"),
+      { statusCode: 403 }
+    );
+  }
+  if (
+    input.status === "Published" &&
+    publishingMedia.requireFeaturedImage &&
+    !input.image?.trim()
+  ) {
+    throw Object.assign(
+      new Error("A cover image is required before an article can be published"),
+      { statusCode: 422 }
+    );
+  }
+
   const repositoryPayload =
     await prepareArticlePayload(
       data
@@ -559,6 +567,36 @@ export async function updateArticle(
 
   const articleData =
     data as CreateArticleCreditPayload;
+  const policyInput = articleData as CreateArticleCreditPayload & {
+    status?: string;
+    image?: string;
+  };
+  const { publishingMedia } = await settingsService.getSettings();
+  const resultingStatus = policyInput.status ?? existing.status;
+  const resultingImage = policyInput.image ?? existing.image;
+  const requestsPublishing =
+    policyInput.status === "Published" &&
+    existing.status !== "Published";
+  if (
+    requestsPublishing &&
+    !publishingMedia.allowDirectPublishing
+  ) {
+    throw Object.assign(
+      new Error("Direct publishing is disabled by the global publishing policy"),
+      { statusCode: 403 }
+    );
+  }
+  if (
+    resultingStatus === "Published" &&
+    publishingMedia.requireFeaturedImage &&
+    !String(resultingImage ?? "").trim() &&
+    (requestsPublishing || policyInput.image !== undefined)
+  ) {
+    throw Object.assign(
+      new Error("A cover image is required before an article can be published"),
+      { statusCode: 422 }
+    );
+  }
 
   const credits =
     await prepareArticleCredits(
@@ -621,7 +659,29 @@ export async function updateArticle(
  * Automatically sets published_at timestamp in the repository.
  */
 export async function publishArticle(id: string) {
-    return repository.publish(id);
+  const [existing, { publishingMedia }] = await Promise.all([
+    repository.findById(id),
+    settingsService.getSettings(),
+  ]);
+  if (!existing) {
+    throw Object.assign(new Error("Article not found"), { statusCode: 404 });
+  }
+  if (!publishingMedia.allowDirectPublishing) {
+    throw Object.assign(
+      new Error("Direct publishing is disabled by the global publishing policy"),
+      { statusCode: 403 }
+    );
+  }
+  if (
+    publishingMedia.requireFeaturedImage &&
+    !String(existing.image ?? "").trim()
+  ) {
+    throw Object.assign(
+      new Error("A cover image is required before an article can be published"),
+      { statusCode: 422 }
+    );
+  }
+  return repository.publish(id);
 }
 
 /**

@@ -1,0 +1,145 @@
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <div class="border-b border-slate-200 p-5 sm:p-6 lg:p-8">
+    <p class="text-xs font-black uppercase tracking-[0.16em] text-amber-600">Publishing & Media</p>
+    <h2 class="mt-2 text-xl font-bold text-[#000035]">Editorial and upload policy</h2>
+    <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+      These controls are enforced by article and media APIs. Existing content is not modified when a
+      policy changes.
+    </p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    @if (externalUpdate()) {
+      <div class="m-5 flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 sm:m-6 sm:flex-row sm:items-center sm:justify-between lg:mx-8" role="alert">
+        <span><strong>New server settings are available.</strong> Your unsaved values were preserved.</span>
+        <button type="button" class="min-h-11 touch-manipulation rounded-xl border border-amber-400 bg-white px-4 font-bold text-[#000035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" (click)="loadLatest()">Load latest</button>
+      </div>
+    }
+    <div class="grid gap-4 border-b border-slate-200 p-5 sm:p-6 lg:grid-cols-2 lg:p-8">
+      <label
+        class="flex cursor-pointer items-start gap-4 rounded-xl border border-slate-200 p-4 transition hover:border-amber-400 hover:bg-amber-50/40"
+      >
+        <input
+          type="checkbox"
+          formControlName="allowDirectPublishing"
+          class="mt-1 h-4 w-4 accent-[#F4B400]"
+        />
+        <span>
+          <strong class="block text-sm text-[#000035]">Allow direct publishing</strong>
+          <span class="mt-1 block text-xs leading-5 text-slate-500">
+            Administrators can move articles directly to Published. Disable this to enforce draft-only
+            changes until an approval workflow is available.
+          </span>
+        </span>
+      </label>
+
+      <label
+        class="flex cursor-pointer items-start gap-4 rounded-xl border border-slate-200 p-4 transition hover:border-amber-400 hover:bg-amber-50/40"
+      >
+        <input
+          type="checkbox"
+          formControlName="requireFeaturedImage"
+          class="mt-1 h-4 w-4 accent-[#F4B400]"
+        />
+        <span>
+          <strong class="block text-sm text-[#000035]">Require a cover image</strong>
+          <span class="mt-1 block text-xs leading-5 text-slate-500">
+            The server rejects publishing when an article has no cover image.
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <div class="border-b border-slate-200 p-5 sm:p-6 lg:p-8">
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div>
+          <h3 class="font-bold text-[#000035]">Accepted upload formats</h3>
+          <p class="mt-1 text-sm leading-6 text-slate-600">
+            Select at least one format. File signatures are verified after upload.
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            @for (type of mediaTypes; track type.value) {
+              <label
+                class="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold transition focus-within:ring-2 focus-within:ring-amber-500 focus-within:ring-offset-2"
+                [class.border-amber-400]="hasMediaType(type.value)"
+                [class.bg-amber-50]="hasMediaType(type.value)"
+                [class.text-[#000035]]="hasMediaType(type.value)"
+                [class.border-slate-200]="!hasMediaType(type.value)"
+                [class.text-slate-600]="!hasMediaType(type.value)"
+              >
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 accent-[#F4B400]"
+                  [checked]="hasMediaType(type.value)"
+                  (change)="mediaTypeChanged(type.value, $event)"
+                />
+                {{ type.label }}
+              </label>
+            }
+          </div>
+          @if (
+            form.controls.allowedMimeTypes.touched &&
+            form.controls.allowedMimeTypes.value.length === 0
+          ) {
+            <p class="mt-3 text-sm text-red-700">Select at least one accepted file format.</p>
+          }
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <label for="upload-limit" class="text-sm font-semibold text-[#000035]">
+            Maximum file size
+          </label>
+          <div class="mt-2 flex items-center gap-2">
+            <input
+              id="upload-limit"
+              type="number"
+              min="1"
+              max="100"
+              formControlName="maxUploadSizeMb"
+              class="min-h-12 min-w-0 flex-1 touch-manipulation rounded-xl border border-slate-300 bg-white px-4 text-base outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+            />
+            <span class="text-sm font-bold text-slate-600">MB</span>
+          </div>
+          <p class="mt-2 text-xs leading-5 text-slate-500">Allowed range: 1–100 MB.</p>
+
+          <label class="mt-5 flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              formControlName="optimizeImages"
+              class="mt-1 h-4 w-4 accent-[#F4B400]"
+            />
+            <span>
+              <strong class="block text-sm text-[#000035]">Optimize images</strong>
+              <span class="mt-1 block text-xs leading-5 text-slate-500">
+                Generate responsive WebP variants for consistent delivery.
+              </span>
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky bottom-0 z-10 flex flex-col gap-4 border-t border-slate-200 bg-white/95 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:flex-row sm:items-center sm:justify-between sm:border-0 sm:p-6 lg:p-8">
+      <div aria-live="polite">
+        @if (message()) {
+          <p
+            class="text-sm font-semibold"
+            [class.text-emerald-700]="messageKind() === 'success'"
+            [class.text-red-700]="messageKind() === 'error'"
+          >
+            {{ message() }}
+          </p>
+        } @else {
+          <p class="text-xs text-slate-500">Policies take effect on the next API request.</p>
+        }
+      </div>
+      <button
+        type="submit"
+        class="min-h-12 w-full touch-manipulation rounded-xl bg-[#000035] px-6 text-sm font-bold text-white transition hover:bg-[#11115b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        [disabled]="saving() || form.invalid || form.pristine || externalUpdate()"
+      >
+        {{ saving() ? 'Saving policies…' : 'Save publishing policy' }}
+      </button>
+    </div>
+  </form>
+</section>

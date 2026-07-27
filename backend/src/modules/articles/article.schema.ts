@@ -25,6 +25,46 @@ export const ARTICLE_CATEGORY_VALUES = [
 export type ArticleCategory =
   (typeof ARTICLE_CATEGORY_VALUES)[number];
 
+export const ADMIN_ARTICLE_SORT_VALUES = [
+  "latest",
+  "oldest",
+  "mostViewed",
+] as const;
+
+const adminArticleTagsQuerySchema = z.preprocess(
+  value => {
+    const values = Array.isArray(value)
+      ? value
+      : typeof value === "string"
+        ? value.split(",")
+        : [];
+
+    return values
+      .map(item => String(item).trim())
+      .filter(Boolean);
+  },
+  z.array(z.string().max(50)).max(20)
+);
+
+/**
+ * Query contract for the compact All Articles endpoint.
+ * Keeping validation at the transport boundary lets the repository use
+ * index-friendly exact comparisons and bounded pagination.
+ */
+export const adminArticlesQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  status: z.enum(ARTICLE_STATUS_VALUES).optional(),
+  category: z.enum(ARTICLE_CATEGORY_VALUES).optional(),
+  featured: z
+    .enum(["true", "false"])
+    .transform(value => value === "true")
+    .optional(),
+  search: z.string().trim().max(100).optional(),
+  sort: z.enum(ADMIN_ARTICLE_SORT_VALUES).default("latest"),
+  tags: adminArticleTagsQuerySchema.optional(),
+});
+
 const MAX_DATA_URL_CHARS = 28_000_000;
 const MAX_ARTICLE_CONTENT_CHARS = 1_000_000;
 

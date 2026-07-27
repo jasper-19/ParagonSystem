@@ -14,6 +14,7 @@ import { RouterLink, RouterLinkActive, RouterModule } from '@angular/router';
 import { TemperatureService } from '../../services/temperature.service';
 import { LocationService } from '../../services/location.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { GlobalSettingsService } from '../../services/global-settings.service';
 
 // ===== Header Component =====
 // Responsible for rendering the top navigation, search modal, and
@@ -33,6 +34,7 @@ export class Header implements OnInit, OnDestroy {
   private locationService = inject(LocationService);
   private ngZone = inject(NgZone);
   private cdr = inject(ChangeDetectorRef);
+  readonly globalSettings = inject(GlobalSettingsService).publicSettings;
 
   // ----- UI state -----
   // Mobile menu visibility flag

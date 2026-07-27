@@ -7,13 +7,13 @@
     <div class="md:col-span-1">
       <div class="flex items-center gap-3 mb-5">
         <img
-          src="assets/PRG_Logo.png"
-          alt="Paragon Logo"
+          [src]="globalSettings()?.general?.logoUrl || 'assets/PRG_Logo.png'"
+          [alt]="(globalSettings()?.general?.siteName || 'Paragon') + ' logo'"
           class="h-10 w-auto filter brightness-110"
         />
         <div>
           <h3 class="text-white font-bold text-xl tracking-tight">
-            Paragon
+            {{ globalSettings()?.general?.siteName || 'Paragon' }}
           </h3>
           <p class="text-xs text-gray-500 uppercase tracking-widest">Student Publication</p>
         </div>
@@ -22,7 +22,7 @@
       <!-- Short description about the publication. Keep exact text. -->
       <p class="text-sm leading-relaxed text-gray-400 mb-6">
         The Official Student Publication of
-        Cagayan State University - Gonzaga Campus
+        {{ globalSettings()?.general?.organizationName || 'Cagayan State University - Gonzaga Campus' }}
       </p>
 
       <!-- ===== SOCIALS ===== -->
@@ -115,7 +115,7 @@
             d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
           />
         </svg>
-        Paragon.csu.edu.ph
+        {{ globalSettings()?.general?.contactEmail || 'Paragon.csu.edu.ph' }}
       </span>
     </div>
   </div>

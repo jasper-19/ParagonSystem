@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Output, HostListener, signal } from '@angular/core';
+import { Component, EventEmitter, Output, HostListener, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { GlobalSettingsService } from '../../../../../core/services/global-settings.service';
 @Component({
   selector: 'app-media-uploader',
   standalone: true,
@@ -8,9 +9,17 @@ import { RouterModule } from '@angular/router';
   templateUrl: './media-uploader.html'
 })
 export class MediaUploaderComponent {
+  private readonly globalSettings = inject(GlobalSettingsService);
   @Output() filesSelected = new EventEmitter<File[]>();
 
   readonly isDragging = signal(false);
+  readonly validationError = signal('');
+  readonly policy = computed(() => this.globalSettings.settings()?.publishingMedia);
+  readonly acceptedImages = computed(() =>
+    (this.policy()?.allowedMimeTypes ?? ['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+      .filter(type => type.startsWith('image/')),
+  );
+  readonly acceptFormats = computed(() => this.acceptedImages().join(','));
 
   private dragDepth = 0;
 
@@ -38,12 +47,18 @@ export class MediaUploaderComponent {
   private emitValidFiles(
     files: File[]
   ): void {
+    this.validationError.set('');
+    const allowed = new Set(this.acceptedImages());
+    const maxBytes = (this.policy()?.maxUploadSizeMb ?? 25) * 1024 * 1024;
     const validImages = files.filter(
       file =>
-        file.type.startsWith('image/')
+        allowed.has(file.type) && file.size <= maxBytes
     );
 
     if (!validImages.length) {
+      this.validationError.set(
+        `Select an allowed image no larger than ${this.policy()?.maxUploadSizeMb ?? 25} MB.`
+      );
       return;
     }
 

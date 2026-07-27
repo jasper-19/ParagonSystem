@@ -16,7 +16,7 @@ export function toPublicUser(user: User): PublicUser {
 
 export async function authenticate(username: string, password: string): Promise<User | null> {
   const user = await repository.findByUsername(username);
-  if (!user) {
+  if (!user || !user.isActive) {
     await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
     return null;
   }
@@ -34,6 +34,24 @@ export async function createUser(input: {
   role: string;
   staffId?: string;
 }): Promise<User> {
+  if (!input.staffId) {
+    throw Object.assign(
+      new Error("An active editorial-board staff member is required"),
+      { statusCode: 400 }
+    );
+  }
+  if (!await repository.isEligibleAdminStaff(input.staffId)) {
+    throw Object.assign(
+      new Error("Staff member is not eligible or already has an account"),
+      { statusCode: 409 }
+    );
+  }
+  if (await repository.findByUsername(input.username)) {
+    throw Object.assign(new Error("Username is already in use"), {
+      statusCode: 409,
+    });
+  }
+
   const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
   const payload: { username: string; passwordHash: string; role: string; staffId?: string } = {
     username: input.username,
@@ -46,8 +64,28 @@ export async function createUser(input: {
 
 export async function updateUser(
   id: string,
-  patch: Partial<{ password: string; role: string; staffId: string | null; twoFaEnabled: boolean }>
+  patch: Partial<{
+    password: string;
+    role: string;
+    staffId: string | null;
+    twoFaEnabled: boolean;
+    isActive: boolean;
+  }>
 ): Promise<User | undefined> {
+  const existing = await repository.findById(id);
+  if (!existing) return undefined;
+  if (
+    existing.role === "admin" &&
+    existing.isActive &&
+    (patch.isActive === false || (patch.role && patch.role !== "admin")) &&
+    await repository.countActiveAdmins() <= 1
+  ) {
+    throw Object.assign(
+      new Error("At least one active administrator is required"),
+      { statusCode: 409 }
+    );
+  }
+
   const repoPatch: any = {};
   if (patch.password !== undefined) {
     repoPatch.passwordHash = await bcrypt.hash(patch.password, BCRYPT_ROUNDS);
@@ -61,12 +99,23 @@ export async function updateUser(
   if (patch.twoFaEnabled !== undefined) {
     repoPatch.twoFaEnabled = patch.twoFaEnabled;
   }
+  if (patch.isActive !== undefined) {
+    repoPatch.isActive = patch.isActive;
+  }
 
   return repository.updateUser(id, repoPatch);
 }
 
 export async function listUsers(): Promise<User[]> {
   return repository.listAll();
+}
+
+export async function listManagedUsers() {
+  return repository.listManagedUsers();
+}
+
+export async function listEligibleAdminStaff() {
+  return repository.listEligibleAdminStaff();
 }
 
 export async function getUserById(id: string): Promise<User | undefined> {

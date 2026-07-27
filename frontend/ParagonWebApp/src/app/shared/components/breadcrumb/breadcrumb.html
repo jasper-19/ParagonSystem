@@ -1,20 +1,81 @@
-<nav class="flex pl-6 md:pl-10" aria-label="Breadcrumb">
-  <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-    <li *ngFor="let crumb of breadcrumbs; let last = last; let i = index" [attr.aria-current]="last ? 'page' : null" class="inline-flex items-center">
-      <ng-container *ngIf="i === 0">
-        <a [routerLink]="crumb.url" class="inline-flex items-center text-xl font-medium text-[#f4b400] hover:text-[#ffd86b]">
-          <svg class="w-4 h-4 me-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4 12 8-8 8 8M6 10.5V19a1 1 0 0 0 1 1h3v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h3a1 1 0 0 0 1-1v-8.5"/></svg>
-          {{ crumb.label }}
-        </a>
-      </ng-container>
-      <ng-container *ngIf="i !== 0">
-        <div class="flex items-center space-x-1.5">
-          <svg class="w-3.5 h-3.5 rtl:rotate-180 text-[#f4b400]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
-          <a *ngIf="!last" [routerLink]="crumb.url" class="inline-flex items-center text-sm font-medium text-[#f4b400] hover:text-[#ffd86b]">{{ crumb.label }}</a>
-          <span *ngIf="last" class="inline-flex items-center text-xl font-medium text-[#ffd86b]">{{ crumb.label }}</span>
-        </div>
-      </ng-container>
-    </li>
-  </ol>
-</nav>
+@if (breadcrumbs().length > 0) {
+  <nav
+    class="mx-auto w-full max-w-screen-2xl"
+    aria-label="Breadcrumb"
+  >
+    <div
+      class="flex min-h-12 items-center overflow-hidden rounded-xl border border-slate-200 bg-white px-2 shadow-sm sm:px-3"
+    >
+      <ol class="flex min-w-0 flex-1 items-center" role="list">
+        @for (crumb of breadcrumbs(); track trackBreadcrumb($index, crumb); let first = $first; let last = $last; let index = $index) {
+          @if (index === 1 && breadcrumbs().length > 2) {
+            <li class="flex shrink-0 items-center sm:hidden" aria-hidden="true">
+              <svg
+                class="h-4 w-4 shrink-0 text-slate-300"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+              <span class="flex h-10 min-w-8 items-center justify-center text-sm font-bold tracking-widest text-slate-400">
+                …
+              </span>
+            </li>
+          }
 
+          <li
+            class="min-w-0 items-center"
+            [ngClass]="!first && !last ? 'hidden sm:flex' : 'flex'"
+          >
+            @if (!first) {
+              <svg
+                class="h-4 w-4 shrink-0 text-slate-300"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            }
+
+            @if (!last) {
+              <a
+                class="group inline-flex min-h-11 min-w-0 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-amber-50 hover:text-amber-800 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 sm:px-3 motion-reduce:transition-none"
+                [routerLink]="crumb.url"
+                [attr.aria-label]="first ? 'Go to ' + crumb.label : null"
+              >
+                @if (first) {
+                  <svg
+                    class="h-4 w-4 shrink-0 text-amber-600 transition-colors group-hover:text-amber-700 motion-reduce:transition-none"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="m3 11 9-8 9 8" />
+                    <path d="M5 10v10h14V10M9 20v-6h6v6" />
+                  </svg>
+                }
+                <span class="max-w-28 truncate sm:max-w-48 lg:max-w-64">{{ crumb.label }}</span>
+              </a>
+            } @else {
+              <span
+                class="inline-flex min-h-11 min-w-0 items-center px-2 text-sm font-bold text-[#000035] sm:px-3"
+                aria-current="page"
+                [title]="crumb.label"
+              >
+                <span class="truncate">{{ crumb.label }}</span>
+              </span>
+            }
+          </li>
+        }
+      </ol>
+
+    </div>
+  </nav>
+}

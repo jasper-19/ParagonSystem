@@ -1,6 +1,20 @@
-import { Component, OnInit,  OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { finalize, Subject, takeUntil, catchError, retry, throwError, timeout, timer } from 'rxjs';
 import { AdminAuthService, ActiveSession } from '../../../../../core/services/admin-auth.service';
 import { SuccessModal } from '../../../../../shared/components/feedback-modal/success-modal';
@@ -9,14 +23,16 @@ import { ErrorModal } from '../../../../../shared/components/feedback-modal/erro
 @Component({
   selector: 'app-security-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, SuccessModal, ErrorModal, ReactiveFormsModule],
-  templateUrl: './profile-security-settings.html'
+  imports: [CommonModule, SuccessModal, ErrorModal, ReactiveFormsModule],
+  templateUrl: './profile-security-settings.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileSecuritySettings implements OnInit, OnDestroy {
   private readonly auth = inject(AdminAuthService);
   private readonly destroy$ = new Subject<void>();
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly fb = inject(FormBuilder);
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
 
   currentPassword = '';
   newPassword = '';
@@ -27,12 +43,15 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
   showConfirmPassword = false;
 
   twoFAEnabled = false;
+  twoFaLoading = true;
   twoFaUpdating = false;
   twoFaMessage = '';
+  twoFaMessageKind: 'success' | 'error' | '' = '';
 
   activeSessions: ActiveSession[] = [];
   sessionsLoading = false;
   sessionsError = '';
+  sessionActionError = '';
   loggingOutSessionIds: Record<string, boolean> = {};
 
   changingPassword = false;
@@ -57,7 +76,7 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
           '',
           [
             Validators.required,
-            Validators.minLength(8),
+            Validators.minLength(12),
             this.passwordComplexityValidator,
           ],
         ],
@@ -106,6 +125,10 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
     this.auth
       .me()
       .pipe(
+        finalize(() => {
+          this.twoFaLoading = false;
+          this.cdr.markForCheck();
+        }),
         takeUntil(this.destroy$)
       )
       .subscribe({
@@ -127,6 +150,8 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
 
           this.twoFAEnabled =
             false;
+          this.twoFaMessage = 'Unable to load the two-factor authentication setting.';
+          this.twoFaMessageKind = 'error';
 
           this.cdr.markForCheck();
         },
@@ -243,13 +268,14 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
     this.twoFAEnabled = enabled;
     this.twoFaUpdating = true;
     this.twoFaMessage = '';
+    this.twoFaMessageKind = '';
 
     this.auth
       .setTwoFaEnabled(enabled)
       .pipe(
         finalize(() => {
-          this.twoFaUpdating =
-            false;
+          this.twoFaUpdating = false;
+          this.cdr.markForCheck();
         }),
 
         takeUntil(this.destroy$)
@@ -265,14 +291,22 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
             this.twoFAEnabled
               ? '2FA enabled.'
               : '2FA disabled.';
+          this.twoFaMessageKind = 'success';
 
           this.auth.invalidateMeCache();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.twoFAEnabled = previous;
           this.twoFaMessage = err?.error?.error || 'Failed to update 2FA setting.';
+          this.twoFaMessageKind = 'error';
+          this.cdr.markForCheck();
         },
       });
+  }
+
+  setTwoFAFromEvent(event: Event): void {
+    this.setTwoFA((event.target as HTMLInputElement).checked);
   }
 
   changePassword(): void {
@@ -299,6 +333,12 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
         'error';
 
       this.cdr.markForCheck();
+      queueMicrotask(() => {
+        const invalidControl = this.elementRef.nativeElement.querySelector(
+          '[aria-invalid="true"]',
+        ) as HTMLElement | null;
+        invalidControl?.focus();
+      });
 
       return;
     }
@@ -394,10 +434,10 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
     if (field === 'confirm') this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  logoutSession(index: number): void {
-    const session = this.activeSessions[index];
-    if (!session) return;
+  logoutSession(session: ActiveSession): void {
+    if (!session || session.current || this.loggingOutSessionIds[session.id]) return;
 
+    this.sessionActionError = '';
     this.loggingOutSessionIds[session.id] = true;
     this.auth
       .logoutSession(session.id)
@@ -406,6 +446,7 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
           this.loggingOutSessionIds[
             session.id
           ] = false;
+          this.cdr.markForCheck();
         }),
 
         takeUntil(this.destroy$)
@@ -422,6 +463,7 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
           if (session.current) {
             this.auth.invalidateMeCache();
           }
+          this.cdr.markForCheck();
         },
 
         error: error => {
@@ -429,12 +471,18 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
             'Unable to log out session:',
             error
           );
+          this.sessionActionError = `We could not sign out ${session.browser}. Please try again.`;
+          this.cdr.markForCheck();
         },
       });
   }
 
   retrySessions(): void {
     this.loadSessions();
+  }
+
+  trackSession(_index: number, session: ActiveSession): string {
+    return session.id;
   }
 
   requirementClass(
@@ -530,10 +578,10 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
   }
 
   // Returns a CSS width percentage for the password strength bar based on the score (0-5).
-  get passwordStrengthWidth(): string {
-    return `${
-      this.passwordStrengthScore * 20
-    }%`;
+  get passwordStrengthWidthClass(): string {
+    return ['w-0', 'w-1/5', 'w-2/5', 'w-3/5', 'w-4/5', 'w-full'][
+      this.passwordStrengthScore
+    ];
   }
 
   // Returns a CSS class for the password strength bar based on the score (0-5).

@@ -5,6 +5,7 @@ import { StaffMember } from "../../models/staff-member.model";
 
 // Note: API endpoints are hardcoded here for clarity and to avoid circular imports with api.config.ts
 import { API_ENDPOINTS } from "../config/api.config";
+import { SocketService } from "./socket.service";
 
 /**
  * DTO returned by the backend for an active session.
@@ -58,6 +59,7 @@ export class AdminAuthService {
 
   // Inject HttpClient using function-style injection to keep constructor-less service
   private http = inject(HttpClient);
+  private readonly socket = inject(SocketService);
 
   // Optional cached observable for the current user/staff info; used to avoid duplicate requests
   private meRequest$: Observable<AdminMeResponse> | null = null;
@@ -92,6 +94,7 @@ export class AdminAuthService {
       .pipe(
         tap(() => {
           this.meRequest$ = null;
+          this.socket.reconnectWithCurrentSession();
         }),
 
         map(() => undefined)
@@ -104,6 +107,7 @@ export class AdminAuthService {
       .pipe(
         tap(() => {
           this.meRequest$ = null;
+          this.socket.reconnectWithCurrentSession();
         })
       );
   }

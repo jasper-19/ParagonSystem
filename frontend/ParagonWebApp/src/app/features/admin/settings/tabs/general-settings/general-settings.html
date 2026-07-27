@@ -1,151 +1,139 @@
-<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-0 divide-y divide-[#000035]/6">
-
-  <!-- ── HEADER ── -->
-  <div class="py-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div>
-      <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">General Settings</h2>
-      <p class="text-[11px] text-[#000035]/35 mt-0.5">Configure system-wide options and preferences.</p>
-    </div>
+<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <div class="border-b border-slate-200 p-5 sm:p-6 lg:p-8">
+    <p class="text-xs font-black uppercase tracking-[0.16em] text-amber-600">General</p>
+    <h2 class="mt-2 text-xl font-bold text-[#000035]">Identity and localization</h2>
+    <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+      These values identify the publication across browser metadata and server-backed experiences.
+      Date and time preferences apply organization-wide.
+    </p>
   </div>
 
-  <!-- ── SYSTEM IDENTITY ── -->
-  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
-    <div>
-      <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">System Identity</h2>
-      <p class="text-[11px] text-[#000035]/35 mt-1 leading-relaxed">Read-only system information.</p>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div class="bg-[#000035]/2 border border-[#000035]/8 rounded-lg px-4 py-3">
-        <p class="text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/30 mb-1">System Name</p>
-        <p class="text-sm font-bold text-[#000035]">{{ systemInfo.systemName }}</p>
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    @if (externalUpdate()) {
+      <div class="m-5 flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 sm:m-6 sm:flex-row sm:items-center sm:justify-between lg:mx-8" role="alert">
+        <span><strong>New server settings are available.</strong> Your unsaved values were preserved.</span>
+        <button type="button" class="min-h-11 touch-manipulation rounded-xl border border-amber-400 bg-white px-4 font-bold text-[#000035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" (click)="loadLatest()">Load latest</button>
       </div>
-      <div class="bg-[#000035]/2 border border-[#000035]/8 rounded-lg px-4 py-3">
-        <p class="text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/30 mb-1">Organization</p>
-        <p class="text-sm font-bold text-[#000035]">{{ systemInfo.organization }}</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── BRANDING ── -->
-  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
-    <div>
-      <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Branding</h2>
-      <p class="text-[11px] text-[#000035]/35 mt-1 leading-relaxed">Upload your system logo.</p>
-    </div>
-    <div class="space-y-4">
-      <!-- File Upload -->
+    }
+    <div class="grid gap-5 border-b border-slate-200 p-5 sm:grid-cols-2 sm:p-6 lg:p-8">
       <div>
-        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">
-          System Logo
-        </label>
-        <label class="flex items-center gap-4 border border-dashed border-[#000035]/15 rounded-lg px-4 py-4 cursor-pointer hover:border-[#F4B400]/60 hover:bg-[#F4B400]/2 transition-all duration-200 group">
-          <div class="w-9 h-9 rounded-lg bg-[#000035]/5 flex items-center justify-center shrink-0 group-hover:bg-[#F4B400]/10 transition-colors duration-200">
-            <svg class="w-4 h-4 text-[#000035]/30 group-hover:text-[#F4B400]/60" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
-            </svg>
-          </div>
-          <div>
-            <p class="text-xs font-bold text-[#000035]/60 group-hover:text-[#000035] transition-colors duration-200">
-              Click to upload
-            </p>
-            <p class="text-[10px] text-[#000035]/30 mt-0.5">PNG, JPG, SVG up to 2MB</p>
-          </div>
-          <input type="file" (change)="onFileChange($event)" class="hidden"/>
-        </label>
+        <label for="site-name" class="text-sm font-semibold text-[#000035]">Publication name</label>
+        <input
+          id="site-name"
+          type="text"
+          formControlName="siteName"
+          autocomplete="organization"
+          class="mt-2 min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 px-4 text-base text-slate-900 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+        />
+        @if (form.controls.siteName.touched && form.controls.siteName.invalid) {
+          <p class="mt-2 text-sm text-red-700">Enter a publication name between 2 and 120 characters.</p>
+        }
       </div>
-      <!-- Preview -->
-      <div *ngIf="logoPreview" class="flex items-center gap-4 border border-[#000035]/8 rounded-lg px-4 py-3 bg-[#000035]/2">
-        <img [src]="logoPreview" class="h-12 w-auto object-contain rounded"/>
-        <div>
-          <p class="text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/30">Preview</p>
-          <p class="text-xs font-semibold text-[#000035]/60 mt-0.5">Logo looks good</p>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ── LOCALIZATION ── -->
-  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
-    <div>
-      <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Localization</h2>
-      <p class="text-[11px] text-[#000035]/35 mt-1 leading-relaxed">Regional date, time, and timezone settings.</p>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div>
-        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Timezone</label>
-        <select formControlName="timezone"
-          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/60 transition-all duration-200 cursor-pointer">
-          <option value="Asia/Manila">Asia/Manila</option>
+        <label for="organization-name" class="text-sm font-semibold text-[#000035]">
+          Organization
+        </label>
+        <input
+          id="organization-name"
+          type="text"
+          formControlName="organizationName"
+          class="mt-2 min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 px-4 text-base text-slate-900 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+        />
+      </div>
+
+      <div>
+        <label for="contact-email" class="text-sm font-semibold text-[#000035]">
+          Public contact email
+        </label>
+        <input
+          id="contact-email"
+          type="email"
+          formControlName="contactEmail"
+          autocomplete="email"
+          placeholder="publication@csu.edu.ph"
+          class="mt-2 min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 px-4 text-base text-slate-900 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+        />
+        @if (form.controls.contactEmail.touched && form.controls.contactEmail.invalid) {
+          <p class="mt-2 text-sm text-red-700">Enter a valid email address or leave this blank.</p>
+        }
+      </div>
+
+      <div>
+        <label for="logo-url" class="text-sm font-semibold text-[#000035]">Logo URL</label>
+        <input
+          id="logo-url"
+          type="url"
+          formControlName="logoUrl"
+          placeholder="https://..."
+          class="mt-2 min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 px-4 text-base text-slate-900 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+        />
+        <p class="mt-2 text-xs leading-5 text-slate-500">
+          Use an HTTPS asset from the Media Library or your managed storage.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid gap-5 border-b border-slate-200 p-5 sm:grid-cols-3 sm:p-6 lg:p-8">
+      <div>
+        <label for="timezone" class="text-sm font-semibold text-[#000035]">System timezone</label>
+        <select
+          id="timezone"
+          formControlName="timezone"
+          class="mt-2 min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 bg-white px-4 text-base outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+        >
+          <option value="Asia/Manila">Asia/Manila (Philippine Time)</option>
+          <option value="UTC">UTC</option>
+          <option value="Asia/Singapore">Asia/Singapore</option>
+          <option value="Asia/Tokyo">Asia/Tokyo</option>
         </select>
       </div>
       <div>
-        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Date Format</label>
-        <select formControlName="dateFormat"
-          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/60 transition-all duration-200 cursor-pointer">
+        <label for="date-format" class="text-sm font-semibold text-[#000035]">Date format</label>
+        <select
+          id="date-format"
+          formControlName="dateFormat"
+          class="mt-2 min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 bg-white px-4 text-base outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+        >
           <option value="YYYY-MM-DD">YYYY-MM-DD</option>
           <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+          <option value="DD/MM/YYYY">DD/MM/YYYY</option>
         </select>
       </div>
       <div>
-        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Time Format</label>
-        <select formControlName="timeFormat"
-          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/60 transition-all duration-200 cursor-pointer">
+        <label for="time-format" class="text-sm font-semibold text-[#000035]">Time format</label>
+        <select
+          id="time-format"
+          formControlName="timeFormat"
+          class="mt-2 min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 bg-white px-4 text-base outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+        >
           <option value="12h">12-hour</option>
           <option value="24h">24-hour</option>
         </select>
       </div>
     </div>
-  </div>
 
-  <!-- ── SYSTEM PREFERENCES ── -->
-  <div class="py-7 grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 sm:gap-10">
-    <div>
-      <h2 class="text-[11px] font-black uppercase tracking-[0.18em] text-[#000035]">Preferences</h2>
-      <p class="text-[11px] text-[#000035]/35 mt-1 leading-relaxed">Pagination, routing, and UI behavior.</p>
+    <div class="sticky bottom-0 z-10 flex flex-col gap-4 border-t border-slate-200 bg-white/95 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:flex-row sm:items-center sm:justify-between sm:border-0 sm:p-6 lg:p-8">
+      <div aria-live="polite">
+        @if (message()) {
+          <p
+            class="text-sm font-semibold"
+            [class.text-emerald-700]="messageKind() === 'success'"
+            [class.text-red-700]="messageKind() === 'error'"
+          >
+            {{ message() }}
+          </p>
+        } @else {
+          <p class="text-xs text-slate-500">All updates are validated and audit logged.</p>
+        }
+      </div>
+      <button
+        type="submit"
+        class="inline-flex min-h-12 w-full touch-manipulation items-center justify-center rounded-xl bg-[#000035] px-6 text-sm font-bold text-white transition hover:bg-[#11115b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        [disabled]="saving() || form.invalid || form.pristine || externalUpdate()"
+      >
+        {{ saving() ? 'Saving changes…' : 'Save general settings' }}
+      </button>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div>
-        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Items per Page</label>
-        <input type="number" formControlName="pagination"
-          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/60 transition-all duration-200"/>
-      </div>
-      <div>
-        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Landing Page</label>
-        <select formControlName="landingPage"
-          class="w-full bg-white border border-[#000035]/10 rounded-lg px-3 py-2.5 text-sm font-medium text-[#000035] focus:outline-none focus:ring-2 focus:ring-[#F4B400]/40 focus:border-[#F4B400]/60 transition-all duration-200 cursor-pointer">
-          <option value="dashboard">Dashboard</option>
-          <option value="articles">Articles</option>
-        </select>
-      </div>
-      <!-- Breadcrumbs Toggle -->
-      <div>
-        <label class="block text-[9px] font-black uppercase tracking-[0.18em] text-[#000035]/40 mb-2">Breadcrumbs</label>
-        <label class="flex items-center gap-3 border border-[#000035]/10 rounded-lg px-3 py-2.5 cursor-pointer hover:border-[#F4B400]/40 hover:bg-[#F4B400]/2 transition-all duration-200 group">
-          <input type="checkbox" formControlName="breadcrumbs" class="w-4 h-4 accent-[#F4B400] cursor-pointer"/>
-          <span class="text-sm font-medium text-[#000035]/70 group-hover:text-[#000035] transition-colors duration-200">
-            Enable Breadcrumbs
-          </span>
-        </label>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── SUBMIT ── -->
-  <div class="pt-6 flex items-center justify-between gap-4">
-    <p class="text-[10px] text-[#000035]/25 font-semibold uppercase tracking-widest hidden sm:block">
-      All changes are saved to the database
-    </p>
-    <button
-      type="submit"
-      [disabled]="isSubmitting"
-      class="flex items-center gap-2.5 bg-[#000035] hover:bg-[#000035]/90 disabled:opacity-40 text-white text-[11px] font-black uppercase tracking-[0.18em] px-6 py-3 rounded-lg transition-all duration-200 cursor-pointer disabled:cursor-not-allowed ml-auto"
-    >
-      <svg *ngIf="isSubmitting" class="animate-spin w-3.5 h-3.5 text-white/60" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v8z"></path>
-      </svg>
-      {{ isSubmitting ? 'Saving…' : 'Save Changes' }}
-    </button>
-  </div>
-
-</form>
+  </form>
+</section>

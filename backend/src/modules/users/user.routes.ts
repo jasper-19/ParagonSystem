@@ -10,6 +10,12 @@ const router = Router();
 
 router.get("/", authenticate, requireAdmin, controller.listUsers);
 router.get(
+  "/eligible-staff",
+  authenticate,
+  requireAdmin,
+  controller.listEligibleStaff
+);
+router.get(
   "/:id",
   authenticate,
   requireAdmin,

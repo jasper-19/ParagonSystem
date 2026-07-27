@@ -14,4 +14,5 @@ export const API_ENDPOINTS = {
   staff: `${environment.apiUrl}/staff`,
   colleges: `${environment.apiUrl}/colleges`,
   users: `${environment.apiUrl}/users`,
+  settings: `${environment.apiUrl}/settings`,
 };

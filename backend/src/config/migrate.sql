@@ -215,6 +215,7 @@ CREATE TABLE IF NOT EXISTS users (
   role          VARCHAR(50)  NOT NULL DEFAULT 'admin'
     CHECK (role IN ('admin', 'staff')),
   staff_id      UUID REFERENCES staff_members(id) ON DELETE SET NULL,
+  is_active     BOOLEAN NOT NULL DEFAULT TRUE,
   two_fa_enabled BOOLEAN     NOT NULL DEFAULT FALSE,
   last_login_at TIMESTAMPTZ,
   created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -224,6 +225,13 @@ CREATE TABLE IF NOT EXISTS users (
 -- Add missing columns if the table already existed without them
 DO $$
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'is_active'
+  ) THEN
+    ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE;
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'users' AND column_name = 'staff_id'
@@ -260,6 +268,45 @@ BEGIN
   END IF;
 END
 $$;
+
+-- A staff member can hold at most one authentication account.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_unique_staff_id
+  ON users(staff_id)
+  WHERE staff_id IS NOT NULL;
+
+-- ============================================================
+-- system_settings singleton (versioned global configuration)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS system_settings (
+  id                SMALLINT PRIMARY KEY CHECK (id = 1),
+  general           JSONB NOT NULL,
+  publishing_media  JSONB NOT NULL,
+  notifications     JSONB NOT NULL,
+  maintenance       JSONB NOT NULL,
+  version           BIGINT NOT NULL DEFAULT 1 CHECK (version > 0),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by        UUID REFERENCES users(id) ON DELETE SET NULL,
+  CHECK (jsonb_typeof(general) = 'object'),
+  CHECK (jsonb_typeof(publishing_media) = 'object'),
+  CHECK (jsonb_typeof(notifications) = 'object'),
+  CHECK (jsonb_typeof(maintenance) = 'object')
+);
+
+INSERT INTO system_settings (
+  id,
+  general,
+  publishing_media,
+  notifications,
+  maintenance
+)
+VALUES (
+  1,
+  '{"siteName":"The Paragon","organizationName":"Cagayan State University - Gonzaga","contactEmail":"","logoUrl":"","timezone":"Asia/Manila","dateFormat":"YYYY-MM-DD","timeFormat":"12h"}'::jsonb,
+  '{"allowDirectPublishing":true,"requireFeaturedImage":true,"maxUploadSizeMb":25,"allowedMimeTypes":["image/jpeg","image/png","image/webp","image/gif","application/pdf","video/mp4","video/webm","audio/mpeg","audio/ogg","audio/wav"],"optimizeImages":true}'::jsonb,
+  '{"inAppEnabled":true,"applicationEvents":true,"articleCreated":true,"articlePublished":true}'::jsonb,
+  '{"enabled":false,"message":"The publication site is temporarily unavailable while scheduled maintenance is completed.","allowAdminBypass":true}'::jsonb
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
 -- user sessions table (JWT session tracking)

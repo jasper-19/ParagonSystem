@@ -208,9 +208,26 @@
               <option value="Archived" class="bg-[#000035] text-white" disabled>Archived</option>
             }
             @for (s of statuses; track s) {
-              <option [value]="s" class="bg-[#000035] text-white">{{ s }}</option>
+              <option
+                [value]="s"
+                [disabled]="s === 'Published' && globalSettings()?.publishingMedia?.allowDirectPublishing === false"
+                class="bg-[#000035] text-white"
+              >{{ s }}</option>
             }
           </select>
+          @if (globalSettings()?.publishingMedia?.allowDirectPublishing === false) {
+            <p class="text-xs leading-5 text-amber-300" role="status">
+              Direct publishing is disabled by the organization policy. Save this article as a draft.
+            </p>
+          } @else if (
+            form.controls.status.value === 'Published' &&
+            globalSettings()?.publishingMedia?.requireFeaturedImage &&
+            !selectedImageMedia()
+          ) {
+            <p class="text-xs leading-5 text-amber-300" role="status">
+              A featured image is required before publishing.
+            </p>
+          }
         </div>
 
         <!-- Featured -->
@@ -240,6 +257,7 @@
             [disabled]="
               form.invalid ||
               selectedCredits().author.length === 0 ||
+              publishingPolicyBlocked() ||
               isSubmitting()
             "
             class="w-full min-h-12 px-5 py-3.5 text-sm font-bold
@@ -285,6 +303,7 @@
           [helperText]="'Upload a new image or choose one from the media library.'"
           [aspectClass]="'aspect-square'"
           [showFileInfo]="false"
+          [required]="globalSettings()?.publishingMedia?.requireFeaturedImage ?? false"
           (mediaChange)="onCoverMediaChange($event)"
         ></app-cover-image-selector>
 
@@ -913,6 +932,7 @@
           [disabled]="
             form.invalid ||
             selectedCredits().author.length === 0 ||
+            publishingPolicyBlocked() ||
             isSubmitting()
           "
           class="inline-flex min-h-12 items-center justify-center

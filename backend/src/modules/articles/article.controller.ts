@@ -5,6 +5,7 @@ import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
 import { emitArticlesUpdated, emitMediaUpdated } from "../../realtime/socket.events";
+import { adminArticlesQuerySchema } from "./article.schema";
 
 function setPublicCache(res: Response): void {
     res.set({
@@ -99,139 +100,43 @@ export const getArticles =  asyncHandler(
  */
 export const getAdminArticles = asyncHandler(
   async (req: Request, res: Response) => {
-    const rawStatus = req.query["status"];
-    const rawCategory = req.query["category"];
-    const rawFeatured = req.query["featured"];
-    const rawSearch = req.query["search"];
-    const rawSort = req.query["sort"];
-    const rawPage = req.query["page"];
-    const rawLimit = req.query["limit"];
-    const rawTags = req.query["tags"];
+    const parsed = adminArticlesQuerySchema.safeParse(req.query);
 
-    const status =
-      typeof rawStatus === "string"
-        ? String(
-            sanitizeValue(rawStatus)
-          ).trim()
-        : undefined;
-
-    const category =
-      typeof rawCategory === "string"
-        ? String(
-            sanitizeValue(rawCategory)
-          ).trim()
-        : undefined;
-
-    const featured =
-      typeof rawFeatured === "string"
-        ? String(
-            sanitizeValue(rawFeatured)
-          ) === "true"
-        : undefined;
-
-    const search =
-      typeof rawSearch === "string"
-        ? String(
-            sanitizeValue(rawSearch)
-          ).trim()
-        : undefined;
-
-    const sanitizedSort =
-      typeof rawSort === "string"
-        ? String(
-            sanitizeValue(rawSort)
-          )
-        : undefined;
-
-    const sort =
-      sanitizedSort === "latest" ||
-      sanitizedSort === "oldest" ||
-      sanitizedSort === "mostViewed"
-        ? sanitizedSort
-        : undefined;
-
-    const parsedPage =
-      typeof rawPage === "string"
-        ? Number(
-            sanitizeValue(rawPage)
-          )
-        : undefined;
-
-    const parsedLimit =
-      typeof rawLimit === "string"
-        ? Number(
-            sanitizeValue(rawLimit)
-          )
-        : undefined;
-
-    const page =
-      Number.isInteger(parsedPage) &&
-      Number(parsedPage) > 0
-        ? Number(parsedPage)
-        : 1;
-
-    const limit =
-      Number.isInteger(parsedLimit) &&
-      Number(parsedLimit) > 0
-        ? Math.min(
-            Number(parsedLimit),
-            100
-          )
-        : 20;
-
-    const tags = Array.isArray(rawTags)
-      ? rawTags
-          .map(tag =>
-            String(
-              sanitizeValue(String(tag))
-            ).trim()
-          )
-          .filter(Boolean)
-      : typeof rawTags === "string"
-        ? String(
-            sanitizeValue(rawTags)
-          )
-            .split(",")
-            .map(tag => tag.trim())
-            .filter(Boolean)
-        : undefined;
-
-    const filters:
-      service.GetArticlesFilters = {
-        page,
-        limit,
-      };
-
-    if (status) {
-      filters.status = status;
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid article list query",
+        details: parsed.error.issues.map(issue => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+      return;
     }
 
-    if (category) {
-      filters.category = category;
-    }
+    const {
+      page,
+      limit,
+      sort,
+      status,
+      category,
+      featured,
+      search,
+      tags,
+    } = parsed.data;
 
-    if (
-      featured !== undefined
-    ) {
-      filters.featured = featured;
-    }
+    const filters: service.GetArticlesFilters = {
+      page,
+      limit,
+      sort,
+    };
 
-    if (search) {
-      filters.search = search;
-    }
+    if (status !== undefined) filters.status = status;
+    if (category !== undefined) filters.category = category;
+    if (featured !== undefined) filters.featured = featured;
+    if (search) filters.search = search;
+    if (tags?.length) filters.tags = tags;
 
-    if (sort) {
-      filters.sort = sort;
-    }
-
-    if (tags?.length) {
-      filters.tags = tags;
-    }
-
-    const result =
-      await service.getAdminArticles(
-        filters
-      );
+    const result = await service.getAdminArticles(filters);
 
     /*
      * This is authenticated admin data.
@@ -431,7 +336,8 @@ export const createArticle = asyncHandler(
 
         const article = await service.createArticle(req.body);
 
-        notificationService.create(
+        notificationService.createForEvent(
+            "articleCreated",
             `New Article created: ${(article as any).title ?? "Untitled"}.`,
             "article"
         ).catch(() => {});
@@ -503,7 +409,8 @@ export const publishArticle = asyncHandler(
 
         const article = await service.publishArticle(id);
 
-        notificationService.create(
+        notificationService.createForEvent(
+            "articlePublished",
             `Article published: ${(article as any).title ?? id}.`,
             "article",
         ).catch(() => {});

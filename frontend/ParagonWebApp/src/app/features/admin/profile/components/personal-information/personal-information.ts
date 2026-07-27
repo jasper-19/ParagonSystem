@@ -1,4 +1,12 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  Input,
+  OnChanges,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { StaffMember } from '../../../../../models/staff-member.model';
@@ -9,7 +17,8 @@ import { College } from '../../../../join/models/college.model';
   selector: 'app-personal-information',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './personal-information.html'
+  templateUrl: './personal-information.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PersonalInformation implements OnChanges, OnInit {
 
@@ -17,19 +26,38 @@ export class PersonalInformation implements OnChanges, OnInit {
 
   staffData: StaffMember | null = null;
   private readonly collegeService = inject(CollegeService);
+  private readonly cdr = inject(ChangeDetectorRef);
   colleges: College[] = [];
   collegeName: string | null = null;
   programName: string | null = null;
   displayYear: string | null = null;
+  educationLoading = false;
+  educationError = false;
 
   ngOnInit(): void {
+    this.loadColleges();
+  }
+
+  retryEducationData(): void {
+    this.loadColleges();
+  }
+
+  private loadColleges(): void {
+    this.educationLoading = true;
+    this.educationError = false;
     this.collegeService.getColleges().subscribe({
       next: (c) => {
         this.colleges = c ?? [];
+        this.educationLoading = false;
         this.updateDerivedNames();
+        this.cdr.markForCheck();
       },
       error: () => {
         this.colleges = [];
+        this.educationLoading = false;
+        this.educationError = true;
+        this.updateDerivedNames();
+        this.cdr.markForCheck();
       },
     });
   }
@@ -40,7 +68,6 @@ export class PersonalInformation implements OnChanges, OnInit {
   }
 
   private updateDerivedNames(): void {
-    // College name
     const collegeId = this.staffData?.collegeId;
     if (!collegeId) {
       this.collegeName = null;
@@ -49,7 +76,6 @@ export class PersonalInformation implements OnChanges, OnInit {
       this.collegeName = found ? found.name : collegeId;
     }
 
-    // Program name (search programs across all colleges)
     const programId = this.staffData?.programId;
     if (!programId) {
       this.programName = null;
@@ -65,7 +91,6 @@ export class PersonalInformation implements OnChanges, OnInit {
       this.programName = foundProgramName ? foundProgramName : programId;
     }
 
-    // Year: format to ordinal like "2nd Year" and strip underscores
     this.displayYear = this.formatYearLevel(this.staffData?.yearLevel);
   }
 
@@ -88,14 +113,12 @@ export class PersonalInformation implements OnChanges, OnInit {
       }
     };
 
-    // 1) direct numeric or numeric+suffix
     const numMatch = s.match(/^(\d+)(?:\s*(st|nd|rd|th))?(?:\s*year)?$/);
     if (numMatch) {
       const n = parseInt(numMatch[1], 10);
       return `${ordinalSuffix(n)} Year`;
     }
 
-    // 2) words first/second/third/fourth -> map
     const wordsMap: Record<string, number> = {
       first: 1,
       second: 2,
@@ -108,14 +131,12 @@ export class PersonalInformation implements OnChanges, OnInit {
       return `${ordinalSuffix(wordsMap[wordMatch[1]])} Year`;
     }
 
-    // 3) contains a digit anywhere
     const anyDigit = s.match(/(\d+)/);
     if (anyDigit) {
       const n = parseInt(anyDigit[1], 10);
       return `${ordinalSuffix(n)} Year`;
     }
 
-    // 4) fallback: title-case and ensure ends with 'Year'
     const tc = s
       .split(' ')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))

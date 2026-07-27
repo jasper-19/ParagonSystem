@@ -1,82 +1,128 @@
-<div *ngIf="isOpen" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-9999 flex items-center justify-center p-4" (click)="onClose()">
+@if (isOpen) {
+  <div
+    class="fixed inset-0 z-70 flex items-end justify-center overscroll-contain bg-[#000035]/65 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+    role="presentation"
+    (click)="onClose()"
+  >
+    <section
+      #dialog
+      class="max-h-[calc(100dvh-1rem)] w-full max-w-xl overflow-y-auto overscroll-contain rounded-t-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-admin-title"
+      aria-describedby="create-admin-description"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="sticky top-0 z-10 border-b border-slate-200 bg-[#000035] p-5 text-white sm:p-6">
+        <p class="text-xs font-black uppercase tracking-[0.16em] text-[#F4B400]">User Accounts</p>
+        <h3 id="create-admin-title" class="mt-2 text-xl font-bold">Add administrator</h3>
+        <p id="create-admin-description" class="mt-2 text-sm leading-6 text-white/65">
+          Link a secure system account to an active editorial-board staff member.
+        </p>
+      </header>
 
-  <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden relative" (click)="$event.stopPropagation()">
-
-    <!-- Header with Background -->
-    <div class="relative bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035] px-8 py-6">
-
-      <div class="relative flex items-start justify-between gap-4">
-        <div class="flex-1 min-w-0">
-          <h3 class="text-2xl font-bold text-white mb-2">{{ isEditMode ? 'Edit User' : 'Add User' }}</h3>
-
-          <div class="flex flex-wrap items-center gap-2">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-white/10 text-slate-200 border border-white/10 backdrop-blur-sm">
-              <div class="w-1.5 h-1.5 bg-[#F4B400] rounded-full"></div>
-              <span class="text-sm font-medium">Mode:</span>
-              <span class="text-sm font-semibold text-white">{{ isEditMode ? 'Edit' : 'Create' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Close Button -->
-        <button (click)="onClose()" class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all duration-300 backdrop-blur-sm border border-white/10 hover:border-white/20" aria-label="Close" type="button">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-    </div>
-
-    <!-- Content -->
-    <div class="p-8 space-y-6 max-h-[calc(100vh-12rem)] overflow-y-auto">
-
-      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4 text-sm">
-
+      <form [formGroup]="form" (ngSubmit)="submit()" class="p-5 sm:p-6" novalidate>
         <div>
-          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Full name</label>
-          <input type="text" formControlName="name" placeholder="Full name" class="w-full border-2 border-slate-200 rounded-xl p-3 mt-2 focus:outline-none focus:border-[#F4B400]/40" />
-          <p *ngIf="form.get('name')?.touched && form.get('name')?.invalid" class="text-red-500 text-xs mt-1">Name is required (min 3 characters)</p>
+          <label for="account-staff" class="text-sm font-semibold text-[#000035]">
+            Active staff member
+          </label>
+          <select
+            id="account-staff"
+            formControlName="staffId"
+            class="mt-2 min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 bg-white px-4 text-base outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+            (change)="staffChanged()"
+          >
+            <option value="">Select staff from the active board</option>
+            @for (staff of eligibleStaff; track staff.id) {
+              <option [value]="staff.id">
+                {{ staff.fullName }} — {{ staff.boardRole }}, {{ staff.boardSection }}
+              </option>
+            }
+          </select>
+          @if (form.controls.staffId.touched && form.controls.staffId.invalid) {
+            <p class="mt-2 text-sm text-red-700">Select an eligible staff member.</p>
+          }
         </div>
 
-        <div>
-          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</label>
-          <input type="email" formControlName="email" placeholder="Email" class="w-full border-2 border-slate-200 rounded-xl p-3 mt-2 focus:outline-none focus:border-[#F4B400]/40" />
-          <p *ngIf="form.get('email')?.touched && form.get('email')?.invalid" class="text-red-500 text-xs mt-1">Enter a valid email</p>
+        <div class="mt-5">
+          <label for="account-username" class="text-sm font-semibold text-[#000035]">Username</label>
+          <input
+            id="account-username"
+            type="text"
+            formControlName="username"
+            autocomplete="off"
+            class="mt-2 min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 px-4 text-base outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+          />
+          <p class="mt-2 text-xs leading-5 text-slate-500">
+            Letters, numbers, periods, underscores, and hyphens only.
+          </p>
+          @if (form.controls.username.touched && form.controls.username.invalid) {
+            <p class="mt-2 text-sm text-red-700">Enter a valid username between 3 and 100 characters.</p>
+          }
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Role</label>
-            <select formControlName="role" class="w-full border-2 border-slate-200 rounded-xl p-3 mt-2 focus:outline-none focus:border-[#F4B400]/40">
-              <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
-            </select>
+        <div class="mt-5">
+          <div class="flex items-center justify-between gap-4">
+            <label for="temporary-password" class="text-sm font-semibold text-[#000035]">
+              Temporary password
+            </label>
+            <button
+              type="button"
+              [attr.aria-label]="showPassword() ? 'Hide temporary password' : 'Show temporary password'"
+              class="min-h-11 touch-manipulation rounded-lg px-2 text-right text-xs font-bold text-amber-700 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+              (click)="generatePassword()"
+            >
+              Generate strong password
+            </button>
           </div>
-
-          <div>
-            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
-            <select formControlName="status" class="w-full border-2 border-slate-200 rounded-xl p-3 mt-2 focus:outline-none focus:border-[#F4B400]/40">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+          <div class="relative mt-2">
+            <input
+              id="temporary-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              class="min-h-12 w-full touch-manipulation rounded-xl border border-slate-300 px-4 pr-20 font-mono text-base outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm"
+            />
+            <button
+              type="button"
+              class="absolute inset-y-0 right-1 min-w-14 touch-manipulation rounded-lg text-xs font-bold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+              (click)="showPassword.set(!showPassword())"
+            >
+              {{ showPassword() ? 'Hide' : 'Show' }}
+            </button>
           </div>
+          <p class="mt-2 text-xs leading-5 text-slate-500">
+            Use 12–72 characters. Share this credential through a secure channel.
+          </p>
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <p class="mt-2 text-sm text-red-700">Enter a password between 12 and 72 characters.</p>
+          }
         </div>
 
-        <div *ngIf="!isEditMode">
-          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Password</label>
-          <input type="password" formControlName="password" placeholder="Password" class="w-full border-2 border-slate-200 rounded-xl p-3 mt-2 focus:outline-none focus:border-[#F4B400]/40" />
-          <p *ngIf="form.get('password')?.touched && form.get('password')?.invalid" class="text-red-500 text-xs mt-1">Password must be at least 6 characters</p>
-        </div>
+        @if (errorMessage()) {
+          <p class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">
+            {{ errorMessage() }}
+          </p>
+        }
 
-        <div class="flex justify-end gap-3 border-t border-slate-200 pt-4">
-          <button type="button" (click)="onClose()" class="px-6 py-3 rounded-xl bg-gray-200 hover:bg-gray-300">Cancel</button>
-          <button type="submit" [disabled]="isSubmitting" class="px-6 py-3 rounded-xl bg-[#000035] text-white font-bold shadow-lg hover:shadow-xl">{{ isSubmitting ? 'Saving...' : (isEditMode ? 'Save changes' : 'Create user') }}</button>
+        <div class="sticky bottom-0 -mx-5 -mb-5 mt-6 flex flex-col-reverse gap-3 border-t border-slate-200 bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:static sm:m-0 sm:mt-6 sm:flex-row sm:justify-end sm:border-0 sm:p-0">
+          <button
+            type="button"
+            class="min-h-12 touch-manipulation rounded-xl border border-slate-300 px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+            [disabled]="isSubmitting()"
+            (click)="onClose()"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="min-h-12 touch-manipulation rounded-xl bg-[#000035] px-5 text-sm font-bold text-white hover:bg-[#11115b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="isSubmitting() || form.invalid"
+          >
+            {{ isSubmitting() ? 'Creating account…' : 'Create administrator' }}
+          </button>
         </div>
-
       </form>
-
-    </div>
-
+    </section>
   </div>
-
-</div>
+}
