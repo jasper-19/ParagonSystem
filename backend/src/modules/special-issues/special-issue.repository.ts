@@ -404,6 +404,16 @@ export async function replacePdf(
   pdfUrl: string,
   metadata: PdfStorageMetadata
 ) {
+  const isLegacyInlinePdf =
+    expected.storagePath === null &&
+    expected.pdfUrl.startsWith("data:application/pdf;base64,");
+  const optimisticPredicate = isLegacyInlinePdf
+    ? "pdf_storage_path IS NULL"
+    : "pdf_url = $13 AND pdf_storage_path IS NOT DISTINCT FROM $14";
+  const optimisticParams = isLegacyInlinePdf
+    ? []
+    : [expected.pdfUrl, expected.storagePath];
+
   const result = await db.query(
     `UPDATE special_issues
      SET
@@ -420,8 +430,7 @@ export async function replacePdf(
        pdf_processor = $11,
        updated_at = NOW()
      WHERE id = $12
-       AND pdf_url = $13
-       AND pdf_storage_path IS NOT DISTINCT FROM $14
+       AND ${optimisticPredicate}
      RETURNING ${SPECIAL_ISSUE_SELECT_COLUMNS}`,
     [
       pdfUrl,
@@ -436,8 +445,7 @@ export async function replacePdf(
       metadata.compressionProfile,
       metadata.processor,
       id,
-      expected.pdfUrl,
-      expected.storagePath,
+      ...optimisticParams,
     ]
   );
 
