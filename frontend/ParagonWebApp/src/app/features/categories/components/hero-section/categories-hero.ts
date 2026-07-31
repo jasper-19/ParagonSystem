@@ -13,7 +13,7 @@ export class CategoriesHero {
    * Main title displayed in hero
    * Example: "All Stories" or selected category
    */
-  readonly title = input<string>('All Stories');
+  readonly title = input<string>('All Articles');
 
   /**
    * Small label above title

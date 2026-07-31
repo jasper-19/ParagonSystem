@@ -26,20 +26,20 @@ export class ImagePlaceholderComponent {
 
   get iconWrapperClass(): string {
     if (this.size === 'large') {
-      return 'mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#f4b400]/15 text-[#f4b400]';
+      return 'mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-none text-[#f4b400]';
     }
 
     if (this.size === 'small') {
-      return 'flex h-8 w-8 items-center justify-center rounded-full bg-[#f4b400]/15 text-[#f4b400]';
+      return 'flex h-8 w-8 items-center justify-center rounded-full bg-none text-[#f4b400]';
     }
 
-    return 'mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-[#f4b400]/15 text-[#f4b400]';
+    return 'mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-none text-[#f4b400]';
   }
 
   get iconClass(): string {
-    if (this.size === 'large') return 'h-8 w-8';
-    if (this.size === 'small') return 'h-5 w-5';
-    return 'h-6 w-6';
+    if (this.size === 'large') return 'h-40 w-40';
+    if (this.size === 'small') return 'h-20 w-20';
+    return 'h-30 w-30';
   }
 
   get showLabel(): boolean {
