@@ -41,8 +41,17 @@
               [ngClass]="activeIndex() === i ? 'bg-[#000035] text-white' : 'bg-slate-100 text-slate-500'"
               aria-hidden="true"
             >
-              <svg class="h-5 w-5 transition-transform duration-200 motion-reduce:transition-none" [class.rotate-180]="activeIndex() === i" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m6 9 6 6 6-6" />
+              <svg 
+                class="h-5 w-5 transition-transform duration-200 motion-reduce:transition-none" 
+                [class.rotate-180]="activeIndex() === i" 
+                fill="none" 
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2" 
+                viewBox="0 0 24 24"
+              >
+                <path d="m6 9 6 6 6-6" />
               </svg>
             </span>
           </button>

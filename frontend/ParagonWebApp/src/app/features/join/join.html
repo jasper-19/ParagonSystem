@@ -31,8 +31,17 @@
           <div class="h-1.5 bg-[#F4B400]"></div>
           <div class="px-5 py-10 text-center sm:px-12 sm:py-14">
             <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl text-[#F4B400]">
-              <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 9.8V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3" />
+              <svg 
+                class="h-8 w-8" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8" 
+                aria-hidden="true"
+              >
+                <path d="M4 9.8V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3" />
                 <path d="M14 2v5a1 1 0 0 0 1 1h5" />
                 <path d="M9 17v-2a2 2 0 0 0-4 0v2" />
                 <rect width="8" height="5" x="3" y="17" rx="1" />
@@ -52,12 +61,21 @@
               Follow Paragon’s official channels for recruitment updates and reopening announcements.
             </p>
             <a
-              href="#positions"
+              routerLink="/join"
+              [fragment]="applicationsOpen() ? 'application' : 'positions'"
               class="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-[#000035] transition hover:border-[#F4B400] hover:bg-[#F4B400]/10 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#F4B400]"
             >
-              Review available roles
-              <svg class="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6" />
+              {{ applicationsOpen() ? 'Start your application' : 'Review available roles' }}
+              <svg 
+                class="h-4 w-4" 
+                aria-hidden="true" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24">
+                <path d="m6 9 6 6 6-6" />
               </svg>
             </a>
           </div>

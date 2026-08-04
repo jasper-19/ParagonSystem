@@ -21,7 +21,7 @@
             Paragon
           </p>
           <h2 id="search-dialog-title" class="mt-1 text-2xl font-black tracking-tight sm:text-3xl">
-            Find your next story
+            Find your next article
           </h2>
           <p id="search-dialog-description" class="mt-1 hidden max-w-xl text-sm leading-6 text-slate-300 sm:block">
             Search reporting, perspectives, categories, and contributors.
@@ -149,7 +149,7 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <p class="text-sm font-bold text-slate-700">Searching stories…</p>
+          <p class="text-sm font-bold text-slate-700">Searching articles…</p>
         </div>
 
         <div class="grid gap-3 md:grid-cols-2">
@@ -171,7 +171,7 @@
               {{ selectedCategory ? 'Category' : 'Search results' }}
             </p>
             <h3 class="mt-1 text-xl font-black tracking-tight text-[#000035]">
-              {{ selectedCategory ? selectedCategory + ' stories' : 'Results for “' + query.trim() + '”' }}
+              {{ selectedCategory ? selectedCategory + ' articles' : 'Results for “' + query.trim() + '”' }}
             </h3>
           </div>
           <button
@@ -207,7 +207,7 @@
 
             <div class="min-w-0 flex-1 py-0.5">
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.625rem] font-black uppercase tracking-wider">
-                <span class="text-[#9a6700]">{{ article.category }}</span>
+                <span class="text-[#F4B400]">{{ article.category }}</span>
                 <span class="text-slate-300" aria-hidden="true">•</span>
                 <time class="text-slate-500" [attr.datetime]="(article.publishedAt || article.createdAt) | date:'yyyy-MM-dd'">
                   {{ article.publishedAt || article.createdAt | date:'MMM d, y' }}
@@ -254,7 +254,7 @@
                 <circle cx="11" cy="11" r="8"/>
               </svg>
             </span>
-            <h3 class="mt-5 text-xl font-black tracking-tight text-[#000035]">No matching stories</h3>
+            <h3 class="mt-5 text-xl font-black tracking-tight text-[#000035]">No matching articles</h3>
             <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
               Try a broader keyword, check the spelling, or browse one of the categories below.
             </p>
