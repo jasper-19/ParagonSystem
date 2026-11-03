@@ -57,3 +57,16 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Production styles and Content Security Policy
+
+The production build disables `optimization.styles.inlineCritical` so Angular emits a
+normal stylesheet link. Keep this setting while `vercel.json` uses
+`script-src 'self'`: critical CSS inlining emits a `media="print"` stylesheet with
+an inline `onload` handler, which that policy blocks and leaves the screen layout
+without its full stylesheet. Script and CSS minification remain enabled.
+
+After changing this setting, deploy a fresh production build. Verify that the
+built `dist/ParagonWebApp/browser/index.html` links the stylesheet without
+`media="print"` or an inline `onload` handler, and check the deployed home page
+at mobile and desktop widths.
