@@ -7,6 +7,7 @@ import { GlobalSettingsService } from '../../services/global-settings.service';
   selector: 'app-footer',
   imports: [CommonModule, RouterModule],
   templateUrl: './footer.html',
+  styleUrl: './footer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Footer {

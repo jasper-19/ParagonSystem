@@ -1,6 +1,6 @@
 import { Component, inject, DestroyRef, DOCUMENT } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter, map, tap } from 'rxjs/operators';
 import { distinctUntilChanged, shareReplay } from 'rxjs';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,30 +9,28 @@ import { ArticleService } from '../../core/services/article.service';
 import { ArticleViewService } from './services/article-view.service';
 import { Article as ArticleModel } from '../../models/article.model';
 import { ArticleSectionComponent } from './components/section/section';
-import { WelcomeBanner } from '../home/components/welcome-banner/welcomebanner';
 import { ArticleMeta } from './components/meta/meta';
 import { Related } from './components/related/related';
 import { OtherStories } from './components/other-stories/other-stories';
 import { StaffApplication } from './components/staff-application/staff-application';
 import { ArticleSkeleton } from './components/skeleton/article-skeleton';
 import { imageVariant } from '../../shared/utils/image-variant.util';
-import { ImagePlaceholderComponent } from '../../shared/components/image-placeholder/image-placeholder';
 
 @Component({
   selector: 'app-article',
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     ArticleSectionComponent,
-    WelcomeBanner,
     ArticleMeta,
     Related,
     OtherStories,
     StaffApplication,
     ArticleSkeleton,
-    ImagePlaceholderComponent,
   ],
   templateUrl: './article.html',
+  styleUrl: './article.scss',
 })
 export class ArticlePage {
 
@@ -47,6 +45,7 @@ export class ArticlePage {
   private readonly pageTitle = inject(Title);
   private readonly document = inject(DOCUMENT);
   readonly articleFeed = this.articleService.articleFeed;
+  readonly articleError = this.articleService.articleFeedError;
 
   private readonly articleFeed$ = toObservable(this.articleFeed);
   private readonly slugChanged$ =
@@ -55,19 +54,18 @@ export class ArticlePage {
     );
 
   article$ = this.articleFeed$.pipe(
-    map(feed => feed?.article),
-    filter((article): article is ArticleModel => !!article),
+    map(feed => feed?.article ?? null),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   articleView$ = this.article$.pipe(
-    map(article => this.viewService.transform(article)),
+    map(article => article ? this.viewService.transform(article) : null),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
   readingTime$ = this.article$.pipe(
     map(article => {
-      const words = this.stripHtml(article.content)
+      const words = this.stripHtml(article?.content ?? '')
         .split(/\s+/)
         .filter(Boolean)
         .length;
@@ -111,6 +109,7 @@ export class ArticlePage {
 
     this.article$
       .pipe(
+        filter((article): article is ArticleModel => !!article),
         distinctUntilChanged(
           (previous, current) =>
             previous.id === current.id &&
@@ -172,6 +171,11 @@ export class ArticlePage {
             }
           });
       });
+  }
+
+  retryArticle(): void {
+    const slug = this.route.snapshot.paramMap.get('slug');
+    if (slug) this.articleService.loadArticleFeed(slug);
   }
 
   private updateArticleMetadata(
@@ -308,7 +312,7 @@ export class ArticlePage {
 
     if (!image) {
       return new URL(
-        '/assets/images/paragon-social-preview.jpg',
+        '/assets/paragon-social-preview.jpg',
         this.document.baseURI
       ).toString();
     }

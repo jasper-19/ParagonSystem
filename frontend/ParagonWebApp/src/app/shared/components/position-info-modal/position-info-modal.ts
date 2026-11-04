@@ -17,6 +17,7 @@ import { JoinPosition } from '../../../features/join/models/join-position.model'
   standalone: true,
   imports: [CommonModule],
   templateUrl: './position-info-modal.html',
+  styleUrl: './position-info-modal.scss',
 })
 export class PositionInfoModal implements OnDestroy {
 
@@ -92,7 +93,7 @@ export class PositionInfoModal implements OnDestroy {
     const first = focusableElements[0];
     const last = focusableElements[focusableElements.length - 1];
 
-    if (event.shiftKey && document.activeElement === first) {
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === this.dialogPanel?.nativeElement)) {
       event.preventDefault();
       last.focus();
     } else if (!event.shiftKey && document.activeElement === last) {

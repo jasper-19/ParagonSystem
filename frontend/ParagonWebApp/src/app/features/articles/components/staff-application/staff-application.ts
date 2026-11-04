@@ -7,5 +7,6 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './staff-application.html',
+  styleUrl: './staff-application.scss',
 })
 export class StaffApplication {}

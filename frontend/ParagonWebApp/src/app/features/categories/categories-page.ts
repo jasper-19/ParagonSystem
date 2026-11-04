@@ -2,7 +2,7 @@ import { Component, signal, computed, effect, inject, DestroyRef, untracked } fr
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, debounceTime } from 'rxjs';
 import { GetArticlesParams, ArticleSortOption } from '../../models/article-query.model';
 import { ArticleService } from '../../core/services/article.service';
 import { CategoriesHero } from './components/hero-section/categories-hero';
@@ -17,7 +17,8 @@ import { LoaderService } from '../../shared/services/loader.service';
     CategoriesHero,
     CategoriesArticles
   ],
-  templateUrl: './categories-page.html'
+  templateUrl: './categories-page.html',
+  styleUrl: './categories-page.scss'
 })
 export class CategoriesPage {
 
@@ -98,6 +99,7 @@ export class CategoriesPage {
   readonly limit = 6;
 
   readonly loading = signal<boolean>(false);
+  readonly loadError = signal<string | null>(null);
 
   // -----------------------------------------
   // 📰 ARTICLE STATE
@@ -117,7 +119,6 @@ export class CategoriesPage {
     this.searchChanges
       .pipe(
         debounceTime(350),
-        distinctUntilChanged(),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(value => this.search.set(value.trim()));
@@ -133,6 +134,8 @@ export class CategoriesPage {
         this.selectedCategory.set(
           category || undefined
         );
+        const sort = params.get('sort');
+        this.sort.set(sort === 'oldest' || sort === 'mostViewed' ? sort : 'latest');
       });
 
     /*
@@ -199,6 +202,7 @@ export class CategoriesPage {
     }
 
     this.loading.set(true);
+    this.loadError.set(null);
 
     const params: GetArticlesParams = {
       page: this.currentPage(),
@@ -236,6 +240,7 @@ export class CategoriesPage {
         );
 
         this.loading.set(false);
+        this.loadError.set('Articles could not be loaded. Check your connection and try again.');
 
         if (this.initialLoading()) {
           this.loader.hide();
@@ -295,7 +300,17 @@ export class CategoriesPage {
   }
 
   setSort(value: string): void {
-    this.sort.set(value as ArticleSortOption);
+    if (value !== 'latest' && value !== 'oldest' && value !== 'mostViewed') return;
+    this.sort.set(value);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { sort: value === 'latest' ? null : value },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  retryLoad(): void {
+    this.loadArticles();
   }
 
   onSearchInput(value: string): void {
@@ -330,6 +345,7 @@ export class CategoriesPage {
   }
 
   clearFilters(): void {
+    this.searchChanges.next('');
     this.search.set('');
     this.searchQuery.set('');
     this.sort.set('latest');
@@ -341,6 +357,7 @@ export class CategoriesPage {
       relativeTo: this.route,
       queryParams: {
         category: null,
+        sort: null,
       },
       queryParamsHandling: 'merge',
     });

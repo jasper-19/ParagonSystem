@@ -1,208 +1,41 @@
-<div class="min-h-screen bg-slate-50 text-slate-950">
-  <app-categories-hero
-    [title]="selectedCategory() ?? 'Top Articles'"
-    label="Paragon"
-    subtitle="Explore timely reporting, thoughtful perspectives, and articles from across the community."
-  />
-
-  <main class="relative">
-    <section
-      class="relative z-10 mx-auto -mt-12 w-full max-w-7xl px-4 sm:-mt-16 sm:px-6 lg:-mt-20"
-      aria-labelledby="story-filters-title"
-    >
-      <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.35)] sm:rounded-3xl">
-        <header class="flex flex-col gap-4 border-b border-slate-200 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <div class="min-w-0">
-            <p class="mb-1 text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#f4b400]">
-              Discover
-            </p>
-            <h2 id="story-filters-title" class="text-lg font-black tracking-tight text-[#000035] sm:text-xl">
-              Find the articles that matter to you
-            </h2>
-          </div>
-
-          <button
-            type="button"
-            class="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
-            [disabled]="!hasActiveFilters()"
-            (click)="clearFilters()"
-          >
-            <svg
-            aria-hidden="true"
-            class="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            >
-              <path d="M18 6 6 18"/>
-              <path d="m6 6 12 12"/>
-            </svg>
-            <span>Clear filters</span>
-            <span *ngIf="activeFilterCount() > 0" class="tabular-nums">({{ activeFilterCount() }})</span>
-          </button>
+<div class="top-stories-page">
+  <app-categories-hero [title]="selectedCategory() ?? 'Top Articles'" subtitle="Explore timely reporting, thoughtful perspectives, and articles from across the community." />
+  <main id="main-content">
+    <section class="filters-shell" aria-labelledby="story-filters-title">
+      <div class="filter-panel">
+        <header class="filter-panel__header">
+          <h2 id="story-filters-title">Find the articles that matter to you</h2>
+          <button type="button" class="clear-button" [disabled]="!hasActiveFilters() && !searchQuery().trim()" (click)="clearFilters()">Clear filters <span *ngIf="activeFilterCount() > 0">({{ activeFilterCount() }})</span></button>
         </header>
-
-        <div class="space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
-          <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_17rem]">
-            <label class="grid gap-2">
-              <span class="text-xs font-extrabold text-slate-700">Search articles</span>
-              <span class="relative">
-                <svg class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  >
-                  <path d="m21 21-4.34-4.34"/>
-                  <circle cx="11" cy="11" r="8"/>
-                </svg>
-                <input
-                  #searchInput
-                  type="search"
-                  inputmode="search"
-                  autocomplete="off"
-                  placeholder="Search by title, topic, or author"
-                  class="min-h-12 w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-11 pr-4 text-[0.9375rem] text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
-                  [value]="searchQuery()"
-                  (input)="onSearchInput(searchInput.value)"
-                />
-              </span>
-            </label>
-
-            <label class="grid gap-2">
-              <span class="text-xs font-extrabold text-slate-700">Sort by</span>
-              <span class="relative">
-                <select
-                  #sortSelect
-                  class="min-h-12 w-full appearance-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 pr-11 text-[0.9375rem] font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-[#a87300] focus:bg-white focus:ring-3 focus:ring-[#F4B400]/20"
-                  [value]="sort()"
-                  (change)="setSort(sortSelect.value)"
-                >
-                  <option value="latest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                  <option value="mostViewed">Most viewed</option>
-                </select>
-                <svg class="pointer-events-none absolute right-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  >
-                  <path d="m6 9 6 6 6-6"/>
-                </svg>
-              </span>
-            </label>
+        <div class="filter-panel__body">
+          <div class="primary-controls">
+            <label class="control"><span>Search articles</span><span class="control__field">
+              <svg class="control__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+              <input #searchInput type="search" inputmode="search" autocomplete="off" placeholder="Search by title, topic, or author" [value]="searchQuery()" (input)="onSearchInput(searchInput.value)" />
+            </span></label>
+            <label class="control"><span>Sort by</span><span class="control__field">
+              <select #sortSelect [value]="sort()" (change)="setSort(sortSelect.value)"><option value="latest">Newest first</option><option value="oldest">Oldest first</option><option value="mostViewed">Most viewed</option></select>
+              <svg class="control__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </span></label>
           </div>
-
-          <fieldset class="min-w-0 border-t border-slate-200 pt-5">
-            <legend class="flex items-center gap-2 pr-3 text-xs font-extrabold tracking-wide text-slate-700">
-              <svg aria-hidden="true" class="h-4 w-4 text-[#f4b400]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect width="7" height="7" x="3" y="3" rx="1"/>
-                <rect width="7" height="7" x="14" y="3" rx="1"/>
-                <rect width="7" height="7" x="14" y="14" rx="1"/>
-                <rect width="7" height="7" x="3" y="14" rx="1"/>
-              </svg>
-              Browse by category
-            </legend>
-
-            <div class="-mx-4 mt-3 flex snap-x gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
-              <button
-                type="button"
-                class="min-h-11 shrink-0 snap-start rounded-xl border px-4 py-2 text-sm font-bold transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
-                [ngClass]="!selectedCategory()
-                  ? 'border-[#000035] bg-[#000035] text-white shadow-md'
-                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'"
-                [attr.aria-pressed]="!selectedCategory()"
-                (click)="setCategory(undefined)"
-              >
-                All articles
-              </button>
-
-              <button
-                *ngFor="let category of categories()"
-                type="button"
-                class="min-h-11 shrink-0 snap-start rounded-xl border px-4 py-2 text-sm font-bold transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
-                [ngClass]="selectedCategory() === category
-                  ? 'border-[#000035] bg-[#000035] text-white shadow-md'
-                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'"
-                [attr.aria-pressed]="selectedCategory() === category"
-                (click)="setCategory(category)"
-              >
-                {{ category }}
-              </button>
+          <fieldset class="filter-group"><legend>Browse by category</legend>
+            <div class="filter-options filter-options--categories">
+              <button type="button" class="filter-chip filter-chip--category" [attr.aria-pressed]="!selectedCategory()" (click)="setCategory(undefined)">All articles</button>
+              <button *ngFor="let category of categories()" type="button" class="filter-chip filter-chip--category" [attr.aria-pressed]="selectedCategory() === category" (click)="setCategory(category)">{{ category }}</button>
             </div>
           </fieldset>
-
-          <fieldset *ngIf="tags().length > 0" class="min-w-0 border-t border-slate-200 pt-5">
-            <legend class="flex items-center gap-2 pr-3 text-xs font-extrabold tracking-wide text-slate-700">
-              <svg aria-hidden="true" class="h-4 w-4 text-[#f4b400]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M2 5h20"/>
-                <path d="M6 12h12"/>
-                <path d="M9 19h6"/>
-              </svg>
-              Refine by topic
-            </legend>
-
-            <div class="mt-3 flex flex-wrap gap-2">
-              <button
-                *ngFor="let tag of visibleTags()"
-                type="button"
-                class="min-h-11 rounded-full border px-4 py-2 text-sm font-bold transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
-                [ngClass]="selectedTags().includes(tag)
-                  ? 'border-[#F4B400] bg-[#F4B400] text-[#000035] shadow-md'
-                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'"
-                [attr.aria-pressed]="selectedTags().includes(tag)"
-                (click)="toggleTag(tag)"
-              >
-                {{ formatTag(tag) }}
-              </button>
-
-              <button
-                *ngIf="hiddenTagCount() > 0"
-                type="button"
-                class="min-h-11 rounded-full border border-dashed border-slate-400 bg-white px-4 py-2 text-sm font-bold text-[#000035] transition hover:border-[#000035] hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
-                [attr.aria-expanded]="showAllTags()"
-                (click)="toggleTagVisibility()"
-              >
-                {{ showAllTags() ? 'Show fewer' : 'Show ' + hiddenTagCount() + ' more' }}
-              </button>
+          <fieldset *ngIf="tags().length > 0" class="filter-group"><legend>Refine by topic</legend>
+            <div class="filter-options">
+              <button *ngFor="let tag of visibleTags()" type="button" class="filter-chip filter-chip--tag" [attr.aria-pressed]="selectedTags().includes(tag)" (click)="toggleTag(tag)">{{ formatTag(tag) }}</button>
+              <button *ngIf="hiddenTagCount() > 0" type="button" class="tags-toggle" [attr.aria-expanded]="showAllTags()" (click)="toggleTagVisibility()">{{ showAllTags() ? 'Show fewer' : 'Show ' + hiddenTagCount() + ' more' }}</button>
             </div>
           </fieldset>
         </div>
       </div>
     </section>
-
-    <section class="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20" aria-labelledby="stories-heading">
-      <header class="mb-6 flex flex-col gap-2 border-b border-slate-200 pb-5 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-        <div>
-          <p class="mb-1 text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#f4b400]">
-            {{ selectedCategory() || 'Latest coverage' }}
-          </p>
-          <h2 id="stories-heading" class="text-3xl font-black tracking-tight text-[#000035] sm:text-4xl">
-            {{ selectedCategory() ? selectedCategory() + ' articles' : 'Top articles' }}
-          </h2>
-        </div>
-        <p class="text-sm font-semibold tabular-nums text-slate-500" aria-live="polite">
-          {{ total() }} {{ total() === 1 ? 'article' : 'articles' }} loaded
-        </p>
-      </header>
-
-      <app-categories-articles
-        [articles]="articles()"
-        [loading]="loading()"
-        [initialLoading]="initialLoading()"
-        [hasMore]="hasMore()"
-        (loadMore)="onLoadMore()"
-      />
+    <section class="stories-shell" aria-labelledby="stories-heading">
+      <header class="stories-heading"><h2 id="stories-heading">{{ selectedCategory() ? selectedCategory() + ' articles' : 'Top articles' }}</h2><p role="status">{{ total() }} {{ total() === 1 ? 'article' : 'articles' }} loaded</p></header>
+      <app-categories-articles [articles]="articles()" [loading]="loading()" [initialLoading]="initialLoading()" [hasMore]="hasMore()" [errorMessage]="loadError()" (retry)="retryLoad()" (loadMore)="onLoadMore()" />
     </section>
   </main>
 </div>

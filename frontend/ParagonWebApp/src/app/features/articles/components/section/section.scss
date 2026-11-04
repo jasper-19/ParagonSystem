@@ -1,66 +1,43 @@
-:host {
-  display: block;
-  min-width: 0;
-}
-
-:host ::ng-deep .article-copy {
-  overflow-wrap: anywhere;
-}
-
-:host ::ng-deep .article-copy p {
-  margin-block: 0;
-}
-
-:host ::ng-deep .article-copy p + p {
-  margin-top: 1.25rem;
-}
-
-:host ::ng-deep .article-copy a {
-  color: #755000;
-  font-weight: 650;
-  text-decoration: underline;
-  text-decoration-color: #f4b400;
-  text-decoration-thickness: 2px;
-  text-underline-offset: .2em;
-}
-
-:host ::ng-deep .article-copy a:focus-visible {
-  outline: 2px solid #f4b400;
-  outline-offset: 3px;
-}
-
-:host ::ng-deep .article-copy ul,
-:host ::ng-deep .article-copy ol {
-  margin-block: 1.5rem;
-  padding-left: 1.5rem;
-}
-
-:host ::ng-deep .article-copy ul {
-  list-style: disc;
-}
-
-:host ::ng-deep .article-copy ol {
-  list-style: decimal;
-}
-
-:host ::ng-deep .article-copy li + li {
-  margin-top: .5rem;
-}
-
-:host ::ng-deep .article-copy strong {
+:host { display: block; min-width: 0; }
+:host ::ng-deep .article-copy { font-size: 1.0625rem; line-height: 1.85; color: #202033; overflow-wrap: anywhere; margin-bottom: 1.5rem; }
+:host ::ng-deep .article-copy p { margin: 0 0 1.25rem; }
+:host ::ng-deep .article-copy.first-paragraph > p:first-of-type,
+:host ::ng-deep .article-copy.first-paragraph:not(:has(> *)) { display: flow-root; }
+:host ::ng-deep .article-copy.first-paragraph > p:first-of-type::first-letter,
+:host ::ng-deep .article-copy.first-paragraph:not(:has(> *))::first-letter {
+  float: left;
+  margin-right: .5rem;
+  padding-top: .18rem;
   color: #000035;
+  font-family: var(--font-serif);
+  font-size: 4.1rem;
+  font-weight: 700;
+  line-height: .85;
 }
-
-@media (min-width: 640px) {
-  :host ::ng-deep .article-copy.first-paragraph > p:first-child::first-letter,
-  :host ::ng-deep .article-copy.first-paragraph::first-letter {
-    float: left;
-    margin-right: .5rem;
-    padding-top: .18rem;
-    color: #000035;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 4.1rem;
-    font-weight: 700;
-    line-height: .78;
-  }
+:host ::ng-deep .article-copy :is(h1,h2,h3,h4,h5,h6), .body-heading { margin-block: 2rem 1rem; color: var(--article-ink); font: 700 1.75rem/1.25 var(--font-serif); text-wrap: pretty; }
+:host ::ng-deep .article-copy :is(h3,h4,h5,h6) { font-size: 1.375rem; }
+:host ::ng-deep .article-copy a { color: #755000; text-decoration: underline; text-decoration-color: #f4b400; text-decoration-thickness: 2px; text-underline-offset: .2em; }
+:host ::ng-deep .article-copy a:focus-visible { outline: 2px solid #000035; outline-offset: 3px; }
+:host ::ng-deep .article-copy :is(ul,ol) { margin-block: 1.25rem; padding-left: 1.5rem; }
+:host ::ng-deep .article-copy ul { list-style: disc; }
+:host ::ng-deep .article-copy ol { list-style: decimal; }
+:host ::ng-deep .article-copy li + li { margin-top: .5rem; }
+:host ::ng-deep .article-copy strong { color: #000035; }
+:host ::ng-deep .article-copy img { max-width: 100%; height: auto; margin-block: 1.5rem; }
+:host ::ng-deep .article-copy iframe { max-width: 100%; aspect-ratio: 16 / 9; height: auto; }
+:host ::ng-deep .article-copy blockquote, .body-quote { border-block: 1px solid #dcdce3; padding-block: 1.5rem; margin-block: 2rem; color: #000035; font: 400 1.5rem/1.5 var(--font-serif); }
+:host ::ng-deep .article-copy .ql-align-center { text-align: center; }
+:host ::ng-deep .article-copy .ql-align-right { text-align: right; }
+:host ::ng-deep .article-copy .ql-align-justify { text-align: justify; }
+.body-image { margin-block: 2rem; }
+.body-image img { display: block; max-height: 70svh; width: 100%; object-fit: contain; background: #f7f6f2; }
+.body-image figcaption { margin-top: .75rem; font-size: .75rem; line-height: 1.7; color: var(--article-muted); }
+.body-quote footer { font: 400 .8125rem/1.5 var(--font-sans); color: var(--article-muted); margin-top: .75rem; }
+.body-embed { margin-block: 2rem; aspect-ratio: 16 / 9; background: #000035; }
+.body-embed iframe { width: 100%; height: 100%; }
+::selection { background: #f4b400; color: #000035; }
+@media (max-width: 639px) {
+  :host ::ng-deep .article-copy { font-size: 1rem; line-height: 1.8; }
+  :host ::ng-deep .article-copy.first-paragraph > p:first-of-type::first-letter,
+  :host ::ng-deep .article-copy.first-paragraph:not(:has(> *))::first-letter { font-size: 3.5rem; }
 }

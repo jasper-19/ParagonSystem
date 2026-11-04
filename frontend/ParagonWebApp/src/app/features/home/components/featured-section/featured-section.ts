@@ -4,14 +4,13 @@ import { RouterModule } from '@angular/router';
 import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
 import { ImagePlaceholderComponent } from '../../../../shared/components/image-placeholder/image-placeholder';
-import { ScrollRevealDirective } from '../../scroll-reveal.directive';
 
 @Component({
   selector: 'app-featured-section',
   standalone: true,
   templateUrl: './featured-section.html',
   styleUrl: './featured-section.scss',
-  imports: [CommonModule, RouterModule, ImagePlaceholderComponent, ScrollRevealDirective],
+  imports: [CommonModule, RouterModule, ImagePlaceholderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeaturedSection implements OnDestroy {

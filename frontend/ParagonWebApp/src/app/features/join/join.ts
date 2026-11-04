@@ -30,6 +30,7 @@ import { ApplicationSettings } from '../../models/application-settings.model';
     JoinFinalCta,
   ],
   templateUrl: './join.html',
+  styleUrl: './join.scss',
 })
 export class JoinPage {
   private readonly joinService = inject(JoinService);
@@ -38,12 +39,19 @@ export class JoinPage {
 
   readonly positionsLoaded = signal(false);
   readonly settingsLoaded = signal(false);
+  readonly settingsError = signal(false);
 
   readonly loading = computed(
     () => !this.positionsLoaded() || !this.settingsLoaded()
   );
 
   constructor() {
+    this.loadRecruitmentSettings();
+  }
+
+  loadRecruitmentSettings(): void {
+    this.settingsLoaded.set(false);
+    this.settingsError.set(false);
     this.applicationService
       .getApplicationSettings()
       .pipe(
@@ -53,6 +61,7 @@ export class JoinPage {
       )
       .subscribe({
         error: err => {
+          this.settingsError.set(true);
           console.error(
             "Failed to load application settings",
             err
@@ -82,7 +91,7 @@ export class JoinPage {
   );
 
   readonly applicationsOpen = computed(() =>
-    this.applicationSettings()?.isOpen ?? false
+    !this.settingsError() && (this.applicationSettings()?.isOpen ?? false)
   );
 
   readonly applicationAnnouncement = computed(() =>

@@ -1,0 +1,18 @@
+.role-backdrop { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: rgb(0 0 35 / .65); }
+.role-dialog { display: flex; flex-direction: column; width: min(100%, 40rem); max-height: 90dvh; background: white; color: #000035; box-shadow: 0 24px 72px rgb(0 0 35 / .25); outline: none; }
+header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; flex-shrink: 0; padding: 1.5rem 2rem; border-bottom: 2px solid #f4b400; background: #000035; color: white; }
+header h3 { margin: 0; font: 400 1.875rem/1.25 var(--font-serif); }
+header p { margin: .5rem 0 0; color: #c4c4d2; font-size: .8125rem; }
+button { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex-shrink: 0; margin-right: -.75rem; border: 0; background: transparent; color: white; cursor: pointer; }
+button:hover { color: #f4b400; }
+button:focus-visible { outline: 2px solid #f4b400; outline-offset: 2px; }
+svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; }
+.role-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 1.5rem 2rem 2rem; scrollbar-color: #9292a4 #f7f6f2; scrollbar-width: thin; }
+.role-content > p { margin: 0 0 1.5rem; color: #53536c; font-size: .9375rem; line-height: 1.75; }
+h4 { margin: 0 0 .875rem; font: 400 1.375rem/1.3 var(--font-serif); }
+dl { margin: 0; }
+dl > div { padding-block: .875rem; border-top: 1px solid #dcdce3; }
+dt { font-size: .875rem; font-weight: 600; }
+dd { margin: .375rem 0 0; color: #53536c; font-size: .8125rem; line-height: 1.75; }
+::selection { background: #f4b400; color: #000035; }
+@media (max-width: 639px) { .role-backdrop { padding: 1rem; } header, .role-content { padding: 1.25rem; } header h3 { font-size: 1.625rem; } }

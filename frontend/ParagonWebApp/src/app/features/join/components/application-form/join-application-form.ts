@@ -1,9 +1,11 @@
 import {
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
+  HostListener,
   Input,
   signal,
   ViewChild,
@@ -11,26 +13,32 @@ import {
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { of, Subject } from 'rxjs';
+import { catchError, startWith, switchMap, tap } from 'rxjs/operators';
 import { RouterModule } from '@angular/router';
 import { JoinPosition } from '../../models/join-position.model';
 import { JoinApplication, YearLevel } from '../../models/join-application.model';
 import { ApplicationService } from '../../../../core/services/application.service';
-import { ConfirmationModal } from '../../../../shared/components/confirmation-modal/confirmation-modal';
-import { SuccessModal } from '../../../../shared/components/feedback-modal/success-modal';
-import { ErrorModal } from '../../../../shared/components/feedback-modal/error-modal';
 import { CollegeService } from '../../services/college.service';
 import { College } from '../../models/college.model';
 
 @Component({
   selector: 'app-join-application-form',
   standalone: true,
-  imports: [ CommonModule, ReactiveFormsModule, RouterModule, ConfirmationModal, SuccessModal, ErrorModal, ],
+  imports: [ CommonModule, ReactiveFormsModule, RouterModule, ],
   templateUrl: './join-application-form.html',
 })
 
 export class JoinApplicationForm {
   @ViewChild('applicationForm')
   private applicationForm?: ElementRef<HTMLFormElement>;
+  @ViewChild('submissionDialog')
+  private submissionDialog?: ElementRef<HTMLElement>;
+  private readonly destroyRef = inject(DestroyRef);
+  private feedbackOpen = false;
+  private feedbackFocus: HTMLElement | null = null;
+  private previousOverflow = '';
+  private feedbackTimer?: ReturnType<typeof setTimeout>;
 
   // ========================
   // INPUTS (Signal-backed)
@@ -77,9 +85,25 @@ export class JoinApplicationForm {
   readonly attemptedSubmit = signal(false);
   readonly showConfirmModal = signal(false);
   readonly showSuccessModal = signal(false);
-  readonly showErrorModal = signal(false);
+  readonly collegeError = signal(false);
+  readonly collegesLoading = signal(true);
+  private readonly collegeRequests = new Subject<void>();
   readonly colleges = toSignal(
-    this.collegeService.getColleges(),
+    this.collegeRequests.pipe(
+      startWith(undefined),
+      switchMap(() => {
+        this.collegeError.set(false);
+        this.collegesLoading.set(true);
+        return this.collegeService.getColleges().pipe(
+          tap(() => this.collegesLoading.set(false)),
+          catchError(() => {
+            this.collegeError.set(true);
+            this.collegesLoading.set(false);
+            return of([] as College[]);
+          })
+        );
+      })
+    ),
     { initialValue: [] as College[] }
   );
 
@@ -136,14 +160,34 @@ export class JoinApplicationForm {
   // ========================
 
   constructor() {
+    effect(() => {
+      const open = this.showConfirmModal() || this.showSuccessModal() || this.showSubmissionError();
+      if (open && !this.feedbackOpen) {
+        this.feedbackFocus = document.activeElement as HTMLElement | null;
+        this.previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        clearTimeout(this.feedbackTimer);
+        this.feedbackTimer = setTimeout(() => this.submissionDialog?.nativeElement.focus());
+      } else if (!open && this.feedbackOpen) {
+        document.body.style.overflow = this.previousOverflow;
+        clearTimeout(this.feedbackTimer);
+        this.feedbackTimer = setTimeout(() => this.feedbackFocus?.focus());
+      }
+      this.feedbackOpen = open;
+    });
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(this.feedbackTimer);
+      if (this.feedbackOpen) document.body.style.overflow = this.previousOverflow;
+    });
 
     // Preselect position
     effect(() => {
       const position = this._preselectedPosition();
+      const positions = this._positions();
       if (position) {
-        this.selectedPositions.set([
+        this.selectedPositions.set(positions.some(item => item.id === position) ? [
           { positionId: position, categories: [] }
-        ]);
+        ] : []);
       }
     });
 
@@ -155,10 +199,15 @@ export class JoinApplicationForm {
       if (!programControl) return;
 
       if (programs.length > 0) {
+        programControl.enable({ emitEvent: false });
+        if (!programs.some(program => program.id === programControl.value)) {
+          programControl.reset('', { emitEvent: false });
+        }
         programControl.setValidators([Validators.required]);
       } else {
         programControl.clearValidators();
-        programControl.reset();
+        programControl.reset('', { emitEvent: false });
+        programControl.disable({ emitEvent: false });
       }
 
       programControl.updateValueAndValidity();
@@ -187,6 +236,7 @@ export class JoinApplicationForm {
   }
 
   confirmSubmission() {
+    if (this.isSubmitting()) return;
     if (
       this.form.invalid ||
       this.selectedPositions().length === 0 ||
@@ -306,19 +356,53 @@ export class JoinApplicationForm {
   private focusFirstInvalidField(): void {
     setTimeout(() => {
       const form = this.applicationForm?.nativeElement;
-      const target = form?.querySelector<HTMLElement>(
-        '.ng-invalid:not(form), [data-position-input]'
-      );
+      const invalidPosition = this.selectedPositions().find(selected => {
+        const position = this.positions.find(item => item.id === selected.positionId);
+        return (position?.subRoles?.length ?? 0) > 0 && selected.categories.length === 0;
+      });
+      const positionInput = invalidPosition
+        ? [...(form?.querySelectorAll<HTMLElement>('[data-position-input]') ?? [])].find(input => input.dataset['positionInput'] === invalidPosition.positionId)
+        : form?.querySelector<HTMLElement>('[data-position-input]');
+      const target = form?.querySelector<HTMLElement>('.ng-invalid:not(form)') ?? positionInput;
 
       target?.focus();
       target?.scrollIntoView({
-        behavior: 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
         block: 'center',
       });
     });
   }
 
-  closeSubmissionError(): void {
+  closeFeedback(): void {
+    this.showConfirmModal.set(false);
+    this.showSuccessModal.set(false);
     this.showSubmissionError.set(false);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onFeedbackKeydown(event: KeyboardEvent): void {
+    if (!this.feedbackOpen) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeFeedback();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const panel = this.submissionDialog?.nativeElement;
+    const buttons = panel?.querySelectorAll<HTMLButtonElement>('button:not([disabled])');
+    if (!buttons?.length) return;
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === panel)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  retryColleges(): void {
+    this.collegeRequests.next();
   }
 }

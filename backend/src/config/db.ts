@@ -1,4 +1,4 @@
-import { Pool, PoolConfig } from "pg";
+import { Pool, PoolClient, PoolConfig } from "pg";
 import { performance } from "node:perf_hooks";
 import dotenv from "dotenv";
 
@@ -19,8 +19,7 @@ const poolMax =
 
 const configuredWarmCount =
   Math.max(
-    Number(process.env.DB_POOL_WARM_COUNT) ||
-      (isProduction ? 1 : poolMax),
+    Number(process.env.DB_POOL_WARM_COUNT ?? 1) || 0,
     0
   );
 
@@ -40,7 +39,8 @@ const poolConfig: PoolConfig = {
     ? 30_000
     : 0,
 
-  connectionTimeoutMillis: 5_000,
+  connectionTimeoutMillis:
+    Math.max(Number(process.env.DB_CONNECTION_TIMEOUT_MS) || 15_000, 1),
   query_timeout: 15_000,
   statement_timeout: 15_000,
   idle_in_transaction_session_timeout: 10_000,
@@ -111,19 +111,17 @@ pool.on("error", err => {
 export async function initializeDatabase(): Promise<void> {
   const startedAt = performance.now();
 
-  const clients = await Promise.all(
-    Array.from(
-      { length: poolWarmCount },
-      () => pool.connect()
-    )
-  );
+  const clients: PoolClient[] = [];
 
   try {
-    await Promise.all(
-      clients.map(client =>
-        client.query("SELECT 1")
-      )
-    );
+    // Establish connections sequentially to avoid a burst during local startup.
+    // Retain each client until warming finishes, and release it even if a later
+    // connection or health check fails.
+    for (let index = 0; index < Math.max(1, poolWarmCount); index += 1) {
+      const client = await pool.connect();
+      clients.push(client);
+      await client.query("SELECT 1");
+    }
   } finally {
     clients.forEach(client =>
       client.release()
@@ -131,7 +129,7 @@ export async function initializeDatabase(): Promise<void> {
   }
 
   console.log(
-    `[DB] Pool warmed with ${poolWarmCount} connections in ${(
+    `[DB] Pool initialized with ${clients.length} connections in ${(
       performance.now() - startedAt
     ).toFixed(2)}ms`
   );

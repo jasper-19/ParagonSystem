@@ -6,7 +6,6 @@ import routes from "./routes";
 import pool from "./config/db";
 import path from "path";
 import { errorHandler } from "./middlewares/errorHandler";
-import { performance } from "node:perf_hooks";
 import { getAllowedOrigins } from "./config/security";
 import { csrfProtection } from "./middlewares/csrf";
 import { enforceMaintenanceMode } from "./middlewares/maintenance";
@@ -142,34 +141,7 @@ if (process.env.NODE_ENV !== "production") {
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 }
 
-export async function initializeDatabase(): Promise<void> {
-  const startedAt = performance.now();
-
-  const clients = await Promise.all([
-    pool.connect(),
-    pool.connect(),
-    pool.connect(),
-    pool.connect(),
-  ]);
-
-  try {
-    await Promise.all(
-      clients.map(client =>
-        client.query("SELECT 1")
-      )
-    );
-  } finally {
-    clients.forEach(client =>
-      client.release()
-    );
-  }
-
-  console.log(
-    `[DB] Pool warmed in ${(
-      performance.now() - startedAt
-    ).toFixed(2)}ms`
-  );
-}
+export { initializeDatabase } from "./config/db";
 
 // Mount all versioned API routes
 app.use("/api", routes);

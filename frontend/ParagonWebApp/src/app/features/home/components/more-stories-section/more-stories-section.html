@@ -1,90 +1,30 @@
-<section aria-labelledby="more-stories-heading" class="bg-[#f7f6f2] py-14 sm:py-18 lg:py-24">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6">
-    <div appScrollReveal="up" class="mb-8 flex flex-col gap-5 border-b border-[#000035]/15 pb-6 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p class="mb-2 text-xs font-black uppercase tracking-[0.22em] text-[#f4b400]">From the publication</p>
-        <h2 id="more-stories-heading" class="text-3xl font-black tracking-tight text-[#000035] sm:text-4xl">
-          More articles
-        </h2>
-      </div>
-      <a
-        routerLink="/top-stories"
-        class="inline-flex min-h-11 w-fit items-center gap-2 text-sm font-bold text-[#000035] underline-offset-4 transition-colors hover:text-[#f4b400] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F4B400]"
-      >
-        Browse the archive <span aria-hidden="true">
-          <svg
-            class="h-3.5 w-3.5"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M18 8L22 12L18 16"/>
-            <path d="M2 12H22"/>
-          </svg>
-        </span>
-      </a>
+<section aria-labelledby="more-stories-heading" class="pub-archive">
+  <div class="pub-container">
+    <div class="pub-section-heading">
+      <h2 id="more-stories-heading">More articles</h2>
+      <a routerLink="/top-stories" class="pub-section-link">Browse the archive <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6" /></svg></a>
     </div>
-
-    <ng-container *ngIf="articles.length; else moreStoriesEmpty">
-      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <article
-          *ngFor="let story of articles; let i = index; trackBy: trackByArticle"
-          appScrollReveal="up"
-          [revealDelay]="i * 65"
-          class="min-w-0 bg-white shadow-[0_1px_0_rgba(0,0,53,0.12)]"
-        >
-          <a
-            [routerLink]="['/article', story.slug]"
-            class="group flex h-full flex-col focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#F4B400]"
-          >
-            <div class="aspect-4/3 overflow-hidden bg-[#000035]/5">
-              <ng-container *ngIf="story.image; else imagePlaceholder">
-                <img
-                  [src]="imageVariant(story.image, 'medium')"
-                  [alt]="story.title"
-                  loading="lazy"
-                  decoding="async"
-                  class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </ng-container>
-              <ng-template #imagePlaceholder>
-                <app-image-placeholder size="medium" label="No image available" />
-              </ng-template>
+    <div *ngIf="articles.length; else moreStoriesEmpty" class="pub-archive-list">
+      <article *ngFor="let story of articles; trackBy: trackByArticle" class="pub-archive-story">
+        <a [routerLink]="['/article', story.slug]">
+          <div class="pub-archive-image">
+            <img *ngIf="story.image; else imagePlaceholder" [src]="imageVariant(story.image, 'medium')" [alt]="story.title" loading="lazy" decoding="async" />
+            <ng-template #imagePlaceholder><app-image-placeholder size="medium" label="No image available" /></ng-template>
+          </div>
+          <div class="pub-archive-copy">
+            <div class="pub-meta"><span class="pub-category">{{ story.category }}</span><time>{{ story.publishedAt | date:'MMM d, yyyy' }}</time></div>
+            <h3>{{ story.title }}</h3>
+            <p *ngIf="story.excerpt" class="pub-archive-excerpt">{{ story.excerpt }}</p>
+            <div class="pub-credits">
+              <p *ngIf="story.author">Written by {{ story.author }}</p>
+              <p *ngIf="story.photoby">Photo by {{ story.photoby }}</p>
+              <p *ngIf="story.graphicby">Graphics by {{ story.graphicby }}</p>
+              <p *ngIf="story.illusrationby">Illustration by {{ story.illusrationby }}</p>
             </div>
-            <div class="flex flex-1 flex-col p-5 sm:p-6">
-              <div class="mb-3 flex flex-wrap items-center gap-2">
-                <span class="bg-[#F4B400] px-2 py-1 text-[0.625rem] font-black uppercase tracking-widest text-[#000035]">
-                  {{ story.category }}
-                </span>
-                <time class="text-xs font-medium text-[#000035]/50">{{ story.publishedAt | date:'MMM d, yyyy' }}</time>
-              </div>
-              <h3 class="text-pretty text-xl font-black leading-snug text-[#000035] transition-colors group-hover:text-[#f4b400]">
-                {{ story.title }}
-              </h3>
-              <p *ngIf="story.excerpt" class="mt-3 line-clamp-2 text-sm leading-6 text-[#000035]/65">{{ story.excerpt }}</p>
-              <div class="mt-auto space-y-1 border-t border-[#000035]/10 pt-4 text-xs text-[#000035]/60">
-                <p *ngIf="story.author"><span class="font-bold text-[#000035]/80">Written by</span> {{ story.author }}</p>
-                <p *ngIf="story.photoby"><span class="font-bold text-[#000035]/80">Photo by</span> {{ story.photoby }}</p>
-                <p *ngIf="story.graphicby"><span class="font-bold text-[#000035]/80">Graphics by</span> {{ story.graphicby }}</p>
-                <p *ngIf="story.illusrationby"><span class="font-bold text-[#000035]/80">Illustration by</span> {{ story.illusrationby }}</p>
-              </div>
-            </div>
-          </a>
-        </article>
-      </div>
-    </ng-container>
+          </div>
+        </a>
+      </article>
+    </div>
+    <ng-template #moreStoriesEmpty><div class="pub-empty"><h3>More reporting is coming soon.</h3><p>Check back for the latest stories from the newsroom.</p></div></ng-template>
   </div>
 </section>
-
-<ng-template #moreStoriesEmpty>
-  <div appScrollReveal="up" class="border border-[#000035]/10 bg-white px-6 py-12 text-center">
-    <h3 class="text-2xl font-black text-[#000035]">More reporting is coming soon.</h3>
-    <p class="mt-3 text-sm leading-6 text-[#000035]/60">Check back for the latest stories from the newsroom.</p>
-  </div>
-</ng-template>

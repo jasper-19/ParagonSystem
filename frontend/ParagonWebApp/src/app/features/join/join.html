@@ -1,90 +1,25 @@
-<main class="min-h-screen bg-slate-50 text-slate-950">
+<main id="main-content" class="join-page">
   @if (loading()) {
-    <div class="bg-[#000035] px-4 py-24 sm:px-6 sm:py-32" role="status" aria-live="polite">
-      <div class="mx-auto max-w-7xl animate-pulse motion-reduce:animate-none">
-        <div class="h-3 w-28 rounded-full bg-white/15"></div>
-        <div class="mt-7 h-12 max-w-xl rounded-xl bg-white/10 sm:h-16"></div>
-        <div class="mt-4 h-12 max-w-3xl rounded-xl bg-white/10 sm:h-16"></div>
-        <div class="mt-7 h-5 max-w-2xl rounded bg-white/10"></div>
-        <div class="mt-3 h-5 max-w-xl rounded bg-white/10"></div>
-        <span class="sr-only">Loading recruitment opportunities…</span>
-      </div>
-    </div>
+    <div class="join-loading join-shell" role="status"><h1>Join Paragon</h1><p>Loading recruitment opportunities…</p></div>
   } @else {
     <app-join-hero [applicationsOpen]="applicationsOpen()" />
-
     <app-join-why />
-
-    <app-join-positions
-      [positions]="openPositions()"
-      [applicationsOpen]="applicationsOpen()"
-    />
-
-    @if (applicationsOpen()) {
-      <app-join-application-form
-        [positions]="openPositions()"
-        [preselectedPosition]="selectedPositionId()"
-      />
+    <app-join-positions [positions]="openPositions()" [applicationsOpen]="applicationsOpen()" />
+    @if (settingsError()) {
+      <section id="application" class="join-section join-status" aria-labelledby="recruitment-status-heading">
+        <div class="join-shell join-status-layout"><h2 id="recruitment-status-heading">Recruitment status is unavailable</h2><div><p>We couldn’t load the application settings. Please try again.</p><button type="button" class="join-button" (click)="loadRecruitmentSettings()">Try again</button></div></div>
+      </section>
+    } @else if (applicationsOpen()) {
+      <app-join-application-form [positions]="openPositions()" [preselectedPosition]="selectedPositionId()" />
     } @else {
-      <section id="application" class="scroll-mt-20 bg-slate-50 px-4 py-16 sm:px-6 sm:py-20 lg:py-24" aria-labelledby="recruitment-status-heading">
-        <div class="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-[#F4B400]/30 bg-white shadow-[0_24px_70px_-35px_rgba(15,23,42,0.3)]">
-          <div class="h-1.5 bg-[#F4B400]"></div>
-          <div class="px-5 py-10 text-center sm:px-12 sm:py-14">
-            <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl text-[#F4B400]">
-              <svg 
-                class="h-8 w-8" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8" 
-                aria-hidden="true"
-              >
-                <path d="M4 9.8V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3" />
-                <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-                <path d="M9 17v-2a2 2 0 0 0-4 0v2" />
-                <rect width="8" height="5" x="3" y="17" rx="1" />
-              </svg>
-            </span>
-
-            <p class="mt-5 text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#F4B400]">
-              Recruitment status
-            </p>
-            <h2 id="recruitment-status-heading" class="mt-2 text-2xl font-black tracking-tight text-[#000035] sm:text-3xl">
-              Applications are currently closed
-            </h2>
-            <p class="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-              {{ applicationAnnouncement() }}
-            </p>
-            <p class="mx-auto mt-6 max-w-xl text-xs leading-5 text-slate-500">
-              Follow Paragon’s official channels for recruitment updates and reopening announcements.
-            </p>
-            <a
-              routerLink="/join"
-              [fragment]="applicationsOpen() ? 'application' : 'positions'"
-              class="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-[#000035] transition hover:border-[#F4B400] hover:bg-[#F4B400]/10 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#F4B400]"
-            >
-              {{ applicationsOpen() ? 'Start your application' : 'Review available roles' }}
-              <svg 
-                class="h-4 w-4" 
-                aria-hidden="true" 
-                fill="none" 
-                stroke="currentColor" 
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                viewBox="0 0 24 24">
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </a>
-          </div>
+      <section id="application" class="join-section join-status" aria-labelledby="recruitment-status-heading">
+        <div class="join-shell join-status-layout">
+          <h2 id="recruitment-status-heading">Applications are currently closed</h2>
+          <div><p>{{ applicationAnnouncement() }}</p><p class="join-muted">Follow Paragon’s official channels for recruitment updates and reopening announcements.</p><a routerLink="/join" fragment="positions" class="join-text-link">Review available roles <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div>
         </div>
       </section>
     }
-
     <app-join-faq />
-
     <app-join-final-cta [applicationsOpen]="applicationsOpen()" />
   }
 </main>

@@ -1,95 +1,14 @@
-<header class="border-b border-[#000035]/10 bg-[#fffdf7] py-10 sm:py-14 lg:py-18">
-  <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-    <nav aria-label="Article navigation" class="mb-8 flex flex-wrap items-center gap-3">
-      <a
-        routerLink="/top-stories"
-        class="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#000035]/70 underline-offset-4 transition-colors hover:text-[#000035] hover:underline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#F4B400]"
-      >
-        <svg
-        aria-hidden="true"
-        class="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2.25"
-        viewBox="0 0 24 24">
-          <path d="m15 18-6-6 6-6" />
-        </svg>
-        All stories
-      </a>
-      <span aria-hidden="true" class="text-[#000035]/25">/</span>
-      <a
-        routerLink="/top-stories"
-        [queryParams]="{ category: category }"
-        class="inline-flex min-h-11 items-center bg-[#F4B400] px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#000035] transition-colors hover:bg-[#e4a700] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#000035] rounded-full"
-      >
-        {{ category }}
-      </a>
-    </nav>
-
-    <h1 class="max-w-5xl text-balance text-[clamp(2.25rem,7vw,5rem)] font-black leading-[1.02] tracking-[-0.035em] text-[#000035]">
-      {{ title }}
-    </h1>
-
-    <p *ngIf="excerpt" class="mt-6 max-w-3xl text-pretty text-lg leading-8 text-[#000035]/68 sm:text-xl sm:leading-9">
-      {{ excerpt }}
-    </p>
-
-    <div class="mt-8 flex flex-col gap-6 border-t border-[#000035]/12 pt-6 lg:flex-row lg:items-end lg:justify-between">
-      <div class="min-w-0">
-        <p *ngIf="author" class="text-base text-[#000035]">
-          <span class="text-[#000035]/55">Written by</span>
-          <strong class="ml-1">{{ author }}</strong>
-        </p>
-
-        <div class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#000035]/60">
-          <time *ngIf="publishedAt">{{ publishedAt | date:'MMMM d, yyyy' }}</time>
-          <span *ngIf="readingTime">{{ readingTime }}</span>
-          <span>{{ views | number }} {{ views === 1 ? 'view' : 'views' }}</span>
-        </div>
-
-        <div *ngIf="photoby || graphicby || illusrationby" class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-[#000035]/58">
-          <p *ngIf="photoby"><span class="font-bold text-[#000035]/75">Photo by</span> {{ photoby }}</p>
-          <p *ngIf="graphicby"><span class="font-bold text-[#000035]/75">Graphics by</span> {{ graphicby }}</p>
-          <p *ngIf="illusrationby"><span class="font-bold text-[#000035]/75">Illustration by</span> {{ illusrationby }}</p>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap gap-3" aria-label="Share article">
-        <button
-          *ngIf="canUseNativeShare"
-          type="button"
-          (click)="shareArticle()"
-          class="inline-flex min-h-11 items-center justify-center gap-2 border border-[#000035]/15 bg-white px-4 py-2 text-sm font-bold text-[#000035] transition-colors hover:border-[#000035]/35 hover:bg-[#f7f6f2] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#F4B400]"
-        >
-          <svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <circle cx="18" cy="5" r="3"/>
-            <circle cx="6" cy="12" r="3"/>
-            <circle cx="18" cy="19" r="3"/>
-            <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/>
-            <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>
-          </svg>
-          Share
-        </button>
-
-        <button
-          type="button"
-          (click)="copyArticleLink()"
-          class="inline-flex min-h-11 items-center justify-center gap-2 bg-[#000035] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#10105a] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#F4B400]"
-          [attr.aria-label]="linkCopied() ? 'Article link copied' : 'Copy article link'"
-          aria-live="polite"
-        >
-          <svg *ngIf="!linkCopied()" aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-          </svg>
-          <svg *ngIf="linkCopied()" aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path d="M20 6 9 17l-5-5"/>
-          </svg>
-          {{ linkCopied() ? 'Link copied' : 'Copy link' }}
-        </button>
-      </div>
-    </div>
-  </div>
-</header>
+<header class="article-header"><div class="article-header-inner">
+  <nav aria-label="Article navigation" class="article-navigation"><a routerLink="/top-stories"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg>All stories</a><span aria-hidden="true">/</span><a routerLink="/top-stories" [queryParams]="{category:category}" class="article-category">{{ category }}</a></nav>
+  <h1>{{ title }}</h1>
+  <p *ngIf="excerpt" class="article-deck">{{ excerpt }}</p>
+  <div class="article-byline-row"><div class="article-byline">
+    <p *ngIf="author">Written by <strong>{{ author }}</strong></p>
+    <div class="article-publication"><time *ngIf="publishedAt" [attr.datetime]="publishedAt | date:'yyyy-MM-dd'">{{ publishedAt | date:'MMMM d, yyyy' }}</time><span *ngIf="readingTime">{{ readingTime }}</span><span>{{ views | number }} {{ views === 1 ? 'view' : 'views' }}</span></div>
+    <div *ngIf="photoby || graphicby || illusrationby" class="article-credits"><p *ngIf="photoby">Photo by {{ photoby }}</p><p *ngIf="graphicby">Graphics by {{ graphicby }}</p><p *ngIf="illusrationby">Illustration by {{ illusrationby }}</p></div>
+  </div><div class="article-sharing" aria-label="Share article">
+    <button *ngIf="canUseNativeShare" type="button" (click)="shareArticle()" class="share-native"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m9 10 6-4M9 14l6 4"/></svg>Share</button>
+    <button type="button" (click)="copyArticleLink()" [attr.aria-label]="linkCopied() ? 'Article link copied' : 'Copy article link'" class="share-copy" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ng-container *ngIf="!linkCopied()"><rect x="8" y="8" width="13" height="13" rx="1"/><path d="M16 5V3H3v13h2"/></ng-container><path *ngIf="linkCopied()" d="m5 12 4 4L20 5"/></svg>{{ linkCopied() ? 'Link copied' : 'Copy link' }}</button>
+    <span class="share-feedback" role="status">{{ copyError() }}</span>
+  </div></div>
+</div></header>

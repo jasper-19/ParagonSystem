@@ -12,6 +12,7 @@ import { AdminAuthService } from '../../../core/services/admin-auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './admin-login.html',
+  styleUrl: './admin-login.scss',
 })
 export class AdminLoginComponent {
   private readonly fb = inject(FormBuilder);

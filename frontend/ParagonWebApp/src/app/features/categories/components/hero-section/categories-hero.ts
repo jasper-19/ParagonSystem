@@ -5,7 +5,8 @@ import { CommonModule } from '@angular/common';
   selector: 'app-categories-hero',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './categories-hero.html'
+  templateUrl: './categories-hero.html',
+  styleUrl: './categories-hero.scss'
 })
 export class CategoriesHero {
 

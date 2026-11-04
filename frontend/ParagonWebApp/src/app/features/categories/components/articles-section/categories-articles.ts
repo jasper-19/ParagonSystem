@@ -12,13 +12,13 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Article } from '../../../../models/article.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
-import { ImagePlaceholderComponent } from '../../../../shared/components/image-placeholder/image-placeholder';
 
 @Component({
   selector: 'app-categories-articles',
   standalone: true,
-  imports: [CommonModule, RouterLink, ImagePlaceholderComponent],
-  templateUrl: './categories-articles.html'
+  imports: [CommonModule, RouterLink],
+  templateUrl: './categories-articles.html',
+  styleUrl: './categories-articles.scss'
 })
 export class CategoriesArticles
   implements AfterViewInit, OnDestroy {
@@ -29,8 +29,10 @@ export class CategoriesArticles
   @Input({ required: true }) hasMore!: boolean;
 
   @Input() initialLoading: boolean = false;
+  @Input() errorMessage: string | null = null;
 
   @Output() loadMore = new EventEmitter<void>();
+  @Output() retry = new EventEmitter<void>();
 
   @ViewChild('anchor')
   anchor!: ElementRef<HTMLDivElement>;
@@ -49,6 +51,7 @@ export class CategoriesArticles
           entry.isIntersecting &&
           this.hasMore &&
           !this.loading &&
+          !this.errorMessage &&
           this.articles.length > 0
         ) {
           this.loadMore.emit();

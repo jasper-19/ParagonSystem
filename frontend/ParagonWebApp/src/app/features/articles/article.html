@@ -1,93 +1,26 @@
-<main id="main-content" class="min-w-0 overflow-x-clip bg-white">
- <!-- <app-welcome-banner /> -->
-
+<main id="main-content" class="article-page">
   <ng-container *ngIf="article$ | async as article; else loading">
     <article>
-      <app-article-meta
-        [title]="article.title"
-        [excerpt]="article.excerpt"
-        [author]="article.author"
-        [publishedAt]="article.publishedAt || undefined"
-        [category]="article.category"
-        [views]="article.views"
-        [photoby]="article.photoby"
-        [graphicby]="article.graphicby"
-        [illusrationby]="article.illusrationby"
-        [readingTime]="(readingTime$ | async) || undefined"
-      />
-
-      <figure class="mx-auto mt-2 w-full max-w-6xl px-4 sm:mt-6 sm:px-6 lg:px-8">
-        <div class="relative overflow-hidden bg-[#000035] shadow-[0_24px_70px_rgba(0,0,53,0.16)]">
-          <ng-container *ngIf="article.image; else imagePlaceholder">
-            <img
-              [src]="imageVariant(article.image, 'large')"
-              [alt]="article.title"
-              fetchpriority="high"
-              decoding="async"
-              class="mx-auto max-h-[75svh] min-h-52 w-full object-contain"
-            />
-          </ng-container>
-          <ng-template #imagePlaceholder>
-            <div class="aspect-video w-full">
-              <app-image-placeholder size="large" label="No article image available" />
-            </div>
-          </ng-template>
-        </div>
-      </figure>
-
-      <div class="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,46rem)_1fr] lg:gap-16 lg:px-8 lg:py-18">
-        <section aria-label="Article body" *ngIf="articleView$ | async as view" class="min-w-0">
-          <app-article-section
-            *ngFor="let section of view.sections; let isFirst = first"
-            [section]="section"
-            [isFirst]="isFirst"
-          />
+      <app-article-meta [title]="article.title" [excerpt]="article.excerpt" [author]="article.author" [publishedAt]="article.publishedAt || undefined" [category]="article.category" [views]="article.views" [photoby]="article.photoby" [graphicby]="article.graphicby" [illusrationby]="article.illusrationby" [readingTime]="(readingTime$ | async) || undefined" />
+      <figure *ngIf="article.image" class="article-cover"><img [src]="imageVariant(article.image, 'large')" [alt]="article.title" fetchpriority="high" decoding="async" /></figure>
+      <div class="article-reading-layout">
+        <section aria-label="Article body" *ngIf="articleView$ | async as view" class="article-body">
+          <app-article-section *ngFor="let section of view.sections; let isFirst = first" [section]="section" [isFirst]="isFirst" />
         </section>
-
-        <aside class="border-t border-[#000035]/12 pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0" aria-labelledby="article-details-heading">
-          <div class="lg:sticky lg:top-24">
-            <h2 id="article-details-heading" class="text-xs font-black uppercase tracking-[0.2em] text-[#000035]">
-              Article details
-            </h2>
-            <dl class="mt-4 divide-y divide-[#000035]/10 border-y border-[#000035]/10 text-sm">
-              <div class="flex items-start justify-between gap-4 py-3">
-                <dt class="text-[#000035]/55">Section</dt>
-                <dd class="text-right font-bold text-[#000035]">{{ article.category }}</dd>
-              </div>
-              <div class="flex items-start justify-between gap-4 py-3">
-                <dt class="text-[#000035]/55">Published</dt>
-                <dd class="text-right font-bold text-[#000035]">{{ article.publishedAt | date:'MMM d, yyyy' }}</dd>
-              </div>
-              <div class="flex items-start justify-between gap-4 py-3">
-                <dt class="text-[#000035]/55">Reading time</dt>
-                <dd class="text-right font-bold text-[#000035]">{{ (readingTime$ | async) || '1 min read' }}</dd>
-              </div>
-            </dl>
-
-            <div *ngIf="article.tags.length" class="mt-8">
-              <h2 id="topics-heading" class="text-xs font-black uppercase tracking-[0.2em] text-[#000035]">Topics</h2>
-              <ul class="mt-4 flex flex-wrap gap-2" aria-labelledby="topics-heading">
-                <li *ngFor="let tag of article.tags">
-                  <span class="inline-flex min-h-11 items-center border border-[#000035]/15 bg-[#f7f6f2] px-3 py-2 text-xs font-bold text-[#000035]">
-                    #{{ tag }}
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </aside>
+        <aside class="article-details" aria-labelledby="article-details-heading"><div class="article-details-inner">
+          <h2 id="article-details-heading">Article details</h2>
+          <dl><div><dt>Section</dt><dd>{{ article.category }}</dd></div><div><dt>Published</dt><dd>{{ article.publishedAt | date:'MMM d, yyyy' }}</dd></div><div><dt>Reading time</dt><dd>{{ (readingTime$ | async) || '1 min read' }}</dd></div></dl>
+          <div *ngIf="article.tags.length" class="article-topics"><h2 id="topics-heading">Topics</h2><ul aria-labelledby="topics-heading"><li *ngFor="let tag of article.tags"><span>#{{ tag }}</span></li></ul></div>
+        </div></aside>
       </div>
     </article>
-
     <app-staff-application />
-
-    <ng-container *ngIf="articleFeed() as feed">
-      <app-related [articles]="feed.related" />
-      <app-other-stories [articles]="feed.otherStories" />
-    </ng-container>
+    <ng-container *ngIf="articleFeed() as feed"><app-related [articles]="feed.related" /><app-other-stories [articles]="feed.otherStories" /></ng-container>
   </ng-container>
 </main>
-
 <ng-template #loading>
-  <app-article-skeleton />
+  <section *ngIf="articleError() as error; else articleSkeleton" class="article-error" aria-labelledby="article-error-title">
+    <h1 id="article-error-title">Article unavailable</h1><p role="alert">{{ error }}</p><div><button type="button" (click)="retryArticle()">Try again</button><a routerLink="/top-stories">Browse all articles</a></div>
+  </section>
 </ng-template>
+<ng-template #articleSkeleton><app-article-skeleton /></ng-template>

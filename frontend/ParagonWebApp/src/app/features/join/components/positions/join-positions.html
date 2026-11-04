@@ -1,113 +1,16 @@
-<section id="positions" class="scroll-mt-20 bg-[#fffaf0] px-4 py-16 sm:px-6 sm:py-20 lg:py-24" aria-labelledby="open-positions-heading">
-  <div class="mx-auto max-w-7xl">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div class="max-w-2xl">
-        <p class="text-[0.6875rem] font-black uppercase tracking-[0.2em] text-[#F4B400]">Find your place</p>
-        <h2 id="open-positions-heading" class="mt-2 text-3xl font-black tracking-tight text-[#000035] sm:text-4xl">
-          Open positions
-        </h2>
-        <p class="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
-          Explore what the team is currently recruiting and choose the role that best fits your strengths.
-        </p>
-      </div>
-      <p *ngIf="positions().length" class="text-sm font-bold tabular-nums text-slate-500" aria-live="polite">
-        {{ positions().length }} {{ positions().length === 1 ? 'team' : 'teams' }} recruiting
-      </p>
-    </div>
-
-    <div *ngIf="positions().length === 0; else list" class="mt-10 rounded-3xl border border-dashed border-slate-300 bg-white px-5 py-14 text-center sm:px-8">
-      <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-        <svg class="h-7 w-7" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2ZM8 7h8" />
-        </svg>
-      </span>
-      <h3 class="mt-4 text-xl font-black text-[#000035]">No open positions right now</h3>
-      <p class="mt-2 text-sm leading-6 text-slate-600">Check back soon for the next recruitment cycle.</p>
-    </div>
-
+<section id="positions" class="join-section join-positions" aria-labelledby="open-positions-heading">
+  <div class="join-shell">
+    <div class="join-section-intro"><div><h2 id="open-positions-heading">Open positions</h2><p>Explore what the team is currently recruiting and choose the role that best fits your strengths.</p></div><p *ngIf="positions().length" class="join-role-count" aria-live="polite">{{ positions().length }} {{ positions().length === 1 ? 'team' : 'teams' }} recruiting</p></div>
+    <div *ngIf="positions().length === 0; else list" class="join-empty"><h3>No open positions right now</h3><p>Check back soon for the next recruitment cycle.</p></div>
     <ng-template #list>
-      <div class="mt-10 grid gap-5 md:grid-cols-2 lg:gap-6">
-        <article
-          *ngFor="let position of positions(); let i = index"
-          class="group flex min-w-0 flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-[#F4B400] hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none sm:p-7"
-        >
-          <div class="flex items-start justify-between gap-4">
-            <span class="inline-flex min-h-8 items-center rounded-full border border-[#F4B400]/30 bg-[#F4B400]/10 px-3 py-1 text-[0.6875rem] font-black uppercase tracking-wider text-[#F4B400]">
-              {{ position.department }}
-            </span>
-            <button
-              type="button"
-              (click)="openInfo(position)"
-              class="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-[#F4B400] hover:bg-[#F4B400]/10 hover:text-[#000035] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
-              [attr.aria-label]="'View details for ' + position.title"
-            >
-              <svg 
-                class="h-5 w-5" 
-                aria-hidden="true" 
-                fill="none" 
-                stroke="currentColor" 
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 16v-4"/>
-                <path d="M12 8h.01"/>
-              </svg>
-            </button>
-          </div>
-
-          <h3 class="mt-5 text-2xl font-black tracking-tight text-[#000035]">{{ position.title }}</h3>
-          <p class="mt-3 text-sm leading-7 text-slate-600 sm:text-[0.9375rem]">{{ position.description }}</p>
-
-          <div *ngIf="position.subRoles?.length" class="mt-5">
-            <p class="text-xs font-black uppercase tracking-wider text-slate-500">Specializations</p>
-            <div class="mt-2 flex flex-wrap gap-2">
-              <span *ngFor="let role of position.subRoles?.slice(0, 4)" class="rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-700">
-                {{ role.name }}
-              </span>
-              <span *ngIf="(position.subRoles?.length ?? 0) > 4" class="rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-500">
-                +{{ (position.subRoles?.length ?? 0) - 4 }} more
-              </span>
-            </div>
-          </div>
-
-          <div class="mt-auto flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row">
-            <a
-              routerLink="/join"
-              fragment="application"
-              [queryParams]="{ position: position.id }"
-              class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#000035] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#001f5c] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
-            >
-              {{ applicationsOpen() ? 'Apply for this role' : 'Recruitment status' }}
-              <svg 
-                class="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" 
-                aria-hidden="true" 
-                fill="none" 
-                stroke="currentColor" 
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                viewBox="0 0 24 24">
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </a>
-            <button
-              type="button"
-              (click)="openInfo(position)"
-              class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-[#000035] transition hover:border-[#F4B400] hover:bg-[#F4B400]/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
-            >
-              Role details
-            </button>
-          </div>
+      <div class="join-role-list">
+        <article *ngFor="let position of positions()" class="join-role">
+          <div class="join-role-title"><h3>{{ position.title }}</h3><p>{{ position.department }}</p></div>
+          <div class="join-role-copy"><p>{{ position.description }}</p><p *ngIf="position.subRoles?.length" class="join-specializations"><span class="join-specializations-label">Specializations</span><span *ngFor="let role of position.subRoles?.slice(0, 4)">{{ role.name }}</span><span *ngIf="(position.subRoles?.length ?? 0) > 4">+{{ (position.subRoles?.length ?? 0) - 4 }} more</span></p></div>
+          <div class="join-role-actions"><a routerLink="/join" fragment="application" [queryParams]="{ position: position.id }" class="join-button">{{ applicationsOpen() ? 'Apply for this role' : 'Recruitment status' }}<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a><button type="button" class="join-text-link" (click)="openInfo(position)" [attr.aria-label]="'Role details for ' + position.title">Role details</button></div>
         </article>
       </div>
     </ng-template>
   </div>
-
-  <app-position-info-modal
-    [isOpen]="showInfoModal()"
-    [position]="selectedPosition()"
-    (closed)="closeInfo()"
-  />
+  <app-position-info-modal [isOpen]="showInfoModal()" [position]="selectedPosition()" (closed)="closeInfo()" />
 </section>

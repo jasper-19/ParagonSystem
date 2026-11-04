@@ -20,6 +20,7 @@ import { SOCKET_EVENTS } from '../../core/constants/socket-events';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './editorial-board.html',
+  styleUrl: './editorial-board.scss',
 })
 export class EditorialBoard implements OnInit, OnDestroy {
   private readonly editorialBoardService =
@@ -57,6 +58,7 @@ export class EditorialBoard implements OnInit, OnDestroy {
 
   readonly loading = signal(true);
   readonly loadError = signal(false);
+  private readonly failedImages = signal(new Set<string>());
 
   readonly totalMembers = computed(() =>
     this.sections().reduce(
@@ -128,6 +130,18 @@ export class EditorialBoard implements OnInit, OnDestroy {
 
   retry(): void {
     this.loadActiveBoard(true);
+  }
+
+  imageAvailable(image?: string): boolean {
+    return !!image && !this.failedImages().has(image);
+  }
+
+  onImageError(image?: string): void {
+    if (image) this.failedImages.update(images => new Set(images).add(image));
+  }
+
+  yearLabel(yearLevel: string): string {
+    return yearLevel.replace(/_/g, ' ');
   }
 
   sectionId(title: string, index: number): string {

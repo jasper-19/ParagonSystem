@@ -1,0 +1,18 @@
+:host { display: block; }
+.publication-footer { background: #000035; color: #d6d6e1; border-top: 4px solid #f4b400; }
+.publication-footer > div:first-child { max-width: 1248px; padding-block: 3rem; gap: 2.5rem; }
+.publication-footer .footer-heading { color: white; margin-bottom: 1rem; font-size: .875rem; font-weight: 600; }
+.publication-footer .footer-link { display: inline-block; min-height: 28px; color: #c4c4d2; text-underline-offset: 4px; }
+.publication-footer .footer-link:hover { color: #f4b400; text-decoration: underline; }
+.publication-footer .footer-social-link { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #ffffff40; }
+.publication-footer .footer-social-link:hover { background: #f4b400; color: #000035; }
+.publication-footer .footer-social-link svg { color: inherit; }
+.publication-footer :is(.text-gray-400, .text-gray-500) { color: #c4c4d2; }
+.publication-footer > div:last-child { background: none; border-color: #ffffff30; }
+.publication-footer > div:last-child > div { max-width: 1248px; font-size: .75rem; }
+.publication-footer a:focus-visible { outline: 2px solid #f4b400; outline-offset: 4px; }
+.publication-footer ::selection { background: #f4b400; color: #000035; }
+@media (max-width: 767px) {
+  .publication-footer > div:first-child { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 2rem 1rem; gap: 2rem 1rem; }
+  .publication-footer > div:first-child > div:first-child { grid-column: 1 / -1; max-width: 32rem; }
+}

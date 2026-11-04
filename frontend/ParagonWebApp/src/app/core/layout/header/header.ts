@@ -25,6 +25,7 @@ import { GlobalSettingsService } from '../../services/global-settings.service';
   standalone: true,
   imports: [SearchModal, CommonModule, RouterLink, RouterLinkActive, RouterModule],
   templateUrl: './header.html',
+  styleUrl: './header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Header implements OnInit, OnDestroy {

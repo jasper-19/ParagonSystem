@@ -2,6 +2,7 @@
 
 @import "tailwindcss";
 @import 'quill/dist/quill.snow.css';
+@import './app/features/home/publication.css';
 
 :root {
   --font-sans: "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;

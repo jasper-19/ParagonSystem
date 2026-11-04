@@ -1,6 +1,6 @@
-<main id="main-content" class="min-w-0 overflow-x-clip bg-white">
+<main id="main-content" class="publication-home">
+  <app-welcome-banner />
   <ng-container *ngIf="homepageFeed() as feed; else homepageEmpty">
-   <!-- <app-welcome-banner /> -->
     <app-featured-section [articles]="feed.featured" />
     <app-most-viewed-section [articles]="feed.mostViewed" />
     <app-category-section [sections]="feed.categories" />
@@ -9,14 +9,11 @@
 </main>
 
 <ng-template #homepageEmpty>
-  <main id="main-content" class="grid min-h-[60svh] place-items-center bg-white px-4 py-16 sm:px-6">
+  <div class="pub-empty pub-empty--page">
     <div class="mx-auto max-w-lg text-center">
-      <p class="mb-3 text-xs font-black uppercase tracking-[0.24em] text-[#F4B400]">
-        Latest coverage
-      </p>
-      <h1 class="text-balance text-3xl font-black leading-tight text-[#000035] sm:text-4xl">
+      <h2 class="text-balance text-3xl font-black leading-tight text-[#000035] sm:text-4xl">
         The publication is preparing its next articles.
-      </h1>
+      </h2>
       <p class="mx-auto mt-4 max-w-md text-pretty text-base leading-7 text-[#000035]/65">
         Published articles will appear here as soon as they are ready.
       </p>
@@ -27,5 +24,5 @@
         Browse all articles
       </a>
     </div>
-  </main>
+  </div>
 </ng-template>

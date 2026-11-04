@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './meta.html',
+  styleUrl: './meta.scss',
 })
 export class ArticleMeta {
   @Input() title!: string;
@@ -24,6 +25,7 @@ export class ArticleMeta {
   @Input() readingTime?: string; // optional (e.g. "1 min read")
 
   readonly linkCopied = signal(false);
+  readonly copyError = signal('');
   readonly canUseNativeShare =
     typeof navigator !== 'undefined' &&
     typeof navigator.share === 'function';
@@ -59,30 +61,27 @@ export class ArticleMeta {
 
   async copyArticleLink(): Promise<void> {
     const url = window.location.href;
-
+    this.linkCopied.set(false);
+    this.copyError.set('');
+    let copied = false;
     try {
       if (
         navigator.clipboard &&
         window.isSecureContext
       ) {
         await navigator.clipboard.writeText(url);
+        copied = true;
       } else {
-        this.copyUsingFallback(url);
+        copied = this.copyUsingFallback(url);
       }
-
-      this.showCopiedFeedback();
-    } catch (error) {
-      console.error(
-        'Failed to copy article link:',
-        error
-      );
-
-      this.copyUsingFallback(url);
-      this.showCopiedFeedback();
+    } catch {
+      copied = this.copyUsingFallback(url);
     }
+    if (copied) this.showCopiedFeedback();
+    else this.copyError.set('Could not copy the link. Copy the address from your browser.');
   }
 
-  private copyUsingFallback(url: string): void {
+  private copyUsingFallback(url: string): boolean {
     const textArea =
       document.createElement('textarea');
 
@@ -93,10 +92,16 @@ export class ArticleMeta {
 
     document.body.appendChild(textArea);
 
-    textArea.select();
-    document.execCommand('copy');
-
-    document.body.removeChild(textArea);
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    try {
+      textArea.select();
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    } finally {
+      textArea.remove();
+      previouslyFocused?.focus();
+    }
   }
 
   private showCopiedFeedback(): void {

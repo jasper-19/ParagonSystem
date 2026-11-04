@@ -5,12 +5,11 @@ import { Article } from './../../../../models/article.model';
 import { CategoryFeedSection } from './../../../../models/homepage-feed.model';
 import { imageVariant } from '../../../../shared/utils/image-variant.util';
 import { ImagePlaceholderComponent } from '../../../../shared/components/image-placeholder/image-placeholder';
-import { ScrollRevealDirective } from '../../scroll-reveal.directive';
 
 @Component({
   selector: 'app-category-section',
   standalone: true,
-  imports: [CommonModule, RouterModule, ImagePlaceholderComponent, ScrollRevealDirective],
+  imports: [CommonModule, RouterModule, ImagePlaceholderComponent],
   templateUrl: './category-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

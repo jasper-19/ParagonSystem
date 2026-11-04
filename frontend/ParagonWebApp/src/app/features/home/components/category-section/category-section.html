@@ -1,125 +1,39 @@
-<section aria-labelledby="sections-heading" class="bg-white py-14 sm:py-18 lg:py-24">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6">
-    <div appScrollReveal="up" class="mb-8 max-w-2xl sm:mb-10">
-      <p class="mb-2 text-xs font-black uppercase tracking-[0.22em] text-[#f4b400]">Explore the publication</p>
-      <h2 id="sections-heading" class="text-3xl font-black tracking-tight text-[#000035] sm:text-4xl">
-        Articles by section
-      </h2>
-    </div>
-
-    <ng-container *ngIf="visibleSections.length; else categoriesEmpty">
-      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <section
-          *ngFor="let block of visibleSections; let i = index"
-          appScrollReveal="up"
-          [revealDelay]="i * 65"
-          [attr.aria-labelledby]="'category-' + block.category"
-          class="flex min-w-0 flex-col border border-[#000035]/12 bg-[#000035]"
-        >
-          <div class="flex items-center justify-between gap-4 border-b border-white/15 px-5 py-4">
-            <h3 [id]="'category-' + block.category" class="text-sm font-black uppercase tracking-[0.18em] text-white">
-              {{ block.title }}
-            </h3>
-            <a
-              routerLink="/top-stories"
-              [queryParams]="{ category: block.category }"
-              class="inline-flex min-h-11 items-center text-xs font-bold text-[#F4B400] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
-              [attr.aria-label]="'View all ' + block.title + ' stories'"
-            >
-              View all <span aria-hidden="true" class="ml-1">
-                <svg
-                  class="h-3.5 w-3.5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M18 8L22 12L18 16"/>
-                  <path d="M2 12H22"/>
-                </svg>
-              </span>
-            </a>
-          </div>
-
-          <article class="group">
-            <a
-              [routerLink]="['/article', block.articles[0].slug]"
-              class="block focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-[#F4B400]"
-            >
-              <div class="aspect-video overflow-hidden bg-white/5">
-                <ng-container *ngIf="block.articles[0].image; else mediumPlaceholder">
-                  <img
-                    [src]="imageVariant(block.articles[0].image, 'medium')"
-                    [alt]="block.articles[0].title"
-                    loading="lazy"
-                    decoding="async"
-                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </ng-container>
-                <ng-template #mediumPlaceholder>
-                  <app-image-placeholder size="medium" label="No image available" />
-                </ng-template>
-              </div>
-              <div class="p-5">
-                <time class="text-[0.625rem] font-bold uppercase tracking-widest text-[#F4B400]">
-                  {{ block.articles[0].publishedAt | date:'MMM d, yyyy' }}
-                </time>
-                <h4 class="mt-2 text-pretty text-xl font-black leading-snug text-white transition-colors group-hover:text-[#F4B400]">
-                  {{ block.articles[0].title }}
-                </h4>
-                <div class="mt-3 space-y-1 text-xs text-white/55">
-                  <p *ngIf="block.articles[0].author"><span class="font-semibold text-white/75">Written by</span> {{ block.articles[0].author }}</p>
-                  <p *ngIf="block.articles[0].photoby"><span class="font-semibold text-white/75">Photo by</span> {{ block.articles[0].photoby }}</p>
-                  <p *ngIf="block.articles[0].graphicby"><span class="font-semibold text-white/75">Graphics by</span> {{ block.articles[0].graphicby }}</p>
-                  <p *ngIf="block.articles[0].illusrationby"><span class="font-semibold text-white/75">Illustration by</span> {{ block.articles[0].illusrationby }}</p>
-                </div>
-              </div>
-            </a>
-          </article>
-
-          <div *ngIf="block.articles.length > 1" class="mt-auto divide-y divide-white/10 border-t border-white/10 px-5">
-            <article *ngFor="let article of block.articles.slice(1, 4); trackBy: trackByArticle">
-              <a
-                [routerLink]="['/article', article.slug]"
-                class="group/brief grid min-h-22 grid-cols-[4.5rem_1fr] items-center gap-3 py-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4B400]"
-              >
-                <div class="aspect-4/3 overflow-hidden bg-white/5">
-                  <ng-container *ngIf="article.image; else thumbPlaceholder">
-                    <img
-                      [src]="imageVariant(article.image, 'thumbnail')"
-                      [alt]="article.title"
-                      loading="lazy"
-                      decoding="async"
-                      class="h-full w-full object-cover transition-transform duration-300 group-hover/brief:scale-105"
-                    />
-                  </ng-container>
-                  <ng-template #thumbPlaceholder>
-                    <app-image-placeholder size="small" />
-                  </ng-template>
-                </div>
-                <div class="min-w-0">
-                  <time class="text-[0.625rem] text-[#F4B400]/75">{{ article.publishedAt | date:'MMM d' }}</time>
-                  <h4 class="mt-1 line-clamp-2 text-sm font-bold leading-snug text-white/85 group-hover/brief:text-white">
-                    {{ article.title }}
-                  </h4>
-                </div>
-              </a>
-            </article>
-          </div>
-        </section>
+<section aria-labelledby="sections-heading" class="pub-sections pub-container">
+  <div class="pub-section-heading"><h2 id="sections-heading">Articles by section</h2></div>
+  <div *ngIf="visibleSections.length; else categoriesEmpty" class="pub-category-grid">
+    <section *ngFor="let block of visibleSections" [attr.aria-labelledby]="'category-' + block.category" class="pub-category-column">
+      <div class="pub-category-heading">
+        <h3 [id]="'category-' + block.category">{{ block.title }}</h3>
+        <a routerLink="/top-stories" [queryParams]="{ category: block.category }" class="pub-section-link" [attr.aria-label]="'View all ' + block.title + ' stories'">View all <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6" /></svg></a>
       </div>
-    </ng-container>
+      <article class="pub-category-lead">
+        <a [routerLink]="['/article', block.articles[0].slug]">
+          <div *ngIf="block.articles[0].image" class="pub-category-image">
+            <img [src]="imageVariant(block.articles[0].image, 'medium')" [alt]="block.articles[0].title" loading="lazy" decoding="async" />
+          </div>
+          <time class="pub-date">{{ block.articles[0].publishedAt | date:'MMM d, yyyy' }}</time>
+          <h4>{{ block.articles[0].title }}</h4>
+          <p *ngIf="!block.articles[0].image && block.articles[0].excerpt" class="pub-category-excerpt">{{ block.articles[0].excerpt }}</p>
+          <div class="pub-credits">
+            <p *ngIf="block.articles[0].author">Written by {{ block.articles[0].author }}</p>
+            <p *ngIf="block.articles[0].photoby">Photo by {{ block.articles[0].photoby }}</p>
+            <p *ngIf="block.articles[0].graphicby">Graphics by {{ block.articles[0].graphicby }}</p>
+            <p *ngIf="block.articles[0].illusrationby">Illustration by {{ block.articles[0].illusrationby }}</p>
+          </div>
+        </a>
+      </article>
+      <div *ngIf="block.articles.length > 1" class="pub-category-briefs">
+        <article *ngFor="let article of block.articles.slice(1, 4); trackBy: trackByArticle">
+          <a [routerLink]="['/article', article.slug]" class="pub-brief">
+            <div><time class="pub-date">{{ article.publishedAt | date:'MMM d' }}</time><h4>{{ article.title }}</h4></div>
+            <div class="pub-brief-image">
+              <img *ngIf="article.image; else thumbPlaceholder" [src]="imageVariant(article.image, 'thumbnail')" [alt]="article.title" loading="lazy" decoding="async" />
+              <ng-template #thumbPlaceholder><app-image-placeholder size="small" /></ng-template>
+            </div>
+          </a>
+        </article>
+      </div>
+    </section>
   </div>
+  <ng-template #categoriesEmpty><div class="pub-empty"><h3>Section coverage is being prepared.</h3><p>Published stories will appear in their assigned sections.</p></div></ng-template>
 </section>
-
-<ng-template #categoriesEmpty>
-  <div appScrollReveal="up" class="border border-[#000035]/10 bg-[#fffdf7] px-6 py-12 text-center">
-    <h3 class="text-2xl font-black text-[#000035]">Section coverage is being prepared.</h3>
-    <p class="mt-3 text-sm leading-6 text-[#000035]/60">Published stories will appear in their assigned sections.</p>
-  </div>
-</ng-template>
