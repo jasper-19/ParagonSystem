@@ -10,6 +10,7 @@ let viewMemberScrollLockCount = 0;
   standalone: true,
   imports: [CommonModule],
   templateUrl: './view-member-info-modal.html',
+  styleUrl: './view-member-info-modal.scss',
 })
 export class ViewMemberInfoModalComponent implements OnDestroy, AfterViewInit {
 

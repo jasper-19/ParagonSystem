@@ -25,6 +25,7 @@ interface MediaTypeOption {
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './publishing-media-settings.html',
+  styleUrl: '../../settings-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublishingMediaSettingsComponent implements OnInit {

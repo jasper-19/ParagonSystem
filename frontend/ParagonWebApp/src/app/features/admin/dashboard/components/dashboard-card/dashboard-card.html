@@ -1,37 +1,5 @@
-<div
-  class="h-full min-w-0 rounded-xl border p-4 shadow-sm
-         transition-shadow duration-200
-         hover:shadow-md
-         motion-reduce:transition-none
-         sm:p-5"
-  [ngClass]="colorClasses().container"
->
-  <p
-    class="truncate text-xs font-semibold uppercase
-           tracking-wider text-slate-500"
-    [title]="title()"
-  >
-    {{ title() }}
-  </p>
-
-  <p
-    class="mt-2 wrap-break-word text-3xl font-bold leading-none
-           sm:mt-3 sm:text-4xl"
-    [ngClass]="colorClasses().value"
-  >
-    {{ value() }}
-  </p>
-
-  @if (subtitle()) {
-    <div
-      class="mt-3 inline-flex max-w-full items-center
-             rounded-full px-2.5 py-1
-             text-xs font-medium"
-      [ngClass]="colorClasses().accent"
-    >
-      <span class="truncate">
-        {{ subtitle() }}
-      </span>
-    </div>
-  }
+<div class="summary-stat" [attr.data-variant]="variant()">
+  <p class="stat-label">{{ title() }}</p>
+  <p class="stat-value">{{ value() }}</p>
+  @if (subtitle()) { <p class="stat-note">{{ subtitle() }}</p> }
 </div>

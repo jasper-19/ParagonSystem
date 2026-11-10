@@ -1,0 +1,19 @@
+@use './profile-foundation';
+
+.profile-workspace { gap: 24px; }
+.profile-page-header { padding: 4px 0 20px; border-bottom: 1px solid #dce1e9; }
+.profile-page-header h1 { margin: 0; font-size: 28px; line-height: 1.25; letter-spacing: -.025em; }
+.profile-page-header p { font-size: 14px; max-width: 68ch; }
+.profile-page-header > div:last-child { gap: 16px; }
+.profile-page-header [aria-label='Account status: Active'] {
+  border: 0; background: transparent; padding: 0; border-radius: 0;
+  justify-content: flex-start; font-size: 13px; white-space: nowrap;
+}
+.profile-workspace > section { padding: 20px; border-radius: 6px; }
+
+@media (max-width: 639px) {
+  .profile-page-header h1 { font-size: 25px; }
+  .profile-page-header { gap: 12px; padding-bottom: 16px; }
+  .profile-page-header > div:last-child { flex-direction: row; justify-content: space-between; }
+  .profile-workspace > section { padding: 16px; }
+}

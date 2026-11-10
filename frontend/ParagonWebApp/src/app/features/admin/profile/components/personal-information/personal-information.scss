@@ -1,0 +1,20 @@
+@use '../../profile-foundation';
+
+.personal-information > header { padding: 20px 24px; gap: 16px; }
+.personal-information h2 { margin: 0; }
+.personal-information > header p { max-width: 68ch; }
+.personal-information-fields { padding: 4px 24px 20px; gap: 0 28px; }
+.personal-information-fields > div {
+  padding: 18px 0; border: 0; border-bottom: 1px solid #e2e8f0; border-radius: 0;
+}
+.personal-information-fields dt {
+  font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0;
+}
+.personal-information-fields dt > span { display: none; }
+.personal-information-fields dd { margin-top: 6px; font-size: 14px; font-weight: 600; }
+
+@media (max-width: 639px) {
+  .personal-information > header { padding: 20px 16px 16px; }
+  .personal-information-fields { padding: 0 16px 16px; }
+  .personal-information-fields > div { padding: 14px 0; }
+}

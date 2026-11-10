@@ -1,10 +1,10 @@
 <div
-  class="relative"
+  class="media-uploader relative"
 >
 
   <!-- Upload Button -->
   <label
-    class="group inline-flex min-h-11 cursor-pointer
+    class="media-uploader__button group inline-flex min-h-11 cursor-pointer
           select-none items-center justify-center gap-2
           whitespace-nowrap rounded-xl
           border border-[#F4B400]/35
@@ -41,7 +41,7 @@
   <!-- Drag Overlay -->
   <div
     *ngIf="isDragging()"
-    class="pointer-events-none fixed inset-0 z-70
+    class="media-uploader__overlay pointer-events-none fixed inset-0 z-70
           flex items-center justify-center
           bg-[#000035]/60 px-4
           backdrop-blur-sm"
@@ -49,7 +49,7 @@
     aria-live="polite"
   >
     <div
-      class="flex w-full max-w-md flex-col
+      class="media-uploader__drop-target flex w-full max-w-md flex-col
             items-center gap-4 rounded-2xl
             border-2 border-dashed border-[#F4B400]
             bg-white px-6 py-10 text-center

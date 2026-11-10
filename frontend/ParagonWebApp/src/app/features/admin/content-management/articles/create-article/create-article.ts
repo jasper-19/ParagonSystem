@@ -55,7 +55,8 @@ type TagCandidate = {
   selector: 'app-create-article',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RichTextEditorComponent, ConfirmationModal, CoverImagSelectorComponent, ErrorModal],
-  templateUrl: './create-article.html'
+  templateUrl: './create-article.html',
+  styleUrl: './create-article.scss'
 })
 export class CreateArticleComponent implements OnDestroy {
   private fb = inject(NonNullableFormBuilder);

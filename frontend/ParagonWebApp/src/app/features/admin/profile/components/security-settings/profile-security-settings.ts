@@ -25,6 +25,7 @@ import { ErrorModal } from '../../../../../shared/components/feedback-modal/erro
   standalone: true,
   imports: [CommonModule, SuccessModal, ErrorModal, ReactiveFormsModule],
   templateUrl: './profile-security-settings.html',
+  styleUrl: './profile-security-settings.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileSecuritySettings implements OnInit, OnDestroy {
@@ -490,7 +491,7 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
   ): string {
     return satisfied
       ? 'text-green-700'
-      : 'text-[#000035]/45';
+      : 'text-slate-600';
   }
 
   // Convenience getters for form controls
@@ -515,7 +516,7 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
   }
 
   get hasMinimumLength(): boolean {
-    return this.newPasswordValue.length >= 8;
+    return this.newPasswordValue.length >= 12;
   }
 
   get hasUppercase(): boolean {

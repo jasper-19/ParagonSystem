@@ -1,0 +1,38 @@
+@use '../../profile-foundation';
+
+.profile-security > header { background: white; padding: 20px 24px; }
+.profile-security h2 { margin: 0; }
+.profile-security > div { padding: 24px; }
+.profile-security > div > .flex > span[aria-hidden='true'] {
+  width: 24px; height: 24px; border-radius: 0; background: transparent; color: #000035;
+}
+.password-section > form { margin-top: 20px; }
+.password-section form > .grid { gap: 20px; }
+.password-section input {
+  min-height: 44px; padding-top: 10px; padding-bottom: 10px; padding-left: 12px;
+  border-radius: 4px; font-size: 14px;
+}
+.password-section input[aria-invalid='true'] { border-color: #b91c1c; }
+.password-section input:focus { outline: 2px solid #000035; outline-offset: 2px; }
+.password-section .absolute { border-radius: 0 4px 4px 0; }
+.password-section button[type='submit'] { min-height: 44px; font-weight: 600; }
+#password-requirements { padding: 16px 0 0; border: 0; border-top: 1px solid #e2e8f0; background: transparent; border-radius: 0; }
+#password-requirements > div { max-width: 440px; }
+#password-requirements [role='progressbar'] { height: 4px; border-radius: 0; }
+#password-requirements [role='progressbar'] > span { border-radius: 0; }
+#password-requirements ul { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 13px; }
+.two-factor-section > div:last-child { border: 0; background: transparent; padding: 0; min-width: 175px; }
+.sessions-section > ul { border: 0; border-radius: 0; margin-top: 16px; }
+.sessions-section > ul > li { padding: 16px 0; gap: 16px; }
+.sessions-section > ul > li > span { background: #f4f6f9; width: 40px; height: 40px; border-radius: 4px; }
+.sessions-section > ul > li:last-child { padding-bottom: 0; }
+
+@media (max-width: 639px) {
+  .profile-security > header { padding: 20px 16px; }
+  .profile-security > div { padding: 20px 16px; }
+  .password-section input { font-size: 16px; }
+  .two-factor-section > div:last-child { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+  .sessions-section > ul > li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; align-items: start; }
+  .sessions-section > ul > li > span { width: 32px; height: 32px; }
+  .sessions-section > ul > li > button { grid-column: 2; justify-self: start; width: auto; }
+}

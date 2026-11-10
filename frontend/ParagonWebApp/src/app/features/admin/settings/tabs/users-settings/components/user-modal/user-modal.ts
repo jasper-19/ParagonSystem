@@ -13,6 +13,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
@@ -29,12 +30,16 @@ export interface UserFormValue {
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './user-modal.html',
+  styleUrl: './user-modal.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserModalComponent implements OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(UserAccountsService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly document = inject(DOCUMENT);
+  private opener: HTMLElement | null = null;
+  private previousBodyOverflow: string | null = null;
 
   @Input() isOpen = false;
   @Input() eligibleStaff: EligibleAdminStaff[] = [];
@@ -63,11 +68,35 @@ export class UserModalComponent implements OnChanges {
     ],
   });
 
+  constructor() {
+    this.destroyRef.onDestroy(() => this.restorePage());
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
-    if (!changes['isOpen'] || !this.isOpen) return;
+    if (!changes['isOpen']) return;
+    if (!this.isOpen) {
+      this.restorePage();
+      return;
+    }
+    if (this.previousBodyOverflow === null) {
+      this.opener = this.document.activeElement instanceof HTMLElement
+        ? this.document.activeElement
+        : null;
+      this.previousBodyOverflow = this.document.body.style.overflow;
+      this.document.body.style.overflow = 'hidden';
+    }
     queueMicrotask(() => {
+      if (!this.isOpen) return;
       this.dialog?.nativeElement.querySelector<HTMLElement>('select')?.focus();
     });
+  }
+
+  private restorePage(): void {
+    if (this.previousBodyOverflow === null) return;
+    this.document.body.style.overflow = this.previousBodyOverflow;
+    this.previousBodyOverflow = null;
+    if (this.opener?.isConnected) this.opener.focus();
+    this.opener = null;
   }
 
   @HostListener('document:keydown', ['$event'])

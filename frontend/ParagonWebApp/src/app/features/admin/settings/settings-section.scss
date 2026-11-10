@@ -1,0 +1,51 @@
+:host { display: block; min-width: 0; color: #000035; font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+.settings-section {
+  min-width: 0; background: #fff; font-size: 14px; line-height: 1.5; caret-color: #000035;
+  ::selection { color: #000035; background: #f4b400; }
+  h2 { margin: 0; color: #000035; font-size: 18px; font-weight: 600; line-height: 1.35; letter-spacing: -.01em; }
+  h3 { font-size: 14px; font-weight: 600; }
+  p { max-width: 72ch; }
+  .text-slate-500, .text-slate-400 { color: #596477; }
+  .text-xs { font-size: 12px; }
+  .text-sm { font-size: 13px; }
+  .font-black, .font-bold { font-weight: 600; }
+  .uppercase { text-transform: none; letter-spacing: 0; }
+  [class*='rounded-'] { border-radius: 4px; }
+  form > div:not(.settings-save-bar):not(.settings-conflict), form > fieldset { padding: 24px 0; border-color: #dce1e8; gap: 24px; }
+  form > fieldset { grid-template-columns: minmax(0, 1fr); }
+  button { min-height: 44px; border-radius: 4px; box-shadow: none; font-family: inherit; font-size: 13px; font-weight: 600; transition: background-color 150ms ease-out, border-color 150ms ease-out; }
+  button:disabled { cursor: not-allowed; opacity: .5; }
+  button:focus-visible { outline: 2px solid #000035; outline-offset: 3px; box-shadow: none; }
+  label:not(.settings-option) { font-size: 13px; font-weight: 600; }
+  input:not([type='checkbox']), select, textarea { min-height: 44px; border-radius: 4px; border-color: #b8c1cf; font-family: inherit; font-size: 14px; color: #000035; box-shadow: none; }
+  input::placeholder, textarea::placeholder { color: #657084; opacity: 1; }
+  input:not([type='checkbox']):focus, select:focus, textarea:focus { border-color: #000035; outline: 2px solid #000035; outline-offset: 2px; box-shadow: none; }
+  input[type='checkbox'] { flex-shrink: 0; width: 18px; height: 18px; accent-color: #000035; }
+  input[type='checkbox']:focus-visible { outline: 2px solid #000035; outline-offset: 3px; }
+  input:disabled, select:disabled, textarea:disabled { cursor: not-allowed; background: #f4f6f9; color: #657084; }
+  fieldset:disabled .settings-option { opacity: .55; cursor: not-allowed; }
+  .settings-option { min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; align-self: start; font-weight: 400; }
+  .settings-option:hover { background: transparent; }
+  .settings-option > span { min-width: 0; }
+  .settings-option strong { font-size: 14px; font-weight: 600; }
+  .settings-option [class*='leading-5'] { max-width: 70ch; color: #596477; font-size: 13px; line-height: 1.6; }
+  .settings-option.mt-4 { padding: 14px; border: 1px solid #fecaca; border-radius: 4px; background: #fef2f2; }
+  [role='alert'] { border-radius: 4px; }
+  .settings-save-bar { gap: 16px; padding: 20px 0 max(20px, env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid #dce1e8; backdrop-filter: none; }
+  .settings-save-bar > button { min-height: 44px; flex-shrink: 0; }
+  .settings-conflict { margin: 20px 0 0; padding: 14px 16px; }
+  .settings-upload-limit { padding: 0 0 0 24px; border-left: 1px solid #dce1e8; min-width: 0; }
+}
+.settings-section-heading { padding: 0 0 22px; border-bottom: 1px solid #dce1e8; h2 + p { margin-top: 6px; color: #596477; font-size: 13px; line-height: 1.6; } }
+.settings-account-summary { gap: 16px; > span { padding: 0; border-radius: 0; background: transparent; font-size: 12px; font-weight: 500; } }
+.settings-account-list {
+  margin: 0; padding: 0; list-style: none;
+  > li { padding: 20px 0; }
+  > li > div:first-child { width: 40px; height: 40px; border-radius: 4px; color: #f4b400; font-size: 14px; font-weight: 600; }
+  strong, p { white-space: normal; overflow-wrap: anywhere; }
+  strong + span { border-radius: 4px; font-size: 12px; font-weight: 500; }
+  > li > button { flex-shrink: 0; }
+}
+@media (max-width: 1023px) { .settings-section .settings-upload-limit { border-left: 0; border-top: 1px solid #dce1e8; padding: 22px 0 0; } }
+@media (max-width: 639px) { .settings-section { input:not([type='checkbox']), select, textarea { font-size: 16px; } form > div:not(.settings-save-bar):not(.settings-conflict), form > fieldset { padding: 20px 0; gap: 20px; } .settings-save-bar { padding-top: 16px; } } .settings-account-list > li { padding: 18px 0; } }
+@media (prefers-reduced-motion: reduce) { .settings-section button { transition: none; } }

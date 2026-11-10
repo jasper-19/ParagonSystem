@@ -98,7 +98,9 @@ readonly modes: AnalyticsMode[] = [
           {
             label: 'Articles',
             data: this.trendData.articles,
-            tension: 0.35,
+            tension: 0.2,
+            borderColor: '#36a2eb',
+            backgroundColor: '#36a2eb',
             borderWidth: 2,
             pointRadius: 2,
             pointHoverRadius: 5,
@@ -106,7 +108,9 @@ readonly modes: AnalyticsMode[] = [
           {
             label: 'Applications',
             data: this.trendData.applications,
-            tension: 0.35,
+            tension: 0.2,
+            borderColor: '#ff6384',
+            backgroundColor: '#ff6384',
             borderWidth: 2,
             pointRadius: 2,
             pointHoverRadius: 5,
@@ -130,6 +134,8 @@ readonly modes: AnalyticsMode[] = [
               usePointStyle: true,
               boxWidth: 8,
               padding: 16,
+              color: '#53536c',
+              font: { family: '"Segoe UI", "Helvetica Neue", Arial, sans-serif', size: 12 },
             },
           },
 
@@ -150,6 +156,8 @@ readonly modes: AnalyticsMode[] = [
               maxRotation: 0,
               minRotation: 0,
               maxTicksLimit: 8,
+              color: '#53536c',
+              font: { family: '"Segoe UI", "Helvetica Neue", Arial, sans-serif', size: 11 },
             },
           },
 
@@ -158,16 +166,19 @@ readonly modes: AnalyticsMode[] = [
 
             ticks: {
               precision: 0,
+              color: '#53536c',
+              font: { family: '"Segoe UI", "Helvetica Neue", Arial, sans-serif', size: 11 },
             },
 
             grid: {
               drawTicks: false,
+              color: '#ededf2',
             },
           },
         },
 
         animation: {
-          duration: 250,
+          duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 200,
         },
       },
     });

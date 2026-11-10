@@ -33,6 +33,7 @@ import {
   ],
   providers: [ActivityLogsStore],
   templateUrl: './activity-logs.html',
+  styleUrl: './activity-logs.scss',
 })
 export class ActivityLogsComponent implements OnInit {
   @ViewChild(ActivityLogFiltersComponent)
@@ -127,6 +128,7 @@ export class ActivityLogsComponent implements OnInit {
 
     if (
       event.key === '/' &&
+      !this.selectedLog() &&
       !typing &&
       !event.ctrlKey &&
       !event.metaKey &&

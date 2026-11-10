@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StaffMember } from '../../../../../models/staff-member.model';
 
@@ -7,9 +7,11 @@ import { StaffMember } from '../../../../../models/staff-member.model';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './profile-overview.html',
+  styleUrl: './profile-overview.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileOverview {
+  private readonly cdr = inject(ChangeDetectorRef);
   @Input() staff: StaffMember | null = null;
   @Input() loading = false;
 
@@ -48,9 +50,11 @@ export class ProfileOverview {
     reader.onload = () => {
       this.avatarPreview = reader.result;
       this.avatarStatus = 'Profile image preview updated. This preview is not saved yet.';
+      this.cdr.markForCheck();
     };
     reader.onerror = () => {
       this.avatarStatus = 'The selected image could not be previewed.';
+      this.cdr.markForCheck();
     };
     reader.readAsDataURL(file);
   }

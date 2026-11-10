@@ -17,6 +17,21 @@ import { PublicLayout } from './features/public-layout/public-layout';
 
 // add near the top with other imports
 import { adminAuthGuard } from './core/guards/admin-auth.guard';
+import type { BreadcrumbData, BreadcrumbLabel } from './shared/components/breadcrumb/breadcrumb';
+
+const articleBreadcrumbParents = [{ label: 'All Articles', url: '/admin/all-articles' }];
+const issueBreadcrumbParents = [{ label: 'Special Issues', url: '/admin/all-special-issues' }];
+const settingsTabLabels: Readonly<Record<string, string>> = {
+  general: 'General',
+  'publishing-media': 'Publishing & Media',
+  notifications: 'Notifications',
+  maintenance: 'Maintenance',
+  users: 'User Accounts',
+};
+const settingsBreadcrumb: BreadcrumbLabel = route =>
+  Object.hasOwn(settingsTabLabels, route.paramMap.get('tab') ?? '')
+    ? settingsTabLabels[route.paramMap.get('tab')!]
+    : 'General';
 
 export const routes: Routes = [
   {
@@ -71,7 +86,7 @@ export const routes: Routes = [
 
       //System Management
       { path: 'settings',loadComponent: () => import('./features/admin/settings/settings').then(m => m.SettingsComponent),data: { breadcrumb: 'Settings' }},
-      { path: 'settings/:tab',loadComponent: () => import('./features/admin/settings/settings').then(m => m.SettingsComponent),data: { breadcrumb: 'Settings' }},
+      { path: 'settings/:tab',loadComponent: () => import('./features/admin/settings/settings').then(m => m.SettingsComponent),data: { breadcrumb: settingsBreadcrumb, breadcrumbParents: [{ label: 'Settings', url: '/admin/settings' }] } satisfies BreadcrumbData},
       { path: 'activity-logs',loadComponent: () => import('./features/admin/activity-logs/activity-logs').then(m => m.ActivityLogsComponent),data: { breadcrumb: 'Activity Logs' }},
 
       // Media Library
@@ -79,13 +94,13 @@ export const routes: Routes = [
 
       // Articles Management
       { path: 'all-articles', loadComponent: () => import('./features/admin/content-management/articles/all-articles/all-articles').then(m => m.AllArticlesComponent), data: { breadcrumb: 'All Articles' } },
-      { path: 'create-article', loadComponent: () => import('./features/admin/content-management/articles/create-article/create-article').then(m => m.CreateArticleComponent), data: { breadcrumb: 'Create Article' } },
-      { path: 'edit-article/:slug', loadComponent: () => import('./features/admin/content-management/articles/create-article/create-article').then(m => m.CreateArticleComponent), data: { breadcrumb: 'Edit Article' } },
+      { path: 'create-article', loadComponent: () => import('./features/admin/content-management/articles/create-article/create-article').then(m => m.CreateArticleComponent), data: { breadcrumb: 'Create Article', breadcrumbParents: articleBreadcrumbParents } satisfies BreadcrumbData },
+      { path: 'edit-article/:slug', loadComponent: () => import('./features/admin/content-management/articles/create-article/create-article').then(m => m.CreateArticleComponent), data: { breadcrumb: 'Edit Article', breadcrumbParents: articleBreadcrumbParents } satisfies BreadcrumbData },
 
       // Special Issues Management
        { path: 'all-special-issues', loadComponent: () => import('./features/admin/content-management/special-issues/all-special-issues/all-special-issues').then(m => m.AllSpecialIssuesComponent), data: { breadcrumb: 'Special Issues' } },
-       { path: 'create-special-issue', loadComponent: () => import('./features/admin/content-management/special-issues/create-special-issue/create-special-issue').then(m => m.CreateSpecialIssueComponent), data: { breadcrumb: 'Create Special Issue' } },
-       { path: 'edit-special-issue/:slug', loadComponent: () => import('./features/admin/content-management/special-issues/create-special-issue/create-special-issue').then(m => m.CreateSpecialIssueComponent), data: { breadcrumb: 'Edit Special Issue' } },
+       { path: 'create-special-issue', loadComponent: () => import('./features/admin/content-management/special-issues/create-special-issue/create-special-issue').then(m => m.CreateSpecialIssueComponent), data: { breadcrumb: 'Create Special Issue', breadcrumbParents: issueBreadcrumbParents } satisfies BreadcrumbData },
+       { path: 'edit-special-issue/:slug', loadComponent: () => import('./features/admin/content-management/special-issues/create-special-issue/create-special-issue').then(m => m.CreateSpecialIssueComponent), data: { breadcrumb: 'Edit Special Issue', breadcrumbParents: issueBreadcrumbParents } satisfies BreadcrumbData },
 
       // Editorial Board
       { path: 'applications', loadComponent: () => import('./features/admin/editorial-board/applications/applications').then(m => m.ApplicationsComponent), data: { breadcrumb: 'Applications' } },

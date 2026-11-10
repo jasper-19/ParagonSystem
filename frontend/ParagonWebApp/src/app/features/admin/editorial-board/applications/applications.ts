@@ -22,6 +22,7 @@ type SelectedApplicationPosition = {
   standalone: true,
   imports: [CommonModule, FormsModule, ApplicationReviewModal, ConfirmationModal],
   templateUrl: './applications.html',
+  styleUrl: './applications.scss',
 })
 export class ApplicationsComponent implements OnInit {
 
@@ -584,7 +585,7 @@ export class ApplicationsComponent implements OnInit {
     const rows = apps.map(app => [
       escapeCsv(app.fullName),
       escapeCsv(app.email),
-      escapeCsv(app.studentId),escapeCsv(this.getPositionCategoryDisplay(app)),
+      escapeCsv(app.studentId),
       escapeCsv(this.getPositionCategoryDisplay(app)),
       escapeCsv(this.formatStatus(app.status)),
       escapeCsv(this.formatInterviewDate(app.interviewDate)),

@@ -1,13 +1,13 @@
 <section
   aria-labelledby="activity-logs-title"
-  class="mx-auto w-full
+  class="activity-logs-workspace mx-auto w-full
          max-w-screen-2xl
          space-y-6"
 >
 
   <!-- Page Title -->
   <header
-    class="flex flex-col gap-3
+    class="logs-heading flex flex-col gap-3
           sm:flex-row
           sm:items-end
           sm:justify-between"
@@ -35,7 +35,7 @@
 
     @if (!isLoading() && !errorMessage()) {
       <div
-        class="inline-flex w-fit
+        class="logs-count inline-flex w-fit
               items-center gap-2
               rounded-full border
               border-slate-200
@@ -44,12 +44,6 @@
               text-slate-600 shadow-sm"
         aria-live="polite"
       >
-        <span
-          aria-hidden="true"
-          class="h-2 w-2 rounded-full
-                bg-emerald-500"
-        ></span>
-
         {{ totalResults() }}
         {{
           totalResults() === 1
@@ -78,7 +72,7 @@
         aria-live="polite"
         aria-busy="true"
         aria-label="Loading activity logs"
-        class="overflow-hidden rounded-xl
+        class="logs-skeleton overflow-hidden rounded-xl
               border border-slate-200
               bg-white shadow-sm"
       >
@@ -400,7 +394,7 @@
     ) {
       <nav
         aria-label="Activity log pagination"
-        class="border-t border-slate-200
+        class="logs-pagination border-t border-slate-200
               pt-5"
       >
 
@@ -409,7 +403,7 @@
 
         <!-- Top Row: Page Size + Info -->
         <div
-          class="flex flex-col
+          class="logs-pagination-summary flex flex-col
                 items-center
                 justify-center
                 gap-3 text-center
@@ -434,6 +428,7 @@
             </label>
 
             <select
+              id="activity-log-page-size"
               [ngModel]="pageSize()"
               (ngModelChange)="
                 onPageSizeChange($event)
@@ -480,9 +475,8 @@
         </div>
 
         <!-- Bottom Row: Pagination Controls -->
-        <nav
-          aria-label="Activity logs pagination"
-          class="flex w-full items-center
+        <div
+          class="logs-pagination-controls flex w-full items-center
                 justify-between gap-2
                 sm:justify-center"
         >
@@ -644,7 +638,7 @@
               />
             </svg>
           </button>
-        </nav>
+        </div>
 
         </div>
 

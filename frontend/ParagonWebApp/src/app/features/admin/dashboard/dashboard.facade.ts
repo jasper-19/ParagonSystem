@@ -1,6 +1,7 @@
 import { Injectable, inject, computed, signal, DestroyRef } from '@angular/core';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { distinctUntilChanged, switchMap, finalize, tap } from 'rxjs/operators';
+import { switchMap, finalize, tap, catchError } from 'rxjs/operators';
+import { EMPTY, Subject, merge } from 'rxjs';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { AnalyticsMetric, AnalyticsTrend, AnalyticsMode } from '../../../models/dashboard-feed.model';
 import { SocketService } from '../../../core/services/socket.service';
@@ -39,19 +40,33 @@ export class DashboardFacade {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly analyticsLoading = signal(false);
+  readonly loadError = signal<string | null>(null);
+  private readonly retryRequest = new Subject<void>();
   readonly selectedMode = signal<AnalyticsMode>('daily');
 
 setMode(mode: AnalyticsMode): void {
   this.selectedMode.set(mode);
 }
 
+retry(): void {
+  this.retryRequest.next();
+}
+
 constructor() {
-  toObservable(this.selectedMode)
+  merge(toObservable(this.selectedMode), this.retryRequest)
     .pipe(
-      distinctUntilChanged(),
-      tap(() => this.analyticsLoading.set(true)),
-      switchMap(mode =>
-        this.dashboardService.loadDashboardFeed(mode).pipe(
+      switchMap(() =>
+        this.dashboardService.loadDashboardFeed(this.selectedMode()).pipe(
+          tap({ subscribe: () => {
+            this.analyticsLoading.set(true);
+            this.loadError.set(null);
+          } }),
+          catchError(() => {
+            this.loadError.set(this.dashboardFeed()
+              ? 'Unable to update the dashboard. Previously loaded data is still shown.'
+              : 'Unable to load the dashboard. Try again to retrieve publication activity.');
+            return EMPTY;
+          }),
           finalize(() => this.analyticsLoading.set(false))
         )
       ),
@@ -103,9 +118,7 @@ private countWithinDays<T>(
 }
 
   private refreshDashboardFeed(): void {
-    this.dashboardService.loadDashboardFeed(this.selectedMode()).subscribe({
-      error: err => console.error('Failed to refresh dashboard feed', err),
-    });
+    this.retry();
   }
 
   // ===== Article Metrics =====

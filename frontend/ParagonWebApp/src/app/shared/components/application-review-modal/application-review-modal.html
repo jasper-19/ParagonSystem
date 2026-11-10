@@ -1,7 +1,7 @@
 <ng-container *ngIf="application as app">
 
 <div
-  class="fixed inset-0 z-9999
+  class="application-review-overlay fixed inset-0 z-9999
        flex items-end justify-center
        bg-slate-950/70 backdrop-blur-sm
        animate-in fade-in
@@ -20,7 +20,7 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="application-review-title"
-    class="relative flex max-h-[94dvh]
+    class="application-review relative flex max-h-[94dvh]
            w-full max-w-3xl flex-col
            overflow-hidden bg-white
            shadow-2xl
@@ -42,7 +42,7 @@
 
       <!-- Header with Background -->
       <header
-        class="relative z-10 shrink-0
+        class="application-review__header relative z-10 shrink-0
               bg-linear-to-br
               from-[#000035]
               via-[#001f5c]
@@ -103,7 +103,7 @@
       </header>
 
         <div
-          class="shrink-0 border-b border-slate-200
+          class="application-review__progress shrink-0 border-b border-slate-200
                 bg-white px-4 py-4
                 sm:px-6 lg:px-8"
           aria-label="Application progress"
@@ -256,7 +256,7 @@
 
       <!-- Content -->
       <div
-        class="min-h-0 flex-1 space-y-6
+        class="application-review__content min-h-0 flex-1 space-y-6
               overflow-y-auto
               overscroll-contain
               px-4 py-5
@@ -267,7 +267,7 @@
         <!-- Applicant Info -->
         <div class="space-y-4">
 
-          <div class="flex items-center gap-2">
+          <div class="application-review__heading flex items-center gap-2">
             <div class="h-5 w-1 rounded-full bg-[#F4B400]"></div>
             <h4 class="text-lg font-bold text-[#000035]">
               Applicant
@@ -276,7 +276,7 @@
 
           <!-- Identity -->
           <div
-            class="rounded-2xl border border-slate-200
+            class="application-review__identity rounded-2xl border border-slate-200
                   bg-slate-50 p-4 sm:p-5"
           >
             <div class="flex min-w-0 items-center gap-3">
@@ -389,7 +389,7 @@
 
           <!-- Details -->
           <dl
-            class="grid grid-cols-1 gap-3
+            class="application-review__facts grid grid-cols-1 gap-3
                   min-[480px]:grid-cols-2"
           >
             <div
@@ -427,7 +427,7 @@
 
           <!-- Applied positions -->
           <div
-            class="rounded-2xl border border-slate-200
+            class="application-review__positions rounded-2xl border border-slate-200
                   bg-white p-4 sm:p-5"
           >
             <p
@@ -493,7 +493,7 @@
         <!-- Motivation -->
         <div class="space-y-4">
 
-          <div class="flex items-center gap-2">
+          <div class="application-review__heading flex items-center gap-2">
             <div class="h-5 w-1 rounded-full bg-[#F4B400]"></div>
             <h4 class="text-lg font-bold text-[#000035]">
               Motivation
@@ -501,7 +501,7 @@
           </div>
 
           <div
-            class="rounded-2xl border border-slate-200
+            class="application-review__motivation rounded-2xl border border-slate-200
                   bg-slate-50 p-4 sm:p-5"
           >
             <p
@@ -534,7 +534,7 @@
     <section
       *ngIf="isPending(app)"
       aria-labelledby="schedule-interview-title"
-      class="space-y-4 rounded-2xl
+      class="application-review__workflow space-y-4 rounded-2xl
             border border-slate-200
             bg-slate-50 p-4 sm:p-5
             animate-in fade-in slide-in-from-bottom-2
@@ -623,7 +623,7 @@
 
     <section
       *ngIf="isScheduled(app)"
-      class="space-y-4 rounded-2xl
+      class="application-review__workflow space-y-4 rounded-2xl
             border border-blue-200
             bg-blue-50 p-4 sm:p-5
             animate-in fade-in slide-in-from-bottom-2
@@ -723,7 +723,7 @@
     <section
       *ngIf="hasInterviewNotesStage(app)"
       aria-labelledby="interview-notes-title"
-      class="space-y-4 rounded-2xl
+      class="application-review__workflow space-y-4 rounded-2xl
             border border-slate-200
             bg-slate-50 p-4 sm:p-5"
     >
@@ -833,7 +833,7 @@
 
         <footer
           *ngIf="isInterviewed(app)"
-          class="shrink-0 border-t border-slate-200
+          class="application-review__footer shrink-0 border-t border-slate-200
                 bg-white/95 px-4 pt-3
                 pb-[calc(0.75rem+env(safe-area-inset-bottom))]
                 backdrop-blur

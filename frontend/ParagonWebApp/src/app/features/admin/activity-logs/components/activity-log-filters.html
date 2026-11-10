@@ -1,32 +1,25 @@
 <section
   aria-labelledby="activity-log-filters-title"
-  class="rounded-xl border
+  class="log-filters rounded-xl border
          border-slate-200 bg-white
          p-4 shadow-sm
          sm:p-5"
 >
   <div
-    class="flex flex-col gap-4
+    class="filters-layout flex flex-col gap-4
            lg:flex-row
            lg:items-end"
   >
 
   <div class="min-w-0 lg:w-48 lg:shrink-0">
-    <p
+    <h2
       id="activity-log-filters-title"
       class="text-xs font-bold uppercase
             tracking-[0.12em]
             text-slate-400"
     >
-      Filters
-    </p>
-
-    <p
-      class="mt-1 text-sm font-semibold
-            text-[#000035]"
-    >
       Refine activity records
-    </p>
+    </h2>
 
   @if (loading) {
     <div
@@ -68,7 +61,7 @@
   </div>
 
   <div
-    class="grid min-w-0 flex-1
+    class="filters-fields grid min-w-0 flex-1
           grid-cols-1 gap-3
           sm:grid-cols-2
           xl:grid-cols-4"
@@ -298,7 +291,7 @@
           ? 'Reset all activity log filters'
           : 'No activity log filters to reset'
       "
-      class="inline-flex min-h-11 w-full
+      class="filters-reset inline-flex min-h-11 w-full
             shrink-0 items-center
             justify-center gap-2
             rounded-xl border

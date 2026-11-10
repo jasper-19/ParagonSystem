@@ -25,7 +25,8 @@ import { MediaCardComponent } from '../media-card/media-card';
   imports: [CommonModule, RouterModule,
     MediaCardComponent
   ],
-  templateUrl: './media-grid.html'
+  templateUrl: './media-grid.html',
+  styleUrl: './media-grid.scss'
 })
 export class MediaGridComponent implements AfterViewInit, OnChanges {
   @Input() mediaList: Media[] = [];

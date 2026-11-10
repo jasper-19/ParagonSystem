@@ -1,81 +1,20 @@
 @if (breadcrumbs().length > 0) {
-  <nav
-    class="mx-auto w-full max-w-screen-2xl"
-    aria-label="Breadcrumb"
-  >
-    <div
-      class="flex min-h-12 items-center overflow-hidden rounded-xl border border-slate-200 bg-white px-2 shadow-sm sm:px-3"
-    >
-      <ol class="flex min-w-0 flex-1 items-center" role="list">
-        @for (crumb of breadcrumbs(); track trackBreadcrumb($index, crumb); let first = $first; let last = $last; let index = $index) {
-          @if (index === 1 && breadcrumbs().length > 2) {
-            <li class="flex shrink-0 items-center sm:hidden" aria-hidden="true">
-              <svg
-                class="h-4 w-4 shrink-0 text-slate-300"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-              <span class="flex h-10 min-w-8 items-center justify-center text-sm font-bold tracking-widest text-slate-400">
-                …
-              </span>
-            </li>
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol class="breadcrumb__trail" role="list">
+      @for (crumb of breadcrumbs(); track trackBreadcrumb($index, crumb); let first = $first; let last = $last) {
+        <li class="breadcrumb__item">
+          @if (!first) {
+            <svg class="breadcrumb__separator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <path d="m9 18 6-6-6-6" />
+            </svg>
           }
-
-          <li
-            class="min-w-0 items-center"
-            [ngClass]="!first && !last ? 'hidden sm:flex' : 'flex'"
-          >
-            @if (!first) {
-              <svg
-                class="h-4 w-4 shrink-0 text-slate-300"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                aria-hidden="true"
-              >
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            }
-
-            @if (!last) {
-              <a
-                class="group inline-flex min-h-11 min-w-0 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-amber-50 hover:text-amber-800 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 sm:px-3 motion-reduce:transition-none"
-                [routerLink]="crumb.url"
-                [attr.aria-label]="first ? 'Go to ' + crumb.label : null"
-              >
-                @if (first) {
-                  <svg
-                    class="h-4 w-4 shrink-0 text-amber-600 transition-colors group-hover:text-amber-700 motion-reduce:transition-none"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    aria-hidden="true"
-                  >
-                    <path d="m3 11 9-8 9 8" />
-                    <path d="M5 10v10h14V10M9 20v-6h6v6" />
-                  </svg>
-                }
-                <span class="max-w-28 truncate sm:max-w-48 lg:max-w-64">{{ crumb.label }}</span>
-              </a>
-            } @else {
-              <span
-                class="inline-flex min-h-11 min-w-0 items-center px-2 text-sm font-bold text-[#000035] sm:px-3"
-                aria-current="page"
-                [title]="crumb.label"
-              >
-                <span class="truncate">{{ crumb.label }}</span>
-              </span>
-            }
-          </li>
-        }
-      </ol>
-
-    </div>
+          @if (!last) {
+            <a class="breadcrumb__link" [routerLink]="crumb.url">{{ crumb.label }}</a>
+          } @else {
+            <span class="breadcrumb__current" aria-current="page">{{ crumb.label }}</span>
+          }
+        </li>
+      }
+    </ol>
   </nav>
 }

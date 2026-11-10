@@ -1,428 +1,84 @@
-<aside
-  aria-label="Administration navigation"
-  class="fixed inset-y-0 left-0 z-60
-         flex h-dvh flex-col
-         overflow-visible
-         border-r border-[#f4b400]/20
-         bg-[#000035]
-         transition-[width,transform] duration-300 ease-in-out
-         motion-reduce:transition-none
-         -translate-x-full
-         md:translate-x-0"
-        [ngClass]="{
-          'w-72 translate-x-0': isSidebarOpen,
-          'w-72 md:w-20': !isSidebarOpen
-        }"
->
-  <nav
-    #sidebarNavigation
-    id="admin-sidebar-navigation"
-    class="flex min-h-0 flex-1 flex-col
-          overflow-visible px-3 py-4
-          sm:py-5 lg:py-6"
-    aria-label="Primary administration navigation"
-    (keydown)="onSidebarKeydown($event)"
-  >
-
-<div
-  class="mb-5 shrink-0 border-b border-[#f4b400]/15 pb-5
-        transition-[min-height] duration-300 ease-in-out
-        motion-reduce:transition-none"
-  [ngClass]="{
-    'min-h-18': isSidebarOpen,
-    'min-h-32': !isSidebarOpen
-  }"
->
-
-    <!-- LOGO SECTION -->
-<div
-  class="flex min-w-0 items-center gap-3
-         transition-all duration-300 ease-in-out
-         motion-reduce:transition-none"
-  [ngClass]="{
-    'flex-row': isSidebarOpen,
-    'flex-col': !isSidebarOpen
-  }"
->
-  <div
-    class="flex min-w-0 items-center gap-3
-           transition-all duration-300 ease-in-out"
-    [ngClass]="{
-      'flex-1 flex-row': isSidebarOpen,
-      'w-full flex-col justify-center': !isSidebarOpen
-    }"
-  >
-    <div
-      class="flex h-12 w-12 shrink-0 items-center
-             justify-center rounded-xl"
-    >
-      <img
-        src="assets/PRG_Logo.png"
-        alt="Paragon"
-        class="h-12 w-12 object-contain"
-      />
+<aside class="admin-sidebar" [class.is-expanded]="isSidebarOpen" aria-label="Administration navigation">
+  <nav #sidebarNavigation id="admin-sidebar-navigation" class="sidebar-navigation"
+    aria-label="Primary administration navigation" (keydown)="onSidebarKeydown($event)">
+    <div class="sidebar-brand">
+      <div class="brand-identity">
+        <img src="assets/PRG_Logo.png" alt="Paragon" class="brand-logo" />
+        <span class="sidebar-label brand-name">Paragon Admin</span>
+      </div>
+      <button *ngIf="isSidebarOpen" type="button" (click)="toggleSidebar()"
+        class="sidebar-toggle" aria-label="Collapse sidebar">
+        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M13 21h6c1.1046 0 2-.8954 2-2V5c0-1.10457-.8954-2-2-2h-6v18Z"/>
+          <path fill-rule="evenodd" d="M11 3H5c-1.10457 0-2 .89543-2 2v14c0 1.1046.89543 2 2 2h6V3Zm-2.29295 7.7071c.39052-.3905.39052-1.02368 0-1.41421-.39053-.39052-1.02369-.39052-1.41421 0L5.29289 11.2928c-.39052.3906-.39052 1.0237 0 1.4142l1.99995 2c.39052.3905 1.02368.3905 1.41421 0 .39052-.3905.39052-1.0237 0-1.4142l-1.29284-1.2929 1.29284-1.2928Z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+      <button *ngIf="!isSidebarOpen" type="button" (click)="toggleSidebar()"
+        class="sidebar-toggle" aria-label="Expand sidebar">
+        <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M13 21h6c1.1046 0 2-.8954 2-2V5c0-1.10457-.8954-2-2-2h-6v18Z"/>
+          <path fill-rule="evenodd" d="M11 3H5c-1.10457 0-2 .89543-2 2v14c0 1.1046.89543 2 2 2h6V3Zm-5.70711 7.7071c-.39052-.3905-.39052-1.02368 0-1.41421.39053-.39052 1.02369-.39052 1.41422 0l1.99994 1.99991c.39052.3906.39052 1.0237 0 1.4142l-1.99994 2c-.39053.3905-1.02369.3905-1.41422 0-.39052-.3905-.39052-1.0237 0-1.4142l1.29284-1.2929-1.29284-1.2928Z" clip-rule="evenodd"/>
+        </svg>
+      </button>
     </div>
-
-    <span
-      class="overflow-hidden whitespace-nowrap
-             text-xl font-bold text-[#f4b400]
-             transition-[max-width,opacity,transform]
-             duration-200 ease-out
-             motion-reduce:transition-none"
-      [ngClass]="{
-        'max-w-44 translate-x-0 opacity-100 delay-100':
-          isSidebarOpen,
-        'pointer-events-none max-w-0 -translate-x-2 opacity-0':
-          !isSidebarOpen
-      }"
-    >
-      Paragon Admin
-    </span>
-  </div>
-
-  <button
-    *ngIf="isSidebarOpen"
-    type="button"
-    (click)="toggleSidebar()"
-    class="inline-flex h-11 w-11 shrink-0
-           items-center justify-center rounded-xl
-           border border-[#f4b400]/20
-           text-[#f4b400] transition-colors
-           hover:border-[#f4b400]/40
-           hover:bg-[#f4b400]/10
-           focus-visible:outline-none
-           focus-visible:ring-2
-           focus-visible:ring-[#f4b400]
-           focus-visible:ring-offset-2
-           focus-visible:ring-offset-[#000035]"
-    aria-label="Collapse sidebar"
-  >
-    <!-- collapse SVG -->
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M13 21h6c1.1046 0 2-.8954 2-2V5c0-1.10457-.8954-2-2-2h-6v18Z"/>
-            <path fill-rule="evenodd" d="M11 3H5c-1.10457 0-2 .89543-2 2v14c0 1.1046.89543 2 2 2h6V3Zm-2.29295 7.7071c.39052-.3905.39052-1.02368 0-1.41421-.39053-.39052-1.02369-.39052-1.41421 0L5.29289 11.2928c-.39052.3906-.39052 1.0237 0 1.4142l1.99995 2c.39052.3905 1.02368.3905 1.41421 0 .39052-.3905.39052-1.0237 0-1.4142l-1.29284-1.2929 1.29284-1.2928Z" clip-rule="evenodd"/>
-          </svg>
-  </button>
-
-  <button
-    *ngIf="!isSidebarOpen"
-    type="button"
-    (click)="toggleSidebar()"
-    class="mt-2 inline-flex h-11 w-full
-           items-center justify-center rounded-xl
-           border border-[#f4b400]/20
-           text-[#f4b400] transition-colors
-           hover:border-[#f4b400]/40
-           hover:bg-[#f4b400]/10
-           focus-visible:outline-none
-           focus-visible:ring-2
-           focus-visible:ring-[#f4b400]
-           focus-visible:ring-offset-2
-           focus-visible:ring-offset-[#000035]"
-    aria-label="Expand sidebar"
-  >
-    <!-- expand SVG -->
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M13 21h6c1.1046 0 2-.8954 2-2V5c0-1.10457-.8954-2-2-2h-6v18Z"/>
-            <path fill-rule="evenodd" d="M11 3H5c-1.10457 0-2 .89543-2 2v14c0 1.1046.89543 2 2 2h6V3Zm-5.70711 7.7071c-.39052-.3905-.39052-1.02368 0-1.41421.39053-.39052 1.02369-.39052 1.41422 0l1.99994 1.99991c.39052.3906.39052 1.0237 0 1.4142l-1.99994 2c-.39053.3905-1.02369.3905-1.41422 0-.39052-.3905-.39052-1.0237 0-1.4142l1.29284-1.2929-1.29284-1.2928Z" clip-rule="evenodd"/>
-          </svg>
-  </button>
-</div>
-
-</div>
-    <!-- MAIN NAV -->
-    <div
-      class="mb-4 min-h-0 flex-1 overscroll-contain"
-      [ngClass]="{
-        'overflow-y-auto overflow-x-clip pr-0.5 space-y-2.5': isSidebarOpen,
-        'overflow-y-auto overflow-x-clip pr-0 space-y-3': !isSidebarOpen
-      }"
-    >
+    <div class="sidebar-main">
       <ng-container *ngFor="let item of navItems">
-
-        <!-- SINGLE LINK -->
-          <a
-            *ngIf="!item.children && item.route"
-            [routerLink]="item.route"
-            routerLinkActive
-            #rla="routerLinkActive"
-            [routerLinkActiveOptions]="{
-              exact: item.route === '/admin'
-            }"
-            [attr.aria-label]="!isSidebarOpen ? item.label : null"
-
-            [appSidebarTooltip]="item.label"
-            [tooltipEnabled]="!isSidebarOpen"
-            tooltipPlacement="right"
-
-            [ngClass]="{
-              'relative flex w-full pointer-events-auto items-center rounded-lg text-sm font-medium transition-[padding,gap,background-color,color,border-color] duration-300 ease-in-out motion-reduce:transition-none': true,
-              'gap-3 px-3.5 py-3': isSidebarOpen,
-              'min-h-11 justify-center px-2 py-2.5': !isSidebarOpen,
-              'bg-[#f4b400]/15 text-[#f4b400] border-l-4 border-[#f4b400]': rla.isActive,
-              'text-gray-300 hover:bg-[#f4b400]/10 hover:text-white': !rla.isActive
-            }"
-          >
-            <span
-              class="pointer-events-none flex h-5 w-5 shrink-0 items-center justify-center"
-              [innerHTML]="getIcon(item.icon)"
-            ></span>
-
-
-
-            <span
-              class="min-w-0 flex-1 overflow-hidden
-                    whitespace-nowrap text-left
-                    transition-[max-width,opacity,transform]
-                    duration-200 ease-out
-                    motion-reduce:transition-none"
-              [ngClass]="{
-                'max-w-48 translate-x-0 opacity-100 delay-100':
-                  isSidebarOpen,
-                'pointer-events-none max-w-0 -translate-x-2 opacity-0':
-                  !isSidebarOpen
-              }"
-            >
-              {{ item.label }}
-            </span>
-          </a>
-
-        <!-- DROPDOWN BUTTON -->
-        <div *ngIf="item.children" routerLinkActive #parentRla="routerLinkActive" class="rounded-xl"
-        [class.pb-1]="item.open"
-        >
-          <button
-          #parentButton
-            type="button"
-            (click)="$event.stopPropagation(); toggleItem(item)"
-            [attr.data-siderbar-parent]="getSubmenuId(item)"
-            [attr.aria-expanded]="item.open"
+        <a *ngIf="!item.children && item.route" [routerLink]="item.route"
+          routerLinkActive #rla="routerLinkActive" [routerLinkActiveOptions]="{ exact: item.route === '/admin' }"
+          class="sidebar-control" [class.is-active]="rla.isActive"
+          [attr.aria-current]="rla.isActive ? 'page' : null" [attr.aria-label]="!isSidebarOpen ? item.label : null"
+          [appSidebarTooltip]="item.label" [tooltipEnabled]="!isSidebarOpen" tooltipPlacement="right">
+          <span class="sidebar-icon" aria-hidden="true" [innerHTML]="getIcon(item.icon)"></span>
+          <span class="sidebar-label">{{ item.label }}</span>
+        </a>
+        <div *ngIf="item.children" routerLinkActive #parentRla="routerLinkActive" class="sidebar-group">
+          <button #parentButton type="button" (click)="$event.stopPropagation(); toggleItem(item)"
+            class="sidebar-control" [class.is-active]="parentRla.isActive" [class.is-open]="item.open"
+            [attr.data-sidebar-parent]="getSubmenuId(item)" [attr.aria-expanded]="item.open"
             [attr.aria-controls]="getSubmenuId(item)"
-            [attr.aria-label]="
-              !isSidebarOpen
-                ? (item.open ? 'Collapse ' : 'Expand ') + item.label
-                : null
-            "
-
-            [appSidebarTooltip]="item.label"
-            [tooltipEnabled]="!isSidebarOpen"
-            tooltipPlacement="right"
-
-            [ngClass]="{
-              'relative flex w-full pointer-events-auto items-center rounded-lg text-sm font-medium transition-[padding,gap,background-color,color,border-color] duration-300 ease-in-out motion-reduce:transition-none': true,
-              'gap-3 px-3.5 py-3': isSidebarOpen,
-              'min-h-11 justify-center px-2 py-2.5': !isSidebarOpen,
-              'bg-[#f4b400]/15 text-[#f4b400] border-l-4 border-[#f4b400]': parentRla.isActive,
-              'bg-[#f4b400]/10 text-white': item.open && !parentRla.isActive,
-              'text-gray-300 hover:bg-[#f4b400]/10 hover:text-white': !item.open && !parentRla.isActive
-            }"
-          >
-            <span
-              class="pointer-events-none flex h-5 w-5 shrink-0 items-center justify-center"
-              [innerHTML]="getIcon(item.icon)"
-            ></span>
-
-
-
-          <span
-            class="min-w-0 flex-1 overflow-hidden whitespace-nowrap
-                  text-left
-                  transition-[max-width,opacity,transform]
-                  duration-200 ease-out
-                  motion-reduce:transition-none"
-            [ngClass]="{
-              'max-w-48 translate-x-0 opacity-100 delay-100':
-                isSidebarOpen,
-              'pointer-events-none max-w-0 -translate-x-2 opacity-0':
-                !isSidebarOpen
-            }"
-          >
-            {{ item.label }}
-          </span>
-
-            <svg
-              aria-hidden="true"
-              class="h-4 w-4 shrink-0
-                    transition-[opacity,transform]
-                    duration-200 ease-out
-                    motion-reduce:transition-none"
-              [ngClass]="{
-                'opacity-100 delay-100':
-                  isSidebarOpen,
-                'pointer-events-none w-0 opacity-0':
-                  !isSidebarOpen,
-                'rotate-180':
-                  item.open && isSidebarOpen
-              }"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 9l-7 7-7-7"
-              />
+            [attr.aria-label]="!isSidebarOpen ? (item.open ? 'Collapse ' : 'Expand ') + item.label : null"
+            [appSidebarTooltip]="item.label" [tooltipEnabled]="!isSidebarOpen" tooltipPlacement="right">
+            <span class="sidebar-icon" aria-hidden="true" [innerHTML]="getIcon(item.icon)"></span>
+            <span class="sidebar-label">{{ item.label }}</span>
+            <svg aria-hidden="true" class="sidebar-chevron" [class.is-rotated]="item.open"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-
-          <!-- DROPDOWN ITEMS -->
-          <div
-            *ngIf="item.open"
-            [id]="getSubmenuId(item)"
-            [attr.data-sidebar-submenu]="getSubmenuId(item)"
-            role="group"
-            [ngClass]="{
-              'mt-2 space-y-1.5': true,
-              'px-1': !isSidebarOpen,
-              'ml-4 border-l-2 border-[#f4b400]/20 pl-4': isSidebarOpen
-            }"
-          >
-            <a
-              *ngFor="let child of item.children"
-              [routerLink]="child.route"
-              routerLinkActive
-              #childRla="routerLinkActive"
+          <div *ngIf="item.open" [id]="getSubmenuId(item)" [attr.data-sidebar-submenu]="getSubmenuId(item)"
+            role="group" [attr.aria-label]="item.label" class="sidebar-submenu">
+            <a *ngFor="let child of item.children" [routerLink]="child.route"
+              routerLinkActive #childRla="routerLinkActive" class="sidebar-control sidebar-child"
+              [class.is-active]="childRla.isActive" [attr.aria-current]="childRla.isActive ? 'page' : null"
               [attr.aria-label]="!isSidebarOpen ? child.label : null"
-
-              [appSidebarTooltip]="child.label"
-              [tooltipEnabled]="!isSidebarOpen"
-              tooltipPlacement="right"
-
-              [ngClass]="{
-                'relative flex w-full pointer-events-auto items-center rounded-lg text-xs font-medium transition-[padding,gap,background-color,color,border-color] duration-300 ease-in-out motion-reduce:transition-none': true,
-                'min-h-11 justify-center px-2 py-2.5': !isSidebarOpen,
-                'gap-2.5 px-3 py-2.5': isSidebarOpen,
-                'bg-[#f4b400]/20 text-[#f4b400] font-semibold border-l-4 border-[#f4b400]': childRla.isActive,
-                'text-gray-400 hover:bg-[#f4b400]/10 hover:text-[#f4b400]': !childRla.isActive
-              }"
-            >
-              <span
-                class="pointer-events-none flex shrink-0 items-center justify-center"
-                [ngClass]="{
-                  'h-4 w-4': !isSidebarOpen,
-                  'h-3.5 w-3.5': isSidebarOpen
-                }"
-                [innerHTML]="getIcon(child.icon)"
-              ></span>
-
-
-              <span
-                class="min-w-0 overflow-hidden whitespace-nowrap
-                      transition-[max-width,opacity,transform]
-                      duration-200 ease-out
-                      motion-reduce:transition-none"
-                [ngClass]="{
-                  'max-w-48 translate-x-0 opacity-100 delay-100':
-                    isSidebarOpen,
-                  'pointer-events-none max-w-0 -translate-x-2 opacity-0':
-                    !isSidebarOpen
-                }"
-              >
-                {{ child.label }}
-              </span>
+              [appSidebarTooltip]="child.label" [tooltipEnabled]="!isSidebarOpen" tooltipPlacement="right">
+              <span class="sidebar-icon" aria-hidden="true" [innerHTML]="getIcon(child.icon)"></span>
+              <span class="sidebar-label">{{ child.label }}</span>
             </a>
           </div>
         </div>
-
       </ng-container>
     </div>
-
-    <!-- ACCOUNT (BOTTOM) -->
-    <div
-      class="shrink-0 border-t
-            border-[#f4b400]/20 pt-4"
-    >
-      <div
-        [ngClass]="{
-          'space-y-2.5 px-2': isSidebarOpen,
-          'space-y-2 px-1': !isSidebarOpen
-        }"
-      >
-        @for (accountItem of accountItems; track accountItem.label) {
-
-          @if (accountItem.action === 'logout') {
-            <button
-              type="button"
-              (click)="requestLogout()"
-              [attr.aria-label]="!isSidebarOpen ? accountItem.label : null"
-
-              [appSidebarTooltip]="accountItem.label"
-              [tooltipEnabled]="!isSidebarOpen"
-              tooltipPlacement="right"
-
-              [ngClass]="{
-                'relative flex w-full pointer-events-auto items-center rounded-lg border border-red-500/40 bg-red-500/10 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20': true,
-                'gap-3 px-3.5 py-3': isSidebarOpen,
-                'min-h-11 justify-center px-2 py-2.5': !isSidebarOpen
-              }"
-            >
-              <span
-                class="pointer-events-none flex h-5 w-5 shrink-0 items-center justify-center"
-                [innerHTML]="getIcon(accountItem.icon)"
-              ></span>
-
-              <span
-                class="min-w-0 overflow-hidden whitespace-nowrap
-                      transition-[max-width,opacity,transform]
-                      duration-200 ease-out
-                      motion-reduce:transition-none"
-                [ngClass]="{
-                  'max-w-48 translate-x-0 opacity-100 delay-100':
-                    isSidebarOpen,
-                  'pointer-events-none max-w-0 -translate-x-2 opacity-0':
-                    !isSidebarOpen
-                }"
-              >
-                {{ accountItem.label }}
-              </span>
-            </button>
-          } @else if (accountItem.route) {
-            <a
-              [routerLink]="accountItem.route"
-              routerLinkActive
-              #accountRla="routerLinkActive"
-              [attr.aria-label]="!isSidebarOpen ? accountItem.label : null"
-
-              [appSidebarTooltip]="accountItem.label"
-              [tooltipEnabled]="!isSidebarOpen"
-              tooltipPlacement="right"
-
-              [ngClass]="{
-                'relative flex w-full pointer-events-auto items-center rounded-lg text-sm font-medium transition-[padding,gap,background-color,color,border-color] duration-300 ease-in-out motion-reduce:transition-none': true,
-                'gap-3 px-3.5 py-3': isSidebarOpen,
-                'min-h-11 justify-center px-2 py-2.5': !isSidebarOpen,
-                'bg-[#f4b400]/15 text-[#f4b400] border-l-4 border-[#f4b400]': accountRla.isActive,
-                'text-[#f4b400] hover:bg-[#f4b400]/15': !accountRla.isActive
-              }"
-            >
-              <span
-                class="pointer-events-none flex h-5 w-5 shrink-0 items-center justify-center"
-                [innerHTML]="getIcon(accountItem.icon)"
-              ></span>
-
-
-              <span
-                class="min-w-0 overflow-hidden whitespace-nowrap
-                      transition-[max-width,opacity,transform]
-                      duration-200 ease-out
-                      motion-reduce:transition-none"
-                [ngClass]="{
-                  'max-w-48 translate-x-0 opacity-100 delay-100':
-                    isSidebarOpen,
-                  'pointer-events-none max-w-0 -translate-x-2 opacity-0':
-                    !isSidebarOpen
-                }"
-              >
-                {{ accountItem.label }}
-              </span>
-            </a>
-          }
-
+    <div class="sidebar-account">
+      @for (accountItem of accountItems; track accountItem.label) {
+        @if (accountItem.action === 'logout') {
+          <button type="button" (click)="requestLogout()" class="sidebar-control sidebar-logout"
+            [attr.aria-label]="!isSidebarOpen ? accountItem.label : null"
+            [appSidebarTooltip]="accountItem.label" [tooltipEnabled]="!isSidebarOpen" tooltipPlacement="right">
+            <span class="sidebar-icon" aria-hidden="true" [innerHTML]="getIcon(accountItem.icon)"></span>
+            <span class="sidebar-label">{{ accountItem.label }}</span>
+          </button>
+        } @else if (accountItem.route) {
+          <a [routerLink]="accountItem.route" routerLinkActive #accountRla="routerLinkActive"
+            class="sidebar-control" [class.is-active]="accountRla.isActive"
+            [attr.aria-current]="accountRla.isActive ? 'page' : null"
+            [attr.aria-label]="!isSidebarOpen ? accountItem.label : null"
+            [appSidebarTooltip]="accountItem.label" [tooltipEnabled]="!isSidebarOpen" tooltipPlacement="right">
+            <span class="sidebar-icon" aria-hidden="true" [innerHTML]="getIcon(accountItem.icon)"></span>
+            <span class="sidebar-label">{{ accountItem.label }}</span>
+          </a>
         }
-      </div>
+      }
     </div>
-
   </nav>
 </aside>

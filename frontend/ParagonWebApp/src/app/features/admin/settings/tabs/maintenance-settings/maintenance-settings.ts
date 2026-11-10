@@ -19,6 +19,7 @@ import { GlobalSettingsService } from '../../../../../core/services/global-setti
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './maintenance-settings.html',
+  styleUrl: '../../settings-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MaintenanceSettingsComponent implements OnInit {

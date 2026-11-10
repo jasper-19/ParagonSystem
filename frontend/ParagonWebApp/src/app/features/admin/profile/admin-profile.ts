@@ -29,6 +29,7 @@ import { RouterLink } from '@angular/router';
     RouterLink,
   ],
   templateUrl: './admin-profile.html',
+  styleUrl: './admin-profile.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminProfile implements OnInit {

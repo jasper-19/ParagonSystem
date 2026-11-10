@@ -12,6 +12,14 @@ type ActivityFilter = 'all' | 'article' | 'application' | 'issue' | 'staff';
 })
 export class ActivityFeed {
 
+  readonly filters: { value: ActivityFilter; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'article', label: 'Articles' },
+    { value: 'application', label: 'Applications' },
+    { value: 'issue', label: 'Special Issues' },
+    { value: 'staff', label: 'Staff' },
+  ];
+
   readonly activities =
     input.required<ActivityItem[]>();
 

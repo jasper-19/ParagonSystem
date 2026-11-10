@@ -1,9 +1,9 @@
-<div class="h-full">
+<div class="media-details h-full">
   <ng-container *ngIf="media; else noSelectionState">
     <div class="flex flex-col gap-4">
 
       <!-- Preview -->
-      <div class="relative overflow-hidden rounded-(--border-radius-lg)
+      <div class="media-details__preview relative overflow-hidden rounded-(--border-radius-lg)
        bg-(--color-background-secondary)">
         <ng-container *ngIf="isImage(); else nonImagePreview">
           <img
@@ -11,7 +11,7 @@
             [alt]="media.altText || media.fileName"
             class="block aspect-video w-full object-cover
        sm:aspect-4/3" />
-          <div class="absolute inset-0 flex flex-col justify-end px-3 pb-3 pt-10"
+          <div class="media-details__image-label absolute inset-0 flex flex-col justify-end px-3 pb-3 pt-10"
             style="background: linear-gradient(to top, rgba(0,0,53,0.72) 0%, rgba(0,0,53,0.2) 60%, transparent 100%);">
             <p class="text-[11px] font-medium truncate m-0" style="color: rgba(244,180,0,0.95); letter-spacing: 0.03em;">
               {{ media.fileName }}
@@ -38,7 +38,7 @@
       </div>
 
       <!-- Metadata grid -->
-      <div class="grid grid-cols-2 gap-1.5">
+      <div class="media-details__facts grid grid-cols-2 gap-1.5">
         <div class="rounded-(--border-radius-md) px-3 py-2.5 bg-(--color-background-secondary)">
           <p class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary) mb-1">Type</p>
           <p class="text-sm font-medium text-(--color-text-primary) truncate">{{ media.fileType || '—' }}</p>
@@ -68,7 +68,7 @@
       </div>
 
       <!-- Section divider -->
-      <div class="flex items-center gap-2">
+      <div class="media-details__divider flex items-center gap-2">
         <span class="text-[10px] font-medium uppercase tracking-widest text-(--color-text-tertiary) whitespace-nowrap">Metadata</span>
         <div class="flex-1 h-px bg-(--color-border-tertiary)"></div>
       </div>
@@ -76,13 +76,13 @@
       <div *ngIf="editable" class="space-y-4">
         <div>
         <label
-          for="media-alt-text"
+          [attr.for]="fieldId + '-alt-text'"
           class="mb-2 block text-sm font-semibold text-slate-700"
         >
           Alt text
         </label>
           <input
-            id="media-alt-text"
+            [id]="fieldId + '-alt-text'"
             name="mediaAltText"
             type="text"
             [ngModel]="altTextDraft()"
@@ -104,13 +104,13 @@
 
         <div>
           <label
-            for="media-caption"
+            [attr.for]="fieldId + '-caption'"
             class="mb-2 block text-sm font-semibold text-slate-700"
           >
             Caption
           </label>
           <textarea
-            id="media-caption"
+            [id]="fieldId + '-caption'"
             name="mediaCaption"
             rows="4"
             [ngModel]="captionDraft()"
@@ -169,7 +169,7 @@
       </div>
 
       <!-- Save status -->
-      <div class="flex items-center justify-between pt-0.5">
+      <div *ngIf="editable" class="media-details__save-status flex items-center justify-between pt-0.5">
         <p class="text-[11px] text-(--color-text-tertiary) flex items-center gap-1.5 m-0">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -197,7 +197,7 @@
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
-          Saved
+          {{ hasMetadataChanges() ? 'Unsaved changes' : 'Saved' }}
         </span>
       </div>
 
@@ -206,7 +206,7 @@
 
   <!-- No selection state -->
   <ng-template #noSelectionState>
-    <div class="flex h-full min-h-80 flex-col items-center justify-center text-center p-8">
+    <div class="media-details__empty flex h-full min-h-80 flex-col items-center justify-center text-center p-8">
       <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background: rgba(0,0,53,0.04);">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000035" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3">
           <rect x="3" y="3" width="18" height="18" rx="2"/>

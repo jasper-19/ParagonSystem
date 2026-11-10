@@ -40,6 +40,7 @@ import {
   ],
   providers: [MediaLibraryStore],
   templateUrl: './media-library.html',
+  styleUrl: './media-library.scss',
 })
 export class MediaLibraryComponent implements OnInit {
   @ViewChild('mobileDetailsPanel')
@@ -57,6 +58,7 @@ export class MediaLibraryComponent implements OnInit {
   readonly selectedIds = this.store.selectedIdList;
   readonly selectedMedia = this.store.selectedMedia;
   readonly isLoading = this.store.isLoading;
+  readonly loadError = this.store.errorMessage;
   readonly metadataSaveVersion = this.store.metadataSaveVersion;
   readonly isSavingMetadata = this.store.isSavingMetadata;
   readonly isDetailsPanelOpen = signal(false);

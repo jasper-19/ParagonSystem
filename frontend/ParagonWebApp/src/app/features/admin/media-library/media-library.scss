@@ -1,0 +1,90 @@
+:host {
+  display: block;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  color: #000035;
+}
+
+.media-workspace {
+  font-size: 14px;
+  line-height: 1.5;
+  caret-color: #000035;
+  background: transparent;
+  ::selection { background: #f4b400; color: #000035; }
+  h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -.025em; }
+  main > div:first-child { padding-bottom: 22px; border-bottom: 1px solid #dce1e8; }
+  main > div:first-child p { font-size: 14px; margin-top: 6px; }
+  .media-toolbar { border: 0; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
+  input[type='search'] {
+    border: 1px solid #cbd2dc;
+    border-radius: 4px;
+    font-family: inherit;
+    color: #000035;
+    box-shadow: none;
+    &::placeholder { color: #687487; }
+    &:focus { outline: 2px solid #000035; outline-offset: 2px; border-color: #000035; box-shadow: none; }
+  }
+  button {
+    font-family: inherit;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: background-color 150ms ease, border-color 150ms ease;
+    &:focus-visible { outline: 2px solid #000035; outline-offset: 3px; box-shadow: none; }
+  }
+  main > div[aria-busy], main > div:has(> h2) {
+    border-radius: 6px;
+    border-style: solid;
+    border-color: #dce1e8;
+  }
+  main > div[aria-busy] > div { border-radius: 4px; }
+  main > div:has(> h2) > div[aria-hidden] { border-radius: 4px; background: #f2f4f7; }
+  .text-slate-500, .text-slate-600 { color: #596477; }
+  section[aria-labelledby='media-results-title'] > div { padding-bottom: 10px; border-bottom: 1px solid #e4e7ed; }
+  #media-results-title { color: #000035; font-size: 14px; font-weight: 600; }
+  section[aria-labelledby='media-results-title'] > div > span { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .media-inspector {
+    border: 1px solid #dce1e8;
+    border-radius: 6px;
+    min-height: 420px;
+    > div:first-child { padding: 18px 20px; }
+    h3 { color: #000035; }
+    .inspector-title { margin: 0; color: #f4b400; font-size: 15px; font-weight: 600; letter-spacing: 0; }
+    > div:last-child p { font-size: 12px; line-height: 1.6; color: #596477; }
+  }
+  .media-details-dialog {
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 12px 40px rgb(0 0 53 / 20%);
+    header p:last-child { color: #d6d8e8; }
+    header button:focus-visible { outline-color: #f4b400; }
+  }
+  .media-load-error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid #e7c7c7;
+    border-radius: 6px;
+    background: #fff8f8;
+    color: #8b2727;
+    h2 { font-size: 15px; font-weight: 600; }
+    p { margin-top: 4px; font-size: 13px; line-height: 1.6; }
+    button { min-height: 44px; padding: 10px 16px; background: #000035; color: #fff; }
+  }
+  [class*='overflow-y-auto'] { scrollbar-color: #9199a9 #f2f4f7; scrollbar-width: thin; }
+}
+
+@media (max-width: 639px) {
+  .media-workspace {
+    h1 { font-size: 25px; }
+    input[type='search'] { font-size: 16px; }
+  }
+}
+
+@media (min-width: 640px) {
+  .media-workspace .media-details-dialog { border-radius: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-workspace button { transition: none; }
+}

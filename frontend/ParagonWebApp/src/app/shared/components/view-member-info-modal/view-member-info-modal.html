@@ -1,7 +1,7 @@
 <ng-container *ngIf="isOpen() && member()">
 
   <div
-    class="fixed inset-0 z-9999
+    class="member-info-overlay fixed inset-0 z-9999
           flex items-end justify-center
           bg-slate-950/70
           backdrop-blur-sm
@@ -14,7 +14,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="view-member-title"
-      class="relative flex max-h-[94dvh]
+      class="member-info relative flex max-h-[94dvh]
             w-full max-w-md flex-col
             overflow-hidden bg-white
             shadow-2xl
@@ -30,7 +30,7 @@
       <!-- ==================== -->
 
         <header
-          class="relative z-10 shrink-0
+          class="member-info__header relative z-10 shrink-0
                 bg-linear-to-br
                 from-[#000035]
                 via-[#001f5c]
@@ -114,7 +114,7 @@
       <!-- ==================== -->
 
       <div
-        class="min-h-0 flex-1 space-y-5
+        class="member-info__body min-h-0 flex-1 space-y-5
               overflow-y-auto
               overscroll-contain
               px-4 py-5

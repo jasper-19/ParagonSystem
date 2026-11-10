@@ -1,6 +1,7 @@
 <div
   #gridContainer
   role="listbox"
+  aria-multiselectable="true"
   aria-label="Available images"
   class="grid min-w-0 grid-cols-1 gap-3
         min-[420px]:grid-cols-2
@@ -27,7 +28,7 @@
     [tabindex]="index === activeIndex ? 0 : -1"
     (focus)="onItemFocus(index)"
     (keydown)="onItemKeydown($event, index)"
-    class="rounded-2xl outline-none
+    class="media-grid__item rounded-2xl outline-none
           focus-visible:ring-2
           focus-visible:ring-[#F4B400]
           focus-visible:ring-offset-2"

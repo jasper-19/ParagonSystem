@@ -18,6 +18,7 @@ import { College } from '../../../../join/models/college.model';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './personal-information.html',
+  styleUrl: './personal-information.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PersonalInformation implements OnChanges, OnInit {

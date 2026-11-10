@@ -1,6 +1,6 @@
 @if (isOpen) {
   <div
-    class="fixed inset-0 z-70 flex items-end justify-center overscroll-contain bg-[#000035]/65 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+    class="settings-user-overlay fixed inset-0 z-70 flex items-end justify-center overscroll-contain bg-[#000035]/65 p-0 sm:items-center sm:p-4"
     role="presentation"
     (click)="onClose()"
   >
@@ -14,7 +14,6 @@
       (click)="$event.stopPropagation()"
     >
       <header class="sticky top-0 z-10 border-b border-slate-200 bg-[#000035] p-5 text-white sm:p-6">
-        <p class="text-xs font-black uppercase tracking-[0.16em] text-[#F4B400]">User Accounts</p>
         <h3 id="create-admin-title" class="mt-2 text-xl font-bold">Add administrator</h3>
         <p id="create-admin-description" class="mt-2 text-sm leading-6 text-white/65">
           Link a secure system account to an active editorial-board staff member.
@@ -68,7 +67,7 @@
             </label>
             <button
               type="button"
-              [attr.aria-label]="showPassword() ? 'Hide temporary password' : 'Show temporary password'"
+              aria-label="Generate strong password"
               class="min-h-11 touch-manipulation rounded-lg px-2 text-right text-xs font-bold text-amber-700 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
               (click)="generatePassword()"
             >
@@ -86,6 +85,7 @@
             <button
               type="button"
               class="absolute inset-y-0 right-1 min-w-14 touch-manipulation rounded-lg text-xs font-bold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+              [attr.aria-label]="showPassword() ? 'Hide temporary password' : 'Show temporary password'"
               (click)="showPassword.set(!showPassword())"
             >
               {{ showPassword() ? 'Hide' : 'Show' }}

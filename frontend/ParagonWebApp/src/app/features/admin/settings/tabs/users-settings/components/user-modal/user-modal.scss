@@ -1,0 +1,33 @@
+:host { color: #000035; font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+.settings-user-overlay {
+  padding: 16px; background: rgb(0 0 53 / .55); caret-color: #000035;
+  ::selection { color: #000035; background: #f4b400; }
+  [role='dialog'] { max-height: calc(100dvh - 32px); border-radius: 6px; box-shadow: none; scrollbar-width: thin; scrollbar-color: #9199a9 #f2f4f7; }
+  header { padding: 22px 24px; border: 0; }
+  h3 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.3; letter-spacing: -.015em; }
+  header p { margin-top: 6px; color: #d2d2df; font-size: 13px; line-height: 1.6; max-width: 65ch; }
+  form { padding: 24px; }
+  label { font-size: 13px; font-weight: 600; }
+  p { font-size: 12px; }
+  .text-slate-500 { color: #596477; }
+  button { min-height: 44px; border-radius: 4px; font-family: inherit; font-size: 13px; font-weight: 600; box-shadow: none; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button:focus-visible { outline: 2px solid #000035; outline-offset: 2px; box-shadow: none; }
+  button[aria-label='Generate strong password'] { color: #795500; font-size: 12px; }
+  input, select { min-height: 44px; border-radius: 4px; border-color: #b8c1cf; font-family: inherit; font-size: 14px; box-shadow: none; }
+  input:focus, select:focus { border-color: #000035; outline: 2px solid #000035; outline-offset: 2px; box-shadow: none; }
+  #temporary-password { font-family: ui-monospace, Consolas, monospace; }
+  [role='alert'] { border-radius: 4px; }
+  form > div:last-child { position: sticky; bottom: 0; margin: 24px -24px -24px; padding: 16px 24px max(16px, env(safe-area-inset-bottom)); border-top: 1px solid #dce1e8; background: #fff; }
+}
+@media (max-width: 639px) {
+  .settings-user-overlay {
+    padding: 8px; align-items: center;
+    [role='dialog'] { max-height: calc(100dvh - 16px); border-radius: 6px; }
+    header, form { padding: 20px; }
+    input, select { font-size: 16px; }
+    form > div:nth-child(3) > div:first-child { align-items: flex-start; flex-wrap: wrap; gap: 4px; }
+    button[aria-label='Generate strong password'] { padding-left: 0; }
+    form > div:last-child { margin: 24px -20px -20px; padding: 16px 20px max(16px, env(safe-area-inset-bottom)); }
+  }
+}

@@ -199,17 +199,20 @@ export class ApplicationService {
   refresh(
     page = this.currentPage(),
     limit = this.pageSize(),
-    status = this.lastStatus,
-    search = this.lastSearch
+    status?: string,
+    search?: string
   ): void {
-    this.lastStatus = status;
-    this.lastSearch = search;
+    // Realtime refresh() retains filters; explicitly supplied undefined clears them.
+    const nextStatus = arguments.length < 3 ? this.lastStatus : status;
+    const nextSearch = arguments.length < 4 ? this.lastSearch : search;
+    this.lastStatus = nextStatus;
+    this.lastSearch = nextSearch;
 
     this.requestApplicationsRefresh(
       page,
       limit,
-      status,
-      search
+      nextStatus,
+      nextSearch
     );
   }
 

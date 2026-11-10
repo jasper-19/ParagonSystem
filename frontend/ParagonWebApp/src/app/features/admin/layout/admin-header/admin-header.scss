@@ -1,0 +1,72 @@
+:host {
+  display: block;
+  position: relative;
+  color: #000035;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: .8125rem;
+  font-variant-numeric: tabular-nums;
+}
+// Raise only the open notifications above fixed dashboard actions, preserving
+// the existing stacking order for page dialogs when notifications are closed.
+:host:has(.notification-panel) { z-index: 80; }
+.admin-header { position: relative; z-index: 50; background: white; border-bottom: 1px solid #dcdce3; }
+.admin-header ::selection { background: #f4b400; color: #000035; }
+.admin-header button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.admin-header button:focus-visible, .notification-panel:focus-visible { outline: 2px solid #000035; outline-offset: 2px; }
+.header-layout { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-height: 4rem; min-width: 0; align-items: center; gap: .5rem; padding: 0 .75rem; }
+.header-heading { display: flex; min-width: 0; align-items: center; gap: .625rem; }
+.header-heading h1 { min-width: 0; overflow: hidden; font: 600 .875rem/1.3 "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.015em; white-space: nowrap; text-overflow: ellipsis; }
+.title-full { display: none; }
+.header-icon-button { position: relative; display: inline-flex; width: 2.75rem; height: 2.75rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 5px; color: #53536c; transition: background-color 150ms, color 150ms; }
+.header-icon-button:hover, .header-icon-button[aria-expanded="true"] { background: #f1f1f5; color: #000035; }
+.header-icon-button svg { width: 1.125rem; height: 1.125rem; }
+.header-clock { display: none; align-items: center; justify-content: center; gap: .75rem; white-space: nowrap; }
+.header-date { color: #53536c; font-size: .75rem; }
+.header-time { border-left: 1px solid #dcdce3; padding-left: .75rem; color: #000035; font-size: .75rem; }
+.header-account { display: flex; min-width: 0; align-items: center; justify-self: end; gap: .5rem; }
+.tablet-time { display: none; color: #53536c; white-space: nowrap; font-size: .75rem; }
+.notification-container { position: relative; }
+.notification-badge { position: absolute; top: .125rem; right: .0625rem; display: flex; min-width: 1rem; height: 1rem; align-items: center; justify-content: center; padding: 0 .1875rem; border: 2px solid white; border-radius: 1rem; background: #b91c1c; color: white; font-size: .5625rem; font-weight: 700; line-height: 1; }
+.admin-profile { display: flex; min-width: 0; align-items: center; gap: .625rem; padding-left: .75rem; border-left: 1px solid #dcdce3; }
+.admin-avatar { display: flex; width: 2rem; height: 2rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 5px; background: #000035; color: white; font-size: .8125rem; font-weight: 600; }
+.admin-identity { display: none; min-width: 0; }
+.admin-name { max-width: 10rem; overflow: hidden; color: #000035; font-size: .8125rem; font-weight: 600; line-height: 1.35; white-space: nowrap; text-overflow: ellipsis; }
+.admin-role { margin-top: .125rem; color: #53536c; font-size: .6875rem; line-height: 1.3; white-space: nowrap; }
+.notification-panel { position: fixed; inset: 4.5rem .75rem auto; z-index: 70; display: flex; max-height: calc(100dvh - 5.5rem); flex-direction: column; overflow: hidden; border: 1px solid #dcdce3; border-radius: 6px; background: white; box-shadow: 0 12px 32px #0000351a; }
+.notification-heading { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: .75rem; border-bottom: 1px solid #dcdce3; padding: 1rem; }
+.notification-heading h2 { font-family: inherit; color: #000035; font-size: .875rem; font-weight: 600; letter-spacing: -.015em; }
+.notification-count { color: #53536c; font-size: .75rem; }
+.notification-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #b9b9c7 #f7f7f9; }
+.notification-item { display: flex; align-items: flex-start; gap: .75rem; padding: 1rem; border-bottom: 1px solid #ebebf0; }
+.notification-item:last-child { border-bottom: 0; }
+.notification-dot { width: .375rem; height: .375rem; flex-shrink: 0; margin-top: .4375rem; border-radius: 50%; background: #f4b400; }
+.notification-copy { flex: 1; min-width: 0; }
+.notification-message { color: #000035; font-size: .8125rem; line-height: 1.5; overflow-wrap: anywhere; }
+.notification-date { display: flex; align-items: center; gap: .25rem; margin-top: .375rem; color: #53536c; font-size: .6875rem; line-height: 1.5; }
+.notification-date svg { width: .75rem; height: .75rem; flex-shrink: 0; }
+.notification-empty { padding: 2rem 1rem; text-align: center; }
+.notification-empty svg { width: 1.375rem; height: 1.375rem; margin: 0 auto .75rem; color: #53536c; }
+.notification-empty p { color: #000035; font-size: .8125rem; font-weight: 600; }
+.notification-empty span { display: block; margin-top: .25rem; color: #53536c; font-size: .75rem; }
+.notification-footer { flex-shrink: 0; border-top: 1px solid #dcdce3; padding: .5rem .75rem; }
+.notification-footer button { min-height: 2.75rem; width: 100%; padding: .5rem; border-radius: 4px; color: #000035; font-size: .75rem; font-weight: 600; text-align: center; transition: background-color 150ms; }
+.notification-footer button:hover { background: #f1f1f5; }
+@media (min-width: 640px) {
+  .header-layout { padding-inline: 1.25rem; }
+  .header-heading h1 { font-size: .9375rem; }
+  .title-full, .admin-identity { display: block; }
+  .title-short { display: none; }
+  .notification-panel { position: absolute; inset: 100% 0 auto auto; width: 22rem; max-width: calc(100vw - 2rem); max-height: min(32rem, calc(100dvh - 6rem)); margin-top: .5rem; }
+}
+@media (min-width: 768px) {
+  .menu-toggle { display: none; }
+  .tablet-time { display: block; }
+}
+@media (min-width: 1024px) {
+  .header-layout { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1rem; padding-inline: 2rem; }
+  .header-clock { display: flex; }
+  .tablet-time { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header-icon-button, .notification-footer button { transition: none; }
+}

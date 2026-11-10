@@ -1,15 +1,13 @@
 <article
   (click)="onCardClick()"
-  class="group relative w-full overflow-hidden
+  class="media-card group relative w-full overflow-hidden
        rounded-(--border-radius-lg)
        bg-(--color-background-primary)
        text-left
        transition-shadow duration-200
        hover:shadow-md
        motion-reduce:transition-none"
-  [class.ring-2]="selected"
-  [class.shadow-sm]="!selected"
-  [ngClass]="selected ? 'shadow-[0_0_0_2px_#f4b400,0_4px_16px_rgba(0,0,53,0.1)]' : 'shadow-[0_1px_4px_rgba(0,0,53,0.07),0_0_0_1px_rgba(0,0,53,0.06)]'"
+  [class.media-card--selected]="selected"
 >
 
   <!-- Preview -->
@@ -47,7 +45,7 @@
 
     <!-- Hover overlay -->
     <div
-      class="pointer-events-none absolute inset-0
+      class="media-card__overlay pointer-events-none absolute inset-0
             bg-linear-to-t
             from-[rgba(0,0,53,0.38)]
             to-transparent
@@ -65,7 +63,7 @@
     <div class="absolute left-2 top-2 sm:left-2.5 sm:top-2.5">
       <button
         type="button"
-        class="inline-flex h-10 w-10 items-center
+        class="media-card__select inline-flex h-10 w-10 items-center
        justify-center rounded-xl
        transition-colors
        focus-visible:outline-none
@@ -109,7 +107,7 @@
 
     <!-- Type badge -->
     <div class="absolute bottom-2.5 right-2.5">
-      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-[0.07em] bg-[rgba(0,0,53,0.75)] text-[rgba(244,180,0,0.9)] backdrop-blur-sm">
+      <span class="media-card__type inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-[0.07em] bg-[rgba(0,0,53,0.75)] text-[rgba(244,180,0,0.9)] backdrop-blur-sm">
         {{ typeLabel }}
       </span>
     </div>
@@ -118,7 +116,7 @@
 
   <!-- Info row -->
   <div
-    class="flex min-w-0 flex-col gap-1
+    class="media-card__info flex min-w-0 flex-col gap-1
           border-t border-[rgba(0,0,53,0.05)]
           px-3 py-3
           min-[480px]:flex-row

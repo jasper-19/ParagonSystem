@@ -1,506 +1,57 @@
 @if (loading || errorMessage || article) {
-  <div
-    class="fixed inset-0 z-9999 flex items-end justify-center
-          bg-black/70 p-0 backdrop-blur-sm
-              sm:items-center sm:p-4"
-    (click)="close.emit()"
-  >
-    <div
-      #modalPanel
-      tabindex="-1"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="article-modal-title"
-      class="relative flex max-h-dvh w-full max-w-3xl
-                flex-col overflow-hidden rounded-t-3xl bg-white
-                shadow-2xl focus:outline-none
-                sm:max-h-[calc(100dvh-2rem)]
-                sm:rounded-3xl"
-      (click)="$event.stopPropagation()"
-    >
-      <!-- Loading State -->
+  <div class="article-modal-backdrop" (click)="close.emit()">
+    <div #modalPanel tabindex="-1" role="dialog" aria-modal="true" class="article-modal-panel"
+      [attr.aria-labelledby]="loading ? 'article-modal-loading-title' : errorMessage ? 'article-modal-error-title' : 'article-modal-title'"
+      [attr.aria-describedby]="errorMessage && !loading ? 'article-modal-error-message' : null"
+      (click)="$event.stopPropagation()">
+      <header class="article-modal-heading">
+        <div class="article-modal-title-block">
+          @if (loading) { <h3 id="article-modal-loading-title">Loading article details...</h3> }
+          @else if (errorMessage) { <h3 id="article-modal-error-title">Unable to load article</h3> }
+          @else if (article; as a) {
+            <h3 id="article-modal-title">{{ a.title }}</h3>
+            <div class="article-modal-meta"><span>{{ a.status }}</span>
+              @if (a.featured) { <span class="article-modal-featured">Featured</span> }
+              <span>{{ a.views | number }} {{ a.views === 1 ? 'view' : 'views' }}</span>
+            </div>
+          }
+        </div>
+        <button #closeButton type="button" (click)="close.emit()" class="article-modal-close" aria-label="Close article details">
+          <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </header>
       @if (loading) {
-        <div
-          class="flex min-h-64 flex-col items-center justify-center gap-4 px-8 py-16"
-        >
-          <svg
-            class="h-8 w-8 animate-spin text-[#f4b400]
-                      motion-reduce:animate-none"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            />
-
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            />
-          </svg>
-
-          <p
-            id="article-modal-loading-title"
-            class="text-sm font-medium text-gray-500"
-            role="status"
-            aria-live="polite"
-          >
-            Loading article details...
-          </p>
-        </div>
-      }
-
-      <!-- Error State -->
-      @else if (errorMessage) {
-        <div
-          class="flex min-h-64 flex-col items-center justify-center gap-4 px-8 py-16 text-center"
-        >
-          <div
-            class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600"
-          >
-            <svg
-              class="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 9v3m0 4h.01M10.29 3.86l-7.82 13.5A2 2 0 004.2 20h15.6a2 2 0 001.73-3l-7.82-13.5a2 2 0 00-3.42 0z"
-              />
-            </svg>
-          </div>
-
-          <div>
-            <h3
-              id="article-modal-error-title"
-              class="text-lg font-bold text-gray-900"
-            >
-              Unable to load article
-            </h3>
-
-            <p
-              id="article-modal-error-message"
-              class="mt-2 text-sm text-gray-500"
-            >
-              {{ errorMessage }}
-            </p>
-          </div>
-
-          <button
-            #closeButton
-            type="button"
-            (click)="close.emit()"
-            class="rounded-xl bg-[#000035] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0a1a2e]"
-          >
-            Close
-          </button>
-        </div>
-      }
-
-      <!-- Article Detail -->
-      @else if (article; as a) {
-        <!-- Header -->
-        <div
-          class="relative z-10 shrink-0
-                bg-linear-to-br from-[#000035] via-[#001f5c] to-[#000035]
-                px-4 py-5 sm:px-8 sm:py-6"
-        >
-          <div class="flex items-start justify-between gap-3 sm:gap-4">
-            <div class="min-w-0 flex-1">
-              <h3
-                id="article-modal-title"
-                class="wrap-break-word text-xl font-bold leading-snug text-white
-                          sm:text-3xl sm:leading-tight"
-              >
-                {{ a.title }}
-              </h3>
-
-              <div class="mt-4 flex flex-wrap items-center gap-1.5 sm:gap-2">
-
-                <span
-                  class="inline-flex items-center gap-1.5 rounded-full
-                            px-2.5 py-1 text-[11px] font-bold
-                            sm:px-3 sm:py-1.5 sm:text-xs"
-                  [class.bg-green-100]="a.status === 'Published'"
-                  [class.text-green-700]="a.status === 'Published'"
-                  [class.bg-blue-100]="a.status === 'Draft'"
-                  [class.text-blue-700]="a.status === 'Draft'"
-                  [class.bg-slate-200]="a.status === 'Archived'"
-                  [class.text-slate-700]="a.status === 'Archived'"
-                >
-                  <span
-                    class="h-1.5 w-1.5 rounded-full"
-                    [class.bg-green-500]="a.status === 'Published'"
-                    [class.bg-blue-500]="a.status === 'Draft'"
-                    [class.bg-slate-500]="a.status === 'Archived'"
-                  ></span>
-
-                  {{ a.status }}
-                </span>
-
-                @if (a.featured) {
-                  <span
-                    class="inline-flex items-center gap-1.5 rounded-full
-                              px-2.5 py-1 text-[11px] font-bold
-                              sm:px-3 sm:py-1.5 sm:text-xs
-                          bg-[#f4b400] text-xs
-                          text-[#000035]"
-                  >
-                    <svg
-                      class="h-3.5 w-3.5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921
-                          1.902 0l1.286 3.97a1 1 0 00.95.69
-                          h4.17c.969 0 1.371 1.24.588
-                          1.81l-3.376 2.453a1 1 0 00-.364
-                          1.118l1.287 3.97c.3.921-.755
-                          1.688-1.54 1.118L10
-                          15.347l-3.952 2.71c-.784.57-1.838
-                          -.197-1.539-1.118l1.286-3.97a1 1 0
-                          00-.364-1.118L2.055
-                          9.397c-.783-.57-.38-1.81.588-1.81
-                          h4.17a1 1 0 00.95-.69l1.286-3.97z"
-                      />
-                    </svg>
-
-                    Featured
-                  </span>
-                }
-
-                <span
-                  class="inline-flex items-center gap-1.5 rounded-full
-                            px-2.5 py-1 text-[11px] font-bold
-                            sm:px-3 sm:py-1.5 sm:text-xs
-                            border border-white/15 bg-white/10
-                            text-xs text-white"
-                >
-                  <svg
-                    class="h-3.5 w-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    stroke-width="2"
-                    aria-hidden="true"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M2.458 12C3.732 7.943 7.523 5
-                        12 5c4.478 0 8.268 2.943
-                        9.542 7-1.274 4.057-5.064 7-9.542
-                        7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-
-                  {{ a.views | number }}
-                  {{ a.views === 1 ? 'view' : 'views' }}
-                </span>
-
-              </div>
-            </div>
-
-          <button
-            type="button"
-            (click)="close.emit()"
-            class="flex h-11 w-11 shrink-0 items-center justify-center
-                  rounded-xl border border-white/10 bg-white/10
-                  text-white transition
-                  hover:bg-white/20
-                  focus-visible:outline-none
-                  focus-visible:ring-2
-                  focus-visible:ring-[#f4b400]
-                  focus-visible:ring-offset-2
-                  focus-visible:ring-offset-[#000035]"
-            aria-label="Close article details"
-          >
-              <svg
-                class="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Body -->
-        <div
-          class="min-h-0 flex-1 space-y-5 overflow-y-auto
-                    overscroll-contain px-4 py-5
-                    sm:space-y-6 sm:p-8"
-          style="scrollbar-gutter: stable;"
-        >
-          <!-- Overview -->
-          <section class="space-y-4">
-            <div class="flex items-center gap-2">
-              <div
-                class="h-5 w-1 rounded-full bg-[#f4b400]"
-              ></div>
-
-              <h4
-                class="text-lg font-bold text-[#000035]"
-              >
-                Overview
-              </h4>
-            </div>
-
-            <p
-              class="whitespace-pre-wrap text-base leading-relaxed text-slate-700"
-            >
-              {{
-                formatOverview(a.excerpt) ||
-                'No overview available.'
-              }}
-            </p>
-          </section>
-
-          <!-- Article Information -->
-          <section class="space-y-4">
-            <div class="flex items-center gap-2">
-              <div
-                class="h-5 w-1 rounded-full bg-[#f4b400]"
-              ></div>
-
-              <h4 class="text-lg font-bold text-[#000035]">
-                Article Information
-              </h4>
-            </div>
-
-            <div
-              class="grid grid-cols-1 gap-3
-                        sm:grid-cols-2 lg:grid-cols-3"
-            >
-              <div
-                class="rounded-xl border border-slate-200
-                      bg-slate-50 p-4"
-              >
-                <p
-                  class="text-xs font-bold uppercase tracking-wider
-                        text-slate-400"
-                >
-                  Category
-                </p>
-
-                <span
-                  class="mt-2 inline-flex rounded-full
-                        border border-[#f4b400]/30
-                        bg-[#f4b400]/10 px-3 py-1
-                        text-xs font-bold uppercase
-                        text-[#000035]"
-                >
-                  {{ a.category }}
-                </span>
-              </div>
-
-              <div
-                class="rounded-xl border border-slate-200
-                      bg-slate-50 p-4"
-              >
-                <p
-                  class="text-xs font-bold uppercase tracking-wider
-                        text-slate-400"
-                >
-                  Created
-                </p>
-
-                <p
-                  class="mt-2 text-sm font-semibold text-slate-700"
-                >
-                  {{ a.createdAt | date:'MMMM d, y · h:mm a' }}
-                </p>
-              </div>
-
-              <div
-                class="rounded-xl border border-slate-200
-                      bg-slate-50 p-4"
-              >
-                <p
-                  class="text-xs font-bold uppercase tracking-wider
-                        text-slate-400"
-                >
-                  Published
-                </p>
-
-                <p
-                  class="mt-2 text-sm font-semibold text-slate-700"
-                >
-                  {{
-                    a.publishedAt
-                      ? (a.publishedAt | date:'MMMM d, y · h:mm a')
-                      : 'Not yet published'
-                  }}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <p
-                class="mb-2 text-xs font-bold uppercase
-                      tracking-wider text-slate-400"
-              >
-                Tags
-              </p>
-
-              <div class="flex flex-wrap gap-2">
-                @if (a.tags.length > 0) {
-                  @for (tag of a.tags; track tag) {
-                    <span
-                      class="rounded-full border border-slate-200
-                            bg-white px-3 py-1.5 text-xs
-                            font-semibold text-slate-700"
-                    >
-                      #{{ formatTag(tag) }}
-                    </span>
-                  }
-                } @else {
-                  <span class="text-sm italic text-slate-400">
-                    No tags assigned
-                  </span>
-                }
-              </div>
+        <div class="article-modal-state" role="status" aria-live="polite"><span class="article-modal-spinner" aria-hidden="true"></span><p>Loading article details...</p></div>
+      } @else if (errorMessage) {
+        <div class="article-modal-state" role="alert"><p id="article-modal-error-message">{{ errorMessage }}</p></div>
+      } @else if (article; as a) {
+        <div class="article-modal-body">
+          <section class="article-modal-section"><h4>Overview</h4><p class="article-overview">{{ formatOverview(a.excerpt) || 'No overview available.' }}</p></section>
+          <section class="article-modal-section">
+            <h4>Article Information</h4>
+            <dl class="article-information">
+              <div><dt>Category</dt><dd>{{ a.category }}</dd></div>
+              <div><dt>Created</dt><dd>{{ a.createdAt | date:'MMMM d, y · h:mm a' }}</dd></div>
+              <div><dt>Published</dt><dd>{{ a.publishedAt ? (a.publishedAt | date:'MMMM d, y · h:mm a') : 'Not yet published' }}</dd></div>
+            </dl>
+            <div class="article-tags-section"><h5>Tags</h5>
+              @if (a.tags.length > 0) { <div class="article-tags">@for (tag of a.tags; track tag) { <span>#{{ formatTag(tag) }}</span> }</div> }
+              @else { <p class="article-modal-muted">No tags assigned</p> }
             </div>
           </section>
-
-          <!-- Credits -->
-          <section class="space-y-4">
-            <div class="flex items-center gap-2">
-              <div
-                class="h-5 w-1 rounded-full bg-[#f4b400]"
-              ></div>
-
-              <h4 class="text-lg font-bold text-[#000035]">
-                Credits
-              </h4>
-            </div>
-
+          <section class="article-modal-section"><h4>Credits</h4>
             @if (hasCredits(a)) {
-              <div
-                class="divide-y divide-slate-100 overflow-hidden
-                      rounded-2xl border border-slate-200"
-              >
-                @if (hasCreditType(a.credits, 'author')) {
-                  <div
-                    class="grid grid-cols-1 gap-1 px-4 py-3.5
-                          sm:grid-cols-[9rem_1fr]
-                          sm:items-start sm:px-5 sm:py-4"
-                  >
-                    <span
-                      class="text-xs font-bold uppercase tracking-wider
-                            text-slate-400"
-                    >
-                      Written by
-                    </span>
-
-                    <span
-                      class="wrap-break-word text-sm font-semibold
-                            text-slate-700"
-                    >
-                      {{ creditNames(a.credits, 'author') }}
-                    </span>
-                  </div>
-                }
-
-                @if (hasCreditType(a.credits, 'photo')) {
-                  <div
-                    class="grid grid-cols-1 gap-1 px-4 py-3.5
-                          sm:grid-cols-[9rem_1fr]
-                          sm:items-start sm:px-5 sm:py-4"
-                  >
-                    <span
-                      class="text-xs font-bold uppercase tracking-wider
-                            text-slate-400"
-                    >
-                      Photo by
-                    </span>
-
-                    <span
-                      class="wrap-break-word text-sm font-semibold
-                            text-slate-700"
-                    >
-                      {{ creditNames(a.credits, 'photo') }}
-                    </span>
-                  </div>
-                }
-
-                @if (hasCreditType(a.credits, 'graphic')) {
-                  <div
-                    class="grid grid-cols-1 gap-1 px-4 py-3.5
-                          sm:grid-cols-[9rem_1fr]
-                          sm:items-start sm:px-5 sm:py-4"
-                  >
-                    <span
-                      class="text-xs font-bold uppercase tracking-wider
-                            text-slate-400"
-                    >
-                      Graphics by
-                    </span>
-
-                    <span
-                      class="wrap-break-word text-sm font-semibold
-                            text-slate-700"
-                    >
-                      {{ creditNames(a.credits, 'graphic') }}
-                    </span>
-                  </div>
-                }
-
-                @if (hasCreditType(a.credits, 'illustration')) {
-                  <div
-                    class="grid grid-cols-1 gap-1 px-4 py-3.5
-                          sm:grid-cols-[9rem_1fr]
-                          sm:items-start sm:px-5 sm:py-4"
-                  >
-                    <span
-                      class="text-xs font-bold uppercase tracking-wider
-                            text-slate-400"
-                    >
-                      Illustration by
-                    </span>
-
-                    <span
-                      class="wrap-break-word text-sm font-semibold
-                            text-slate-700"
-                    >
-                      {{ creditNames(a.credits, 'illustration') }}
-                    </span>
-                  </div>
-                }
-              </div>
-            } @else {
-              <div
-                class="rounded-xl border border-dashed
-                      border-slate-300 px-5 py-6 text-center"
-              >
-                <p class="text-sm text-slate-400">
-                  No structured credits are assigned to this article.
-                </p>
-              </div>
-            }
+              <dl class="article-credits">
+                @if (hasCreditType(a.credits, 'author')) { <div><dt>Written by</dt><dd>{{ creditNames(a.credits, 'author') }}</dd></div> }
+                @if (hasCreditType(a.credits, 'photo')) { <div><dt>Photo by</dt><dd>{{ creditNames(a.credits, 'photo') }}</dd></div> }
+                @if (hasCreditType(a.credits, 'graphic')) { <div><dt>Graphics by</dt><dd>{{ creditNames(a.credits, 'graphic') }}</dd></div> }
+                @if (hasCreditType(a.credits, 'illustration')) { <div><dt>Illustration by</dt><dd>{{ creditNames(a.credits, 'illustration') }}</dd></div> }
+              </dl>
+            } @else { <p class="article-modal-muted">No structured credits are assigned to this article.</p> }
           </section>
         </div>
       }
+      <footer class="article-modal-footer"><button type="button" (click)="close.emit()">Close</button></footer>
     </div>
   </div>
 }

@@ -16,6 +16,7 @@ export interface ActivityLogFilters {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './activity-log-filters.html',
+  styleUrl: './activity-log-filters.scss',
   host: { class: 'block' },
 })
 export class ActivityLogFiltersComponent implements OnDestroy {

@@ -46,6 +46,7 @@ interface SettingsTabDefinition {
     MaintenanceSettingsComponent,
   ],
   templateUrl: './settings.html',
+  styleUrl: './settings.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit, AfterViewInit {

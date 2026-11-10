@@ -30,6 +30,7 @@ import { SidebarService } from "../../../core/services/sidebar.service";
 
   ],
   templateUrl: './admin-dashboard.html',
+  styleUrl: './admin-dashboard.scss',
 })
 export class AdminDashboard {
 

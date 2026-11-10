@@ -1,5 +1,5 @@
 <div
-  class="flex min-w-0 flex-col gap-6
+  class="media-workspace flex min-w-0 flex-col gap-6
          bg-(--color-background-tertiary)
          xl:flex-row xl:items-start"
 >
@@ -34,7 +34,7 @@
 
     <!-- Search + Upload -->
     <div
-      class="flex min-w-0 flex-col gap-3
+      class="media-toolbar flex min-w-0 flex-col gap-3
             rounded-2xl border border-slate-200
             bg-white p-3 shadow-sm
             sm:p-4
@@ -134,9 +134,19 @@
       </span>
     </div>
 
+    @if (loadError()) {
+      <div class="media-load-error" role="alert">
+        <div>
+          <h2>Media library unavailable</h2>
+          <p>{{ loadError() }}</p>
+        </div>
+        <button type="button" (click)="loadMedia()">Try again</button>
+      </div>
+    }
+
     <!-- Empty State -->
     <div
-      *ngIf="!isLoading() && !filteredMedia().length"
+      *ngIf="!isLoading() && !loadError() && !filteredMedia().length"
       class="flex min-h-72 flex-col items-center
             justify-center rounded-2xl
             border border-dashed border-slate-300
@@ -197,7 +207,7 @@
 
     <!-- Media Grid -->
     <section
-      *ngIf="!isLoading() && filteredMedia().length"
+      *ngIf="!isLoading() && !loadError() && filteredMedia().length"
       aria-labelledby="media-results-title"
       class="min-w-0"
     >
@@ -229,7 +239,7 @@
 <!-- Details Panel -->
 <aside
   aria-label="Selected media details"
-  class="hidden xl:flex w-85 shrink-0 flex-col overflow-hidden bg-(--color-background-primary)"
+  class="media-inspector hidden xl:flex w-85 shrink-0 flex-col overflow-hidden bg-(--color-background-primary)"
   >
 
   <!-- Panel Header -->
@@ -243,7 +253,7 @@
           </svg>
         </div>
         <div>
-          <p class="text-xs font-medium m-0" style="color: #f4b400; letter-spacing: 0.06em; text-transform: uppercase;">File details</p>
+          <h2 class="inspector-title">File details</h2>
         </div>
       </div>
 
@@ -251,7 +261,7 @@
       <span
         *ngIf="isSavingMetadata()"
         class="flex items-center gap-1.5 text-[11px] font-medium"
-        style="color: rgba(244,180,0,0.6);">
+        style="color: #f4b400;">
         <div class="w-1.5 h-1.5 rounded-full" style="border: 1.5px solid rgba(244,180,0,0.25); border-top-color: #f4b400; animation: spin 0.8s linear infinite;"></div>
         Saving
       </span>
@@ -259,7 +269,7 @@
   </div>
 
   <!-- Subtle accent line separating header from body -->
-  <div class="shrink-0 h-px" style="background: linear-gradient(to right, rgba(244,180,0,0.35), rgba(244,180,0,0.05));"></div>
+  <div class="shrink-0 h-px bg-[#F4B400]/30"></div>
 
   <!-- Panel Body -->
   <div class="flex-1 overflow-y-auto px-5 py-5">
@@ -353,7 +363,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="mobile-media-details-title"
-      class="absolute inset-x-0 bottom-0 z-10
+      class="media-details-dialog absolute inset-x-0 bottom-0 z-10
              flex max-h-[90dvh] min-h-0
              flex-col overflow-hidden
              rounded-t-3xl bg-white

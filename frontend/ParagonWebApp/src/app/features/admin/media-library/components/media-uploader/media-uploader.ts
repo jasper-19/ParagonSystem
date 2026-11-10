@@ -6,7 +6,8 @@ import { GlobalSettingsService } from '../../../../../core/services/global-setti
   selector: 'app-media-uploader',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './media-uploader.html'
+  templateUrl: './media-uploader.html',
+  styleUrl: './media-uploader.scss'
 })
 export class MediaUploaderComponent {
   private readonly globalSettings = inject(GlobalSettingsService);

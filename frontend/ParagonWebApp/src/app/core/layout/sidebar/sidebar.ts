@@ -20,6 +20,7 @@ interface NavItem {
   standalone: true,
   imports: [CommonModule, RouterModule, SidebarTooltipDirective],
   templateUrl: './sidebar.html',
+  styleUrl: './sidebar.scss',
 })
 export class Sidebar implements OnInit {
 

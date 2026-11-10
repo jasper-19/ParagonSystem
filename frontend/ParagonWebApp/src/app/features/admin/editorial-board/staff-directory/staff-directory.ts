@@ -22,6 +22,7 @@ type SelectedApplicationPosition = {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ViewMemberInfoModalComponent, ConfirmationModal],
   templateUrl: './staff-directory.html',
+  styleUrl: './staff-directory.scss',
 })
 export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -199,7 +200,8 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
     this.applicationService.refresh(
       1,
       100,
-      'accepted'
+      'accepted',
+      undefined
     );
   }
 
@@ -1360,6 +1362,7 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       )
       .subscribe({
         next: () => {
+          this.editSubmitting = false;
           this.closeEditModal();
         },
                 error: () => {
@@ -2523,6 +2526,7 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       )
       .subscribe({
         next: () => {
+          this.assignStaffSubmitting.set(false);
           this.closeAssignStaffModal();
         },
 
@@ -2643,6 +2647,7 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       )
       .subscribe({
         next: () => {
+          this.revokeAcceptanceSubmitting.set(false);
           this.closeRevokeModal();
         },
 
@@ -2850,6 +2855,7 @@ confirmRevokeMember(): void {
       )
       .subscribe({
         next: () => {
+          this.assignSubmitting.set(false);
           this.closeAssignModal();
         },
 

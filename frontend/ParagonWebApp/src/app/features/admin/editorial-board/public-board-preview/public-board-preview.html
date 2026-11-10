@@ -1,673 +1,98 @@
-<section
-  class="-m-4 min-h-full
-         bg-white
-         p-4
-         sm:-m-5 sm:p-5
-         lg:-m-6 lg:p-6"
->
-  <div
-    class="mx-auto w-full max-w-screen-2xl
-          space-y-5
-          sm:space-y-6"
-  >
-
- <!-- Loading State -->
-  @if (loading()) {
-  <div
-    role="status"
-    aria-busy="true"
-    aria-label="Loading editorial board preview"
-    class="space-y-6"
-  >
-    <span class="sr-only">
-      Loading editorial board preview…
-    </span>
-      <div class="space-y-3">
-        <div
-          class="h-9 w-72 max-w-full
-                animate-pulse rounded-lg
-                bg-slate-200"
-        ></div>
-
-        <div
-          class="h-5 w-96 max-w-full
-                animate-pulse rounded-lg
-                bg-slate-100"
-        ></div>
-      </div>
-
-      <div
-        class="grid grid-cols-1 gap-4
-              sm:grid-cols-3"
-      >
-        @for (item of [1, 2, 3]; track item) {
-          <div
-            class="h-28 animate-pulse
-                  rounded-xl border
-                  border-slate-200
-                  bg-white"
-          ></div>
-        }
-      </div>
-
-      <div
-        class="h-72 animate-pulse
-              rounded-xl border
-              border-slate-200
-              bg-slate-100"
-      ></div>
+<section class="board-preview-workspace">
+  <header class="preview-page-heading">
+    <div>
+      <h1>Editorial Board Preview</h1>
+      <p>Review how visitors will see the active editorial board before opening the public page.</p>
     </div>
-  }
-
-  <!-- Error State -->
-  @if (!loading() && loadError()) {
-    <div
-      role="alert"
-      class="rounded-xl border
-            border-red-200 bg-red-50
-            p-5 shadow-sm"
-    >
-      <p class="text-sm font-semibold text-red-700">
-        {{ loadError() }}
-      </p>
-
-      <button
-        type="button"
-        (click)="loadPreviewBoard()"
-        class="inline-flex min-h-11
-              items-center justify-center
-              rounded-xl border
-              border-slate-300
-              bg-white px-4 py-2.5
-              text-sm font-semibold
-              text-slate-700
-              shadow-sm transition
-              duration-150
-              hover:-translate-y-0.5
-              hover:bg-slate-50
-              hover:shadow
-              active:translate-y-0
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-[#F4B400]
-              motion-reduce:transform-none
-              motion-reduce:transition-none"
-      >
-        Retry
-      </button>
-    </div>
-  }
-
-  <!-- No Active Board State -->
-  @if (
-    !loading() &&
-    !loadError() &&
-    (boardLoaded$ | async) &&
-    !(hasActiveBoard$ | async)
-  ) {
-    <section
-      aria-labelledby="no-active-board-title"
-      class="flex min-h-80 flex-col
-            items-center justify-center
-            rounded-xl border
-            border-dashed border-slate-300
-            bg-white px-5 py-10
-            text-center shadow-sm"
-    >
-      <div
-        aria-hidden="true"
-        class="flex h-14 w-14 items-center
-              justify-center rounded-full
-              bg-[#F4B400]/12
-              text-[#000035]"
-      >
-        <svg
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="1.8"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M16 21v-2a4 4 0 0 0-4-4H6
-              a4 4 0 0 0-4 4v2
-              M9 11a4 4 0 1 0 0-8
-              M19 8v6
-              M22 11h-6"
-          />
-        </svg>
-      </div>
-
-      <h2
-        id="no-active-board-title"
-        class="mt-4 text-lg font-bold
-              text-[#000035]"
-      >
-        No active editorial board
-      </h2>
-
-      <p
-        class="mt-2 max-w-md text-sm
-              leading-6 text-slate-500"
-      >
-        Select and activate an editorial board in
-        Staff Directory before previewing the public page.
-      </p>
-
-      <div
-        class="mt-5 flex w-full flex-col
-              gap-2 sm:w-auto sm:flex-row"
-      >
-        <a
-          routerLink="/admin/editorial-board/staff-directory"
-          class="inline-flex min-h-11
-                items-center justify-center
-                rounded-xl border
-                border-slate-300
-                bg-white px-4 py-2.5
-                text-sm font-semibold
-                text-slate-700
-                shadow-sm transition
-                duration-150
-                hover:-translate-y-0.5
-                hover:bg-slate-50
-                hover:shadow
-                active:translate-y-0
-                focus-visible:outline-none
-                focus-visible:ring-2
-                focus-visible:ring-[#F4B400]
-                motion-reduce:transform-none
-                motion-reduce:transition-none"
-        >
-          Open Staff Directory
-        </a>
-
-        <button
-          type="button"
-          (click)="loadPreviewBoard()"
-          class="inline-flex min-h-11
-                items-center justify-center
-                rounded-xl border
-                border-slate-300 bg-white
-                px-5 py-2.5
-                text-sm font-semibold
-                text-slate-700
-                transition hover:bg-slate-50
-                focus-visible:outline-none
-                focus-visible:ring-2
-                focus-visible:ring-[#F4B400]"
-        >
-          Refresh Preview
-        </button>
-      </div>
-    </section>
-  }
-
-  <!-- ========================= -->
-  <!-- Page Header               -->
-  <!-- ========================= -->
-@if (
-  !loading() &&
-  !loadError()
-) {
-  @if (board$ | async; as board) {
-    @if (board.academicYear) {
-      <div class="space-y-5 sm:space-y-6">
-
-      <!-- ========================= -->
-      <!-- Preview Hero              -->
-      <!-- ========================= -->
-
-      <header
-        class="relative overflow-hidden
-              rounded-xl border border-slate-200
-              bg-white shadow-sm"
-      >
-        <!-- Decorative background -->
-        <div
-          aria-hidden="true"
-          class="absolute inset-x-0 top-0 h-1
-                bg-linear-to-r
-                from-[#000035]
-                via-[#F4B400]
-                to-[#000035]"
-        ></div>
-
-        <div
-          class="relative flex flex-col gap-5
-                px-4 py-5
-                sm:px-6 sm:py-6
-                lg:flex-row lg:items-center
-                lg:justify-between
-                lg:px-8 lg:py-7"
-        >
-          <!-- Hero Content -->
-          <div class="min-w-0 max-w-3xl">
-            <div
-              class="inline-flex items-center gap-2
-                    rounded-full border
-                    border-[#F4B400]/30
-                    bg-[#F4B400]/10
-                    px-3 py-1.5"
-            >
-              <span
-                aria-hidden="true"
-                class="h-2 w-2 rounded-full
-                      bg-[#F4B400]"
-              ></span>
-
-              <span
-                class="text-xs font-bold uppercase
-                      tracking-wider text-[#000035]"
-              >
-                Public Page Preview
-              </span>
-            </div>
-
-            <h1
-              class="mt-3 text-2xl font-bold
-                    tracking-tight text-slate-950
-                    sm:text-3xl
-                    lg:text-4xl"
-            >
-              Editorial Board Preview
-            </h1>
-
-            <p
-              class="mt-2 max-w-2xl
-                    text-sm leading-6
-                    text-slate-600
-                    sm:text-base"
-            >
-              Review how visitors will see the active
-              editorial board before opening the public page.
-            </p>
-
-            <!-- Academic Year -->
-            <div
-              class="mt-4 flex flex-wrap
-                    items-center gap-3"
-            >
-              <div>
-                <p
-                  class="text-[11px] font-semibold
-                        uppercase tracking-wider
-                        text-slate-400"
-                >
-                  Academic Year
-                </p>
-
-                <p
-                  class="mt-1 text-lg font-bold
-                        text-[#000035]
-                        sm:text-xl"
-                >
-                  {{ board.academicYear }}
-                </p>
-              </div>
-
-              <span
-                aria-hidden="true"
-                class="hidden h-10 w-px
-                      bg-slate-200
-                      min-[420px]:block"
-              ></span>
-
-              <div
-                class="inline-flex items-center gap-2
-                      rounded-lg border
-                      border-emerald-200
-                      bg-emerald-50
-                      px-3 py-2"
-              >
-                <span
-                  aria-hidden="true"
-                  class="h-2 w-2 rounded-full
-                        bg-emerald-500"
-                ></span>
-
-                <span
-                  class="text-xs font-semibold
-                        text-emerald-700"
-                >
-                  Active Board
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Hero Action -->
-          <div
-            class="flex w-full shrink-0
-                  flex-col gap-2
-                  lg:w-auto lg:items-end"
-          >
-            <a
-              routerLink="/editorial-board"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open the public editorial board page in a new tab"
-              class="group inline-flex min-h-11
-                    w-full items-center
-                    justify-center gap-2
-                    rounded-xl bg-[#000035]
-                    px-5 py-2.5
-                    text-sm font-semibold
-                    text-white shadow-sm
-                    transition
-                    duration-150
-                    hover:-translate-y-0.5
-                    hover:bg-[#0a1a2e]
-                    hover:shadow-md
-                    active:translate-y-0
-                    active:shadow-sm
-                    focus-visible:outline-none
-                    focus-visible:ring-2
-                    focus-visible:ring-[#F4B400]
-                    focus-visible:ring-offset-2
-                    motion-reduce:transform-none
-                    motion-reduce:transition-none
-                    lg:w-auto"
-            >
-              <svg
-                aria-hidden="true"
-                class="h-4 w-4 transition-transform
-                      duration-150
-                      group-hover:translate-x-0.5
-                      group-hover:-translate-y-0.5
-                      motion-reduce:transform-none
-                      motion-reduce:transition-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M15 3h6v6"/>
-                <path d="M10 14 21 3"/>
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              </svg>
-
+    @if (!loading() && !loadError()) {
+      @if (board$ | async; as board) {
+        @if (board.academicYear) {
+          <div class="preview-public-action">
+            <a class="preview-button preview-button-primary" routerLink="/editorial-board"
+              target="_blank" rel="noopener noreferrer"
+              aria-label="Open the public editorial board page in a new tab">
               Open Public Page
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              </svg>
             </a>
-
-            <p
-              class="text-center text-xs
-                    text-slate-400
-                    lg:text-right"
-            >
-              Opens in a new browser tab
-            </p>
+            <p>Opens in a new browser tab</p>
           </div>
+        }
+      }
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="preview-loading" role="status" aria-busy="true" aria-label="Loading editorial board preview">
+      <span class="sr-only">Loading editorial board preview…</span>
+      <div class="preview-skeleton preview-skeleton-summary" aria-hidden="true"></div>
+      @for (item of [1, 2, 3]; track item) {
+        <div class="preview-skeleton-row" aria-hidden="true">
+          <div class="preview-skeleton preview-skeleton-label"></div>
+          <div class="preview-skeleton preview-skeleton-members"></div>
         </div>
-      </header>
-
-
-  <!-- ========================= -->
-  <!-- Board Summary Strip       -->
-  <!-- ========================= -->
-
-  <section
-    aria-labelledby="board-summary-title"
-    class="overflow-hidden rounded-xl
-          border border-slate-200
-          bg-white shadow-sm"
-  >
-    <div
-      class="flex flex-col
-            lg:flex-row lg:items-center"
-    >
-      <!-- Summary label -->
-      <div
-        class="border-b border-slate-200
-              px-4 py-3.5
-              sm:px-5
-              lg:w-56 lg:shrink-0
-              lg:border-b-0
-              lg:border-r
-              lg:px-6 lg:py-4"
-      >
-        <p
-          id="board-summary-title"
-          class="text-xs font-bold uppercase
-                tracking-wider text-slate-400"
-        >
-          Board Summary
-        </p>
-
-        <p
-          class="mt-1 text-sm font-semibold
-                text-[#000035]"
-        >
-          Current board composition
-        </p>
-      </div>
-
-      <!-- Summary values -->
-      <dl
-        class="grid flex-1 grid-cols-2
-              divide-x divide-slate-200"
-      >
-
-        <!-- Members -->
-        <div class="px-4 py-3.5 sm:px-5 lg:px-6">
-          <dt
-            class="text-[11px] font-semibold
-                  uppercase tracking-wider
-                  text-slate-400"
-          >
-            Members
-          </dt>
-
-          <dd
-            class="mt-1 text-2xl font-extrabold
-                  text-[#000035]"
-          >
-            {{ totalMembers(board) }}
-          </dd>
-        </div>
-
-        <!-- Sections -->
-        <div class="px-4 py-3.5 sm:px-5 lg:px-6">
-          <dt
-            class="text-[11px] font-semibold
-                  uppercase tracking-wider
-                  text-slate-400"
-          >
-            Sections
-          </dt>
-
-          <dd
-            class="mt-1 text-2xl font-extrabold
-                  text-[#000035]"
-          >
-            {{ board.sections.length }}
-          </dd>
-        </div>
-      </dl>
+      }
     </div>
-  </section>
+  }
 
-  @if (board.sections.length === 0) {
-    <section
-      aria-labelledby="no-sections-title"
-      class="flex min-h-64 flex-col
-            items-center justify-center
-            rounded-xl border
-            border-dashed border-slate-300
-            bg-white px-5 py-8
-            text-center shadow-sm"
-    >
-      <div
-        aria-hidden="true"
-        class="flex h-12 w-12 items-center
-              justify-center rounded-full
-              bg-slate-100 text-slate-400"
-      >
-        <svg
-          class="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="1.8"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M4 6h16M4 12h16M4 18h10"
-          />
-        </svg>
+  @if (!loading() && loadError()) {
+    <div class="preview-error" role="alert">
+      <p>{{ loadError() }}</p>
+      <button class="preview-button" type="button" (click)="loadPreviewBoard()">Retry</button>
+    </div>
+  }
+
+  @if (!loading() && !loadError() && (boardLoaded$ | async) && !(hasActiveBoard$ | async)) {
+    <section class="preview-empty" aria-labelledby="no-active-board-title">
+      <svg class="preview-empty-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M19 8v6M22 11h-6"/>
+        <circle cx="9" cy="7" r="4"/>
+      </svg>
+      <h2 id="no-active-board-title">No active editorial board</h2>
+      <p>Select and activate an editorial board in Staff Directory before previewing the public page.</p>
+      <div class="preview-empty-actions">
+        <a class="preview-button preview-button-primary" routerLink="/admin/staff-directory">Open Staff Directory</a>
+        <button class="preview-button" type="button" (click)="loadPreviewBoard()">Refresh Preview</button>
       </div>
-
-      <h2
-        id="no-sections-title"
-        class="mt-4 text-base font-bold
-              text-[#000035]"
-      >
-        No editorial sections yet
-      </h2>
-
-      <p
-        class="mt-2 max-w-md text-sm
-              leading-6 text-slate-500"
-      >
-        Add staff members and assign them to editorial
-        sections to populate this public preview.
-      </p>
-
-      <a
-        routerLink="/admin/editorial-board/staff-directory"
-        class="inline-flex min-h-11
-              items-center justify-center
-              rounded-xl border
-              border-slate-300
-              bg-white px-4 py-2.5
-              text-sm font-semibold
-              text-slate-700
-              shadow-sm transition
-              duration-150
-              hover:-translate-y-0.5
-              hover:bg-slate-50
-              hover:shadow
-              active:translate-y-0
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-[#F4B400]
-              motion-reduce:transform-none
-              motion-reduce:transition-none"
-      >
-        Manage Staff Assignments
-      </a>
     </section>
   }
 
-  <!-- ========================= -->
-  <!-- Board Sections            -->
-  <!-- ========================= -->
+  @if (!loading() && !loadError()) {
+    @if (board$ | async; as board) {
+      @if (board.academicYear) {
+        <dl class="preview-summary" aria-label="Board summary">
+          <div class="preview-academic-year"><dt>Academic Year</dt><dd>{{ board.academicYear }}</dd></div>
+          <div class="preview-board-status"><dt class="sr-only">Status</dt><dd><span aria-hidden="true"></span>Active Board</dd></div>
+          <div><dt>Members</dt><dd>{{ totalMembers(board) }}</dd></div>
+          <div><dt>Sections</dt><dd>{{ board.sections.length }}</dd></div>
+        </dl>
 
-  @if (board.sections.length > 0) {
-    <div class="space-y-4">
+        @if (board.sections.length === 0) {
+          <section class="preview-empty" aria-labelledby="no-sections-title">
+            <svg class="preview-empty-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <path d="M4 6h16M4 12h16M4 18h10"/>
+            </svg>
+            <h2 id="no-sections-title">No editorial sections yet</h2>
+            <p>Add staff members and assign them to editorial sections to populate this public preview.</p>
+            <a class="preview-button" routerLink="/admin/staff-directory">Manage Staff Assignments</a>
+          </section>
+        }
 
-      <div
-        class="flex items-end justify-between
-              gap-4 border-b
-              border-slate-200 pb-3"
-      >
-        <div class="min-w-0">
-          <p
-            class="text-[11px] font-bold uppercase
-                  tracking-[0.14em]
-                  text-[#F4B400]"
-          >
-            Board Structure
-          </p>
-
-          <h2
-            id="editorial-sections-title"
-            class="mt-1 text-lg font-bold
-                  text-[#000035]
-                  sm:text-xl"
-          >
-            Editorial Sections
-          </h2>
-
-          <p
-            class="mt-1 text-sm
-                  leading-6 text-slate-500"
-          >
-            Review the members and roles assigned
-            to each section of the active board.
-          </p>
-        </div>
-
-        <span
-          class="hidden shrink-0 text-sm
-                font-semibold text-slate-400
-                sm:inline"
-        >
-          {{ board.sections.length }}
-          {{
-            board.sections.length === 1
-              ? 'section'
-              : 'sections'
-          }}
-        </span>
-      </div>
-
-      <div
-        aria-labelledby="editorial-sections-title"
-        class="space-y-4"
-      >
-
-  <section
-    *ngFor="
-      let section of board.sections;
-      let index = index;
-      trackBy: trackSection
-    "
-    class="group overflow-hidden rounded-xl
-          border border-slate-200
-          bg-white shadow-sm
-          transition
-          duration-150
-          hover:border-slate-300
-          hover:shadow-md
-          motion-reduce:transition-none"
-    [attr.aria-labelledby]="
-      'preview-section-title-' + index
-    "
-  >
-
-    <!-- Dark Section Header -->
-    <header
-      class="flex min-h-14 items-center
-            justify-between gap-4
-            bg-linear-to-r
-            from-[#000035] to-[#142f46]
-            px-4 py-3
-            sm:px-5
-            lg:px-6"
-    >
-      <!-- Section identity -->
-      <div class="flex min-w-0 items-center gap-3">
-        <span
-          aria-hidden="true"
-          class="flex h-8 w-8 shrink-0
-                items-center justify-center
-                rounded-lg border
-                border-white/15
-                bg-white/10
-                text-[#F4B400]
-                transition-colors
-                duration-150
-                group-hover:border-[#F4B400]/40
-                group-hover:bg-white/15
-                motion-reduce:transition-none"
-        >
-          @switch (getSectionIcon(section.title)) {
+        @if (board.sections.length > 0) {
+          <section class="preview-editorial-sections" aria-labelledby="editorial-sections-title">
+            <div class="preview-section-heading">
+              <h2 id="editorial-sections-title">Editorial Sections</h2>
+              <p>Review the members and roles assigned to each section of the active board.</p>
+            </div>
+            @for (section of board.sections; track trackSection($index, section); let index = $index) {
+              <section class="preview-board-section" [attr.aria-labelledby]="'preview-section-title-' + index">
+                <header class="preview-section-identity">
+                  <span class="preview-section-icon" aria-hidden="true">
+                    @switch (getSectionIcon(section.title)) {
 
             @case ('crown') {
               <svg
@@ -790,442 +215,65 @@
               </svg>
             }
           }
-        </span>
+                  </span>
+                  <div>
+                    <h3 [id]="'preview-section-title-' + index">{{ section.title }}</h3>
+                    <p>{{ section.members.length }} {{ section.members.length === 1 ? 'member' : 'members' }}</p>
+                  </div>
+                </header>
+                @if (section.members.length > 0) {
+                  <div class="preview-member-grid">
+                    @for (member of section.members; track trackMember($index, member)) {
+                      <article class="preview-member">
+                        <div class="preview-initials" aria-hidden="true">{{ member.initials || member.name.charAt(0) }}</div>
+                        <div class="preview-member-details">
+                          <h4 [title]="member.name">{{ member.name }}</h4>
+                          <p [title]="member.position">{{ member.position }}</p>
+                          @if (member.yearLevel) {
+                            <p class="preview-year-level">{{ getYearLevelLabel(member.yearLevel) }}</p>
+                          }
+                        </div>
+                      </article>
+                    }
+                  </div>
+                } @else {
+                  <div class="preview-section-empty">
+                    <p>No members assigned</p>
+                    <p>Assign a staff member to {{ section.title }} in Staff Directory and the preview will update automatically.</p>
+                  </div>
+                }
+              </section>
+            }
+          </section>
+        }
 
-        <div class="min-w-0">
-          <span class="sr-only">
-            Section {{ index + 1 }}:
-          </span>
-          <h3
-            [title]="section.title"
-            [id]="'preview-section-title-' + index"
-            class="truncate text-sm
-                  font-bold uppercase
-                  tracking-[0.12em]
-                  text-white
-                  sm:text-base"
-          >
-            {{ section.title }}
-          </h3>
-        </div>
-      </div>
-
-      <!-- Member count -->
-      <span
-        class="inline-flex shrink-0
-              items-center gap-1.5
-              rounded-full border
-              border-white/15
-              bg-white/10
-              px-2.5 py-1
-              text-xs font-semibold
-              text-white/85"
-      >
-        <span
-          aria-hidden="true"
-          class="h-1.5 w-1.5
-                rounded-full
-                bg-[#F4B400]"
-        ></span>
-
-        {{ section.members.length }}
-        {{
-          section.members.length === 1
-            ? 'member'
-            : 'members'
-        }}
-      </span>
-    </header>
-
-    <!-- Members Grid -->
-    <div
-      class="grid grid-cols-1 gap-3
-            bg-slate-50/60 p-3
-            sm:p-3.5
-            md:grid-cols-2
-            lg:p-4
-            xl:grid-cols-3
-            2xl:grid-cols-4"
-    >
-
-      @if (section.members.length > 0) {
-        <article
-          *ngFor="
-            let member of section.members;
-            trackBy: trackMember
-          "
-          class="group flex h-full min-w-0
-                items-start gap-2.5
-                rounded-lg border
-                border-slate-200
-                bg-white p-3
-                text-left shadow-sm
-                transition
-                duration-150
-                hover:-translate-y-0.5
-                hover:border-[#F4B400]/50
-                hover:shadow-md
-                motion-reduce:transform-none
-                motion-reduce:transition-none"
-        >
-          <!-- Avatar -->
-          <div
-            aria-hidden="true"
-            class="flex h-11 w-11 shrink-0
-                  items-center justify-center
-                  rounded-xl
-                  bg-linear-to-br
-                  from-[#000035] to-[#1a1a4d]
-                  text-sm font-bold
-                  text-[#F4B400]
-                  transition-transform
-                  duration-150
-                  group-hover:scale-[1.03]
-                  motion-reduce:transform-none
-                  motion-reduce:transition-none
-                  lg:h-12 lg:w-12"
-          >
-            {{
-              member.initials ||
-              member.name.charAt(0)
-            }}
+        <section class="preview-advisers" aria-labelledby="preview-adviser-title">
+          <div class="preview-section-heading">
+            <h2 id="preview-adviser-title">Publication Adviser{{ board.coAdviser.name ? 's' : '' }}</h2>
+            <p>The faculty adviser{{ board.coAdviser.name ? 's' : '' }} providing guidance, oversight, and institutional support to the editorial board.</p>
           </div>
-
-          <!-- Member details -->
-          <div class="min-w-0 flex-1">
-            <h3
-              [title]="member.name"
-              class="wrap-break-word text-sm
-                    font-bold leading-snug
-                    text-[#000035]"
-            >
-              {{ member.name }}
-            </h3>
-
-            <p
-              [title]="member.position"
-              class="mt-0.5 wrap-break-word
-                    text-xs font-semibold
-                    leading-5 text-slate-600"
-            >
-              {{ member.position }}
-            </p>
-
-            @if (member.yearLevel) {
-              <div
-                class="mt-1.5 inline-flex items-center
-                      gap-1.5 text-xs
-                      text-slate-400"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="h-3.5 w-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 14l9-5-9-5-9 5 9 5z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 14l6.16-3.422
-                      A12.083 12.083 0 0 1
-                      21 17c0 2.5-1.5 4-9 4
-                      s-9-1.5-9-4
-                      a12.083 12.083 0 0 1
-                      2.84-6.422L12 14z"
-                  />
-                </svg>
-
-                <span>
-                  {{ getYearLevelLabel(member.yearLevel) }}
-                </span>
+          <div class="preview-adviser-grid">
+            <article class="preview-adviser">
+              <div class="preview-initials" aria-hidden="true">{{ board.adviser.initials || board.adviser.name.charAt(0) }}</div>
+              <div>
+                <h3>{{ board.adviser.name }}</h3>
+                <p class="preview-adviser-position">{{ board.adviser.position }}</p>
+                <p>Provides institutional guidance and oversight to the editorial board while supporting the publication’s standards, development, and operations.</p>
               </div>
+            </article>
+            @if (board.coAdviser.name) {
+              <article class="preview-adviser">
+                <div class="preview-initials" aria-hidden="true">{{ board.coAdviser.initials || board.coAdviser.name.charAt(0) }}</div>
+                <div>
+                  <h3>{{ board.coAdviser.name }}</h3>
+                  <p class="preview-adviser-position">{{ board.coAdviser.position }}</p>
+                  <p>Works alongside the publication adviser to guide and support the editorial board.</p>
+                </div>
+              </article>
             }
           </div>
-        </article>
-      } @else {
-          <div
-            class="col-span-full flex min-h-36
-                  flex-col items-center justify-center
-                  rounded-lg border
-                  border-dashed border-slate-300
-                  bg-white px-5 py-6
-                  text-center"
-          >
-            <div
-              aria-hidden="true"
-              class="flex h-10 w-10 items-center
-                    justify-center rounded-full
-                    bg-slate-100 text-slate-400"
-            >
-              <svg
-                class="h-4.5 w-4.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.8"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M16 21v-2a4 4 0 0 0-4-4H6
-                    a4 4 0 0 0-4 4v2
-                    M9 11a4 4 0 1 0 0-8"
-                />
-              </svg>
-            </div>
-
-            <p
-              class="mt-3 text-sm font-semibold
-                    text-slate-600"
-            >
-              No members assigned
-            </p>
-
-            <p
-              class="mt-1 max-w-sm text-xs
-                    leading-5 text-slate-400"
-            >
-              Assign a staff member to
-              {{ section.title }}
-              in Staff Directory and the preview will update automatically.
-            </p>
-          </div>
-        }
-    </div>
-
-  </section>
-</div>
-</div>
-  }
-
-  <!-- ========================= -->
-  <!-- Publication Adviser       -->
-  <!-- ========================= -->
-
-  <div
-    class="flex items-end justify-between
-          gap-4 border-b
-          border-slate-200 pb-3"
-  >
-    <div>
-      <p
-        class="text-[11px] font-bold uppercase
-              tracking-[0.14em]
-              text-[#F4B400]"
-      >
-        Institutional Support
-      </p>
-
-      <h2
-        class="mt-1 text-lg font-bold
-              text-[#000035]
-              sm:text-xl"
-      >
-        Publication Adviser{{ board.coAdviser.name ? 's' : '' }}
-      </h2>
-
-      <p
-        class="mt-1 max-w-2xl
-              text-sm leading-6
-              text-slate-500"
-      >
-        The faculty adviser{{ board.coAdviser.name ? 's' : '' }} providing guidance,
-        oversight, and institutional support to
-        the editorial board.
-      </p>
-    </div>
-  </div>
-
-  <section
-    aria-labelledby="preview-adviser-title"
-    class="group overflow-hidden rounded-xl
-          border border-slate-200
-          bg-white shadow-sm
-          transition
-          duration-150
-          hover:border-[#F4B400]/40
-          hover:shadow-md
-          motion-reduce:transition-none"
-  >
-    <!-- Adviser heading -->
-    <header
-      class="flex items-center justify-between
-            gap-4 border-b border-[#F4B400]/30
-            bg-linear-to-r
-            from-[#F4B400] to-[#FFD86B]
-            px-4 py-3
-            sm:px-6"
-    >
-      <div class="flex min-w-0 items-center gap-2.5">
-        <svg
-          aria-hidden="true"
-          class="h-4 w-4 shrink-0
-                text-[#000035]"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path
-            d="M9.049 2.927c.3-.921
-              1.603-.921 1.902 0l1.286
-              3.97a1 1 0 0 0 .95.69h4.17
-              c.969 0 1.371 1.24.588
-              1.81l-3.376 2.453a1 1 0
-              0 0-.364 1.118l1.287
-              3.97c.3.921-.755
-              1.688-1.54 1.118L10
-              15.347l-3.952
-              2.71c-.784.57-1.838-.197
-              -1.539-1.118l1.286-3.97a1
-              1 0 0 0-.364-1.118L2.055
-              9.397c-.783-.57-.38-1.81
-              .588-1.81h4.17a1 1 0 0 0
-              .95-.69l1.286-3.97z"
-          />
-        </svg>
-
-        <h3
-          id="preview-adviser-title"
-          class="truncate text-xs font-bold
-                uppercase tracking-[0.14em]
-                text-[#000035]"
-        >
-           Adviser Profile{{ board.coAdviser.name ? 's' : '' }}
-        </h3>
-      </div>
-
-      <span
-        class="hidden text-xs font-semibold
-              text-[#000035]/70
-              sm:inline"
-      >
-        Publication Guidance
-      </span>
-    </header>
-
-    <!-- Adviser content -->
-    <div
-      class="grid gap-5 px-4 py-5
-            sm:grid-cols-[auto_minmax(0,1fr)]
-            sm:items-center
-            sm:px-6"
-    >
-      <!-- Avatar -->
-      <div
-        aria-hidden="true"
-        class="mx-auto flex h-20 w-20
-              shrink-0 items-center
-              justify-center rounded-full
-              bg-linear-to-br
-              from-[#000035] to-[#1a1a4d]
-              text-2xl font-extrabold
-              text-[#F4B400]
-              ring-4 ring-[#F4B400]/25
-              transition-transform
-              duration-150
-              group-hover:scale-[1.02]
-              motion-reduce:transform-none
-              motion-reduce:transition-none
-              sm:mx-0"
-      >
-        {{
-          board.adviser.initials ||
-          board.adviser.name.charAt(0)
-        }}
-      </div>
-
-      <!-- Adviser information -->
-      <div
-        class="min-w-0 text-center
-              sm:text-left"
-      >
-
-        <h3
-          class="mt-1 wrap-break-word
-                text-xl font-extrabold
-                leading-tight text-[#000035]
-                sm:text-2xl"
-        >
-          {{ board.adviser.name }}
-        </h3>
-
-        <p
-          class="mt-1 text-sm font-semibold
-                text-slate-600"
-        >
-          {{ board.adviser.position }}
-        </p>
-
-        <p
-          class="mt-3 max-w-2xl
-                text-sm leading-6
-                text-slate-500"
-        >
-          Provides institutional guidance and
-          oversight to the editorial board while
-          supporting the publication’s standards,
-          development, and operations.
-        </p>
-      </div>
-    </div>
-
-    @if (board.coAdviser.name) {
-      <div
-        class="grid gap-5 border-t border-slate-200 px-4 py-5
-              sm:grid-cols-[auto_minmax(0,1fr)]
-              sm:items-center
-              sm:px-6"
-      >
-        <div
-          aria-hidden="true"
-          class="mx-auto flex h-20 w-20
-                shrink-0 items-center
-                justify-center rounded-full
-                bg-linear-to-br
-                from-[#000035] to-[#1a1a4d]
-                text-2xl font-extrabold
-                text-[#F4B400]
-                ring-4 ring-[#F4B400]/25
-                sm:mx-0"
-        >
-          {{
-            board.coAdviser.initials ||
-            board.coAdviser.name.charAt(0)
-          }}
-        </div>
-
-        <div class="min-w-0 text-center sm:text-left">
-          <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9a6700]">
-            Co-adviser
-          </p>
-          <h3
-            class="mt-1 wrap-break-word
-                  text-xl font-extrabold
-                  leading-tight text-[#000035]
-                  sm:text-2xl"
-          >
-            {{ board.coAdviser.name }}
-          </h3>
-          <p class="mt-1 text-sm font-semibold text-slate-600">
-            {{ board.coAdviser.position }}
-          </p>
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-            Works alongside the publication adviser to guide and support the editorial board.
-          </p>
-        </div>
-      </div>
-    }
-  </section>
-
-      </div>
+        </section>
+      }
     }
   }
-}
-  </div>
 </section>

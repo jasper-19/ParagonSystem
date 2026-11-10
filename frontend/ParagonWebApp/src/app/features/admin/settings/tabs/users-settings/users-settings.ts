@@ -24,6 +24,7 @@ import { ConfirmationService } from '../../../../../shared/components/confirmati
   standalone: true,
   imports: [CommonModule, UserModalComponent],
   templateUrl: './users-settings.html',
+  styleUrl: '../../settings-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsersSettingsComponent implements OnInit {

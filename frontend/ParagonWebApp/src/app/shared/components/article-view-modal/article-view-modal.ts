@@ -24,6 +24,7 @@ import {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './article-view-modal.html',
+  styleUrl: './article-view-modal.scss',
 })
 export class ArticleViewModal
   implements OnChanges, OnDestroy {

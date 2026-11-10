@@ -5,7 +5,6 @@ import { finalize } from 'rxjs';
 
 import { EditorialBoardService } from '../../../../core/services/editorial-board.service';
 import { EditorialBoardData } from '../../../../models/editorial-board.model';
-import { SocketService } from '../../../../core/services/socket.service';
 
 type EditorialSectionIcon =
   | 'crown'
@@ -24,6 +23,7 @@ type EditorialSectionIcon =
     RouterModule,
   ],
   templateUrl: './public-board-preview.html',
+  styleUrl: './public-board-preview.scss',
 })
 export class PublicBoardPreviewComponent
   implements OnInit {

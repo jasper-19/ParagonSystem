@@ -7,6 +7,7 @@ import { ActivityLog } from '../../../../models/activity-log.model';
   selector: 'app-activity-log-table',
   imports: [CommonModule],
   templateUrl: './activity-log-table.html',
+  styleUrl: './activity-log-table.scss',
   host: { class: 'block' },
 })
 export class ActivityLogTableComponent {

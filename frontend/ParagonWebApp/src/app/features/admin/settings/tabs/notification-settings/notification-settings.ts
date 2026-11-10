@@ -19,6 +19,7 @@ import { GlobalSettingsService } from '../../../../../core/services/global-setti
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './notification-settings.html',
+  styleUrl: '../../settings-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationSettingsComponent implements OnInit {

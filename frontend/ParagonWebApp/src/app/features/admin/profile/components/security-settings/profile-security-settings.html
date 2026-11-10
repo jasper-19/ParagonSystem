@@ -1,5 +1,5 @@
 <section
-  class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+  class="profile-security overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
   aria-labelledby="security-settings-title"
 >
   <app-success-modal
@@ -19,7 +19,6 @@
   ></app-error-modal>
 
   <header class="border-b border-slate-200 bg-slate-50 p-5 sm:p-6 lg:p-8">
-    <p class="text-xs font-bold uppercase tracking-[0.16em] text-amber-600">Account protection</p>
     <h2 id="security-settings-title" class="mt-2 text-xl font-bold text-[#000035] sm:text-2xl">
       Security settings
     </h2>
@@ -28,7 +27,7 @@
     </p>
   </header>
 
-  <div class="border-b border-slate-200 p-5 sm:p-6 lg:p-8" aria-labelledby="change-password-title">
+  <div class="password-section border-b border-slate-200 p-5 sm:p-6 lg:p-8" aria-labelledby="change-password-title">
     <div class="flex items-start gap-3">
       <span
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#000035] text-amber-400"
@@ -103,7 +102,7 @@
               autocomplete="new-password"
               placeholder="Create new password"
               [attr.aria-invalid]="newPasswordControl.touched && (newPasswordControl.invalid || passwordForm.hasError('passwordUnchanged'))"
-              [attr.aria-describedby]="newPasswordControl.touched && newPasswordControl.invalid ? 'new-password-error password-requirements' : 'password-requirements'"
+              [attr.aria-describedby]="newPasswordControl.touched && (newPasswordControl.invalid || passwordForm.hasError('passwordUnchanged')) ? 'new-password-error password-requirements' : 'password-requirements'"
             />
             <button
               type="button"
@@ -129,6 +128,10 @@
             <p id="new-password-error" class="mt-2 text-sm font-medium text-red-700">Enter a new password.</p>
           } @else if (newPasswordControl.touched && newPasswordControl.hasError('minlength')) {
             <p id="new-password-error" class="mt-2 text-sm font-medium text-red-700">Use at least twelve characters.</p>
+          } @else if (newPasswordControl.touched && newPasswordControl.hasError('passwordComplexity')) {
+            <p id="new-password-error" class="mt-2 text-sm font-medium text-red-700">
+              Include an uppercase letter, a lowercase letter, a number, and a special character.
+            </p>
           } @else if (newPasswordControl.touched && passwordForm.hasError('passwordUnchanged')) {
             <p id="new-password-error" class="mt-2 text-sm font-medium text-red-700">
               Use a password different from your current one.
@@ -201,7 +204,7 @@
 
         <ul class="mt-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 lg:grid-cols-5" aria-label="Password requirements">
           <li class="flex items-center gap-2" [ngClass]="requirementClass(hasMinimumLength)">
-            <span aria-hidden="true">{{ hasMinimumLength ? '✓' : '○' }}</span> 8+ characters
+            <span aria-hidden="true">{{ hasMinimumLength ? '✓' : '○' }}</span> 12+ characters
           </li>
           <li class="flex items-center gap-2" [ngClass]="requirementClass(hasUppercase)">
             <span aria-hidden="true">{{ hasUppercase ? '✓' : '○' }}</span> Uppercase letter
@@ -243,7 +246,7 @@
   </div>
 
   <div
-    class="border-b border-slate-200 p-5 sm:p-6 lg:flex lg:items-center lg:gap-6 lg:p-8"
+    class="two-factor-section border-b border-slate-200 p-5 sm:p-6 lg:flex lg:items-center lg:gap-6 lg:p-8"
     aria-labelledby="two-factor-title"
   >
     <div class="flex min-w-0 flex-1 items-start gap-3">
@@ -298,7 +301,7 @@
     </div>
   </div>
 
-  <div class="p-5 sm:p-6 lg:p-8" aria-labelledby="active-sessions-title">
+  <div class="sessions-section p-5 sm:p-6 lg:p-8" aria-labelledby="active-sessions-title">
     <div class="flex items-start gap-3">
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700" aria-hidden="true">
         <svg class="h-5 w-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">

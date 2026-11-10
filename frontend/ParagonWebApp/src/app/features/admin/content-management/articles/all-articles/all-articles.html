@@ -1,738 +1,121 @@
-<section class="space-y-8">
+<section class="articles-workspace">
+  <div class="articles-heading">
+    <div><h2>Articles</h2><p>Manage and organize publication content</p></div>
+    <a routerLink="/admin/create-article" class="article-button article-button-primary">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 5v14M5 12h14" /></svg>
+      New Article
+    </a>
+  </div>
 
-  <!-- Header -->
-  <div class="flex flex-col gap-5 sm:gap-6">
-
-    <div
-      class="flex flex-col gap-4
-            sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div class="min-w-0 space-y-1.5">
-        <h2
-          class="text-2xl font-bold tracking-tight text-gray-900
-                sm:text-3xl lg:text-4xl"
-        >
-          Articles
-        </h2>
-
-        <p class="text-sm text-gray-600 sm:text-base">
-          Manage and organize publication content
-        </p>
-      </div>
-
-      <a
-        routerLink="/admin/create-article"
-        class="inline-flex min-h-11 w-full items-center justify-center gap-2
-              rounded-lg bg-[#000035] px-5 py-2.5
-              text-sm font-semibold text-white
-              shadow-sm transition
-              hover:bg-[#0a1a2e] hover:shadow-md
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-[#f4b400]
-              focus-visible:ring-offset-2
-              sm:w-auto"
-      >
-        <span aria-hidden="true" class="text-lg leading-none">
-          +
-        </span>
-        New Article
-      </a>
+  <div class="articles-toolbar">
+    <div class="article-search-field">
+      <label for="article-search">Search articles</label>
+      <input id="article-search" type="search" placeholder="Search by title or category"
+        [value]="searchQuery()" (input)="onSearch($event)" />
     </div>
-
-    <!-- Search + Status -->
-    <div
-      class="flex flex-col gap-4
-            lg:flex-row lg:items-end lg:justify-between"
-    >
-      <div class="w-full lg:max-w-md">
-        <label
-          for="article-search"
-          class="mb-1.5 block text-sm font-medium text-gray-700"
-        >
-          Search articles
-        </label>
-
-        <input
-          id="article-search"
-          type="search"
-          placeholder="Search by title or category"
-          [value]="searchQuery()"
-          (input)="onSearch($event)"
-          class="min-h-11 w-full rounded-lg border border-gray-200
-                px-4 py-2 text-sm
-                focus:border-[#f4b400]
-                focus:outline-none
-                focus:ring-2
-                focus:ring-[#f4b400]/30"
-        />
-      </div>
-
-      <div class="w-full sm:w-auto">
-        <label
-          for="article-sort"
-          class="mb-1.5 block text-sm font-medium text-gray-700"
-        >
-          Sort articles
-        </label>
-
-        <select
-          id="article-sort"
-          [ngModel]="sortOrder()"
-          (ngModelChange)="onSortChange($event)"
-          class="min-h-11 w-full rounded-lg border border-gray-200
-                bg-white px-3 py-2 text-sm text-gray-700
-                focus:border-[#f4b400]
-                focus:outline-none
-                focus:ring-2
-                focus:ring-[#f4b400]/30
-                sm:min-w-40"
-        >
-          @for (option of sortOptions; track option.value) {
-            <option [ngValue]="option.value">
-              {{ option.label }}
-            </option>
-          }
-        </select>
-      </div>
-
-      <div class="min-w-0">
-        <span
-          class="mb-1.5 block text-sm font-medium text-gray-700"
-        >
-          Filter by status
-        </span>
-
-        <div
-          class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1
-                sm:flex-wrap sm:overflow-visible"
-          role="group"
-          aria-label="Filter articles by status"
-        >
-          @for (status of statuses; track status) {
-            <button
-              type="button"
-              (click)="setStatus(status)"
-              class="min-h-10 shrink-0 rounded-lg px-4 py-2
-                    text-sm font-medium capitalize transition
-                    focus-visible:outline-none
-                    focus-visible:ring-2
-                    focus-visible:ring-[#f4b400]
-                    focus-visible:ring-offset-2"
-              [class.bg-[#000035]]="statusFilter() === status"
-              [class.text-white]="statusFilter() === status"
-              [class.bg-gray-100]="statusFilter() !== status"
-              [class.text-gray-700]="statusFilter() !== status"
-              [attr.aria-pressed]="statusFilter() === status"
-            >
-              {{ status }}
-            </button>
-          }
-        </div>
+    <div class="article-sort-field">
+      <label for="article-sort">Sort articles</label>
+      <select id="article-sort" [ngModel]="sortOrder()" (ngModelChange)="onSortChange($event)">
+        @for (option of sortOptions; track option.value) { <option [ngValue]="option.value">{{ option.label }}</option> }
+      </select>
+    </div>
+    <div class="article-status-field">
+      <span class="field-label">Filter by status</span>
+      <div class="status-filters" role="group" aria-label="Filter articles by status">
+        @for (status of statuses; track status) {
+          <button type="button" (click)="setStatus(status)" [attr.aria-pressed]="statusFilter() === status">{{ status }}</button>
+        }
       </div>
     </div>
-
   </div>
 
-  <!-- Table Section -->
-  <div class="bg-white rounded-xl shadow border border-gray-100">
-
-@if (loading()) {
-  <div
-    class="flex items-center justify-center gap-3 px-6 py-16 text-sm text-gray-500"
-  >
-    <svg
-      class="h-5 w-5 animate-spin text-[#f4b400]"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle
-        class="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        stroke-width="4"
-      />
-
-      <path
-        class="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-      />
-    </svg>
-
-    <span>Loading articles...</span>
-  </div>
-} @else if (loadError()) {
-  <div
-    class="flex flex-col items-center justify-center gap-4 px-6 py-16 text-center"
-    role="alert"
-  >
-    <p class="text-sm font-medium text-red-700">
-      {{ loadError() }}
-    </p>
-    <button
-      type="button"
-      (click)="retryLoad()"
-      class="min-h-10 rounded-lg bg-[#000035] px-4 py-2
-            text-sm font-semibold text-white
-            focus-visible:outline-none focus-visible:ring-2
-            focus-visible:ring-[#f4b400]"
-    >
-      Try again
-    </button>
-  </div>
-} @else if (displayedArticles().length === 0) {
-
-      <!-- Empty State -->
-      <div class="px-4 sm:px-6 md:px-8 py-12 sm:py-16 text-center">
-        <div class="inline-block p-4 bg-gray-100 rounded-full mb-4">
-          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-          </svg>
-        </div>
-        <p class="text-gray-500 font-medium">No articles found</p>
+  <div class="articles-results" [attr.aria-busy]="loading()">
+    @if (loading()) {
+      <div class="articles-state" role="status"><span class="article-spinner" aria-hidden="true"></span><p>Loading articles...</p></div>
+    } @else if (loadError()) {
+      <div class="articles-state" role="alert"><p class="article-error">{{ loadError() }}</p>
+        <button type="button" (click)="retryLoad()" class="article-button article-button-primary">Try again</button>
       </div>
-
+    } @else if (displayedArticles().length === 0) {
+      <div class="articles-state"><p>No articles found</p></div>
     } @else {
-
-      <!-- Desktop Table View (hidden on mobile) -->
-      <div
-        class="hidden overflow-x-auto lg:block"
-        tabindex="0"
-        aria-label="Articles table"
-      >
-        <table class="min-w-215 w-full divide-y divide-gray-100">
-
-          <thead class="bg-linear-to-r from-[#000035] to-[#1a3a52]">
-            <tr>
-              <th
-                class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              >
-                Title
-              </th>
-
-              <th
-                class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              >
-                Category
-              </th>
-
-              <th
-                class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              >
-                Status
-              </th>
-
-              <th
-                class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              >
-                Views
-              </th>
-
-              <th
-                class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              >
-                Featured
-              </th>
-
-              <th
-                class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
-
-        <tbody class="bg-white divide-y divide-gray-50">
-
-          @for (a of displayedArticles(); track a.id) {
-
-            <tr
-              tabindex="0"
-              role="button"
-              class="cursor-pointer transition-colors
-                    hover:bg-[#f4b400]/10
-                    focus-visible:bg-[#f4b400]/10
-                    focus-visible:outline-none
-                    focus-visible:ring-2
-                    focus-visible:ring-inset
-                    focus-visible:ring-[#f4b400]"
-              (click)="openArticle(a)"
-              (keydown.enter)="openArticle(a)"
-              (keydown.space)="$event.preventDefault(); openArticle(a)"
-              [attr.aria-label]="'View article details for ' + a.title"
-            >
-
-              <td class="max-w-sm px-4 py-4 lg:px-6">
-                <span
-                  class="line-clamp-2 font-semibold leading-5 text-[#000035]"
-                  [title]="a.title"
-                >
-                  {{ a.title }}
-                </span>
-              </td>
-
-              <td class="px-6 py-4">
-                <span class="inline-block px-3 py-1 text-xs font-bold uppercase rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
-                  {{ a.category }}
-                </span>
-              </td>
-
-              <td class="px-6 py-4">
-                <span
-                  class="inline-block px-3 py-1 text-xs font-bold rounded-full"
-                  [class.bg-green-100]="a.status === 'Published'"
-                  [class.text-green-700]="a.status === 'Published'"
-                  [class.bg-blue-100]="a.status === 'Draft'"
-                  [class.text-blue-700]="a.status === 'Draft'"
-                  [class.bg-gray-100]="a.status === 'Archived'"
-                  [class.text-gray-700]="a.status === 'Archived'"
-                >
-                  {{ a.status }}
-                </span>
-              </td>
-
-              <td class="px-6 py-4 font-semibold text-[#000035]">
-                {{ a.views }}
-              </td>
-
-              <td class="px-6 py-4">
-                @if (a.featured) {
-                  <span class="px-2.5 py-1 text-xs font-bold bg-[#f4b400] text-[#000035] rounded-full">
-                    FEATURED
-                  </span>
-                } @else {
-                  <span class="text-xs text-gray-400">—</span>
-                }
-              </td>
-
-              <td class="px-6 py-4">
-                <div class="flex min-w-max items-center gap-2">
-
-                  <button
-                    type="button"
-                    [routerLink]="['/admin/edit-article', a.slug]"
-                    (click)="$event.stopPropagation()"
-                    class="inline-flex min-h-10 items-center justify-center
-                          rounded-lg bg-[#000035] px-3 py-2
-                          text-xs font-semibold text-white transition
-                          hover:shadow-md
-                          focus-visible:outline-none
-                          focus-visible:ring-2
-                          focus-visible:ring-[#f4b400]
-                          focus-visible:ring-offset-2"
-                  >
-                    Edit
-                  </button>
-
-                  @if (a.status === 'Archived') {
-                    <button
-                      type="button"
-                      (click)="$event.stopPropagation(); requestDelete(a)"
-                      class="inline-flex min-h-10 items-center justify-center
-                            rounded-lg bg-red-700 px-3 py-2
-                            text-xs font-semibold text-white transition
-                            hover:bg-red-800 hover:shadow-md
-                            focus-visible:outline-none
-                            focus-visible:ring-2
-                            focus-visible:ring-red-600
-                            focus-visible:ring-offset-2"
-                    >
-                      Delete
-                    </button>
-                  } @else {
-                    <button
-                      type="button"
-                      (click)="$event.stopPropagation(); requestArchive(a)"
-                      class="inline-flex min-h-10 items-center justify-center
-                            rounded-lg bg-[#6B7280] px-3 py-2
-                            text-xs font-semibold text-white transition
-                            hover:bg-[#6B7280]/60 hover:shadow-md
-                            focus-visible:outline-none
-                            focus-visible:ring-2
-                            focus-visible:ring-[#64748B]
-                            focus-visible:ring-offset-2"
-                    >
-                      Archive
-                    </button>
-                  }
-
-                </div>
-              </td>
-
-            </tr>
-
-          }
-
-        </tbody>
-
+      <div class="articles-table-scroll" tabindex="0" aria-label="Articles table">
+        <table>
+          <thead><tr><th scope="col">Title</th><th scope="col">Category</th><th scope="col">Status</th><th scope="col">Views</th><th scope="col">Featured</th><th scope="col">Actions</th></tr></thead>
+          <tbody>
+            @for (a of displayedArticles(); track a.id) {
+              <tr tabindex="0" role="button" (click)="openArticle(a)"
+                (keydown.enter)="openArticle(a)" (keydown.space)="$event.preventDefault(); openArticle(a)"
+                [attr.aria-label]="'View article details for ' + a.title">
+                <td class="article-title-cell"><span class="article-title" [title]="a.title">{{ a.title }}</span></td>
+                <td class="article-category">{{ a.category }}</td>
+                <td><span class="article-status" [attr.data-status]="a.status">{{ a.status }}</span></td>
+                <td>{{ a.views | number }}</td>
+                <td><span [class.article-featured]="a.featured">{{ a.featured ? 'Featured' : '—' }}</span></td>
+                <td>
+                  <div class="article-actions" (keydown)="$event.stopPropagation()">
+                    <button type="button" [routerLink]="['/admin/edit-article', a.slug]" (click)="$event.stopPropagation()" class="article-action">Edit</button>
+                    @if (a.status === 'Archived') {
+                      <button type="button" (click)="$event.stopPropagation(); requestDelete(a)" class="article-action article-action-danger">Delete</button>
+                    } @else {
+                      <button type="button" (click)="$event.stopPropagation(); requestArchive(a)" class="article-action">Archive</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
         </table>
       </div>
 
-      <!-- Mobile Card View (visible only on mobile) -->
-      <div class="divide-y divide-gray-100 lg:hidden">
+      <div class="articles-mobile">
         @for (a of displayedArticles(); track a.id) {
-          <article
-            tabindex="0"
-            class="space-y-4 p-4 transition-colors
-                  hover:bg-[#f4b400]/5
-                  focus-visible:bg-[#f4b400]/5
-                  focus-visible:outline-none
-                  focus-visible:ring-2
-                  focus-visible:ring-inset
-                  focus-visible:ring-[#f4b400]
-                  sm:p-5"
-            (click)="openArticle(a)"
-            (keydown.enter)="openArticle(a)"
-            (keydown.space)="$event.preventDefault(); openArticle(a)"
-            [attr.aria-label]="'View article details for ' + a.title"
-          >
-            <div class="space-y-2">
-              <h3
-                class="text-base font-semibold leading-6 text-[#000035]"
-              >
-                {{ a.title }}
-              </h3>
-
-              <div class="flex flex-wrap gap-2">
-                <span
-                  class="rounded-full border border-[#f4b400]/30
-                        bg-[#f4b400]/10 px-2.5 py-1
-                        text-xs font-bold uppercase text-[#000035]"
-                >
-                  {{ a.category }}
-                </span>
-
-                <span
-                  class="rounded-full px-2.5 py-1 text-xs font-bold"
-                  [class.bg-green-100]="a.status === 'Published'"
-                  [class.text-green-700]="a.status === 'Published'"
-                  [class.bg-blue-100]="a.status === 'Draft'"
-                  [class.text-blue-700]="a.status === 'Draft'"
-                  [class.bg-gray-100]="a.status === 'Archived'"
-                  [class.text-gray-700]="a.status === 'Archived'"
-                >
-                  {{ a.status }}
-                </span>
-
-                @if (a.featured) {
-                  <span
-                    class="rounded-full bg-[#f4b400] px-2.5 py-1
-                          text-xs font-bold text-[#000035]"
-                  >
-                    Featured
-                  </span>
-                }
-              </div>
+          <article class="article-mobile-row" tabindex="0" (click)="openArticle(a)"
+            (keydown.enter)="openArticle(a)" (keydown.space)="$event.preventDefault(); openArticle(a)"
+            [attr.aria-label]="'View article details for ' + a.title">
+            <h3>{{ a.title }}</h3>
+            <div class="article-mobile-meta"><span class="article-category">{{ a.category }}</span>
+              <span class="article-status" [attr.data-status]="a.status">{{ a.status }}</span>
+              @if (a.featured) { <span class="article-featured">Featured</span> }
             </div>
-
-            <div
-              class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3"
-            >
-              <div>
-                <span class="block text-xs text-gray-500">
-                  Views
-                </span>
-                <span class="font-semibold text-[#000035]">
-                  {{ a.views | number }}
-                </span>
-              </div>
-
-              <div>
-                <span class="block text-xs text-gray-500">
-                  Created
-                </span>
-                <span class="font-medium text-gray-700">
-                  {{ a.createdAt | date:'MMM d, y' }}
-                </span>
-              </div>
-
-              <div class="col-span-2 sm:col-span-1">
-                <span class="block text-xs text-gray-500">
-                  Published
-                </span>
-                <span class="font-medium text-gray-700">
-                  {{
-                    a.publishedAt
-                      ? (a.publishedAt | date:'MMM d, y')
-                      : 'Not published'
-                  }}
-                </span>
-              </div>
-            </div>
-
-            <div
-              class="grid grid-cols-2 gap-2 pt-1
-                    sm:flex sm:flex-wrap sm:justify-end"
-            >
-              <button
-                type="button"
-                [routerLink]="['/admin/edit-article', a.slug]"
-                (click)="$event.stopPropagation()"
-                class="min-h-11 rounded-lg bg-[#000035]
-                      px-4 py-2 text-sm font-semibold text-white
-                      transition hover:shadow-md sm:min-w-28
-                      focus-visible:ring-2
-                      focus-visible:ring-[#f4b400]
-                      focus-visible:ring-offset-2"
-              >
-                Edit
-              </button>
-
+            <dl class="article-mobile-dates">
+              <div><dt>Views</dt><dd>{{ a.views | number }}</dd></div>
+              <div><dt>Created</dt><dd>{{ a.createdAt | date:'MMM d, y' }}</dd></div>
+              <div><dt>Published</dt><dd>{{ a.publishedAt ? (a.publishedAt | date:'MMM d, y') : 'Not published' }}</dd></div>
+            </dl>
+            <div class="article-actions" (keydown)="$event.stopPropagation()">
+              <button type="button" [routerLink]="['/admin/edit-article', a.slug]" (click)="$event.stopPropagation()" class="article-action">Edit</button>
               @if (a.status === 'Archived') {
-
-                <button
-                  type="button"
-                  (click)="$event.stopPropagation(); requestDelete(a)"
-                  class="inline-flex
-                        min-h-11
-                        items-center
-                        justify-center
-                        rounded-lg
-                        bg-red-700
-                        px-4
-                        py-2
-                        text-sm
-                        font-semibold
-                        text-white
-                        transition
-                        hover:bg-red-800
-                        hover:shadow-md
-                        sm:min-w-28
-                        focus-visible:outline-none
-                        focus-visible:ring-2
-                        focus-visible:ring-red-600
-                        focus-visible:ring-offset-2"
-                >
-                  Delete
-                </button>
-
+                <button type="button" (click)="$event.stopPropagation(); requestDelete(a)" class="article-action article-action-danger">Delete</button>
               } @else {
-
-                <button
-                  type="button"
-                  (click)="$event.stopPropagation(); requestArchive(a)"
-                  class="inline-flex
-                        min-h-11
-                        items-center
-                        justify-center
-                        rounded-lg
-                        bg-[#6B7280]
-                        px-4
-                        py-2
-                        text-sm
-                        font-semibold
-                        text-white
-                        transition
-                        hover:bg-[#6B7280]/60
-                        hover:shadow-md
-                        sm:min-w-28
-                        focus-visible:outline-none
-                        focus-visible:ring-2
-                        focus-visible:ring-[#64748B]
-                        focus-visible:ring-offset-2"
-                >
-                  Archive
-                </button>
-
+                <button type="button" (click)="$event.stopPropagation(); requestArchive(a)" class="article-action">Archive</button>
               }
-
             </div>
           </article>
         }
       </div>
 
+      <div class="articles-pagination">
+        <div class="article-page-summary">
+          <label for="article-page-size">Show</label>
+          <select id="article-page-size" [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)" [disabled]="loading()">
+            @for (size of pageSizeOptions; track size) { <option [ngValue]="size">{{ size }}</option> }
+          </select>
+          <span>entries</span>
+          <p>Showing {{ rangeStart() }}–{{ rangeEnd() }} of {{ totalResults() }}</p>
+        </div>
+        <p class="article-mobile-page-indicator">Page {{ currentPage() }} of {{ totalPages() }}</p>
+        <nav aria-label="Article pagination" class="article-page-controls">
+          <button type="button" (click)="goToPreviousPage()" [disabled]="loading() || currentPage() <= 1" aria-label="Go to previous page">Previous</button>
+          <div class="article-page-numbers">
+            @for (page of visiblePageNumbers(); track page) {
+              <button type="button" (click)="goToPage(page)" [disabled]="loading()" [attr.aria-current]="currentPage() === page ? 'page' : null" [attr.aria-label]="'Go to page ' + page">{{ page }}</button>
+            }
+          </div>
+          <button type="button" (click)="goToNextPage()" [disabled]="loading() || currentPage() >= totalPages()" aria-label="Go to next page">Next</button>
+        </nav>
+      </div>
     }
-
   </div>
-
-  <!-- Pagination -->
-@if (!loading() && totalResults() > 0) {
-  <div class="flex flex-col gap-4 mt-6">
-
-    <!-- Top Row: Page Size + Info -->
-    <div
-      class="flex flex-col items-center gap-3
-            sm:flex-row sm:justify-between"
-    >
-
-      <!-- Left: Page Size Selector -->
-      <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
-
-      <label
-        for="article-page-size"
-        class="text-xs text-gray-600 sm:text-sm"
-      >
-        Show
-      </label>
-
-      <select
-        id="article-page-size"
-        aria-label="Articles per page"
-        [ngModel]="pageSize()"
-        (ngModelChange)="onPageSizeChange($event)"
-        class="min-h-10 rounded-lg border border-gray-200
-              px-3 py-1.5 text-sm
-              focus:outline-none
-              focus:ring-2
-              focus:ring-[#f4b400]"
-      >
-        @for (size of pageSizeOptions; track size) {
-          <option [ngValue]="size">
-            {{ size }}
-          </option>
-        }
-      </select>
-
-      <span class="text-xs text-gray-600 sm:text-sm">
-        entries
-      </span>
-
-      </div>
-
-      <!-- Right: Page Info -->
-      <div class="text-center text-xs text-gray-500 sm:text-left sm:text-sm">
-        Showing
-        <span class="font-medium text-gray-800">
-          {{ rangeStart() }}–{{ rangeEnd() }}
-        </span>
-        of
-        <span class="font-medium text-gray-800">
-          {{ totalResults() }}
-        </span>
-      </div>
-
-    </div>
-
-<!-- Bottom Row: Responsive Pagination -->
-<div class="mt-5 flex flex-col items-center gap-3">
-
-  <!-- Mobile page indicator -->
-  <p
-    class="text-center text-xs font-medium text-gray-500
-           min-[420px]:hidden"
-  >
-    Page
-    <span class="font-semibold text-gray-800">
-      {{ currentPage() }}
-    </span>
-    of
-    <span class="font-semibold text-gray-800">
-      {{ totalPages() }}
-    </span>
-  </p>
-
-  <nav
-    class="flex w-full items-center justify-center gap-2"
-    aria-label="Article pagination"
-  >
-    <button
-      type="button"
-      (click)="goToPreviousPage()"
-      [disabled]="
-        loading() ||
-        currentPage() <= 1
-      "
-      class="inline-flex min-h-10 items-center justify-center
-             rounded-lg border border-gray-200
-             px-3 py-2 text-xs font-semibold text-gray-700
-             transition hover:bg-gray-50
-             focus-visible:outline-none
-             focus-visible:ring-2
-             focus-visible:ring-[#f4b400]
-             focus-visible:ring-offset-2
-             disabled:cursor-not-allowed
-             disabled:opacity-50
-             sm:px-4 sm:text-sm"
-      aria-label="Go to previous page"
-    >
-      Previous
-    </button>
-
-    <!-- Page numbers: hidden only on very narrow screens -->
-    <div
-      class="hidden items-center gap-1
-             min-[420px]:flex sm:gap-2"
-    >
-      @for (page of visiblePageNumbers(); track page) {
-        <button
-          type="button"
-          (click)="goToPage(page)"
-          [disabled]="loading()"
-          class="inline-flex min-h-10 min-w-10
-                 items-center justify-center rounded-lg
-                 px-2 py-2 text-xs font-semibold
-                 transition
-                 focus-visible:outline-none
-                 focus-visible:ring-2
-                 focus-visible:ring-[#f4b400]
-                 focus-visible:ring-offset-2
-                 disabled:cursor-not-allowed
-                 disabled:opacity-60
-                 sm:text-sm"
-          [class.bg-[#000035]]="
-            currentPage() === page
-          "
-          [class.text-white]="
-            currentPage() === page
-          "
-          [class.bg-gray-100]="
-            currentPage() !== page
-          "
-          [class.text-gray-700]="
-            currentPage() !== page
-          "
-          [attr.aria-current]="
-            currentPage() === page
-              ? 'page'
-              : null
-          "
-          [attr.aria-label]="
-            'Go to page ' + page
-          "
-        >
-          {{ page }}
-        </button>
-      }
-    </div>
-
-    <button
-      type="button"
-      (click)="goToNextPage()"
-      [disabled]="
-        loading() ||
-        currentPage() >= totalPages()
-      "
-      class="inline-flex min-h-10 items-center justify-center
-             rounded-lg border border-gray-200
-             px-3 py-2 text-xs font-semibold text-gray-700
-             transition hover:bg-gray-50
-             focus-visible:outline-none
-             focus-visible:ring-2
-             focus-visible:ring-[#f4b400]
-             focus-visible:ring-offset-2
-             disabled:cursor-not-allowed
-             disabled:opacity-50
-             sm:px-4 sm:text-sm"
-      aria-label="Go to next page"
-    >
-      Next
-    </button>
-  </nav>
-
-</div>
-
-  </div>
-  }
 </section>
-
-<app-article-view-modal
-  [article]="selectedArticle()"
-  [loading]="modalLoading()"
-  [errorMessage]="modalError()"
-  (close)="closeArticleModal()"
-/>
+<app-article-view-modal [article]="selectedArticle()" [loading]="modalLoading()" [errorMessage]="modalError()" (close)="closeArticleModal()" />

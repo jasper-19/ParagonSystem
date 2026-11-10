@@ -24,6 +24,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
   imports: [CommonModule],
   standalone: true,
   templateUrl: './admin-header.html',
+  styleUrl: './admin-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminHeaderComponent implements OnInit, OnDestroy, AfterViewChecked {

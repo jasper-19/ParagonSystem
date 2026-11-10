@@ -29,7 +29,7 @@
 | ID | Scenario | Steps | Expected result |
 | --- | --- | --- | --- |
 | F-01 | Empty password submit | Focus and blur each password field, then submit. | Required messages appear, invalid fields expose `aria-invalid`, and submission does not call the API. |
-| F-02 | Weak password | Enter fewer than eight characters or omit an uppercase, lowercase, number, or special character. | Requirements update as the user types, strength feedback changes, and submit remains disabled. |
+| F-02 | Weak password | Enter fewer than twelve characters or omit an uppercase, lowercase, number, or special character. | Requirements update as the user types, strength feedback changes, and submit remains disabled. |
 | F-03 | Reused password | Enter the same current and new password. | The form explains that the new password must differ and prevents submission. |
 | F-04 | Mismatched confirmation | Enter valid but different new and confirmation values. | A mismatch message appears and submit remains disabled. |
 | F-05 | Valid password | Enter a valid unique password and submit. | The button reports progress, duplicate submission is prevented, fields reset on success, and other sessions refresh. |

@@ -1,0 +1,151 @@
+:host {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  color: #000035;
+}
+
+.application-review-overlay { background: rgb(0 0 53 / 64%); backdrop-filter: none; }
+.application-review {
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 20px 64px rgb(0 0 53 / 24%);
+  font-size: 14px;
+  line-height: 1.5;
+
+  .application-review__header {
+    padding: 20px;
+    background: #000035;
+    background-image: none;
+
+    h3 { font-size: 22px; font-weight: 600; line-height: 1.3; letter-spacing: -0.02em; }
+    h3 + div { margin-top: 10px; }
+    h3 + div > div { padding: 0; border: 0; border-radius: 0; background: transparent; backdrop-filter: none; color: #d6daed; }
+    h3 + div span { font-size: 13px; }
+    button { border-color: #5d5d80; border-radius: 4px; background: transparent; }
+    button:hover { background: #25255a; }
+  }
+
+  .application-review__progress {
+    padding: 16px 20px 12px;
+    background: #f6f7f9;
+    border-color: #dce0e6;
+
+    ol { min-width: 0; }
+    li { min-width: 0; padding-inline: 4px; }
+    li > span:first-of-type:not(:last-of-type) { box-shadow: none; }
+    li > span:last-child { font-size: 11px; font-weight: 600; color: #596477; }
+    li[aria-current='step'] > span:last-child { color: #000035; }
+    li > span.rounded-full { border-width: 1px; box-shadow: none; }
+    > div > span { border-radius: 4px; }
+  }
+
+  .application-review__content {
+    padding: 24px 20px;
+    scrollbar-color: #a4acba #f3f5f7;
+    scrollbar-width: thin;
+
+    > div, > section { margin-top: 28px; }
+    > :first-child { margin-top: 0; }
+    h4 { font-size: 16px; font-weight: 600; line-height: 1.4; }
+    .text-slate-400, .text-slate-500 { color: #596477; }
+    .text-slate-700 { color: #303d50; }
+    .application-review__heading > div { display: none; }
+    .application-review__heading { margin-bottom: 12px; }
+  }
+
+  .application-review__identity {
+    padding: 0 0 16px;
+    border: 0;
+    border-bottom: 1px solid #e4e7ec;
+    border-radius: 0;
+    background: transparent;
+
+    > div > div:first-child { width: 44px; height: 44px; border-radius: 4px; font-size: 16px; font-weight: 600; }
+    > div > div:last-child > p:first-child { white-space: normal; overflow-wrap: anywhere; font-size: 16px; font-weight: 600; }
+  }
+
+  .application-review__facts {
+    gap: 16px;
+
+    > div { padding: 0 0 12px; border: 0; border-bottom: 1px solid #e4e7ec; border-radius: 0; }
+    dt { font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; color: #596477; }
+    dd { color: #000035; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  }
+
+  .application-review__positions {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+
+    > p { font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; color: #000035; }
+    > div > div { padding: 12px 0; border: 0; border-bottom: 1px solid #e4e7ec; border-radius: 0; background: transparent; }
+    > div > div p { font-weight: 500; }
+    span { border-radius: 3px; background: #fff3cd; padding: 3px 8px; color: #594200; }
+  }
+
+  .application-review__motivation {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+
+    p { max-width: 70ch; font-size: 14px; line-height: 1.75; color: #303d50; }
+  }
+
+  .application-review__workflow {
+    padding: 20px 0 0;
+    border: 0;
+    border-top: 1px solid #dce0e6;
+    border-radius: 0;
+    background: transparent;
+    animation: none;
+
+    h4 { font-size: 16px; }
+    > div > div.rounded-xl { border-radius: 4px; border-color: #d9e3ef; background: #f2f6fb; }
+    > div > div.rounded-xl > p:first-child { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; color: #335b89; }
+  }
+
+  label { font-size: 13px; font-weight: 600; color: #000035; }
+  input, textarea {
+    max-width: 100%;
+    min-width: 0;
+    border: 1px solid #b8c0cc;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #000035;
+    caret-color: #000035;
+
+    &::placeholder { color: #657083; opacity: 1; }
+    &:focus { border-color: #000035; outline: 2px solid #000035; outline-offset: 2px; box-shadow: none; }
+    &[readonly] { background: #f3f5f7; }
+  }
+
+  button {
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: none;
+
+    &:disabled { cursor: not-allowed; opacity: 0.55; }
+  }
+  .application-review__content button { min-height: 40px; }
+  .application-review__content button[class*='bg-[#000035]'] { color: #fff; }
+  button:focus-visible, a:focus-visible { outline: 2px solid #000035; outline-offset: 3px; box-shadow: none; }
+  .application-review__header button:focus-visible { outline-color: #f4b400; }
+  a { text-underline-offset: 3px; }
+  [role='alert'] { border-radius: 4px; font-size: 13px; }
+  .application-review__footer { background: #fff; backdrop-filter: none; padding-top: 16px; animation: none; }
+  ::selection { color: #000035; background: #f8d979; }
+}
+
+@media (min-width: 640px) {
+  .application-review { border-radius: 6px; }
+  .application-review .application-review__header { padding: 24px 28px; }
+  .application-review .application-review__progress { padding-inline: 28px; }
+  .application-review .application-review__content { padding: 24px 28px 28px; }
+}
+
+@media (max-width: 639px) {
+  .application-review input, .application-review textarea { font-size: 16px; }
+}

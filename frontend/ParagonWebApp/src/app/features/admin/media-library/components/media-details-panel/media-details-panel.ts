@@ -13,9 +13,12 @@ export interface MediaMetadataDraft {
   selector: 'app-media-details-panel',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './media-details-panel.html'
+  templateUrl: './media-details-panel.html',
+  styleUrl: './media-details-panel.scss'
 })
 export class MediaDetailsPanelComponent implements OnChanges {
+  private static nextInstanceId = 0;
+  readonly fieldId = `media-details-${MediaDetailsPanelComponent.nextInstanceId++}`;
   @Input() media: Media | null = null;
   @Input() isSaving = false;
   @Input() editable = true;

@@ -1,0 +1,65 @@
+:host {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --sidebar-ink: #000035;
+  --sidebar-gold: #f4b400;
+}
+.admin-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 60;
+  display: flex;
+  width: 18rem;
+  height: 100dvh;
+  flex-direction: column;
+  border-right: 1px solid #ffffff14;
+  background: var(--sidebar-ink);
+  color: #c4c4d2;
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: width 220ms ease-out, transform 220ms ease-out, visibility 220ms;
+  &.is-expanded { transform: translateX(0); visibility: visible; }
+  ::selection { background: var(--sidebar-gold); color: var(--sidebar-ink); }
+  :is(a, button):focus-visible { outline: 2px solid var(--sidebar-gold); outline-offset: -2px; }
+  button { font-family: inherit; cursor: pointer; }
+}
+.sidebar-navigation { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 1rem .75rem; }
+.sidebar-brand { display: flex; min-height: 4rem; flex-shrink: 0; align-items: center; justify-content: space-between; gap: .25rem; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid #ffffff1a; }
+.brand-identity { display: flex; min-width: 0; align-items: center; gap: .625rem; }
+.brand-logo { width: 2.5rem; height: 2.5rem; flex-shrink: 0; object-fit: contain; }
+.brand-name { color: var(--sidebar-gold); font-size: 1rem; font-weight: 650; letter-spacing: -.025em; }
+.sidebar-toggle { display: flex; width: 2.5rem; height: 2.75rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 4px; color: #c4c4d2; transition: background-color 150ms, color 150ms; }
+.sidebar-toggle svg { width: 1.125rem; height: 1.125rem; }
+.sidebar-toggle:hover { color: white; background: #ffffff0d; }
+.sidebar-main { flex: 1; min-height: 0; overflow-y: auto; overflow-x: clip; overscroll-behavior: contain; padding-bottom: 1rem; }
+.sidebar-main { scrollbar-width: thin; scrollbar-color: #ffffff40 transparent; }
+.sidebar-group + .sidebar-group, .sidebar-main > .sidebar-control + .sidebar-group { margin-top: .375rem; }
+.sidebar-control { display: flex; position: relative; width: 100%; min-height: 2.75rem; align-items: center; gap: .75rem; border-radius: 5px; padding: .625rem .875rem; color: #c4c4d2; font-size: .8125rem; font-weight: 500; line-height: 1.4; text-align: left; text-decoration: none; transition: background-color 150ms, color 150ms; -webkit-tap-highlight-color: transparent; }
+.sidebar-control:hover, .sidebar-control.is-open { background: #ffffff0d; color: white; }
+.sidebar-control.is-active { background: #f4b40014; color: var(--sidebar-gold); }
+.sidebar-control.is-active:hover { background: #f4b40020; }
+.sidebar-icon { display: flex; width: 1.125rem; height: 1.125rem; align-items: center; justify-content: center; flex-shrink: 0; pointer-events: none; }
+:host ::ng-deep .sidebar-icon svg { display: block; width: 100%; height: 100%; }
+.sidebar-label { display: block; min-width: 0; overflow: hidden; white-space: nowrap; }
+.sidebar-chevron { width: .875rem; height: .875rem; flex-shrink: 0; margin-left: auto; color: #a7a7bc; transition: transform 150ms; }
+.sidebar-chevron.is-rotated { transform: rotate(180deg); }
+.sidebar-submenu { margin: .375rem 0 .5rem 1.375rem; padding-left: .625rem; border-left: 1px solid #ffffff26; }
+.sidebar-child { gap: .625rem; padding: .625rem .75rem; font-size: .8125rem; }
+.sidebar-child .sidebar-icon { width: 1rem; height: 1rem; }
+.sidebar-account { flex-shrink: 0; padding-top: .75rem; border-top: 1px solid #ffffff1a; }
+.sidebar-account > * + * { margin-top: .25rem; }
+.sidebar-logout { color: #ffb6bc; }
+.sidebar-logout:hover { background: #fda4af0d; color: #ffd2d6; }
+.admin-sidebar:not(.is-expanded) {
+  .sidebar-brand { flex-direction: column; min-height: 7rem; gap: .5rem; }
+  .brand-identity { justify-content: center; }
+  .sidebar-label, .sidebar-chevron { display: none; }
+  .sidebar-control { justify-content: center; padding-inline: .5rem; }
+  .sidebar-submenu { margin-left: 0; padding-left: 0; border-left: 0; }
+}
+@media (min-width: 768px) {
+  .admin-sidebar { width: 5rem; transform: translateX(0); visibility: visible; }
+  .admin-sidebar.is-expanded { width: 18rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar, .sidebar-toggle, .sidebar-control, .sidebar-chevron { transition: none; }
+}

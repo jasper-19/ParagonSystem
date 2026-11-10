@@ -1,4 +1,4 @@
-<section class="space-y-8 max-w-7xl mx-auto px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pb-0">
+<section class="article-editor-workspace space-y-8 max-w-7xl mx-auto px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pb-0">
 
   <!-- Header -->
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-6 border-b-2 border-slate-200">
@@ -33,7 +33,7 @@
   </div>
 
   <!-- AUTOSAVE STATUS -->
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 rounded-xl
+  <div role="status" [hidden]="!isRestoredDraft() && !lastSavedAt()" class="draft-status flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 rounded-xl
               bg-slate-50 border-2 border-slate-200">
 
     @if (isRestoredDraft()) {
@@ -160,10 +160,10 @@
             <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd"/>
             <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z"/>
           </svg>
-          <label class="text-sm font-bold text-[#000035]">Article Content</label>
+          <span id="article-content-label" class="text-sm font-bold text-[#000035]">Article Content</span>
           <span class="text-red-500 text-sm">*</span>
         </div>
-        <div class="border border-slate-200 rounded-xl overflow-hidden">
+        <div class="editor-canvas" role="group" aria-labelledby="article-content-label">
           <app-rich-text-editor formControlName="content" class="overflow-x-auto"></app-rich-text-editor>
         </div>
       </div>
@@ -176,7 +176,7 @@
 
       <!-- Publish Panel -->
       <div
-        class="space-y-5 rounded-2xl border-2 border-[#000035]
+        class="publish-panel space-y-5 rounded-2xl border-2 border-[#000035]
               bg-linear-to-br from-[#000035] to-[#001f5c]
               p-4 shadow-xl sm:p-5 lg:sticky lg:top-6
               lg:z-20 lg:p-6"
@@ -316,11 +316,11 @@
           <svg class="w-5 h-5 text-[#F4B400]" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
           </svg>
-          <h2
+          <label
           for="article-category"
           class="text-sm font-bold text-[#000035] uppercase tracking-wider">
             Category
-          </h2>
+          </label>
           <span class="text-red-500 text-sm">*</span>
         </div>
 

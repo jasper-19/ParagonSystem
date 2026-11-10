@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './media-card.html',
+  styleUrl: './media-card.scss',
 })
 
 export class MediaCardComponent {

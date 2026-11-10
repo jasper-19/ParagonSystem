@@ -1,0 +1,28 @@
+:host {
+  display: block;
+  min-width: 0;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  color: #000035;
+  font-size: 14px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+:host :is(h1, h2, h3, button, input, a, label) { font-family: inherit; }
+:host :is(h2, h3) { letter-spacing: -.015em; }
+:host h2 { font-size: 20px; line-height: 1.35; }
+:host h3 { font-size: 16px; line-height: 1.4; }
+:host [class*='shadow'] { box-shadow: none; }
+:host :is(.rounded-2xl, .rounded-xl, .rounded-lg) { border-radius: 6px; }
+:host :is(button, a, label) { -webkit-tap-highlight-color: transparent; }
+:host :is(button, a):focus-visible { outline: 2px solid #000035; outline-offset: 3px; }
+:host :is(button, a) { transition-duration: 150ms; }
+:host .text-xs { font-size: 13px; }
+:host .text-slate-500 { color: #596579; }
+:host ::selection { background: #f4b400; color: #000035; }
+:host input { caret-color: #000035; }
+:host input::placeholder { color: #64748b; }
+
+@media (prefers-reduced-motion: reduce) {
+  :host *, :host *::after { transition: none; animation: none; }
+}

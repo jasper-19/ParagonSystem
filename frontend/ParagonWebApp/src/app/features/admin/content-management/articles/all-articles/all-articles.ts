@@ -20,6 +20,7 @@ import {
   finalize,
   Subject,
   switchMap,
+  takeUntil,
 } from "rxjs";
 
 type ArticleStatus = 'all' | 'Draft' | 'Published' | 'Archived';
@@ -30,6 +31,7 @@ type ArticleSort = 'latest' | 'oldest' | 'mostViewed';
   standalone: true,
   imports: [CommonModule, RouterModule, ArticleViewModal, FormsModule],
   templateUrl: './all-articles.html',
+  styleUrl: './all-articles.scss',
 })
 export class AllArticlesComponent {
   private readonly articleService = inject(ArticleService);
@@ -39,6 +41,7 @@ export class AllArticlesComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly request$ = new Subject<AdminArticlesParams>();
   private readonly searchInput$ = new Subject<string>();
+  private readonly closeDetail$ = new Subject<void>();
 
   readonly currentPage = signal(1);
   readonly pageSize = signal(10);
@@ -154,6 +157,7 @@ export class AllArticlesComponent {
     this.articleService
       .getAdminArticleDetail(article.id)
       .pipe(
+        takeUntil(this.closeDetail$),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
@@ -407,6 +411,7 @@ export class AllArticlesComponent {
   }
 
   closeArticleModal(): void {
+    this.closeDetail$.next();
     this.selectedArticle.set(null);
     this.modalError.set(null);
     this.modalLoading.set(false);

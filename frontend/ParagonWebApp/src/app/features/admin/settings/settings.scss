@@ -1,0 +1,29 @@
+:host { display: block; color: #000035; font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+.settings-workspace {
+  min-width: 0; font-size: 14px; line-height: 1.5; caret-color: #000035;
+  ::selection { color: #000035; background: #f4b400; }
+  h1 { margin: 0; font-size: 28px; font-weight: 650; line-height: 1.2; letter-spacing: -.025em; }
+  h1 + p { margin-top: 7px; color: #596477; font-size: 14px; line-height: 1.6; max-width: 70ch; }
+  button, section { border-radius: 4px; box-shadow: none; }
+  .settings-tab { border-radius: 0; }
+  button:focus-visible, [role='tabpanel']:focus-visible { outline: 2px solid #000035; outline-offset: 3px; box-shadow: none; }
+}
+.settings-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px 32px; padding-bottom: 24px; }
+.settings-metadata {
+  display: flex; flex-direction: column; flex-shrink: 0; align-items: flex-end; gap: 5px; padding-top: 3px; color: #596477; font-size: 12px; font-variant-numeric: tabular-nums;
+  > span { border: 0; border-radius: 0; background: transparent; padding: 0; }
+}
+.settings-tabs { display: flex; gap: 24px; overflow-x: auto; overscroll-behavior-x: contain; border-bottom: 1px solid #dce1e8; scrollbar-width: thin; scrollbar-color: #9199a9 #f2f4f7; }
+.settings-tab {
+  position: relative; flex: 0 0 auto; min-height: 68px; padding: 10px 0 16px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #596477; text-align: left; font-family: inherit; cursor: pointer; transition: color 150ms ease-out, border-color 150ms ease-out;
+  > span:first-child { font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+  > span:last-child { margin-top: 4px; color: #596477; font-size: 12px; }
+  &[aria-selected='true'] { border-bottom-color: #f4b400; background: transparent; color: #000035; }
+  &:hover { color: #000035; border-bottom-color: #c8cfd9; }
+  &[aria-selected='true']:hover { border-bottom-color: #f4b400; }
+  &:focus-visible { outline-offset: -3px; }
+}
+.settings-loading { padding: 24px 0; }
+@media (max-width: 1023px) { .settings-heading { flex-direction: column; gap: 14px; } .settings-metadata { align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 6px 18px; padding: 0; } }
+@media (max-width: 639px) { .settings-workspace h1 { font-size: 25px; } .settings-tabs { gap: 22px; } .settings-tab { min-height: 64px; } }
+@media (prefers-reduced-motion: reduce) { .settings-tab { transition: none; } }

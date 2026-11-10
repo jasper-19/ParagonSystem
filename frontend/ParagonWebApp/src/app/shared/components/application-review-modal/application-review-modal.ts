@@ -18,6 +18,7 @@ export type ApplicationReviewAction = 'schedule' | 'interviewed' | 'accept' | 'r
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './application-review-modal.html',
+  styleUrl: './application-review-modal.scss',
 })
 export class ApplicationReviewModal implements OnChanges, OnDestroy, AfterViewInit {
 

@@ -1,0 +1,23 @@
+:host { display: block; min-width: 0; color: #000035; font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+.log-filters {
+  padding: 18px 0 20px; border: 0; border-top: 1px solid #dce1e8; border-bottom: 1px solid #dce1e8; border-radius: 0; background: transparent; box-shadow: none;
+  .filters-layout { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 14px 12px; }
+  .filters-layout > div:first-child { grid-column: 1 / -1; width: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  h2 { margin: 0; color: #000035; font-size: 15px; font-weight: 600; text-transform: none; letter-spacing: -.01em; line-height: 1.4; }
+  [role='status'] { margin: 0; color: #596477; }
+  .filters-fields { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr); gap: 12px; }
+  label { margin-bottom: 6px; color: #596477; font-size: 12px; font-weight: 600; }
+  input, select, button { min-height: 40px; border-color: #c8cfd9; border-radius: 4px; font-family: inherit; font-size: 13px; box-shadow: none; transition: border-color 150ms ease-out, background-color 150ms ease-out; }
+  input, select { padding-top: 8px; padding-bottom: 8px; color: #000035; caret-color: #000035; }
+  input::placeholder { color: #647084; opacity: 1; }
+  .pointer-events-none { color: #647084; }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid #000035; outline-offset: 2px; border-color: #000035; box-shadow: none; }
+  input:disabled, select:disabled { background: #f2f4f7; color: #647084; cursor: not-allowed; }
+  .filters-reset { width: auto; min-height: 40px; padding: 8px 12px; color: #000035; font-weight: 600; }
+  button:disabled { cursor: not-allowed; }
+  ::selection { background: #f4b400; color: #000035; }
+}
+@media (max-width: 1279px) { .log-filters .filters-fields { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 767px) { .log-filters .filters-layout { grid-template-columns: minmax(0,1fr); } .log-filters .filters-reset { justify-self: start; } }
+@media (max-width: 479px) { .log-filters .filters-fields { grid-template-columns: minmax(0,1fr); } .log-filters input, .log-filters select { min-height: 44px; font-size: 16px; } .log-filters .filters-reset { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .log-filters input, .log-filters select, .log-filters button { transition: none; } }

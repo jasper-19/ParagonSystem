@@ -1,0 +1,162 @@
+:host {
+  display: block;
+  color: #000035;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.article-editor-workspace {
+  --editor-line: #dce1e8;
+  --editor-muted: #596477;
+  font-size: 14px;
+  line-height: 1.5;
+  caret-color: #000035;
+
+  ::selection { background: #f4b400; color: #000035; }
+  > div:first-child { padding-bottom: 22px; border-bottom-width: 1px; }
+  h1 { font-size: 28px; font-weight: 650; line-height: 1.2; letter-spacing: -.025em; }
+  h2 { font-size: 15px; font-weight: 650; text-transform: none; letter-spacing: 0; }
+  label { font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+  p { line-height: 1.6; }
+  .text-slate-400, .text-slate-500 { color: var(--editor-muted); }
+  .text-slate-600 { color: #4c586c; }
+  .text-xs { font-size: 12px; }
+  .flex > span[class*='text-[#F4B400]'] { color: #725200; border-radius: 4px; font-variant-numeric: tabular-nums; }
+  .uppercase { text-transform: none; letter-spacing: 0; }
+
+  // Keep the editor's two-column arrangement, with quiet, consistent section boundaries.
+  form > div:not(.fixed) > div:not(.publish-panel) {
+    border: 1px solid var(--editor-line);
+    border-radius: 6px;
+    box-shadow: none;
+    padding: 22px;
+    > .flex:first-child > svg { width: 17px; height: 17px; color: #667085; }
+  }
+  form > div { min-width: 0; }
+  input:not([type='checkbox']):not([type='file']), textarea, select {
+    min-width: 0;
+    min-height: 44px;
+    border-width: 1px;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #000035;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    box-shadow: none;
+    transition: border-color 150ms ease;
+    &::placeholder { color: #687487; opacity: 1; }
+    &:focus { outline: 2px solid #000035; outline-offset: 2px; border-color: #000035; box-shadow: none; }
+  }
+  #article-title { font-size: 21px; font-weight: 600; line-height: 1.4; }
+  #article-slug { font-size: 13px; }
+  textarea { line-height: 1.65; }
+  button, a { transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease; }
+  button { border-radius: 4px; box-shadow: none; }
+  button:focus-visible, input[type='checkbox']:focus-visible {
+    outline: 2px solid #000035;
+    outline-offset: 3px;
+    box-shadow: none;
+  }
+  button:disabled { cursor: not-allowed; }
+  button[type='submit'] {
+    background: #f4b400;
+    color: #000035;
+    font-weight: 650;
+    box-shadow: none;
+    &:hover:not(:disabled) { background: #e5a900; }
+  }
+  .draft-status {
+    border: 1px solid var(--editor-line);
+    border-radius: 4px;
+    background: #f6f7f9;
+    padding: 10px 14px;
+    &[hidden] { display: none; }
+    .text-amber-600 { color: #805d00; }
+  }
+  .publish-panel {
+    // A sticky panel here overlaps the metadata that follows in the same column.
+    position: relative;
+    top: auto;
+    z-index: auto;
+    background: #000035;
+    border: 1px solid #000035;
+    border-radius: 6px;
+    box-shadow: none;
+    padding: 22px;
+    h2 { font-size: 16px; }
+    label { color: #e2e5ef; }
+    select { background: #161648; color: #fff; border-color: #55557b; }
+    select:focus, button:focus-visible, input:focus-visible { outline-color: #f4b400; }
+    > .flex:first-child { padding-bottom: 16px; border-bottom: 1px solid #383860; }
+    > .flex:first-child > svg { width: 18px; height: 18px; }
+    > div:has(#featured-checkbox) {
+      border: 0;
+      border-radius: 0;
+      padding: 4px 0;
+      background: transparent;
+    }
+    > div:last-child { border-top-width: 1px; }
+    button[type='button'] { border-width: 1px; }
+  }
+  [role='listbox'] {
+    border-width: 1px;
+    border-radius: 4px;
+    box-shadow: 0 8px 20px rgb(0 0 53 / 12%);
+    scrollbar-color: #9199a9 #f2f4f7;
+    scrollbar-width: thin;
+  }
+  [role='option'] { font-weight: 400; }
+  .inline-flex:has(button[aria-label^='Remove']) {
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    max-width: 100%;
+    > span { overflow-wrap: anywhere; }
+  }
+  .text-center:has(> svg) { padding-block: 14px; > svg { display: none; } }
+  .fixed {
+    backdrop-filter: none;
+    border-top-width: 1px;
+    background: #fff;
+    box-shadow: 0 -4px 16px rgb(0 0 53 / 5%);
+    button { border-width: 1px; }
+  }
+}
+
+// Quill and the shared image selector stay scoped to this editor instance.
+:host ::ng-deep .article-editor-workspace {
+  app-rich-text-editor {
+    display: block;
+    .ql-toolbar.ql-snow { border: 1px solid #cbd2dc; border-radius: 4px 4px 0 0; background: #f6f7f9; padding: 10px 6px; }
+    .ql-container.ql-snow { border: 1px solid #cbd2dc; border-top: 0; border-radius: 0 0 4px 4px; font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 15px; }
+    .ql-editor { min-height: 360px; padding: 20px; line-height: 1.75; overflow-wrap: anywhere; }
+    .ql-container { border-radius: 0 0 4px 4px; }
+    .ql-editor.ql-blank::before { color: #687487; font-style: normal; }
+    .ql-toolbar button:focus-visible { outline: 2px solid #000035; outline-offset: 1px; }
+    .ql-snow .ql-stroke { stroke: #414d62; }
+    .ql-snow .ql-picker { color: #414d62; }
+    .ql-snow .ql-active .ql-stroke { stroke: #000035; }
+  }
+  app-cover-image-selector {
+    > div > div:first-child svg { width: 17px; height: 17px; color: #667085; }
+    > div > div:first-child label { font-size: 13px; font-weight: 600; }
+    [role='group'] { border-width: 1px; border-radius: 4px; background: #f7f8fa; }
+    button, label:has(input[type='file']) { border-radius: 4px; border-width: 1px; font-size: 12px; box-shadow: none; }
+    .shadow-lg, .shadow-xl { box-shadow: none; }
+    .text-slate-400, .text-slate-500 { color: #596477; }
+  }
+}
+
+@media (max-width: 639px) {
+  .article-editor-workspace {
+    h1 { font-size: 25px; }
+    form > div:not(.fixed) > div:not(.publish-panel), .publish-panel { padding: 16px; }
+    #article-title { font-size: 18px; }
+    input:not([type='checkbox']):not([type='file']), textarea, select { font-size: 16px; }
+  }
+  :host ::ng-deep .article-editor-workspace app-rich-text-editor .ql-editor { min-height: 300px; padding: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .article-editor-workspace button, .article-editor-workspace input, .article-editor-workspace select { transition: none; }
+}

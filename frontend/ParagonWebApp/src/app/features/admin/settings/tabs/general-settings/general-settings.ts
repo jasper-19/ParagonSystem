@@ -28,6 +28,7 @@ import { GlobalSettingsService } from '../../../../../core/services/global-setti
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './general-settings.html',
+  styleUrl: '../../settings-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GeneralSettingsComponent implements OnInit {

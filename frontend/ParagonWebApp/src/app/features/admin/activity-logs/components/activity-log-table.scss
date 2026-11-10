@@ -1,0 +1,38 @@
+:host { display: block; min-width: 0; color: #000035; font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+.log-results {
+  border: 1px solid #dce1e8; border-radius: 4px; box-shadow: none;
+  ::selection { background: #f4b400; color: #000035; }
+  .logs-desktop { scrollbar-width: thin; scrollbar-color: #9199a9 #f2f4f7; }
+  table { min-width: 1060px; }
+  col:nth-child(1) { width: 175px; } col:nth-child(2) { width: 100px; } col:nth-child(3) { width: 140px; } col:nth-child(5) { width: 140px; } col:nth-child(6) { width: 125px; } col:nth-child(7) { width: 100px; }
+  thead { background: #f4f6f9; background-image: none; }
+  th { padding: 12px 14px; border-bottom: 1px solid #dce1e8; color: #596477; font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+  td { padding: 16px 14px; font-size: 13px; }
+  td p { font-size: 13px; }
+  td:first-child p:last-child { font-size: 12px; white-space: normal; }
+  td > .flex > div:first-child { width: 32px; height: 32px; background: #f2f4f7; border-color: #dce1e8; border-radius: 4px; span { color: #000035; font-weight: 600; } }
+  td > .flex { gap: 9px; }
+  td > .flex > .min-w-0 { flex: 1; }
+  .text-slate-400 { color: #647084; }
+  .text-slate-500, .text-slate-600 { color: #596477; }
+  td > span.inline-flex, .log-record > .flex.flex-wrap > span { border-radius: 3px; padding: 3px 6px; font-size: 11px; letter-spacing: 0; text-transform: none; overflow-wrap: anywhere; }
+  td:nth-child(3) > span, .log-record > .flex.flex-wrap > span:last-child { border-color: transparent; background: transparent; padding-left: 0; padding-right: 0; font-size: 12px; font-weight: 400; }
+  td:nth-child(5), td:nth-child(6), time, dd { font-variant-numeric: tabular-nums; }
+  td:nth-child(5) p:last-child { margin-top: 3px; font-size: 12px; }
+  td:nth-child(4) p { overflow-wrap: anywhere; }
+  button { min-height: 36px; border: 1px solid #c8cfd9; border-radius: 4px; padding: 7px 10px; color: #000035; background: white; font-family: inherit; font-size: 12px; font-weight: 600; box-shadow: none; }
+  button:hover { border-color: #000035; background: #f4f6f9; box-shadow: none; }
+  button:focus-visible { outline: 2px solid #000035; outline-offset: 3px; box-shadow: none; }
+  .log-record { padding: 18px 20px; border-color: #dce1e8; }
+  .log-record > div:first-child > .flex > div:first-child { width: 36px; height: 36px; border: 1px solid #dce1e8; border-radius: 4px; background: #f2f4f7; span { color: #000035; font-weight: 600; } }
+  .log-record h2 { font-size: 14px; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+  .log-record > p { margin-top: 10px; line-height: 1.6; overflow-wrap: anywhere; }
+  .log-record > .flex.flex-wrap { margin-top: 12px; align-items: center; gap: 8px 14px; }
+  .log-record dl { display: flex; flex-wrap: wrap; gap: 12px 28px; margin-top: 14px; padding: 0; background: transparent; border-radius: 0; }
+  .log-record dt { color: #647084; font-size: 11px; text-transform: none; letter-spacing: 0; }
+  .log-record dd { margin-top: 3px; font-size: 12px; }
+  .log-record > div:last-child { margin-top: 14px; padding-top: 0; border: 0; }
+  .log-record button { width: auto; min-height: 40px; }
+}
+@media (max-width: 479px) { .log-results .log-record { padding: 16px; } .log-record > div:first-child { flex-direction: column; gap: 10px; } .log-record time { display: flex; flex-wrap: wrap; gap: 5px 10px; text-align: left; padding-left: 48px; } .log-record time > span { margin: 0; } .log-results .log-record button { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .log-results button, .log-results tr, .log-record { transition: none; } }

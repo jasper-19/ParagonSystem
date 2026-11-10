@@ -1,7 +1,7 @@
 <ng-container *ngIf="log">
   <!-- Backdrop -->
   <div
-    class="fixed inset-0 z-9999
+    class="activity-dialog-backdrop fixed inset-0 z-9999
            flex items-end justify-center
            bg-black/60
            backdrop-blur-sm
@@ -18,7 +18,7 @@
       aria-describedby="activity-log-dialog-description"
       tabindex="-1"
       (keydown)="onDialogKeydown($event)"
-      class="flex max-h-[100dvh]
+      class="activity-dialog flex max-h-[100dvh]
              w-full flex-col
              overflow-hidden
              rounded-t-2xl bg-white
@@ -66,25 +66,17 @@
 
             <!-- Header details -->
             <div class="min-w-0">
-              <p
-                class="text-[11px]
-                       font-semibold uppercase
-                       tracking-[0.12em]
-                       text-[#F4B400]"
-              >
-                Activity Details
-              </p>
-
               <h2
                 id="activity-log-dialog-title"
                 class="mt-1 truncate
                        text-lg font-bold
                        text-white
                        sm:text-xl"
-                [title]="getActorName()"
               >
-                {{ getActorName() }}
+                Activity Details
               </h2>
+
+              <p class="activity-dialog-actor" [title]="getActorName()">{{ getActorName() }}</p>
 
               <p
                 id="activity-log-dialog-description"
@@ -139,7 +131,7 @@
 
       <!-- Scrollable body -->
       <div
-        class="min-h-0 flex-1
+        class="activity-dialog-body min-h-0 flex-1
                overflow-y-auto
                overscroll-contain
                bg-slate-50/70

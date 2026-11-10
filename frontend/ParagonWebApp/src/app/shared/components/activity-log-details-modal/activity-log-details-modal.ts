@@ -6,7 +6,8 @@ import { CommonModule, DOCUMENT } from '@angular/common';
   selector: 'app-activity-log-details-modal',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './activity-log-details-modal.html'
+  templateUrl: './activity-log-details-modal.html',
+  styleUrl: './activity-log-details-modal.scss',
 })
 export class ActivityLogDetailsModalComponent implements AfterViewInit, OnDestroy {
 

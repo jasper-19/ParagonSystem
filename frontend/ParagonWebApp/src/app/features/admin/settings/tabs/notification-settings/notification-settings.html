@@ -1,6 +1,5 @@
-<section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-  <div class="border-b border-slate-200 p-5 sm:p-6 lg:p-8">
-    <p class="text-xs font-black uppercase tracking-[0.16em] text-amber-600">Notifications</p>
+<section class="settings-section">
+  <div class="settings-section-heading">
     <h2 class="mt-2 text-xl font-bold text-[#000035]">System-wide event alerts</h2>
     <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
       Control which events create notifications for administrators. Personal delivery preferences
@@ -10,14 +9,14 @@
 
   <form [formGroup]="form" (ngSubmit)="save()">
     @if (externalUpdate()) {
-      <div class="m-5 flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 sm:m-6 sm:flex-row sm:items-center sm:justify-between lg:mx-8" role="alert">
+      <div class="settings-conflict m-5 flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 sm:m-6 sm:flex-row sm:items-center sm:justify-between lg:mx-8" role="alert">
         <span><strong>New server settings are available.</strong> Your unsaved values were preserved.</span>
         <button type="button" class="min-h-11 touch-manipulation rounded-xl border border-amber-400 bg-white px-4 font-bold text-[#000035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" (click)="loadLatest()">Load latest</button>
       </div>
     }
     <div class="border-b border-slate-200 p-5 sm:p-6 lg:p-8">
       <label
-        class="flex cursor-pointer items-center justify-between gap-5 rounded-xl border border-[#000035]/10 bg-[#000035]/[0.025] p-4 sm:p-5"
+        class="settings-option flex cursor-pointer items-center justify-between gap-5 rounded-xl border border-[#000035]/10 bg-[#000035]/[0.025] p-4 sm:p-5"
       >
         <span>
           <strong class="block text-sm text-[#000035]">In-app notifications</strong>
@@ -38,7 +37,7 @@
       [disabled]="!form.controls.inAppEnabled.value"
     >
       <legend class="sr-only">Notification events</legend>
-      <label class="flex cursor-pointer items-start gap-4 rounded-xl border border-slate-200 p-4">
+      <label class="settings-option flex cursor-pointer items-start gap-4 rounded-xl border border-slate-200 p-4">
         <input type="checkbox" formControlName="applicationEvents" class="mt-1 h-4 w-4 accent-[#F4B400]" />
         <span>
           <strong class="block text-sm text-[#000035]">Application activity</strong>
@@ -47,7 +46,7 @@
           </span>
         </span>
       </label>
-      <label class="flex cursor-pointer items-start gap-4 rounded-xl border border-slate-200 p-4">
+      <label class="settings-option flex cursor-pointer items-start gap-4 rounded-xl border border-slate-200 p-4">
         <input type="checkbox" formControlName="articleCreated" class="mt-1 h-4 w-4 accent-[#F4B400]" />
         <span>
           <strong class="block text-sm text-[#000035]">Article created</strong>
@@ -56,7 +55,7 @@
           </span>
         </span>
       </label>
-      <label class="flex cursor-pointer items-start gap-4 rounded-xl border border-slate-200 p-4">
+      <label class="settings-option flex cursor-pointer items-start gap-4 rounded-xl border border-slate-200 p-4">
         <input type="checkbox" formControlName="articlePublished" class="mt-1 h-4 w-4 accent-[#F4B400]" />
         <span>
           <strong class="block text-sm text-[#000035]">Article published</strong>
@@ -67,7 +66,7 @@
       </label>
     </fieldset>
 
-    <div class="sticky bottom-0 z-10 flex flex-col gap-4 border-t border-slate-200 bg-white/95 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:flex-row sm:items-center sm:justify-between sm:border-0 sm:p-6 lg:p-8">
+    <div class="settings-save-bar sticky bottom-0 z-10 flex flex-col gap-4 border-t border-slate-200 bg-white/95 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:flex-row sm:items-center sm:justify-between sm:border-0 sm:p-6 lg:p-8">
       <div aria-live="polite">
         @if (message()) {
           <p

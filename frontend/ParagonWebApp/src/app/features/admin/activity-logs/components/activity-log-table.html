@@ -1,6 +1,6 @@
 <section
   aria-label="Activity log results"
-  class="overflow-hidden rounded-xl
+  class="log-results overflow-hidden rounded-xl
          border border-slate-200
          bg-white shadow-sm"
 >
@@ -56,7 +56,7 @@
 
     <!-- Desktop Table -->
     <div
-      class="hidden overflow-x-auto
+      class="logs-desktop hidden overflow-x-auto
             xl:block"
     >
       <table
@@ -262,13 +262,13 @@
 
     <!-- Mobile Card View -->
     <div
-      class="divide-y divide-slate-200
+      class="logs-mobile divide-y divide-slate-200
             xl:hidden"
     >
 
       @for (log of logs; track log.id) {
       <article
-        class="p-4 transition-colors
+        class="log-record p-4 transition-colors
               duration-150
               hover:bg-[#F4B400]/5
               motion-reduce:transition-none

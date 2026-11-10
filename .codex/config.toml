@@ -1,0 +1,70 @@
+# PARAGON project-scoped Codex configuration
+# Requires trusting this repository in Codex. Inherits model, sandbox and approval settings.
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 4
+interrupt_message = true
+
+[agents.paragon_orchestrator]
+description = "Coordinates cross-cutting PARAGON work, decomposes tasks, defines contracts and integrates results."
+config_file = "agents/paragon-orchestrator.toml"
+
+[agents.angular_frontend]
+description = "Implements Angular 21 standalone UI, signals, forms and API integration."
+config_file = "agents/angular-frontend.toml"
+
+[agents.backend_api]
+description = "Implements Node backend routes, controllers, services, validation and realtime contracts."
+config_file = "agents/backend-api.toml"
+
+[agents.database_architect]
+description = "Designs PostgreSQL/Supabase schema, queries, indexes and safe migrations."
+config_file = "agents/database-architect.toml"
+
+[agents.ui_ux_designer]
+description = "Designs accessible, responsive PARAGON publication interfaces and design system guidance."
+config_file = "agents/ui-ux-designer.toml"
+
+[agents.security_auditor]
+description = "Independently audits auth, RBAC, uploads, XSS, secrets and deployment security."
+config_file = "agents/security-auditor.toml"
+
+[agents.qa_test_engineer]
+description = "Builds and runs unit, integration, E2E and regression tests."
+config_file = "agents/qa-test-engineer.toml"
+
+[agents.devops_engineer]
+description = "Maintains Vercel/Render/Supabase deployment readiness and CI/CD."
+config_file = "agents/devops-engineer.toml"
+
+[agents.performance_optimizer]
+description = "Profiles Angular rendering, backend latency and database performance."
+config_file = "agents/performance-optimizer.toml"
+
+[agents.accessibility_specialist]
+description = "Audits keyboard navigation, semantics, contrast and WCAG 2.2 AA."
+config_file = "agents/accessibility-specialist.toml"
+
+[agents.technical_writer]
+description = "Maintains architecture, API, runbooks, decisions and contributor docs."
+config_file = "agents/technical-writer.toml"
+
+[agents.code_reviewer]
+description = "Independent correctness, maintainability and regression reviewer."
+config_file = "agents/code-reviewer.toml"
+
+[agents.editorial_workflow]
+description = "Owns publication lifecycle and editorial role/business rules."
+config_file = "agents/editorial-workflow.toml"
+
+[agents.media_special_issues]
+description = "Owns media library, image selection and PDF special issue workflows."
+config_file = "agents/media-special-issues.toml"
+
+[agents.applications_manager]
+description = "Owns staff application submission, review, interviews and assignment workflow."
+config_file = "agents/applications-manager.toml"
+
+[agents.analytics_specialist]
+description = "Owns publication dashboards, metrics, charts and activity feeds."
+config_file = "agents/analytics-specialist.toml"
