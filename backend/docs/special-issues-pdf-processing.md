@@ -3,12 +3,18 @@
 ## Request contract
 
 The existing JSON create contract remains available during the migration
-period. New uploads should use `multipart/form-data`:
+period. Inline PDF data URLs are decoded into a bounded temporary file and use
+the same validation, processing, and storage pipeline as multipart PDFs. Legacy
+external HTTPS references are retained without fetching remote content.
+New uploads should use `multipart/form-data`:
 
 - File field: `pdf`
 - Accepted declared MIME type: `application/pdf`
 - Text fields: `title`, `slug`, `type`, `academicYear`, `description`,
   `coverImage`, `publishedAt`, and `status`
+
+Multipart text fields are capped at 1 MiB each. Use an image-library HTTPS URL
+for covers that exceed that limit rather than embedding a large data URL.
 
 The server never uses the uploaded filename as a filesystem path or object
 key. A normalized filename is retained only as display metadata.
@@ -30,8 +36,11 @@ key. A normalized filename is retained only as display metadata.
     removed when the request completes.
 
 The pipeline uses argument arrays with `shell=false`, limits captured process
-output, enforces a timeout, supports request cancellation, and bounds
-concurrent Ghostscript executions.
+output, enforces a timeout, supports request cancellation (including a response
+disconnect after multipart parsing), and bounds concurrent Ghostscript
+executions. Cancellation before the database mutation compensates any new
+storage object. Production uploads stream the final PDF to Supabase instead of
+buffering the entire artifact a second time.
 
 ## Read and mutation endpoints
 
@@ -79,9 +88,9 @@ records.
 Install Ghostscript and set `PDF_GHOSTSCRIPT_PATH` if the executable is not on
 `PATH`. On Windows this is commonly the full path to `gswin64c.exe`.
 
-If Ghostscript is unavailable, legacy JSON requests still work, but multipart
-PDF processing returns a service error. Do not disable content processing in
-production to accept unvalidated files.
+If Ghostscript is unavailable, inline JSON and multipart PDF uploads return a
+service error. Existing external HTTPS reference requests remain available.
+Do not disable content processing in production to accept unvalidated files.
 
 ## Render
 
@@ -101,9 +110,9 @@ Special Issues.
 The service-role credential remains server-only. Objects use immutable UUID
 paths and `upsert=false`, avoiding collisions and stale CDN replacements.
 
-The current Supabase adapter reads only the final bounded artifact into memory
-because the standard `supabase-js` upload API does not accept a local file
-path. Supabase recommends TUS resumable upload above 6 MB. Moving
+The Supabase adapter streams the final bounded artifact from disk using the
+installed SDK's Node stream support. Supabase recommends TUS resumable upload
+above 6 MB. Moving
 `uploadFile()` to TUS or the S3-compatible API is the next storage optimization
 and does not require changing the Special Issues domain service.
 

@@ -12,6 +12,7 @@
 		</div>
 	</div>
 
+@if (saveError()) { <p role="alert" class="rounded-xl bg-red-50 p-4 text-sm text-red-700">{{ saveError() }}</p> }
 	<form
 		[formGroup]="form"
 		(ngSubmit)="submit()"
@@ -62,7 +63,10 @@
 					[class.focus:border-red-400]="form.controls.slug.errors?.['slugTaken']"
 					[class.focus:border-[#f4b400]]="!form.controls.slug.errors?.['slugTaken']"
 				/>
-				@if (form.controls.slug.errors?.['slugTaken']) {
+				@if (form.controls.slug.errors?.['slugCheckFailed']) {
+          <p role="alert" class="text-xs text-red-700">Unable to check this slug. Edit the slug to retry.</p>
+        }
+        @if (form.controls.slug.errors?.['slugTaken']) {
 					<div class="flex items-center gap-2 text-red-600">
 						<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
 							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
@@ -170,7 +174,7 @@
 								 focus:ring-4 focus:ring-[#f4b400]/20 focus:border-[#f4b400] focus:outline-none
 								 transition-all duration-200 font-medium"
 					/>
-          @if (form.controls.publishedAt.errors?.['invalidPublishDate']) {
+          @if (form.controls.publishedAt.errors?.['publishDateTooEarly']) {
             <div class="flex items-center gap-2 text-red-600">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
@@ -185,7 +189,7 @@
 
 					<button
 						type="submit"
-						[disabled]="form.invalid || isSubmitting()"
+						[disabled]="form.invalid || form.pending || isSubmitting()"
 						class="w-full px-5 py-3.5 text-sm font-bold
 								 bg-linear-to-r from-[#F4B400] to-[#d69800] text-[#000035]
 								 hover:shadow-xl hover:shadow-[#F4B400]/30
@@ -208,7 +212,7 @@
 
 					<button
 						type="button"
-						(click)="cancel()"
+						(click)="cancel()" [disabled]="isSubmitting()"
 						class="w-full px-4 py-3 text-sm font-bold text-white
 								 border-2 border-white/20 rounded-xl hover:bg-white/10
 								 transition-all duration-200"
@@ -245,7 +249,9 @@
 					<span class="text-red-500 text-sm">*</span>
 				</div>
 
-				<!-- Preview / Upload (matches Cover Image UX) -->
+				<p class="text-xs text-slate-500">PDF files up to 50 MB.</p>
+        @if (pdfError()) { <p role="alert" class="text-sm text-red-700">{{ pdfError() }}</p> }
+        <!-- Preview / Upload (matches Cover Image UX) -->
 				@if (pdfDisplayText()) {
 					<div class="relative group">
 						<div
@@ -267,7 +273,7 @@
 							</div>
 						</div>
 
-						<div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100
+						<div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100
 									transition-opacity duration-200 rounded-xl flex items-center justify-center">
 							<button
 								type="button"
@@ -302,9 +308,9 @@
 						</div>
 						<input
 							type="file"
-							accept="application/pdf"
+							accept="application/pdf,.pdf" aria-label="Choose PDF file" [disabled]="isSubmitting()"
 							(change)="onPdfSelected($event)"
-							class="hidden"
+							class="sr-only"
 						/>
 					</label>
 				}

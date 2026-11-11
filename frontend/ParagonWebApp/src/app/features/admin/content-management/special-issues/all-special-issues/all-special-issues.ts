@@ -1,8 +1,9 @@
 import { ConfirmationService } from '../../../../../shared/components/confirmation-modal/confirmation.service';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import { SpecialIssueService } from '../../../../../core/services/special-issue.service';
 import { SpecialIssue } from '../../../../../models/special-issue.model';
 import { SpecialIssueViewModal } from '../../../../../shared/components/special-issue-view-modal/special-issue-view-modal';
@@ -23,6 +24,11 @@ export class AllSpecialIssuesComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private confirm = inject(ConfirmationService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly queryParams = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
+  readonly loading = signal(true);
+  readonly feedback = signal('');
+  readonly pendingIds = signal<ReadonlySet<string>>(new Set());
 
   readonly currentPage = signal(1);
   readonly pageSize = signal(5);
@@ -51,11 +57,17 @@ export class AllSpecialIssuesComponent {
   private issuesStream = toSignal(this.issueService.issues$, { initialValue: [] });
 
   constructor() {
-    this.issueService.refreshAdmin().subscribe({ error: () => {} });
+    this.issueService.refreshAdmin().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.feedback.set('Could not load Special Issues. Reload the page to try again.');
+      },
+    });
 
     // Sync query param → signal
     effect(() => {
-      const status = this.route.snapshot.queryParamMap.get('status') as IssueStatus | null;
+      const status = this.queryParams().get('status') as IssueStatus | null;
       if (status && ['published', 'draft', 'archived'].includes(status)) {
         this.statusFilter.set(status);
       } else {
@@ -76,6 +88,10 @@ export class AllSpecialIssuesComponent {
     effect(() => {
       this.pageSize();
       this.currentPage.set(1);
+    });
+    effect(() => {
+      const lastPage = this.totalPages();
+      if (this.currentPage() > lastPage) this.currentPage.set(lastPage);
     });
   }
 
@@ -213,8 +229,10 @@ export class AllSpecialIssuesComponent {
 
   //request archive
   async requestArchive(issue: SpecialIssue): Promise<void> {
-    if (issue.status === 'archived') return;
-    const ok = await this.confirm.confirm({
+    if (issue.status === 'archived' || this.pendingIds().has(issue.id)) return;
+    this.pendingIds.update(ids => new Set([...ids, issue.id]));
+    try {
+      const ok = await this.confirm.confirm({
       title: 'Archive Issue',
       message: `Are you sure you want to archive ${issue.title}?`,
       confirmText: 'Archive',
@@ -222,18 +240,21 @@ export class AllSpecialIssuesComponent {
       variant: 'danger',
     });
 
-    if (!ok) return;
-
-    this.issueService.updateIssueStatus(issue.id, 'archived').subscribe({
-      error: (err) => console.error('Failed to archive issue:', err),
-    });
-
+      if (!ok) return;
+      await firstValueFrom(this.issueService.updateIssueStatus(issue.id, 'archived').pipe(takeUntilDestroyed(this.destroyRef)));
+      this.feedback.set('Issue archived.');
+    } catch {
+      this.feedback.set('Could not archive the issue. Please try again.');
+    } finally {
+      this.clearPending(issue.id);
+    }
   }
 
   async requestDelete(issue: SpecialIssue): Promise<void> {
-    if (issue.status !== 'archived') return;
-
-    const ok = await this.confirm.confirm({
+    if (issue.status !== 'archived' || this.pendingIds().has(issue.id)) return;
+    this.pendingIds.update(ids => new Set([...ids, issue.id]));
+    try {
+      const ok = await this.confirm.confirm({
       title: 'Delete Issue',
       message: `Delete ${issue.title} permanently? This cannot be undone.`,
       confirmText: 'Delete',
@@ -241,10 +262,22 @@ export class AllSpecialIssuesComponent {
       variant: 'danger',
     });
 
-    if (!ok) return;
+      if (!ok) return;
+      await firstValueFrom(this.issueService.deleteIssue(issue.id).pipe(takeUntilDestroyed(this.destroyRef)));
+      if (this.selectedIssue()?.id === issue.id) this.selectedIssue.set(null);
+      this.feedback.set('Issue deleted.');
+    } catch {
+      this.feedback.set('Could not delete the issue. Please try again.');
+    } finally {
+      this.clearPending(issue.id);
+    }
+  }
 
-    this.issueService.deleteIssue(issue.id).subscribe({
-      error: (err) => console.error('Failed to delete issue:', err),
+  private clearPending(id: string): void {
+    this.pendingIds.update(ids => {
+      const remaining = new Set(ids);
+      remaining.delete(id);
+      return remaining;
     });
   }
 }

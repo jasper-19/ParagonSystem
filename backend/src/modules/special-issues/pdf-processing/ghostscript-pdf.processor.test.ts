@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -275,6 +275,23 @@ test("removes the candidate when compression is not selected", async () => {
     );
     const remaining = await stat(inputPath);
     assert.ok(remaining.isFile());
+    assert.deepEqual(await readdir(directory), [path.basename(inputPath)]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("never falls back to the original after compression is cancelled", async () => {
+  const { directory, inputPath } = await fixture();
+  const runner = new FakeGhostscriptRunner();
+  runner.compressionError = new CommandExecutionError("cancelled", {
+    exitCode: null, timedOut: false, aborted: true,
+  });
+  try {
+    await assert.rejects(
+      processor(runner, { allowedRoot: directory }).process(inputPath, "issue.pdf"),
+      error => error instanceof PdfProcessingError && error.code === "PDF_PROCESS_ABORTED"
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

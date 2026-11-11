@@ -82,4 +82,48 @@ describe('SpecialIssueService', () => {
     expect(request.request.method).toBe('GET');
     request.flush([]);
   });
+
+  it('loads subsequent API pages before updating the list', () => {
+    let result: SpecialIssue[] = [];
+    service.refreshAdmin().subscribe(items => result = items);
+    http.expectOne(req => req.url.endsWith('/admin') && !req.params.has('page'))
+      .flush([issue], { headers: { 'X-Has-More': 'true' } });
+    expect(service.getAllIncludingDrafts()).toEqual([]);
+    http.expectOne(req => req.url.endsWith('/admin') && req.params.get('page') === '2')
+      .flush([{ ...issue, id: 'second' }], { headers: { 'X-Has-More': 'false' } });
+    expect(result.map(item => item.id)).toEqual(['issue-id', 'second']);
+    expect(service.getAllIncludingDrafts()).toHaveLength(2);
+  });
+
+  it('does not add slug validation results to the displayed list', () => {
+    let taken = false;
+    service.isSlugTaken(issue.slug).subscribe(value => taken = value);
+    http.expectOne(`${API_ENDPOINTS.specialIssues}/admin/${issue.slug}`).flush(issue);
+    expect(taken).toBe(true);
+    expect(service.getAllIncludingDrafts()).toEqual([]);
+  });
+
+  it('reports slug lookup and list failures instead of false success', () => {
+    let failures = 0;
+    service.isSlugTaken('test').subscribe({ error: () => failures++ });
+    http.expectOne(`${API_ENDPOINTS.specialIssues}/admin/test`)
+      .flush({}, { status: 503, statusText: 'Unavailable' });
+    service.refresh().subscribe({ error: () => failures++ });
+    http.expectOne(req => req.url === API_ENDPOINTS.specialIssues)
+      .flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(failures).toBe(2);
+  });
+
+  it('reports partial success when metadata fails after PDF replacement', () => {
+    let failure: { pdfReplaced?: boolean; replacement?: SpecialIssue } | undefined;
+    const { id, ...payload } = issue;
+    service.updateIssue(id, payload, new File(['%PDF-1.7'], 'new.pdf', { type: 'application/pdf' }))
+      .subscribe({ error: error => failure = error });
+    http.expectOne(`${API_ENDPOINTS.specialIssues}/${id}/pdf`)
+      .flush({ ...issue, pdfUrl: 'https://example.com/new.pdf' });
+    http.expectOne(`${API_ENDPOINTS.specialIssues}/${id}`)
+      .flush({}, { status: 409, statusText: 'Conflict' });
+    expect(failure?.pdfReplaced).toBe(true);
+    expect(failure?.replacement?.pdfUrl).toBe('https://example.com/new.pdf');
+  });
 });

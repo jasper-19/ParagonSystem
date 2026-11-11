@@ -15,13 +15,14 @@ import { ActivatedRoute, RouterModule } from "@angular/router";
 import { SpecialIssue } from "../../../models/special-issue.model";
 import { SpecialIssueService } from "../../../core/services/special-issue.service";
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { finalize } from "rxjs/operators";
+import { Subscription } from "rxjs";
 
 @Component({
   selector: 'app-special-issues-reader',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './special-issues-reader.html',
+  styleUrl: './special-issues-reader.scss',
 })
 export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
   /**
@@ -29,6 +30,10 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
    */
   @ViewChild('readerContainer')
   readerContainer!: ElementRef<HTMLDivElement>;
+
+  @ViewChild('fullscreenContainer')
+  fullscreenContainer!: ElementRef<HTMLDivElement>;
+  isFullscreen = false;
 
   /**
    * Container for flipbook mode (PageFlip)
@@ -54,7 +59,15 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
 
   isLoading = false;
   private viewReady = false;
-  private resizeTimeout: any;
+  private resizeTimeout?: ReturnType<typeof setTimeout>;
+  errorMessage = '';
+  private destroyed = false;
+  private loadSubscription?: Subscription;
+  private loadingTask?: pdfjsLib.PDFDocumentLoadingTask;
+  private generation = 0;
+  private initialization = 0;
+  private pendingPages = new Map<number, Promise<void>>();
+  private renderTasks = new Set<pdfjsLib.RenderTask>();
 
   // Flipbook engine (PageFlip / StPageFlip)
   flipbookAvailable = true;
@@ -62,26 +75,6 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
   private pageFlipPageWidth = 0;
   private pageFlipPageHeight = 0;
   private pageImageUrlCache = new Map<number, string>();
-
-  /**
-   * Waits for the next paint frame (double RAF)
-   */
-  private waitForPaint(): Promise<void> {
-    return new Promise(resolve => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => resolve());
-      });
-    });
-  }
-
-  // Swipe navigation fallback (PageFlip also supports drag/touch)
-  private touchStartX = 0;
-  private touchStartY = 0;
-  private touchDeltaX = 0;
-  private isDragging = false;
-  private isHorizontalSwipe = false;
-  readonly SWIPE_THRESHOLD = 50;
-
 
   constructor(
     private route: ActivatedRoute,
@@ -96,39 +89,45 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
    */
   async ngOnInit(): Promise<void> {
     const slug = this.route.snapshot.paramMap.get('slug');
-    if (!slug) return;
+    if (!slug) { this.errorMessage = 'Publication not found.'; return; }
 
     this.isLoading = true;
-    this.issueService
+    this.loadSubscription = this.issueService
       .getIssueBySlug(slug)
-      .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: async (issue) => {
           try {
+            if (this.destroyed) return;
             this.issue = issue;
-            if (!this.issue?.pdfUrl) return;
+            if (!this.issue?.pdfUrl) throw new Error('PDF unavailable');
 
             // Set PDF.js worker
             pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/pdfjs/pdf.worker.min.mjs';
 
             // Load PDF document
-            const loadingTask = pdfjsLib.getDocument({
+            const loadingTask = this.loadingTask = pdfjsLib.getDocument({
               url: this.issue.pdfUrl,
               maxImageSize: 40_000_000,
               stopAtErrors: true,
             });
-            this.pdfDoc = await loadingTask.promise;
+            const doc = await loadingTask.promise;
+            if (this.destroyed) return;
+            this.pdfDoc = doc;
 
             this.totalPages = this.pdfDoc.numPages;
             this.currentPage = 1;
 
-            this.tryInitialRender();
+            await this.tryInitialRender();
           } catch (err) {
-            console.error('Failed to load PDF document:', err);
+            if (!this.destroyed) this.errorMessage = 'Unable to load this PDF. Please try again later.';
+          } finally {
+            if (!this.destroyed) { this.isLoading = false; this.cdr.markForCheck(); }
           }
         },
         error: (err) => {
-          console.error('Failed to load special issue:', err);
+          this.isLoading = false;
+          this.errorMessage = 'This publication could not be loaded.';
+          this.cdr.markForCheck();
         },
       });
   }
@@ -144,7 +143,13 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    this.initialization++;
+    clearTimeout(this.resizeTimeout);
+    this.loadSubscription?.unsubscribe();
     this.destroyFlipbook();
+    void this.loadingTask?.destroy().catch(() => {});
+    this.pdfDoc = null;
   }
 
 
@@ -160,13 +165,19 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Try to render the initial page(s) if ready
    */
-  private tryInitialRender() {
-    if (this.viewReady && this.pdfDoc) {
-      void this.initFlipbook();
+  private async tryInitialRender(): Promise<void> {
+    if (this.viewReady && this.pdfDoc && !this.destroyed) {
+      const initialization = this.initialization + 1;
+      try { await this.initFlipbook(); }
+      catch { if (!this.destroyed && initialization === this.initialization) this.errorMessage = 'Unable to render this PDF. Please reload the publication.'; }
     }
   }
 
   private destroyFlipbook(): void {
+    this.generation++;
+    for (const task of this.renderTasks) task.cancel();
+    this.renderTasks.clear();
+    this.pendingPages.clear();
     try {
       if (this.pageFlip?.destroy) this.pageFlip.destroy();
     } catch {}
@@ -182,13 +193,17 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
 
   private bookContainerSize(): { width: number; height: number } {
     const el = this.readerContainer?.nativeElement;
-    const width = Math.max(1, Math.floor(el?.clientWidth ?? 1));
-    const height = Math.max(1, Math.floor(el?.clientHeight ?? 1));
+    const style = el ? getComputedStyle(el) : null;
+    const horizontalPadding = style ? parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) : 0;
+    const verticalPadding = style ? parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) : 0;
+    const width = Math.max(1, Math.floor((el?.clientWidth ?? 1) - horizontalPadding));
+    const height = Math.max(1, Math.floor((el?.clientHeight ?? 1) - verticalPadding));
     return { width, height };
   }
 
   private async initFlipbook(): Promise<void> {
-    if (!this.pdfDoc) return;
+    if (!this.pdfDoc || this.destroyed) return;
+    const initialization = ++this.initialization;
     if (!this.viewReady) return;
     if (typeof document === 'undefined') return;
     const containerEl = this.flipbookContainer?.nativeElement;
@@ -201,19 +216,22 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
       PageFlipCtor = mod?.PageFlip ?? mod?.default?.PageFlip ?? mod?.default;
       if (!PageFlipCtor) throw new Error('PageFlip export not found');
     } catch (e) {
-      console.warn('Flipbook mode requires the `page-flip` package.', e);
+      if (this.destroyed || initialization !== this.initialization) return;
       this.flipbookAvailable = false;
       this.destroyFlipbook();
       this.cdr.detectChanges();
       return;
     }
 
+    if (this.destroyed || initialization !== this.initialization) return;
     this.flipbookAvailable = true;
     this.destroyFlipbook();
 
     // Compute page size based on the first PDF page aspect ratio and container space.
     const { width: containerWidth, height: containerHeight } = this.bookContainerSize();
     const firstPage = await this.pdfDoc.getPage(1);
+    if (this.destroyed || initialization !== this.initialization) return;
+    const generation = this.generation;
     const firstViewport = firstPage.getViewport({ scale: 1 });
     const pageAspect = firstViewport.width / firstViewport.height;
 
@@ -232,8 +250,16 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
     this.pageFlipPageWidth = Math.max(1, pageWidth);
     this.pageFlipPageHeight = Math.max(1, pageHeight);
 
+    // Constrain the measured book, not its centering wrapper. PageFlip otherwise
+    // chooses a spread on wide, short screens even when single-page mode is set.
+    containerEl.style.width = `${this.pageFlipPageWidth * (this.isSpreadMode ? 2 : 1)}px`;
+    containerEl.style.height = `${this.pageFlipPageHeight}px`;
+
     // Build HTML pages (empty placeholders). We'll render PDF pages lazily into <img> tags.
-    containerEl.innerHTML = '';
+    containerEl.replaceChildren();
+    // PageFlip.destroy removes its root; retain the Angular-owned container.
+    const bookRoot = document.createElement('div');
+    containerEl.appendChild(bookRoot);
     const pageElements: HTMLElement[] = [];
     for (let p = 1; p <= this.totalPages; p++) {
       const pageEl = document.createElement('div');
@@ -259,13 +285,15 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
 
     // Init PageFlip outside Angular to reduce change detection churn.
     this.ngZone.runOutsideAngular(() => {
-      this.pageFlip = new PageFlipCtor(containerEl, {
+      this.pageFlip = new PageFlipCtor(bookRoot, {
         width: this.pageFlipPageWidth,
         height: this.pageFlipPageHeight,
-        size: 'stretch',
+        size: 'fixed',
+        usePortrait: !this.isSpreadMode,
+        startPage: Math.max(0, this.currentPage - 1),
         autoSize: true,
         showCover: true,
-        mobileScrollSupport: false,
+        mobileScrollSupport: true,
         maxShadowOpacity: 0.5,
       });
 
@@ -275,6 +303,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
 
       if (this.pageFlip?.on) {
         this.pageFlip.on('flip', (e: any) => {
+          if (this.destroyed || generation !== this.generation) return;
           const pageIndex = e?.data ?? 0; // 0-based
           const pageNumber = Math.max(1, Math.min(this.totalPages, Number(pageIndex) + 1));
           this.ngZone.run(() => {
@@ -284,7 +313,12 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
             } else {
               this.currentPage = pageNumber;
             }
-            void this.ensureFlipbookPagesRendered(pageNumber);
+            void this.ensureFlipbookPagesRendered(pageNumber).catch(() => {
+              if (!this.destroyed && generation === this.generation) {
+                this.errorMessage = 'Unable to render this page. Please reload the publication.';
+                this.cdr.markForCheck();
+              }
+            });
             this.cdr.detectChanges();
           });
         });
@@ -299,7 +333,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
       } catch {}
     }
     await this.ensureFlipbookPagesRendered(initialPage);
-    this.cdr.detectChanges();
+    if (!this.destroyed && generation === this.generation) this.cdr.detectChanges();
   }
 
   private async ensureFlipbookPagesRendered(centerPage: number): Promise<void> {
@@ -311,13 +345,28 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
     const start = Math.max(1, centerPage - radius);
     const end = Math.min(this.totalPages, centerPage + radius);
 
+    const generation = this.generation;
     for (let p = start; p <= end; p++) {
+      if (this.destroyed || generation !== this.generation) return;
       if (this.pageImageUrlCache.has(p)) continue;
-      const url = await this.renderPdfPageToObjectUrl(p, this.pageFlipPageWidth);
-      this.pageImageUrlCache.set(p, url);
-
-      const img = containerEl.querySelector(`img[data-page="${p}"]`) as HTMLImageElement | null;
-      if (img) img.src = url;
+      let pending = this.pendingPages.get(p);
+      if (!pending) {
+        pending = this.renderPdfPageToObjectUrl(p, this.pageFlipPageWidth).then(url => {
+          if (this.destroyed || generation !== this.generation) { URL.revokeObjectURL(url); return; }
+          this.pageImageUrlCache.set(p, url);
+          const img = containerEl.querySelector('img[data-page="' + p + '"]') as HTMLImageElement | null;
+          if (img) img.src = url;
+        }).finally(() => { if (generation === this.generation) this.pendingPages.delete(p); });
+        this.pendingPages.set(p, pending);
+      }
+      await pending;
+    }
+    if (generation !== this.generation) return;
+    for (const [page, url] of this.pageImageUrlCache) {
+      if (Math.abs(page - this.currentPage) <= 6) continue;
+      URL.revokeObjectURL(url);
+      this.pageImageUrlCache.delete(page);
+      containerEl.querySelector('img[data-page="' + page + '"]')?.removeAttribute('src');
     }
   }
 
@@ -325,25 +374,29 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
     if (!this.pdfDoc) throw new Error('PDF not loaded');
     if (typeof document === 'undefined') throw new Error('Document not available');
 
+    const generation = this.generation;
     const page = await this.pdfDoc.getPage(pageNumber);
+    if (this.destroyed || generation !== this.generation) throw new Error('Render cancelled');
     const baseViewport = page.getViewport({ scale: 1 });
-    const scale = targetWidth / baseViewport.width;
+    const scale = Math.min(targetWidth / baseViewport.width, 4096 / baseViewport.width, 4096 / baseViewport.height, Math.sqrt(8_000_000 / (baseViewport.width * baseViewport.height)));
     const viewport = page.getViewport({ scale });
 
     const canvas = document.createElement('canvas');
-    canvas.width = Math.floor(viewport.width);
-    canvas.height = Math.floor(viewport.height);
+    canvas.width = Math.max(1, Math.floor(viewport.width));
+    canvas.height = Math.max(1, Math.floor(viewport.height));
 
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas context not available');
 
     const task = page.render({ canvas, canvasContext: ctx, viewport });
-    await task.promise;
+    this.renderTasks.add(task);
+    try { await task.promise; } finally { this.renderTasks.delete(task); }
 
     const blob: Blob = await new Promise((resolve, reject) => {
       canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Failed to create blob'))), 'image/jpeg', 0.92);
     });
 
+    canvas.width = canvas.height = 0;
     return URL.createObjectURL(blob);
   }
 
@@ -369,7 +422,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
 
   jumpToPage(value: number) {
     const page = Number(value);
-    if (!page || page < 1 || page > this.totalPages) return;
+    if (!Number.isInteger(page) || page < 1 || page > this.totalPages) return;
 
     if (this.pageFlip?.flip) {
       try {
@@ -385,14 +438,14 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
    * Whether the next page is available
    */
   get canGoNext() {
-    return this.currentPage < this.totalPages;
+    return !this.isLoading && (this.isSpreadMode && this.currentPage > 1 ? this.currentPage + 1 < this.totalPages : this.currentPage < this.totalPages);
   }
 
   //Spread Indicator
    get pageLabel(): string {
     if (!this.totalPages) return  '-';
 
-    if (!this.isSpreadMode) {
+    if (!this.isSpreadMode || this.currentPage === 1) {
       return  `${this.currentPage} / ${this.totalPages}`
     }
 
@@ -417,11 +470,11 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
    * Toggle fullscreen mode for the reader
    */
   toggleFullscreen() {
-    const el = this.readerContainer.nativeElement;
+    const el = this.fullscreenContainer?.nativeElement ?? this.readerContainer.nativeElement;
     if (!document.fullscreenElement) {
-      el.requestFullscreen();
+      void el.requestFullscreen?.().catch(() => {});
     } else {
-      document.exitFullscreen();
+      void document.exitFullscreen?.().catch(() => {});
     }
   }
 
@@ -431,86 +484,29 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
    */
   @HostListener('window:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'ArrowRight') this.nextPage();
-    if (event.key === 'ArrowLeft') this.prevPage();
-    //if (event.key === 'ArrowDown') this.zoomOut();
-    //if (event.key === 'ArrowUp') this.zoomIn();
-  }
-
-  @HostListener('touchstart', ['$event'])
-  onTouchStart(event: TouchEvent) {
-    if (!event.touches || event.touches.length === 0) return;
-
-    const touch = event.touches[0];
-    this.touchStartX = touch.clientX;
-    this.touchStartY = touch.clientY;
-    this.touchDeltaX = 0;
-    this.isDragging = true;
-    this.isHorizontalSwipe = false;
-  }
-
-  @HostListener('touchmove', ['$event'])
-  onTouchMove(event: TouchEvent) {
-    if (!this.isDragging || !event.touches || event.touches.length === 0) return;
-
-    const touch = event.touches[0];
-
-    const deltaX = touch.clientX - this.touchStartX;
-    const deltaY = touch.clientY - this.touchStartY;
-
-    // Axis lock detection
-    if (!this.isHorizontalSwipe) {
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        this.isHorizontalSwipe = true;
-      } else {
-        return;  // Vertical swipe, ignore for page navigation
-      }
-    }
-      this.touchDeltaX = deltaX;
-  }
-
-  @HostListener('touchend')
-  onTouchEnd() {
-    if (!this.isDragging) return;
-
-    if (!this.isSpreadMode) {
-    if (this.touchDeltaX < 0) {
+    if (this.isLoading || this.errorMessage || !this.flipbookAvailable || (event.target instanceof HTMLElement && (event.target.isContentEditable || !!event.target.closest('input, textarea, select, button, a')))) return;
+    if (event.key === 'ArrowRight' && this.canGoNext) {
+      event.preventDefault();
       this.nextPage();
-    } else {
+    }
+    if (event.key === 'ArrowLeft' && this.canGoPrev) {
+      event.preventDefault();
       this.prevPage();
     }
   }
-
-  if (this.isHorizontalSwipe && Math.abs(this.touchDeltaX) > this.SWIPE_THRESHOLD) {
-
-    if (this.touchDeltaX < 0) {
-      // Swipe LEFT → Next page
-      this.nextPage();
-    } else {
-      // Swipe RIGHT → Previous page
-      this.prevPage();
-    }
-  }
-
-  this.resetSwipe();
-}
-
-private resetSwipe() {
-  this.isDragging = false;
-  this.touchDeltaX = 0;
-  this.isHorizontalSwipe = false;
-}
 
   /**
    * Handle window resize and update layout/render
    */
+  @HostListener('document:fullscreenchange')
   @HostListener('window:resize')
   onResize() {
+    this.isFullscreen = !!this.fullscreenContainer && document.fullscreenElement === this.fullscreenContainer.nativeElement;
     if (!this.pdfDoc) return;
     clearTimeout(this.resizeTimeout);
     this.resizeTimeout = setTimeout(() => {
       this.updateLayoutMode();
-      void this.initFlipbook();
+      void this.tryInitialRender();
     }, 200);
   }
 }

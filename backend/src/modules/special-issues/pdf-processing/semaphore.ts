@@ -23,16 +23,19 @@ export class AsyncSemaphore {
         signal?.addEventListener("abort", onAbort, { once: true });
         this.waiting.push(resume);
       });
+    } else {
+      this.active += 1;
     }
-
-    this.active += 1;
     let released = false;
 
     return () => {
       if (released) return;
       released = true;
-      this.active -= 1;
-      this.waiting.shift()?.();
+      const resume = this.waiting.shift();
+      // Hand the occupied slot directly to a waiter. Decrementing before its
+      // microtask resumes lets a new caller steal that slot and exceed limit.
+      if (resume) resume();
+      else this.active -= 1;
     };
   }
 }

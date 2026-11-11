@@ -1,4 +1,10 @@
 <section class="space-y-8">
+  @if (loading()) {
+    <p role="status" class="text-sm text-gray-600">Loading Special Issues…</p>
+  }
+  @if (feedback()) {
+    <p role="status" class="rounded-lg border border-gray-200 p-3 text-sm text-[#000035]">{{ feedback() }}</p>
+  }
 
   <!-- Header -->
   <div class="flex flex-col gap-6">
@@ -37,6 +43,7 @@
       <div class="w-full md:w-80">
         <input
           type="text"
+          aria-label="Search Special Issues"
           placeholder="Search by title, type, or year..."
           [value]="searchQuery()"
           (input)="onSearch($event)"
@@ -68,7 +75,7 @@
   <!-- Table Section -->
   <div class="bg-white rounded-xl shadow border border-gray-100">
 
-    @if (filteredIssues().length === 0) {
+    @if (!loading() && filteredIssues().length === 0) {
 
       <!-- Empty State -->
       <div class="px-4 sm:px-6 md:px-8 py-12 sm:py-16 text-center">
@@ -95,6 +102,8 @@
             <th
               class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
               (click)="setSort('title')"
+              tabindex="0" (keydown.enter)="setSort('title')" (keydown.space)="$event.preventDefault(); setSort('title')"
+              [attr.aria-sort]="sortField() === 'title' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
             >
               Title
               <span *ngIf="sortField() === 'title'">
@@ -104,6 +113,8 @@
             <th
               class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
               (click)="setSort('type')"
+              tabindex="0" (keydown.enter)="setSort('type')" (keydown.space)="$event.preventDefault(); setSort('type')"
+              [attr.aria-sort]="sortField() === 'type' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
             >
               Type
               <span *ngIf="sortField() === 'type'">
@@ -113,6 +124,8 @@
             <th
               class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
               (click)="setSort('academicYear')"
+              tabindex="0" (keydown.enter)="setSort('academicYear')" (keydown.space)="$event.preventDefault(); setSort('academicYear')"
+              [attr.aria-sort]="sortField() === 'academicYear' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
             >
               Academic Year
               <span *ngIf="sortField() === 'academicYear'">
@@ -122,6 +135,8 @@
             <th
               class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
               (click)="setSort('status')"
+              tabindex="0" (keydown.enter)="setSort('status')" (keydown.space)="$event.preventDefault(); setSort('status')"
+              [attr.aria-sort]="sortField() === 'status' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
             >
               Status
               <span *ngIf="sortField() === 'status'">
@@ -131,6 +146,8 @@
             <th
               class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
               (click)="setSort('publishedAt')"
+              tabindex="0" (keydown.enter)="setSort('publishedAt')" (keydown.space)="$event.preventDefault(); setSort('publishedAt')"
+              [attr.aria-sort]="sortField() === 'publishedAt' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
             >
               Published
               <span *ngIf="sortField() === 'publishedAt'">
@@ -214,6 +231,7 @@
                   <button
                     type="button"
                     (click)="$event.stopPropagation(); requestArchive(issue)"
+                    [disabled]="pendingIds().has(issue.id)"
                     class="px-3 py-1.5 text-xs font-semibold text-white bg-[#6B7280] hover:bg-[#6B7280]/60 hover:shadow-md rounded-lg transition"
                     [class.hidden]="issue.status === 'archived'"
                   >
@@ -223,6 +241,7 @@
                   <button
                     type="button"
                     (click)="$event.stopPropagation(); requestDelete(issue)"
+                    [disabled]="pendingIds().has(issue.id)"
                     class="px-3 py-1.5 text-xs font-semibold text-white bg-red-700 hover:bg-red-800 rounded-lg transition"
                     [class.hidden]="issue.status !== 'archived'"
                   >
@@ -311,6 +330,7 @@
               <button
                 type="button"
                 (click)="$event.stopPropagation(); requestArchive(issue)"
+                [disabled]="pendingIds().has(issue.id)"
                 class="flex-1 px-3 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
                 [class.hidden]="issue.status === 'archived'"
               >
@@ -319,6 +339,7 @@
               <button
                 type="button"
                 (click)="$event.stopPropagation(); requestDelete(issue)"
+                [disabled]="pendingIds().has(issue.id)"
                 class="flex-1 px-3 py-2 text-xs font-semibold text-white bg-red-700 hover:bg-red-800 rounded-lg transition"
                 [class.hidden]="issue.status !== 'archived'"
               >

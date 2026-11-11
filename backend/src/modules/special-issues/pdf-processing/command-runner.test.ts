@@ -31,3 +31,12 @@ test("terminates a child process that exceeds its output budget", async () => {
       error.message.includes("output limit")
   );
 });
+
+test("rejects an already cancelled operation before starting a child", async () => {
+  await assert.rejects(
+    new SpawnCommandRunner().run("must-not-be-spawned", [], {
+      timeoutMs: 1_000, maxOutputBytes: 128, signal: AbortSignal.abort(),
+    }),
+    error => error instanceof CommandExecutionError && error.aborted
+  );
+});

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, EMPTY, Observable, of, throwError } from 'rxjs';
+import { catchError, expand, map, reduce, switchMap, tap } from 'rxjs/operators';
 
 import { SpecialIssue, SpecialIssueType } from '../../models/special-issue.model';
 
@@ -53,30 +53,21 @@ export class SpecialIssueService {
   // - create/update/delete: CRUD operations that update in-memory cache
   // =====================================================
   refresh(status?: IssueStatus): Observable<SpecialIssue[]> {
-    const params = this.buildParams({ status });
-    return this.http.get<ApiSpecialIssue[]>(this.api, { params }).pipe(
-      map((list) => this.normalizeIssues(list)),
+    return this.loadList(this.api, { status }).pipe(
       tap((issues) => {
         if (!status) this.issuesSubject.next(issues);
-      }),
-      catchError((err) => {
-        console.error('Failed to load special issues:', err);
-        if (!status) this.issuesSubject.next([]);
-        return of([]);
       })
     );
   }
 
   refreshAdmin(status?: IssueStatus): Observable<SpecialIssue[]> {
-    const params = this.buildParams({ status, limit: 100 });
-    return this.http.get<ApiSpecialIssue[]>(`${this.api}/admin`, { params }).pipe(
-      map((list) => this.normalizeIssues(list)),
+    return this.loadList(`${this.api}/admin`, { status }).pipe(
       tap((issues) => this.issuesSubject.next(issues))
     );
   }
 
   getIssueBySlug(slug: string): Observable<SpecialIssue> {
-    return this.http.get<ApiSpecialIssue>(`${this.api}/${slug}`).pipe(
+    return this.http.get<ApiSpecialIssue>(`${this.api}/${encodeURIComponent(slug)}`).pipe(
       map((a) => this.normalizeIssue(a)),
       tap((issue) => {
         this.issuesSubject.next([issue, ...this.issuesSubject.value.filter((i) => i.id !== issue.id)]);
@@ -94,9 +85,7 @@ export class SpecialIssueService {
   }
 
   getIssuesByType(type: SpecialIssueType): Observable<SpecialIssue[]> {
-    return this.http.get<ApiSpecialIssue[]>(`${this.api}/type/${encodeURIComponent(type)}`).pipe(
-      map((a) => this.normalizeIssues(a))
-    );
+    return this.loadList(`${this.api}/type/${encodeURIComponent(type)}`, {});
   }
 
   /** For async validators. */
@@ -104,11 +93,11 @@ export class SpecialIssueService {
     const normalized = (slug ?? '').trim().toLowerCase();
     if (!normalized) return of(false);
 
-    return this.getAdminIssueBySlug(normalized).pipe(
+    return this.http.get<ApiSpecialIssue>(`${this.api}/admin/${encodeURIComponent(normalized)}`).pipe(
       map((issue) => (ignoreId ? issue.id !== ignoreId : true)),
       catchError((err) => {
         if (err?.status === 404) return of(false);
-        return of(false);
+        return throwError(() => err);
       })
     );
   }
@@ -136,11 +125,17 @@ export class SpecialIssueService {
       : of(null);
 
     return replace$.pipe(
-      switchMap(() =>
+      switchMap((replacement) =>
         this.http.patch<ApiSpecialIssue>(
           `${this.api}/${id}`,
           this.toMetadataDto(patch)
-        )
+        ).pipe(catchError(error => {
+          if (!replacement) return throwError(() => error);
+          const message = 'The PDF was replaced, but issue details could not be saved. Retry saving the details.';
+          return throwError(() => Object.assign(new Error(message), {
+            error: { error: message }, pdfReplaced: true, replacement, cause: error,
+          }));
+        }))
       ),
       map((a) => this.normalizeIssue(a)),
       tap((updated) => {
@@ -273,5 +268,21 @@ export class SpecialIssueService {
     }
     form.append('pdf', pdfFile, pdfFile.name);
     return form;
+  }
+  private loadList(url: string, filters: Record<string, unknown>): Observable<SpecialIssue[]> {
+    const fetchPage = (page: number) => this.http.get<ApiSpecialIssue[]>(url, {
+      params: this.buildParams({ ...filters, limit: 100, ...(page > 1 ? { page } : {}) }),
+      observe: 'response',
+    }).pipe(map(response => ({ response, page })));
+
+    return fetchPage(1).pipe(
+      expand(({ response, page }) => {
+        if (response.headers.get('X-Has-More') !== 'true') return EMPTY;
+        if (page >= 100) return throwError(() => new Error('Too many issues to load. Narrow the listing filters.'));
+        return fetchPage(page + 1);
+      }),
+      reduce((items, { response }) => items.concat(response.body ?? []), [] as ApiSpecialIssue[]),
+      map(items => this.normalizeIssues(items))
+    );
   }
 }

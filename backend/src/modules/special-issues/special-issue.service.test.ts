@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -12,6 +12,7 @@ import type { CreateMultipartIssueInput } from "./special-issue.schema";
 import {
   createIssueWithDependencies,
   getPublishedIssues,
+  getIssuesByType,
   replaceIssuePdfWithDependencies,
   type SpecialIssueCreateDependencies,
   type SpecialIssueReplacementDependencies,
@@ -333,4 +334,87 @@ test("public list service rejects unpublished status filters", async () => {
       error instanceof Error &&
       (error as Error & { statusCode?: number }).statusCode === 400
   );
+  await assert.rejects(
+    getIssuesByType("Newsletter", {
+      page: 1, limit: 10, status: "draft", sortBy: "publishedAt", sortOrder: "desc",
+    }),
+    error => error instanceof Error &&
+      (error as Error & { statusCode?: number }).statusCode === 400
+  );
+});
+
+for (const mutation of ["create", "replace"] as const) {
+  test(`${mutation} compensates storage when cancelled during upload`, async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "paragon-cancel-test-"));
+    const filePath = path.join(directory, "input.pdf");
+    await writeFile(filePath, "pdf");
+    const controller = new AbortController();
+    const storage = new FakeStorage();
+    storage.uploadFile = async objectKey => {
+      storage.uploaded.push(objectKey);
+      controller.abort();
+    };
+    let committed = false;
+    try {
+      const operation = mutation === "create"
+        ? createIssueWithDependencies(issueInput, uploadedFile(filePath),
+            dependencies(filePath, storage, async () => {
+              committed = true;
+              return { id: "issue-id" };
+            }), controller.signal)
+        : replaceIssuePdfWithDependencies("issue-id", uploadedFile(filePath),
+            replacementDependencies(filePath, storage, {
+              replacePdf: async () => {
+                committed = true;
+                return { id: "issue-id" };
+              },
+            }), controller.signal);
+      await assert.rejects(operation, error =>
+        error instanceof Error && (error as Error & { statusCode: number }).statusCode === 499);
+      assert.equal(committed, false);
+      assert.deepEqual(storage.removed, [[storage.uploaded[0]!]]);
+      await assert.rejects(access(filePath), { code: "ENOENT" });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+}
+
+test("replacement lookup failure removes the unprocessed upload", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "paragon-lookup-test-"));
+  const filePath = path.join(directory, "input.pdf");
+  await writeFile(filePath, "pdf");
+  try {
+    await assert.rejects(
+      replaceIssuePdfWithDependencies("missing", uploadedFile(filePath),
+        replacementDependencies(filePath, new FakeStorage(), {
+          findPdfMutationState: async () => null,
+        })),
+      /Issue not found/
+    );
+    await assert.rejects(access(filePath), { code: "ENOENT" });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("legacy mixed-case inline PDFs use processing and persistent storage", async () => {
+  const storage = new FakeStorage();
+  let inputPath = "";
+  const deps = dependencies("unused", storage, async input => {
+    assert.ok(input.pdfMetadata);
+    assert.match(input.pdfUrl, /^https:\/\/storage\.example\//);
+    return { id: "issue-id" };
+  });
+  deps.processor.process = async filePath => {
+    inputPath = filePath;
+    return processed(filePath);
+  };
+  // Regression: repeated-quartet base64 validation overflowed V8's regexp stack.
+  const result = await createIssueWithDependencies({
+    ...issueInput, pdfUrl: `DATA:APPLICATION/PDF;BASE64,${"A".repeat(5_000_000)}`,
+  }, undefined, deps);
+  assert.equal(result.id, "issue-id");
+  assert.equal(storage.uploaded.length, 1);
+  await assert.rejects(access(inputPath), { code: "ENOENT" });
 });

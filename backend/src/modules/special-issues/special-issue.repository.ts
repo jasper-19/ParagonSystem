@@ -164,8 +164,15 @@ function safeStoredMediaUrl(value: unknown, type: "image" | "pdf"): string {
   const candidate = String(value ?? "");
 
   try {
-    if (new URL(candidate).protocol === "https:") {
+    const url = new URL(candidate);
+    if (url.protocol === "https:") {
       return candidate;
+    }
+    if (process.env.NODE_ENV !== "production" && url.protocol === "http:") {
+      const localBase = new URL(process.env.LOCAL_STORAGE_URL || "http://localhost:3000/uploads");
+      const basePath = `${localBase.pathname.replace(/\/$/, "")}/`;
+      if (url.origin === localBase.origin && url.pathname.startsWith(basePath) &&
+          !url.username && !url.password) return candidate;
     }
   } catch {
     // Continue with data URL validation.
@@ -347,6 +354,8 @@ export async function update(id: string, data: unknown) {
     const publishedAt =
       typeof publishedAtRaw === "string" && publishedAtRaw.trim() !== "" ? new Date(publishedAtRaw) : null;
     push("published_at", publishedAt);
+  } else if (d.status === "published") {
+    set.push("published_at = COALESCE(published_at, NOW())");
   }
 
   if (set.length === 0) {

@@ -1,0 +1,18 @@
+---
+version: 1
+slug: "public-special-issues"
+primary_target: "frontend/ParagonWebApp/src/app/features/special-issues/special-issues.html"
+related_targets: ["frontend/ParagonWebApp/src/app/features/special-issues/special-issues.scss", "frontend/ParagonWebApp/src/app/features/special-issues/special-issues.ts", "frontend/ParagonWebApp/src/app/features/special-issues/reader/special-issues-reader.html", "frontend/ParagonWebApp/src/app/features/special-issues/reader/special-issues-reader.scss", "frontend/ParagonWebApp/src/app/features/special-issues/reader/special-issues-reader.ts"]
+---
+
+# Public special issues and reader
+
+Refine the existing public reading system. Listing mode: Read; reader mode: Experience. Preserve navy #000035 and honey #F4B400 with white, pale paper, and muted ink. Real publication covers and PDF pages carry the visual interest. Georgia headings distinguish public reading from the staff workspace; Segoe UI carries controls and metadata. No new illustration or decorative asset is needed.
+
+The listing uses a left-aligned editorial title and introductory copy, ruled format filters, an uncropped cover-led latest release, and compact archive rows grouped by academic year. Preserve All, Tabloid, Newsletter, Literary Folio, available counts, chronological selection, reader destinations and PDF links. Loading, service failure/retry, missing covers and empty filters are explicit. A single featured issue must never show a false empty archive message. Filters wrap and expose aria-pressed, links and controls retain visible keyboard focus and at least 44px targets.
+
+The reader presents the existing page-flip engine on a quiet navy canvas, with publication identity, library return and PDF download above. Previous/next, live page count, labelled page entry and fullscreen form one restrained toolbar. Fullscreen contains the stage and toolbar while stage measurement stays independent. Keep responsive single/spread reading, page jumps, keyboard and touch navigation, loading/failure states and existing bounded rendering/cleanup. Arrow keys leave focused links/form controls alone and respect publication boundaries. No backend, API, schema, auth, upload or publication-status changes are part of this visual pass.
+
+Constrain the book container to the calculated page width (one page below the spread breakpoint, two pages above it) and page height; the surrounding flex wrapper centers it. PageFlip's usePortrait option permits rather than forces portrait, so an unconstrained full-width container would show an unexpected spread on wide, short screens. The listing explicitly marks asynchronous success/failure updates for Angular's zoneless change detection and retains its main landmark.
+
+Validation: 16 focused listing/reader tests passed, including all five existing grouping/lifecycle tests. The local Vitest run used a single thread worker after the default fork workers timed out during startup. Final production build passed with the existing quill-delta/page-flip CommonJS warnings. Browser checks used synthetic API data and the existing 142-page local publication PDF: listing at 320/390/768/1024/1440px and reader also at 800/820px; no horizontal overflow, reader controls at least 44px. Confirmed previous/next, page jump, keyboard navigation, fullscreen with controls, type filters, single-issue results, empty library, service error/retry and reader error state. Runtime errors and mutations were empty. Independent review, including zoneless updates and PageFlip sizing, found no outstanding issues. No production deployment or live data changes occurred.

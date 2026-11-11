@@ -12,6 +12,24 @@ function validatedListQuery(res: Response): SpecialIssueListQuery {
   return res.locals["validatedQuery"] as SpecialIssueListQuery;
 }
 
+function uploadCancellation(req: Request, res: Response) {
+  const controller = new AbortController();
+  const abort = (): void => controller.abort();
+  const onClose = (): void => {
+    if (!res.writableFinished) abort();
+  };
+  req.once("aborted", abort);
+  res.once("close", onClose);
+  if (req.aborted || res.destroyed) abort();
+  return {
+    signal: controller.signal,
+    dispose: (): void => {
+      req.removeListener("aborted", abort);
+      res.removeListener("close", onClose);
+    },
+  };
+}
+
 function sendIssueList(
   res: Response,
   result: {
@@ -90,19 +108,17 @@ export const getIssuesByType = asyncHandler(
 export const createIssue = asyncHandler(
   async (req: Request, res: Response) => {
     const uploadRequest = req as PdfUploadRequest;
-    const abortController = new AbortController();
-    const abort = (): void => abortController.abort();
-    req.once("aborted", abort);
+    const cancellation = uploadCancellation(req, res);
 
     let issue;
     try {
       issue = await service.createIssue(
         req.body,
         uploadRequest.file,
-        abortController.signal
+        cancellation.signal
       );
     } finally {
-      req.removeListener("aborted", abort);
+      cancellation.dispose();
     }
     const issueTitle =
       typeof issue.title === "string" ? issue.title : "Untitled";
@@ -135,19 +151,17 @@ export const replaceIssuePdf = asyncHandler(
   async (req: Request, res: Response) => {
     const id = sanitizeValue(req.params["id"]) as string;
     const uploadRequest = req as PdfUploadRequest;
-    const abortController = new AbortController();
-    const abort = (): void => abortController.abort();
-    req.once("aborted", abort);
+    const cancellation = uploadCancellation(req, res);
 
     let issue;
     try {
       issue = await service.replaceIssuePdf(
         id,
         uploadRequest.file,
-        abortController.signal
+        cancellation.signal
       );
     } finally {
-      req.removeListener("aborted", abort);
+      cancellation.dispose();
     }
 
     auditLog(

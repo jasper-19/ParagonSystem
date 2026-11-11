@@ -49,6 +49,12 @@ export class SpawnCommandRunner implements CommandRunner {
     options: CommandRunOptions
   ): Promise<CommandResult> {
     return new Promise((resolve, reject) => {
+      if (options.signal?.aborted) {
+        reject(new CommandExecutionError("PDF processing was cancelled", {
+          exitCode: null, timedOut: false, aborted: true,
+        }));
+        return;
+      }
       const startedAt = performance.now();
       const stdoutChunks: Buffer[] = [];
       const stderrChunks: Buffer[] = [];
@@ -57,6 +63,7 @@ export class SpawnCommandRunner implements CommandRunner {
       let timedOut = false;
       let aborted = false;
       let settled = false;
+      let outputLimitExceeded = false;
 
       const child = spawn(executable, [...args], {
         shell: false,
@@ -87,6 +94,7 @@ export class SpawnCommandRunner implements CommandRunner {
       ): number | null => {
         const nextBytes = currentBytes + chunk.length;
         if (nextBytes > options.maxOutputBytes) {
+          outputLimitExceeded = true;
           stop();
           return null;
         }
@@ -97,16 +105,6 @@ export class SpawnCommandRunner implements CommandRunner {
       child.stdout.on("data", (chunk: Buffer) => {
         const next = appendOutput(stdoutChunks, stdoutBytes, chunk);
         if (next === null) {
-          if (!settled) {
-            settled = true;
-            reject(
-              new CommandExecutionError("PDF processor output limit exceeded", {
-                exitCode: null,
-                timedOut: false,
-                aborted: false,
-              })
-            );
-          }
           return;
         }
         stdoutBytes = next;
@@ -115,16 +113,6 @@ export class SpawnCommandRunner implements CommandRunner {
       child.stderr.on("data", (chunk: Buffer) => {
         const next = appendOutput(stderrChunks, stderrBytes, chunk);
         if (next === null) {
-          if (!settled) {
-            settled = true;
-            reject(
-              new CommandExecutionError("PDF processor output limit exceeded", {
-                exitCode: null,
-                timedOut: false,
-                aborted: false,
-              })
-            );
-          }
           return;
         }
         stderrBytes = next;
@@ -155,10 +143,12 @@ export class SpawnCommandRunner implements CommandRunner {
         if (settled) return;
         settled = true;
 
-        if (exitCode !== 0 || timedOut || aborted) {
+        if (exitCode !== 0 || timedOut || aborted || outputLimitExceeded) {
           reject(
             new CommandExecutionError(
-              timedOut
+              outputLimitExceeded
+                ? "PDF processor output limit exceeded"
+                : timedOut
                 ? "PDF processing timed out"
                 : aborted
                   ? "PDF processing was cancelled"

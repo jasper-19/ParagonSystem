@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { unlink } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { performance } from "node:perf_hooks";
 import * as repository from "./special-issue.repository";
 import {
@@ -21,6 +22,7 @@ import type {
   PdfProcessor,
   ProcessedPdf,
 } from "./pdf-processing/pdf.types";
+import { pdfConfig } from "../../config/pdf";
 
 export type SpecialIssueCreateDependencies = {
   repository: {
@@ -92,7 +94,7 @@ export async function getIssuesByType(
       statusCode: 400,
     });
   }
-  return repository.findPublished({
+  return getPublishedIssues({
     ...query,
     type: type as IssueType,
   });
@@ -117,6 +119,53 @@ export async function createIssueWithDependencies(
   dependencies: SpecialIssueCreateDependencies,
   signal?: AbortSignal
 ) {
+  if (!file && "pdfUrl" in data && /^data:/i.test(data.pdfUrl)) {
+    assertNotCancelled(signal);
+    const encoded = data.pdfUrl.slice("data:application/pdf;base64,".length).replace(/[\r\n]/g, "");
+    if (!/^data:application\/pdf;base64,/i.test(data.pdfUrl) ||
+        encoded.length > Math.ceil(pdfConfig.maxUploadBytes / 3) * 4 ||
+        encoded.length % 4 !== 0 || !/^[a-z0-9+/]*={0,2}$/i.test(encoded)) {
+      throw Object.assign(new Error("Invalid PDF data URL"), { statusCode: 400 });
+    }
+    const bytes = Buffer.from(encoded, "base64");
+    if (bytes.length === 0 || bytes.length > pdfConfig.maxUploadBytes) {
+      throw Object.assign(new Error("Invalid PDF upload size"), { statusCode: 400 });
+    }
+    await mkdir(pdfConfig.tempRoot, { recursive: true });
+    const filename = `${randomUUID()}.pdf`;
+    const filePath = path.join(pdfConfig.tempRoot, filename);
+    try {
+      await writeFile(filePath, bytes, { flag: "wx" });
+    } catch (error) {
+      await unlink(filePath).catch(() => undefined);
+      throw error;
+    }
+    file = {
+      fieldname: "pdf", originalname: "document.pdf", encoding: "base64",
+      mimetype: "application/pdf", destination: pdfConfig.tempRoot,
+      filename, path: filePath, size: bytes.length,
+    };
+  }
+  try {
+    return await createUploadedIssue(data, file, dependencies, signal);
+  } finally {
+    if (file) await unlink(file.path).catch(() => undefined);
+  }
+}
+
+function assertNotCancelled(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw Object.assign(new Error("Request was cancelled"), { statusCode: 499 });
+  }
+}
+
+async function createUploadedIssue(
+  data: CreateIssueInput | CreateMultipartIssueInput,
+  file: UploadedPdfFile | undefined,
+  dependencies: SpecialIssueCreateDependencies,
+  signal?: AbortSignal
+) {
+  assertNotCancelled(signal);
   if (!file) {
     return dependencies.repository.create(data as CreateIssueInput);
   }
@@ -166,6 +215,7 @@ export async function createIssueWithDependencies(
       }
     );
     uploadDurationMs = performance.now() - uploadStartedAt;
+    assertNotCancelled(signal);
 
     const pdfUrl = dependencies.storage.getPublicUrl(objectKey);
     const created = await dependencies.repository.create({
@@ -352,6 +402,20 @@ export async function replaceIssuePdfWithDependencies(
   dependencies: SpecialIssueReplacementDependencies,
   signal?: AbortSignal
 ) {
+  try {
+    return await replaceUploadedIssuePdf(id, file, dependencies, signal);
+  } finally {
+    if (file) await unlink(file.path).catch(() => undefined);
+  }
+}
+
+async function replaceUploadedIssuePdf(
+  id: string,
+  file: UploadedPdfFile | undefined,
+  dependencies: SpecialIssueReplacementDependencies,
+  signal?: AbortSignal
+) {
+  assertNotCancelled(signal);
   if (!file) {
     throw Object.assign(new Error("A PDF file is required"), {
       statusCode: 400,
@@ -407,6 +471,7 @@ export async function replaceIssuePdfWithDependencies(
       }
     );
 
+    assertNotCancelled(signal);
     const metadata: repository.PdfStorageMetadata = {
       storagePath: objectKey,
       originalFilename: processed.originalFilename,

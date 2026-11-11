@@ -290,7 +290,15 @@ export class GhostscriptPdfProcessor implements PdfProcessor {
       inputPath,
       this.options.maxUploadBytes
     );
-    const release = await this.semaphore.acquire(options.signal);
+    let release: () => void;
+    try {
+      release = await this.semaphore.acquire(options.signal);
+    } catch (error) {
+      if (options.signal?.aborted) {
+        throw new PdfProcessingError("PDF processing was cancelled", 499, "PDF_PROCESS_ABORTED");
+      }
+      throw error;
+    }
     const outputPath = path.join(
       path.dirname(inputPath),
       `${randomUUID()}.optimized.pdf`
@@ -351,6 +359,8 @@ export class GhostscriptPdfProcessor implements PdfProcessor {
         await unlink(outputPath).catch(() => undefined);
         if (
           this.options.fallback === "original" &&
+          !options.signal?.aborted &&
+          !(error instanceof CommandExecutionError && error.aborted) &&
           !(error instanceof PdfProcessingError &&
             error.code === "PDF_PAGE_COUNT_CHANGED")
         ) {

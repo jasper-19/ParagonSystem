@@ -1,8 +1,10 @@
 import { supabase, storageBucket } from "../config/storage";
 import { StorageService, UploadFileOptions } from "./storage.interface";
-import { readFile } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { finished } from "node:stream/promises";
 
 export class SupabaseStorageService implements StorageService {
+  constructor(private readonly client = supabase, private readonly bucket = storageBucket) {}
     async upload(path: string, buffer: Buffer, options: UploadFileOptions): Promise<void> {
     const uploadOptions = {
         contentType: options.contentType,
@@ -10,8 +12,8 @@ export class SupabaseStorageService implements StorageService {
         ...(options.cacheControl ? { cacheControl: options.cacheControl } : {}),
     };
 
-    const { error } = await supabase.storage
-        .from(storageBucket)
+    const { error } = await this.client.storage
+        .from(this.bucket)
         .upload(path, buffer, uploadOptions);
 
     if (error) {
@@ -26,14 +28,28 @@ export class SupabaseStorageService implements StorageService {
     filePath: string,
     options: UploadFileOptions
   ): Promise<void> {
-    // supabase-js standard uploads do not accept a Node file path. Keep the
-    // processor disk-based, then buffer only the final bounded artifact here.
-    const buffer = await readFile(filePath);
-    await this.upload(path, buffer, options);
+    const stream = createReadStream(filePath);
+    // The installed storage-js SDK accepts Node streams and supplies fetch's
+    // required duplex option. Avoid allocating another complete PDF in memory.
+    // Retain an error listener until destroy finishes, including failed fetches.
+    stream.on("error", () => undefined);
+    try {
+      const { error } = await this.client.storage.from(this.bucket).upload(path, stream, {
+        contentType: options.contentType,
+        upsert: options.upsert ?? false,
+        ...(options.cacheControl ? { cacheControl: options.cacheControl } : {}),
+      });
+      if (error) throw error;
+    } catch {
+      throw Object.assign(new Error("Storage upload failed"), { statusCode: 502 });
+    } finally {
+      stream.destroy();
+      await finished(stream).catch(() => undefined);
+    }
   }
 
   async remove(paths: string[]): Promise<void> {
-    const { error } = await supabase.storage.from(storageBucket).remove(paths);
+    const { error } = await this.client.storage.from(this.bucket).remove(paths);
 
     if (error) {
       throw Object.assign(new Error("Storage object deletion failed"), {
@@ -43,7 +59,7 @@ export class SupabaseStorageService implements StorageService {
   }
 
   getPublicUrl(path: string): string {
-    const { data } = supabase.storage.from(storageBucket).getPublicUrl(path);
+    const { data } = this.client.storage.from(this.bucket).getPublicUrl(path);
     return data.publicUrl;
   }
 }

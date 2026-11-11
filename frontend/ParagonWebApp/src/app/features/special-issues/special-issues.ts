@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { SpecialIssue, SpecialIssueType } from '../../models/special-issue.model';
 import { SpecialIssueService } from '../../core/services/special-issue.service';
 import { RouterModule } from '@angular/router';
@@ -15,6 +15,7 @@ interface IssueTab {
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './special-issues.html',
+  styleUrl: './special-issues.scss',
 })
 export class SpecialIssues implements OnInit {
 
@@ -24,6 +25,9 @@ export class SpecialIssues implements OnInit {
   years: string[] = [];
 
   latestIssue?: SpecialIssue;
+  loading = true;
+  loadError = '';
+  readonly failedCovers = new Set<string>();
 
   /** Active filter */
   activeType: SpecialIssueType | 'all' = 'all';
@@ -36,21 +40,40 @@ export class SpecialIssues implements OnInit {
     { label: 'Literary Folio', value: 'Literary Folio' },
   ];
 
-  constructor(private issuesService: SpecialIssueService, private loader: LoaderService) {}
+  constructor(
+    private issuesService: SpecialIssueService,
+    private loader: LoaderService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit(): void {
+    this.loadIssues();
+  }
+
+  loadIssues(): void {
+    this.loading = true;
+    this.loadError = '';
     this.loader.show();
 
     this.issuesService.refresh().subscribe({
       next: () => {
         this.applyIssues(this.issuesService.getAll());
+        this.loading = false;
         this.loader.hide();
+        this.cdr.markForCheck();
       },
       error: () => {
         this.applyIssues([]);
+        this.loading = false;
+        this.loadError = 'Special issues could not be loaded. Please try again.';
         this.loader.hide();
+        this.cdr.markForCheck();
       },
     });
+  }
+
+  onCoverError(issue: SpecialIssue): void {
+    this.failedCovers.add(issue.id);
   }
 
    filterBy(type: SpecialIssueType | 'all'): void {
@@ -79,8 +102,6 @@ export class SpecialIssues implements OnInit {
 
   private applyIssues(list: SpecialIssue[]): void {
     this.issues = [...list].sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
-    this.latestIssue = this.issues[0];
-    this.filtered = this.issues.slice(1);
-    this.years = [...new Set(this.issues.map((i) => i.academicYear))].sort((a, b) => b.localeCompare(a));
+    this.filterBy(this.activeType);
   }
 }

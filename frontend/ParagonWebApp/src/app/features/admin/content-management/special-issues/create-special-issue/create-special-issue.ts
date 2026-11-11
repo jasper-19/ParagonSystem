@@ -1,5 +1,6 @@
 import { ConfirmationModal } from '../../../../../shared/components/confirmation-modal/confirmation-modal';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { AsyncValidatorFn, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,6 +21,7 @@ type IssueStatus = SpecialIssue['status'];
 })
 export class CreateSpecialIssueComponent {
 
+	private readonly destroyRef = inject(DestroyRef);
 	private fb = inject(NonNullableFormBuilder);
 	private router = inject(Router);
 	private route = inject(ActivatedRoute);
@@ -29,6 +31,8 @@ export class CreateSpecialIssueComponent {
 	readonly isEditMode = computed(() => this.editingId() !== null);
 
 	readonly isSubmitting = signal(false);
+  readonly saveError = signal('');
+  readonly pdfError = signal('');
 	readonly slugManuallyEdited = signal(false);
 	readonly selectedCoverMedia = signal<Media | null>(null);
 	readonly selectedPdfName = signal<string | null>(null);
@@ -53,7 +57,7 @@ export class CreateSpecialIssueComponent {
 		return timer(250).pipe(
 			switchMap(() => this.issueService.isSlugTaken(slug, this.editingId() ?? undefined)),
 			map((taken) => (taken ? { slugTaken: true } : null)),
-			catchError(() => of(null)),
+			catchError(() => of({ slugCheckFailed: true })),
 			take(1)
 		);
 	};
@@ -126,7 +130,7 @@ export class CreateSpecialIssueComponent {
 		this.initEditModeFromRoute();
 		this.setupSlugAutoGeneration();
 
-    this.form.controls.academicYear.valueChanges.subscribe(year => {
+    this.form.controls.academicYear.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(year => {
 
       if (!year) return;
 
@@ -199,7 +203,7 @@ export class CreateSpecialIssueComponent {
 		const titleControl = this.form.controls.title;
 		const slugControl = this.form.controls.slug;
 
-		titleControl.valueChanges.subscribe(title => {
+		titleControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(title => {
 			if (this.slugManuallyEdited()) return;
 			const generated = this.generateSlug(title);
 			slugControl.setValue(generated, { emitEvent: false });
@@ -217,9 +221,10 @@ export class CreateSpecialIssueComponent {
 
   private executeSave(): void {
 
-  if (this.form.invalid || this.isSubmitting()) return;
+  if (this.form.invalid || this.form.pending || this.isSubmitting()) return;
 
   this.isSubmitting.set(true);
+  this.saveError.set('');
 
 	const value = this.form.getRawValue();
 
@@ -248,12 +253,20 @@ export class CreateSpecialIssueComponent {
 
 	request$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
 		next: () => this.router.navigate(['/admin/all-special-issues']),
-		error: (err) => console.error('Failed to save special issue:', err),
+		error: (err) => {
+      if (err?.pdfReplaced && err.replacement?.pdfUrl) {
+        this.selectedPdfFile.set(null);
+        this.selectedPdfName.set(null);
+        this.form.controls.pdfUrl.setValue(err.replacement.pdfUrl);
+        this.pdfDisplayText.set(this.fileLabel(err.replacement.pdfUrl));
+      }
+      this.saveError.set(typeof err?.error?.error === 'string' ? err.error.error : typeof err?.error?.message === 'string' ? err.error.message : 'Unable to save the special issue. Check your connection and try again.');
+    },
 	});
 }
 
   submit(): void {
-  if (this.form.invalid || this.isSubmitting()) return;
+  if (this.form.invalid || this.form.pending || this.isSubmitting()) return;
 
   const isEdit = this.isEditMode();
   const status = this.form.controls.status.value;
@@ -293,7 +306,15 @@ export class CreateSpecialIssueComponent {
 	onPdfSelected(event: Event): void {
   const input = event.target as HTMLInputElement | null;
   const file = input?.files?.[0];
-  if (!file) return;
+  if (!file || this.isSubmitting()) return;
+  if (input) input.value = '';
+  this.pdfError.set('');
+  if (!/\.pdf$/i.test(file.name) || (file.type && file.type !== 'application/pdf')) {
+    this.pdfError.set('Choose a PDF file.'); return;
+  }
+  if (!file.size || file.size > 50 * 1024 * 1024) {
+    this.pdfError.set('Choose a non-empty PDF up to 50 MB.'); return;
+  }
 
 	this.selectedPdfName.set(file.name);
 	this.selectedPdfFile.set(file);
@@ -306,6 +327,8 @@ export class CreateSpecialIssueComponent {
 }
 
   removePdf(): void {
+  if (this.isSubmitting()) return;
+  this.pdfError.set('');
   this.pdfDisplayText.set(null);
 	this.selectedPdfName.set(null);
 	this.selectedPdfFile.set(null);
@@ -349,7 +372,7 @@ export class CreateSpecialIssueComponent {
 		const raw = String(url);
 		if (raw.startsWith('data:')) return 'Uploaded file';
 		const name = raw.split('/').pop() ?? raw;
-		return decodeURIComponent(name);
+		try { return decodeURIComponent(name); } catch { return name; }
 	}
 
 	private buildMediaFromUrl(url: string | null | undefined): Media | null {
