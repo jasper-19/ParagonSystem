@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../shared/components/page-loader/page-loader';
 import { Component, inject, OnInit, signal, AfterViewInit, ElementRef, HostListener, OnDestroy, ViewChild  } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
@@ -20,7 +21,7 @@ type SelectedApplicationPosition = {
 @Component({
   selector: 'admin-editorial-staff',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ViewMemberInfoModalComponent, ConfirmationModal],
+  imports: [PageLoaderComponent, CommonModule, ReactiveFormsModule, ViewMemberInfoModalComponent, ConfirmationModal],
   templateUrl: './staff-directory.html',
   styleUrl: './staff-directory.scss',
 })
@@ -170,6 +171,14 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
   readonly activeEditRoleIndex =
     signal(-1);
 
+  readonly initialLoading = signal(true);
+
+  private finishInitialLoad(): void {
+    if (!this.boardLoading() && !this.boardsLoading() && !this.staffLoading() && !this.collegesLoading()) {
+      this.initialLoading.set(false);
+    }
+  }
+
   ngOnInit(): void {
     this.loadActiveBoard();
     this.loadAllBoards();
@@ -255,6 +264,7 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       .pipe(
         finalize(() => {
           this.boardsLoading.set(false);
+          this.finishInitialLoad();
         })
       )
       .subscribe({
@@ -284,6 +294,7 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       .pipe(
         finalize(() => {
           this.boardLoading.set(false);
+          this.finishInitialLoad();
         })
       )
       .subscribe({
@@ -313,6 +324,7 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       .pipe(
         finalize(() => {
           this.staffLoading.set(false);
+          this.finishInitialLoad();
         })
       )
       .subscribe({
@@ -338,6 +350,7 @@ export class StaffDirectoryComponent implements OnInit, AfterViewInit, OnDestroy
       .pipe(
         finalize(() => {
           this.collegesLoading.set(false);
+          this.finishInitialLoad();
         })
       )
       .subscribe({

@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../../shared/components/page-loader/page-loader';
 import { ConfirmationService } from '../../../../../shared/components/confirmation-modal/confirmation.service';
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -16,7 +17,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-all-special-issues',
   standalone: true,
-  imports: [CommonModule, RouterModule, SpecialIssueViewModal],
+  imports: [PageLoaderComponent, CommonModule, RouterModule, SpecialIssueViewModal],
   templateUrl: './all-special-issues.html',
   styleUrl: '../../../../../shared/styles/admin-special-issues.scss',
 })

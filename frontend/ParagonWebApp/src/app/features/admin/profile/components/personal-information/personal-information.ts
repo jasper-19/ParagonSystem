@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../../shared/components/page-loader/page-loader';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -16,7 +17,7 @@ import { College } from '../../../../join/models/college.model';
 @Component({
   selector: 'app-personal-information',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PageLoaderComponent],
   templateUrl: './personal-information.html',
   styleUrl: './personal-information.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

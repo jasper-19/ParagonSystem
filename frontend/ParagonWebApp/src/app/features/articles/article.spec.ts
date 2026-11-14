@@ -52,16 +52,16 @@ describe('Article reading states', () => {
   it('removes the previous story while another article loads', async () => {
     feed.set(null);
     await fixture.whenStable();
-    expect(fixture.nativeElement.querySelector('app-article-skeleton')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-page-loader')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('h1')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('A reading example');
   });
 
-  it('offers retry and an archive link instead of an endless skeleton after a failed request', async () => {
+  it('offers retry and an archive link instead of an endless loader after a failed request', async () => {
     feed.set(null); error.set('The article could not be loaded. Check your connection and try again.');
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain('try again');
-    expect(fixture.nativeElement.querySelector('app-article-skeleton')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-page-loader')).toBeNull();
     fixture.nativeElement.querySelector('.article-error button').click();
     expect(load).toHaveBeenLastCalledWith('reading-example');
     expect(fixture.nativeElement.querySelector('.article-error a')?.getAttribute('href')).toBe('/top-stories');

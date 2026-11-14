@@ -1,9 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { PageLoaderComponent } from '../../shared/components/page-loader/page-loader';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { take, finalize } from 'rxjs/operators';
 import { ArticleService } from '../../core/services/article.service';
-import { LoaderService } from '../../shared/services/loader.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FeaturedSection } from './components/featured-section/featured-section';
 import { MostViewedSection } from './components/most-viewed-section/most-viewed-section';
 import { CategorySection } from './components/category-section/category-section';
@@ -14,6 +15,7 @@ import { WelcomeBanner } from './components/welcome-banner/welcomebanner';
   selector: 'app-home',
   standalone: true,
   imports: [
+    PageLoaderComponent,
     CommonModule,
     RouterModule,
     FeaturedSection,
@@ -27,20 +29,22 @@ import { WelcomeBanner } from './components/welcome-banner/welcomebanner';
 })
 export class Home implements OnInit {
 
-  private readonly loader = inject(LoaderService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly loading = signal(true);
   private readonly articleService = inject(ArticleService);
 
   readonly homepageFeed = this.articleService.homepageFeed;
 
   ngOnInit(): void {
 
-    this.loader.show();
+    this.loading.set(true);
 
     this.articleService
       .getHomepageFeed()
       .pipe(
         take(1),
-        finalize(() => this.loader.hide())
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false))
       )
       .subscribe({
         error: err => {

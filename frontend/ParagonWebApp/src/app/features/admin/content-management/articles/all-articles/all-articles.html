@@ -31,8 +31,8 @@
 
   <div class="articles-results" [attr.aria-busy]="loading()">
     @if (loading()) {
-      <div class="articles-state" role="status"><span class="article-spinner" aria-hidden="true"></span><p>Loading articles...</p></div>
-    } @else if (loadError()) {
+    <app-page-loader variant="admin" mode="block" label="Loading articles&#8230;" />
+  } @else if (loadError()) {
       <div class="articles-state" role="alert"><p class="article-error">{{ loadError() }}</p>
         <button type="button" (click)="retryLoad()" class="article-button article-button-primary">Try again</button>
       </div>

@@ -20,12 +20,7 @@
   </div>
 
   @if (loading()) {
-    <div class="space-y-3 p-5 sm:p-6 lg:p-8" role="status">
-      <span class="sr-only">Loading user accounts</span>
-      @for (item of [1, 2, 3]; track item) {
-        <div class="h-20 animate-pulse rounded-xl bg-slate-100 motion-reduce:animate-none"></div>
-      }
-    </div>
+    <app-page-loader variant="admin" mode="block" label="Loading user accounts&#8230;" />
   } @else if (loadError()) {
     <div class="m-5 rounded-xl border border-red-200 bg-red-50 p-4 sm:m-6 lg:m-8" role="alert">
       <p class="text-sm font-semibold text-red-900">{{ loadError() }}</p>

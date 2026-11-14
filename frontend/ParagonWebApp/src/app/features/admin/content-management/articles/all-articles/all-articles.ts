@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../../shared/components/page-loader/page-loader';
 import { Component, computed, effect, inject, signal, untracked, DestroyRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
@@ -29,7 +30,7 @@ type ArticleSort = 'latest' | 'oldest' | 'mostViewed';
 @Component({
   selector: 'app-all-articles',
   standalone: true,
-  imports: [CommonModule, RouterModule, ArticleViewModal, FormsModule],
+  imports: [PageLoaderComponent, CommonModule, RouterModule, ArticleViewModal, FormsModule],
   templateUrl: './all-articles.html',
   styleUrl: './all-articles.scss',
 })

@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../shared/components/page-loader/page-loader';
 import { Component, inject, DestroyRef, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
@@ -17,7 +18,7 @@ import { SidebarService } from "../../../core/services/sidebar.service";
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule,
+  imports: [PageLoaderComponent, CommonModule,
     RouterLink,
     RouterLinkActive,
     ArticlesSummary,

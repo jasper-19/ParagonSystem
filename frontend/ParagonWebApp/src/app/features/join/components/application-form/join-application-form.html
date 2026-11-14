@@ -23,7 +23,7 @@
         </div></fieldset>
         <fieldset><legend>Academic information</legend><p class="join-fieldset-help">Your college and program</p>
           <div *ngIf="collegeError()" class="join-form-notice" role="alert"><p>We couldn’t load the colleges and programs.</p><button type="button" class="join-text-link" (click)="retryColleges()">Try again</button></div>
-          <p *ngIf="collegesLoading()" class="join-field-help" role="status">Loading colleges and programs…</p>
+          <app-page-loader *ngIf="collegesLoading()" variant="public" mode="inline" label="Loading colleges and programs..." skeleton="form" />
           <div class="join-field-grid"><div class="join-field"><label for="join-college">College <span class="join-required" aria-hidden="true">*</span></label>
 <select id="join-college" formControlName="collegeId" [attr.aria-invalid]="form.controls.collegeId.touched && form.controls.collegeId.invalid" aria-describedby="join-college-error" aria-required="true"><option value="">Select college</option><option *ngFor="let college of colleges()" [value]="college.id">{{ college.name }}</option></select>
 

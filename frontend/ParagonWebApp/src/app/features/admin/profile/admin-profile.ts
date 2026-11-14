@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../shared/components/page-loader/page-loader';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -21,7 +22,7 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-admin-profile',
   standalone: true,
-  imports: [
+  imports: [PageLoaderComponent,
     CommonModule,
     ProfileOverview,
     ProfileSecuritySettings,

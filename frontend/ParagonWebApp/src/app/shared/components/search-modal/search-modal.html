@@ -32,7 +32,7 @@
             [class.is-selected]="selectedCategory === category" [attr.aria-pressed]="selectedCategory === category"
             (click)="selectCategory(category)">{{ category }}</button>
         </div>
-        <p *ngIf="isFeedLoading" class="browse-status" role="status">Loading categories…</p>
+        <app-page-loader *ngIf="isFeedLoading" variant="public" mode="inline" label="Loading categories…" />
         <div *ngIf="feedError" class="browse-status" role="status">
           <p>Browse is unavailable. You can still search above.</p>
           <button type="button" class="text-button" (click)="loadBrowseFeed()">Try again</button>
@@ -49,10 +49,7 @@
           <span *ngIf="!hasSearched && recentArticles().length" class="result-count">Latest {{ recentArticles().length }}</span>
         </div>
 
-        <div *ngIf="isLoading || (!hasSearched && isFeedLoading)" class="search-loading">
-          <p role="status">{{ hasSearched ? 'Searching articles…' : 'Loading recent articles…' }}</p>
-          <div *ngFor="let item of [1, 2, 3]" class="loading-row" aria-hidden="true"><span></span><span></span><span></span></div>
-        </div>
+        <app-page-loader *ngIf="isLoading || (!hasSearched && isFeedLoading)" variant="public" [label]="hasSearched ? 'Searching articles…' : 'Loading recent articles…'" />
 
         <div *ngIf="!isLoading && searchError" class="search-message" role="alert">
           <h4>Search is unavailable</h4>

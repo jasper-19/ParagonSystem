@@ -73,19 +73,7 @@
       </button>
     </section>
   } @else if (profileLoading()) {
-    <app-profile-overview [staff]="null" [loading]="true"></app-profile-overview>
-    <section
-      class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:p-8"
-      role="status"
-    >
-      <span class="sr-only">Loading personal information</span>
-      <div class="h-6 w-48 animate-pulse rounded bg-slate-200 motion-reduce:animate-none"></div>
-      <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-hidden="true">
-        @for (item of [1, 2, 3, 4, 5, 6]; track item) {
-          <div class="h-24 animate-pulse rounded-xl bg-slate-100 motion-reduce:animate-none"></div>
-        }
-      </div>
-    </section>
+    <app-page-loader variant="admin" mode="block" label="Loading profile&#8230;" />
   } @else if (!profile()?.staff) {
     <section
       class="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:p-6"

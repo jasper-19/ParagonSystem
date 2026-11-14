@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../shared/components/page-loader/page-loader';
 import { FormsModule } from '@angular/forms';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -20,7 +21,7 @@ type SelectedApplicationPosition = {
 @Component({
   selector: 'admin-editorial-applications',
   standalone: true,
-  imports: [CommonModule, FormsModule, ApplicationReviewModal, ConfirmationModal],
+  imports: [PageLoaderComponent, CommonModule, FormsModule, ApplicationReviewModal, ConfirmationModal],
   templateUrl: './applications.html',
   styleUrl: './applications.scss',
 })
@@ -50,6 +51,9 @@ export class ApplicationsComponent implements OnInit {
   private readonly searchChanges = new Subject<string>();
 
   applications$ = this.applicationService.applications$;
+  readonly applicationsLoading = this.applicationService.loading;
+  readonly applicationsLoaded = this.applicationService.loaded;
+  readonly applicationsLoadError = this.applicationService.loadError;
 
   readonly totalResults = this.applicationService.totalApplications;
   readonly totalPages = this.applicationService.totalPagesCount;
@@ -122,7 +126,7 @@ export class ApplicationsComponent implements OnInit {
       });
   }
 
-  private loadApplications(): void {
+  loadApplications(): void {
     this.applicationService.refresh(
       this.activePage(),
       this.activePageSize(),

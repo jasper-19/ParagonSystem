@@ -1,9 +1,9 @@
+import { PageLoaderComponent } from '../../shared/components/page-loader/page-loader';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { SpecialIssue, SpecialIssueType } from '../../models/special-issue.model';
 import { SpecialIssueService } from '../../core/services/special-issue.service';
 import { RouterModule } from '@angular/router';
-import { LoaderService } from '../../shared/services/loader.service';
 import { SocketService } from '../../core/services/socket.service';
 import { EMPTY, Subject, catchError, switchMap, takeUntil, tap } from 'rxjs';
 
@@ -15,7 +15,7 @@ interface IssueTab {
 @Component({
   selector: 'app-special-issues',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PageLoaderComponent],
   templateUrl: './special-issues.html',
   styleUrl: './special-issues.scss',
 })
@@ -24,7 +24,6 @@ export class SpecialIssues implements OnInit, OnDestroy {
   private readonly destroyed = new Subject<void>();
   private stopUpdates?: () => void;
   private stopConnect?: () => void;
-  private loaderVisible = false;
 
   issues: SpecialIssue[] = [];
   filtered: SpecialIssue[] = [];
@@ -49,7 +48,6 @@ export class SpecialIssues implements OnInit, OnDestroy {
 
   constructor(
     private issuesService: SpecialIssueService,
-    private loader: LoaderService,
     private cdr: ChangeDetectorRef,
     private socket: SocketService,
   ) {}
@@ -78,20 +76,12 @@ export class SpecialIssues implements OnInit, OnDestroy {
   loadIssues(): void {
     this.loading = true;
     this.loadError = '';
-    this.loader.show();
-    this.loaderVisible = true;
     this.reloads.next();
   }
 
   private finishLoading(): void {
     this.loading = false;
-    this.hideLoader();
     this.cdr.markForCheck();
-  }
-
-  private hideLoader(): void {
-    if (this.loaderVisible) this.loader.hide();
-    this.loaderVisible = false;
   }
 
   ngOnDestroy(): void {
@@ -100,7 +90,6 @@ export class SpecialIssues implements OnInit, OnDestroy {
     this.destroyed.next();
     this.destroyed.complete();
     this.reloads.complete();
-    this.hideLoader();
   }
 
   onCoverError(issue: SpecialIssue): void {

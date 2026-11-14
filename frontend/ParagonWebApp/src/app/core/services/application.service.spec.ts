@@ -82,4 +82,33 @@ describe('Application query filter persistence', () => {
     expect(latest.request.params.has('search')).toBe(false);
     finish(latest);
   });
+
+  it('keeps loading active until the final queued refresh settles', () => {
+    expect(service.loaded()).toBe(false);
+    service.refresh();
+    const first = request();
+    expect(service.loading()).toBe(true);
+    service.refresh();
+    finish(first);
+    const queued = request();
+    expect(service.loading()).toBe(true);
+    expect(service.loaded()).toBe(true);
+    finish(queued);
+    expect(service.loading()).toBe(false);
+    expect(service.loadError()).toBeNull();
+  });
+
+  it('settles a failed initial request and recovers through the existing refresh action', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    service.refresh();
+    request().flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(service.loading()).toBe(false);
+    expect(service.loaded()).toBe(false);
+    expect(service.loadError()).toContain('Try again');
+    service.refresh();
+    expect(service.loadError()).toBeNull();
+    finish(request());
+    expect(service.loaded()).toBe(true);
+    expect(service.loading()).toBe(false);
+  });
 });

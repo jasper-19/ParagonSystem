@@ -5,7 +5,6 @@ import { of, Subject } from 'rxjs';
 import { vi } from 'vitest';
 import { SpecialIssues } from './special-issues';
 import { SpecialIssueService } from '../../core/services/special-issue.service';
-import { LoaderService } from '../../shared/services/loader.service';
 import { SpecialIssue } from '../../models/special-issue.model';
 import { SocketService } from '../../core/services/socket.service';
 
@@ -20,7 +19,6 @@ describe('Special Issues public grouping', () => {
       issue('two', 'Newsletter', '2025-2026', '2026-01-01'),
       issue('three', 'Tabloid', '2024-2025', '2025-01-01')];
     const component = new SpecialIssues({ refresh: () => of(issues), getAll: () => issues } as unknown as SpecialIssueService,
-      { show: () => {}, hide: () => {} } as LoaderService,
       { markForCheck: vi.fn() } as unknown as ChangeDetectorRef,
       quietSocket as unknown as SocketService);
     component.activeType = 'Newsletter';
@@ -40,18 +38,14 @@ describe('Special Issues library interactions', () => {
   let items: SpecialIssue[];
   let request: Subject<SpecialIssue[]>;
   const refresh = vi.fn();
-  const show = vi.fn();
-  const hide = vi.fn();
 
   beforeEach(() => {
     items = [];
     request = new Subject<SpecialIssue[]>();
     refresh.mockReset().mockImplementation(() => request);
-    show.mockClear(); hide.mockClear();
     TestBed.configureTestingModule({ imports: [SpecialIssues], providers: [
       provideRouter([]),
       { provide: SpecialIssueService, useValue: { refresh, getAll: () => items } },
-      { provide: LoaderService, useValue: { show, hide } },
       { provide: SocketService, useValue: quietSocket },
     ] });
   });
@@ -118,7 +112,7 @@ describe('Special Issues library interactions', () => {
     expect(fixture.componentInstance.activeType).toBe('Newsletter');
     expect(fixture.componentInstance.latestIssue?.id).toBe('retry');
     expect(fixture.componentInstance.loading).toBe(false);
-    expect(hide).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.querySelector('app-page-loader')).toBeNull();
     fixture.destroy();
   });
 });

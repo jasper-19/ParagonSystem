@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../shared/components/page-loader/page-loader';
 import {
   Component,
   HostListener,
@@ -23,7 +24,7 @@ import {
 @Component({
   selector: 'app-activity-logs',
   standalone: true,
-  imports: [
+  imports: [PageLoaderComponent,
     CommonModule,
     RouterModule,
     FormsModule,
@@ -55,7 +56,6 @@ export class ActivityLogsComponent implements OnInit {
   readonly rangeStart = this.store.rangeStart;
   readonly rangeEnd = this.store.rangeEnd;
 
-  readonly skeletonRows = Array.from({ length: 8 }, (_, index) => index);
 
   ngOnInit(): void {
     this.store.initialize();

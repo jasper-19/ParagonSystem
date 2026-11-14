@@ -1,6 +1,6 @@
 <main id="main-content" class="join-page">
   @if (loading()) {
-    <div class="join-loading join-shell" role="status"><h1>Join Paragon</h1><p>Loading recruitment opportunities…</p></div>
+    <div class="join-shell"><app-page-loader variant="public" label="Loading recruitment opportunities..." skeleton="form" /></div>
   } @else {
     <app-join-hero [applicationsOpen]="applicationsOpen()" />
     <app-join-why />

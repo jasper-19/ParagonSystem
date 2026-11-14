@@ -1,213 +1,38 @@
-<div
-  *ngIf="isOpen"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="media-picker-title"
-  class="fixed inset-0 z-100 flex items-end justify-center
-         bg-slate-900/60 backdrop-blur-sm
-         sm:items-center sm:p-4"
-  (mousedown)="onBackdropClick($event)"
->
-  <div
-  #dialogContainer
-    class="flex h-full max-h-full w-full flex-col overflow-hidden bg-white
-           sm:h-[92vh] sm:max-h-255 sm:max-w-7xl sm:rounded-3xl sm:shadow-2xl"
-           tabindex="-1"
-           (keydown)="onDialogKeydown($event)"
-  >
-
-    <!-- Header -->
-    <div class="border-b border-slate-200 px-6 py-4">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h2
-            id="media-picker-title"
-            class="text-lg font-semibold text-slate-900 sm:text-xl"
-          >
-            {{ title }}
-          </h2>
-          <p class="mt-1 text-sm text-slate-500">
-            Browse your media library and select a file to use.
-          </p>
-        </div>
-
-          <button
-            type="button"
-            aria-label="Close media picker"
-            (click)="onClose()"
-            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
-                  border border-slate-200 text-slate-500 transition
-                  hover:bg-red-700 hover:text-white
-                  focus-visible:outline-none focus-visible:ring-2
-                  focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+@if (isOpen) {
+<div class="mp-backdrop" (mousedown)="onBackdropClick($event)">
+  <section #dialogContainer class="mp-dialog" role="dialog" aria-modal="true" [attr.aria-labelledby]="dialogTitleId" tabindex="-1" (keydown)="onDialogKeydown($event)">
+    <header class="mp-header">
+      <div><p class="mp-eyebrow">Media library</p><h2 [id]="dialogTitleId">{{ title }}</h2><p>Choose an image for your publication, or upload a new one.</p></div>
+      <button type="button" class="mp-icon-button" aria-label="Close media picker" (click)="onClose()"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </header>
+    <div class="mp-toolbar">
+      <label class="mp-search"><span>Search library</span><div><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input #searchInput type="search" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)" placeholder="Search images by name" /></div></label>
+      <app-media-uploader (filesSelected)="onUploadFiles($event)" />
     </div>
-
-    <!-- Toolbar -->
-    <div class="border-b border-slate-200 px-4 py-4 sm:px-6">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-        <div class="relative w-full sm:max-w-md">
-          <svg
-            aria-hidden="true"
-            class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4
-                  -translate-y-1/2 text-slate-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="m21 21-4.35-4.35m2.1-5.4a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"
-            />
-          </svg>
-
-          <input
-            #searchInput
-            type="search"
-            [ngModel]="searchTerm()"
-            (ngModelChange)="onSearchChange($event)"
-            placeholder="Search images..."
-            aria-label="Search images"
-            class="h-11 w-full rounded-xl border border-slate-300 bg-white
-                  pl-10 pr-4 text-sm text-slate-700 outline-none transition
-                  placeholder:text-slate-400
-                  focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-          />
-        </div>
-
-        <div class="w-full sm:w-auto">
-          <app-media-uploader
-            (filesSelected)="onUploadFiles($event)"
-          ></app-media-uploader>
-        </div>
-
+    <div class="mp-content">
+      <div class="mp-library" [attr.aria-busy]="isLoading()">
+        <div class="mp-section-heading"><h3>Images</h3><span>{{ isLoading() ? 'Loading images…' : mediaList().length + ' available' }}</span></div>
+        @if (isLoading()) {
+          <app-page-loader variant="admin" label="Loading images…" />
+        } @else if (loadError()) {
+          <div class="mp-empty" role="alert"><h3>Unable to load the library</h3><p>{{ loadError() }}</p><button type="button" class="mp-button" (click)="loadMedia()">Try again</button></div>
+        } @else if (!mediaList().length) {
+          <div class="mp-empty"><h3>{{ searchTerm() ? 'No matching images' : 'Your library is empty' }}</h3><p>{{ searchTerm() ? 'Try another file name or clear your search.' : 'Upload an image to get started.' }}</p>@if (searchTerm()) { <button type="button" class="mp-button" (click)="onSearchChange('')">Clear search</button> }</div>
+        } @else {
+          <app-media-grid [mediaList]="mediaList()" [selectedIds]="selectedMedia() ? [selectedMedia()!.id] : []" (toggleSelection)="onToggleSelection($event)" (openDetails)="onOpenDetails($event)" />
+        }
+        @if (selectedMedia()) { <details class="mp-mobile-details"><summary>Selected image details</summary><div><ng-container *ngTemplateOutlet="imageDetails" /></div></details> }
       </div>
+      <aside class="mp-details" aria-label="Selected image details"><h3>Image details</h3>@if (selectedMedia()) { <ng-container *ngTemplateOutlet="imageDetails" /> } @else { <div class="mp-details-empty"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1"/><path d="m3 17 6-6 4 4 3-3 5 5"/></svg><h4>No image selected</h4><p>Select an image to preview it and check its details.</p></div> }</aside>
     </div>
-
-    <!-- Content -->
-    <div class="flex min-h-0 flex-1 overflow-hidden">
-      <!-- Grid -->
-      <div class="min-h-0 flex-1 overflow-y-auto p-6">
-        <div
-          *ngIf="isLoading()"
-          class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-        >
-          <div
-            *ngFor="let _ of [].constructor(10)"
-            class="animate-pulse"
-          >
-            <div class="aspect-square rounded-2xl bg-slate-200"></div>
-
-            <div class="mt-3 space-y-2">
-              <div class="h-3 w-3/4 rounded bg-slate-200"></div>
-              <div class="h-3 w-1/2 rounded bg-slate-100"></div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          *ngIf="!isLoading() && !mediaList().length"
-          class="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-center"
-        >
-          <h3 class="text-base font-semibold text-slate-800">No media found</h3>
-          <p class="mt-2 max-w-md text-sm text-slate-500">
-            Try adjusting the search or upload a new file.
-          </p>
-        </div>
-
-        <app-media-grid
-          *ngIf="!isLoading() && mediaList().length"
-          [mediaList]="mediaList()"
-          [selectedIds]="selectedMedia() ? [selectedMedia()!.id] : []"
-          (toggleSelection)="onToggleSelection($event)"
-          (openDetails)="onOpenDetails($event)"
-        ></app-media-grid>
-      </div>
-
-      <!-- Side panel -->
-        <aside
-          class="
-            hidden
-            xl:block
-            w-90
-            shrink-0
-            border-l
-            border-slate-200
-            bg-white
-          "
-        >
-        <div class="h-full overflow-y-auto p-6">
-          <app-media-details-panel
-            [media]="selectedMedia()"
-            [isSaving]="false"
-          ></app-media-details-panel>
-        </div>
-          <div
-            *ngIf="selectedMedia()"
-            class="
-              xl:hidden
-              border-t
-              border-slate-200
-              bg-white
-              max-h-[45vh]
-              overflow-y-auto
-            "
-          >
-            <div class="p-4">
-              <app-media-details-panel
-                [media]="selectedMedia()"
-                [isSaving]="false"
-              ></app-media-details-panel>
-            </div>
-          </div>
-      </aside>
-    </div>
-
-    <!-- Footer -->
-    <div class="border-t border-slate-200 px-6 py-4">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="text-sm text-slate-500">
-          <span *ngIf="selectedMedia() as media; else noSelectionText">
-            Selected:
-            <span class="font-medium text-slate-700">
-              {{ media.fileName }}
-            </span>
-          </span>
-
-          <ng-template #noSelectionText>
-            No media selected
-          </ng-template>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <button
-            type="button"
-            (click)="onClose()"
-            class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            (click)="onConfirmSelection()"
-            [disabled]="!selectedMedia() || isSubmitting()"
-            class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-          >
-            Select Media
-          </button>
-        </div>
-      </div>
-    </div>
-
-  </div>
+    <footer class="mp-footer">
+      <div class="mp-selection" aria-live="polite">@if (selectedMedia(); as media) { <span>1 image selected</span><strong [title]="media.fileName">{{ media.fileName }}</strong> } @else { <span>No image selected</span><p>Choose one image to continue.</p> }</div>
+      <div class="mp-actions"><button type="button" class="mp-button" (click)="onClose()">Cancel</button><button type="button" class="mp-button mp-primary" (click)="onConfirmSelection()" [disabled]="!selectedMedia() || isSubmitting()">Use selected image</button></div>
+    </footer>
+  </section>
 </div>
-
+}
+<ng-template #imageDetails>
+  <app-media-details-panel [media]="selectedMedia()" [isSaving]="false" [editable]="false" />
+  @if (selectedMedia(); as media) { <dl class="mp-metadata"><div><dt>Alt text</dt><dd>{{ media.altText || 'No alt text added' }}</dd></div><div><dt>Caption</dt><dd>{{ media.caption || 'No caption added' }}</dd></div></dl> }
+</ng-template>

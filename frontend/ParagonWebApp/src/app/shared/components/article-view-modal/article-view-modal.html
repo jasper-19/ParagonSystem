@@ -21,7 +21,7 @@
         </button>
       </header>
       @if (loading) {
-        <div class="article-modal-state" role="status" aria-live="polite"><span class="article-modal-spinner" aria-hidden="true"></span><p>Loading article details...</p></div>
+        <app-page-loader variant="admin" label="Loading article details…" />
       } @else if (errorMessage) {
         <div class="article-modal-state" role="alert"><p id="article-modal-error-message">{{ errorMessage }}</p></div>
       } @else if (article; as a) {

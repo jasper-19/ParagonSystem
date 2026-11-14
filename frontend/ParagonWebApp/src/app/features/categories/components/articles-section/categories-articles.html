@@ -12,7 +12,7 @@
       </a>
     </article>
   </div>
-  <p *ngIf="loading" class="results-status" role="status">{{ initialLoading ? 'Loading articles…' : 'Loading more articles…' }}</p>
+  <app-page-loader *ngIf="loading" variant="public" [mode]="initialLoading ? 'block' : 'inline'" [label]="initialLoading ? 'Loading articles...' : 'Loading more articles...'" skeleton="stories" />
   <div *ngIf="!loading && errorMessage" class="results-error" role="alert"><p>{{ errorMessage }}</p><button type="button" (click)="retry.emit()">Try again</button></div>
   <div *ngIf="!initialLoading && !loading && !errorMessage && articles.length === 0" class="results-empty"><h3>No articles found</h3><p>Try changing your search or removing a filter to discover more articles.</p></div>
   <div *ngIf="!loading && !errorMessage && articles.length > 0 && hasMore" class="load-more"><button type="button" (click)="loadMore.emit()">Load more articles <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>

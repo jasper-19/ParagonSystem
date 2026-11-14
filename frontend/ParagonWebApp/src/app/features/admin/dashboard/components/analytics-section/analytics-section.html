@@ -31,7 +31,7 @@
   <div class="activity-chart" [attr.aria-busy]="loading">
     <canvas #chartCanvas role="img" aria-label="Article and application activity trend"></canvas>
     @if (loading) {
-      <div class="chart-state" role="status"><span class="loading-mark" aria-hidden="true"></span>Updating analytics…</div>
+      <div class="chart-state"><app-page-loader variant="admin" mode="inline" label="Updating analytics&#8230;" /></div>
     } @else if (trendData.labels.length === 0) {
       <div class="chart-state"><p>No activity recorded for this period.</p></div>
     }

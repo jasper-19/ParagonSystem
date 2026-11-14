@@ -5,7 +5,6 @@ import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { SpecialIssues } from './special-issues';
 import { SocketService } from '../../core/services/socket.service';
-import { LoaderService } from '../../shared/services/loader.service';
 import { API_ENDPOINTS } from '../../core/config/api.config';
 
 describe('Public special issue live updates', () => {
@@ -13,15 +12,13 @@ describe('Public special issue live updates', () => {
   const newIssue = { ...oldIssue, id:'new', title:'Newly published issue', slug:'new', academicYear:'2026-2027', publishedAt:'2026-11-14' };
   let callbacks: Map<string, () => void>;
   let http: HttpTestingController;
-  const show = vi.fn(), hide = vi.fn();
   const request = () => http.expectOne(req => req.url === API_ENDPOINTS.specialIssues);
 
   beforeEach(() => {
-    callbacks = new Map(); show.mockClear(); hide.mockClear();
+    callbacks = new Map();
     const on = (event: string, callback: () => void) => { callbacks.set(event,callback); return () => { callbacks.delete(event); }; };
     TestBed.configureTestingModule({ imports:[SpecialIssues], providers:[provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
       {provide: SocketService, useValue:{ onSpecialIssuesUpdated:(callback:()=>void) => on('special-issues:updated',callback), on }},
-      {provide: LoaderService, useValue:{show,hide}},
     ]});
     http = TestBed.inject(HttpTestingController);
   });
@@ -38,7 +35,7 @@ describe('Public special issue live updates', () => {
     expect(fixture.componentInstance.activeType).toBe('Newsletter');
     expect(fixture.componentInstance.totalIssues).toBe(2);
     expect(fixture.nativeElement.textContent).not.toContain('Private draft');
-    expect(show).toHaveBeenCalledTimes(1); expect(hide).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelector('app-page-loader')).toBeNull();
     fixture.destroy();
   });
 
@@ -52,7 +49,7 @@ describe('Public special issue live updates', () => {
     expect(reconnect.cancelled).toBe(true);
     request().flush([newIssue]); fixture.detectChanges();
     expect(fixture.componentInstance.latestIssue?.id).toBe('new');
-    expect(hide).toHaveBeenCalledTimes(1);
+    expect(fixture.componentInstance.loading).toBe(false);
     const callback = callbacks.get('special-issues:updated')!;
     fixture.destroy();
     expect(callbacks.size).toBe(0);

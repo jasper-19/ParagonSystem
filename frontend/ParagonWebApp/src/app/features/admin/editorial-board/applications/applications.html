@@ -395,10 +395,24 @@
 
     </div>
 
+    @if (applicationsLoadError() && applicationsLoaded()) {
+      <div role="alert" class="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <p>{{ applicationsLoadError() }} Previously loaded applications are still shown.</p>
+        <button type="button" class="mt-2 min-h-11 px-3 font-semibold underline" (click)="loadApplications()">Try again</button>
+      </div>
+    }
+
     <!-- Table Section -->
     <div class="applications-results bg-white rounded-xl shadow border border-gray-100">
 
-      @if (applications.length === 0) {
+      @if (applicationsLoading() && !applicationsLoaded()) {
+        <app-page-loader variant="admin" mode="block" label="Loading applications&#8230;" />
+      } @else if (applicationsLoadError() && !applicationsLoaded()) {
+        <div role="alert" class="p-6 text-sm text-red-800">
+          <p>{{ applicationsLoadError() }}</p>
+          <button type="button" class="mt-3 min-h-11 rounded border border-red-300 bg-white px-4 font-semibold" (click)="loadApplications()">Try again</button>
+        </div>
+      } @else if (applications.length === 0) {
 
         <!-- Empty State -->
         <div class="px-4 sm:px-6 md:px-8 py-12 sm:py-16 text-center">

@@ -23,6 +23,9 @@
       </div>
     }
 
+  @if (!facade.dashboardFeed() && !facade.loadError()) {
+    <app-page-loader variant="admin" mode="block" label="Loading dashboard&#8230;" />
+  } @else {
       <div
         class="dashboard-summaries"
       >
@@ -68,6 +71,7 @@
     [activities]="facade.activityFeed()"
   />
 
+  }
 </section>
 
   <nav

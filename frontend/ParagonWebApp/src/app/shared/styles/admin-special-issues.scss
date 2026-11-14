@@ -96,7 +96,10 @@ td .si-actions { flex-wrap:nowrap; }
 .si-required-note { padding:.375rem .25rem; }
 .si-progress progress { display:block; width:100%; height:8px; margin-block:.75rem; accent-color:#f4b400; }
 .si-progress p { font-size:.75rem; color:var(--si-muted); }
-.si-cover { max-width:25rem; }
+.si-cover { width:100%; min-width:0; }
+:host ::ng-deep .si-cover app-cover-image-selector { display:block; width:100%; }
+:host ::ng-deep .si-cover .si-cover-preview { height:clamp(18rem,32vw,26rem); }
+:host ::ng-deep .si-cover .si-cover-preview img { object-fit:contain; }
 .si-pdf-section { margin-top:1.75rem; padding-top:1.5rem; border-top:1px solid var(--si-rule); }
 .si-pdf-section h3 { font-size:.875rem; font-weight:600; }
 .si-selected-file { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-top:1rem; padding:1rem; border:1px solid var(--si-rule); border-radius:4px; background:#fafbfc; }

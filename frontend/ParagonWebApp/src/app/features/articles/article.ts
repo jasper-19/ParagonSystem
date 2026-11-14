@@ -13,7 +13,7 @@ import { ArticleMeta } from './components/meta/meta';
 import { Related } from './components/related/related';
 import { OtherStories } from './components/other-stories/other-stories';
 import { StaffApplication } from './components/staff-application/staff-application';
-import { ArticleSkeleton } from './components/skeleton/article-skeleton';
+import { PageLoaderComponent } from '../../shared/components/page-loader/page-loader';
 import { imageVariant } from '../../shared/utils/image-variant.util';
 
 @Component({
@@ -27,7 +27,7 @@ import { imageVariant } from '../../shared/utils/image-variant.util';
     Related,
     OtherStories,
     StaffApplication,
-    ArticleSkeleton,
+    PageLoaderComponent,
   ],
   templateUrl: './article.html',
   styleUrl: './article.scss',

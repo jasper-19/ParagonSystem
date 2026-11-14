@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../shared/components/page-loader/page-loader';
 
 import { CommonModule } from "@angular/common";
 import {
@@ -22,7 +23,7 @@ import { PdfRenderQueue } from "./pdf-render-queue";
 @Component({
   selector: 'app-special-issues-reader',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PageLoaderComponent],
   templateUrl: './special-issues-reader.html',
   styleUrl: './special-issues-reader.scss',
 })

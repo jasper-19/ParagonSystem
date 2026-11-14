@@ -1,24 +1,6 @@
 @if (loading) {
-  <section
-    class="flex flex-col gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:p-6 lg:p-8"
-    role="status"
-    aria-label="Loading profile overview"
-  >
-    <div
-      class="h-24 w-24 shrink-0 animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none sm:h-28 sm:w-28"
-      aria-hidden="true"
-    ></div>
-    <div class="w-full min-w-0" aria-hidden="true">
-      <div class="h-7 w-2/3 max-w-sm animate-pulse rounded bg-slate-200 motion-reduce:animate-none"></div>
-      <div class="mt-3 h-4 w-1/2 max-w-xs animate-pulse rounded bg-slate-100 motion-reduce:animate-none"></div>
-      <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        @for (item of [1, 2, 3]; track item) {
-          <div class="h-14 animate-pulse rounded-xl bg-slate-100 motion-reduce:animate-none"></div>
-        }
-      </div>
-    </div>
-  </section>
-} @else if (staff) {
+    <app-page-loader variant="admin" mode="block" label="Loading profile&#8230;" />
+  } @else if (staff) {
   <section
     class="profile-overview relative grid grid-cols-1 gap-6 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-[auto_minmax(0,1fr)] sm:p-6 lg:gap-8 lg:p-8"
     aria-labelledby="profile-overview-name"

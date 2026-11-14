@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../shared/components/page-loader/page-loader';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -18,7 +19,7 @@ type EditorialSectionIcon =
 @Component({
   selector: 'admin-editorial-board-preview',
   standalone: true,
-  imports: [
+  imports: [PageLoaderComponent,
     CommonModule,
     RouterModule,
   ],

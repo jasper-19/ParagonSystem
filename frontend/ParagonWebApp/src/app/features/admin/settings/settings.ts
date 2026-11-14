@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../shared/components/page-loader/page-loader';
 import {
   ChangeDetectionStrategy,
   AfterViewInit,
@@ -37,7 +38,7 @@ interface SettingsTabDefinition {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [
+  imports: [PageLoaderComponent,
     CommonModule,
     GeneralSettingsComponent,
     UsersSettingsComponent,

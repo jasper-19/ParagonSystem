@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../shared/components/page-loader/page-loader';
 import { Component, inject, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -24,7 +25,7 @@ import { GlobalSettingsService } from '../../core/services/global-settings.servi
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [
+  imports: [PageLoaderComponent,
     RouterModule,
     CommonModule,
     RouterOutlet,

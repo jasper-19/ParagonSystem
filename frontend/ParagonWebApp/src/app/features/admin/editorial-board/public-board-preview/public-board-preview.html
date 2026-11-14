@@ -25,16 +25,7 @@
   </header>
 
   @if (loading()) {
-    <div class="preview-loading" role="status" aria-busy="true" aria-label="Loading editorial board preview">
-      <span class="sr-only">Loading editorial board preview…</span>
-      <div class="preview-skeleton preview-skeleton-summary" aria-hidden="true"></div>
-      @for (item of [1, 2, 3]; track item) {
-        <div class="preview-skeleton-row" aria-hidden="true">
-          <div class="preview-skeleton preview-skeleton-label"></div>
-          <div class="preview-skeleton preview-skeleton-members"></div>
-        </div>
-      }
-    </div>
+    <app-page-loader variant="admin" mode="block" label="Loading editorial board preview&#8230;" />
   }
 
   @if (!loading() && loadError()) {

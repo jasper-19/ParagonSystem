@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../shared/components/page-loader/page-loader';
 import {
   Component,
   DestroyRef,
@@ -29,7 +30,7 @@ import {
 @Component({
   selector: 'app-media-library',
   standalone: true,
-  imports: [
+  imports: [PageLoaderComponent,
     CommonModule,
     RouterModule,
     FormsModule,

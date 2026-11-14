@@ -7,6 +7,9 @@
       @if (progress.phase === 'processing') { <p>Keep this page open. Processing time depends on the document size and content.</p> }
     </div>
   }
+  @if (initialLoading()) {
+    <app-page-loader variant="admin" mode="block" label="Loading special issue&#8230;" />
+  } @else {
   <form [formGroup]="form" (ngSubmit)="submit()"><fieldset class="si-editor-layout" [disabled]="isSubmitting()">
     <div class="si-editor-main">
       <section class="si-panel" aria-labelledby="issue-details-heading"><header class="si-panel-heading"><h2 id="issue-details-heading">Issue details</h2><p>The title and description shown in the publication library.</p></header><div class="si-panel-body">
@@ -17,7 +20,7 @@
         <label class="si-field" for="issue-description"><span>Description <span class="si-optional">Optional</span></span><textarea id="issue-description" rows="5" formControlName="description" placeholder="Describe this publication" aria-describedby="issue-description-help"></textarea></label><p id="issue-description-help" class="si-help">Shown on special issues pages.</p>
       </div></section>
       <section class="si-panel" aria-labelledby="issue-files-heading"><header class="si-panel-heading"><h2 id="issue-files-heading">Publication files</h2><p>Select the cover and PDF readers will see.</p></header><div class="si-panel-body">
-        <div class="si-cover"><app-cover-image-selector label="Cover image" [labelClass]="'si-cover-label'" [selectedMedia]="selectedCoverMedia()" [helperText]="'Upload an image or choose one from the media library.'" [required]="true" [aspectClass]="'aspect-[3/4]'" [showFileInfo]="false" (mediaChange)="onCoverMediaChange($event)" /></div>
+        <div class="si-cover"><app-cover-image-selector label="Cover image" [labelClass]="'si-cover-label'" [selectedMedia]="selectedCoverMedia()" [helperText]="'Upload an image or choose one from the media library.'" [required]="true" [aspectClass]="'si-cover-preview'" [showFileInfo]="false" (mediaChange)="onCoverMediaChange($event)" /></div>
         <div class="si-pdf-section"><h3>Publication PDF <span class="si-required">*</span></h3><p class="si-help" id="issue-pdf-help">Choose a PDF up to 50 MB. The file is processed when you save the issue.</p>
           @if (pdfError()) { <p role="alert" class="si-field-error" id="issue-pdf-error">{{ pdfError() }}</p> }
           @if (pdfDisplayText()) { <div class="si-selected-file"><div><span class="si-help">{{ selectedPdfFile() ? 'Selected for upload' : 'Current PDF' }}</span><strong>{{ pdfDisplayText() }}</strong>@if (selectedPdfFile(); as file) { <span class="si-help">{{ file.size / 1048576 | number:'1.2-2' }} MB</span> }</div><button type="button" class="si-small-button si-danger" (click)="removePdf()" [disabled]="isSubmitting()">Remove PDF</button></div> }
@@ -37,5 +40,6 @@
       <div class="si-save-actions"><button class="si-button si-primary" type="submit" [disabled]="form.invalid || form.pending || isSubmitting()">{{ isSubmitting() ? (isEditMode() ? 'Updating…' : 'Creating…') : (isEditMode() ? 'Update Issue' : 'Create Issue') }}</button><button class="si-button" type="button" (click)="cancel()" [disabled]="isSubmitting()">Cancel</button></div>
     </div></section><p class="si-help si-required-note">Fields marked <span class="si-required">*</span> are required.</p></aside>
   </fieldset></form>
+  }
   <app-confirmation-modal [isOpen]="showConfirmModal()" [title]="confirmTitle()" [message]="confirmMessage()" [confirmText]="confirmButtonText()" cancelText="Cancel" (confirmed)="onConfirmSave()" (cancelled)="onCancelSave()" />
 </section>

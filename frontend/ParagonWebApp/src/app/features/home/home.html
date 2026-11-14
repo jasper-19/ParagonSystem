@@ -1,11 +1,15 @@
 <main id="main-content" class="publication-home">
   <app-welcome-banner />
-  <ng-container *ngIf="homepageFeed() as feed; else homepageEmpty">
-    <app-featured-section [articles]="feed.featured" />
-    <app-most-viewed-section [articles]="feed.mostViewed" />
-    <app-category-section [sections]="feed.categories" />
-    <app-more-stories-section [articles]="feed.moreStories" />
-  </ng-container>
+  @if (loading()) {
+    <app-page-loader variant="public" label="Loading the latest stories..." skeleton="stories" />
+  } @else {
+    <ng-container *ngIf="homepageFeed() as feed; else homepageEmpty">
+      <app-featured-section [articles]="feed.featured" />
+      <app-most-viewed-section [articles]="feed.mostViewed" />
+      <app-category-section [sections]="feed.categories" />
+      <app-more-stories-section [articles]="feed.moreStories" />
+    </ng-container>
+  }
 </main>
 
 <ng-template #homepageEmpty>

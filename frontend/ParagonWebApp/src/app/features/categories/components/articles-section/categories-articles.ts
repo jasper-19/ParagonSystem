@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../shared/components/page-loader/page-loader';
 import {
   Component,
   Input,
@@ -16,7 +17,7 @@ import { imageVariant } from '../../../../shared/utils/image-variant.util';
 @Component({
   selector: 'app-categories-articles',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, PageLoaderComponent],
   templateUrl: './categories-articles.html',
   styleUrl: './categories-articles.scss'
 })

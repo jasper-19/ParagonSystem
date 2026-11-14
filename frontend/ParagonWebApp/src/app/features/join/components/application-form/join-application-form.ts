@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../shared/components/page-loader/page-loader';
 import {
   Component,
   computed,
@@ -25,7 +26,7 @@ import { College } from '../../models/college.model';
 @Component({
   selector: 'app-join-application-form',
   standalone: true,
-  imports: [ CommonModule, ReactiveFormsModule, RouterModule, ],
+  imports: [ PageLoaderComponent, CommonModule, ReactiveFormsModule, RouterModule, ],
   templateUrl: './join-application-form.html',
 })
 

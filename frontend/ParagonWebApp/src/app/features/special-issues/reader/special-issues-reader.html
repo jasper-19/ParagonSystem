@@ -24,8 +24,8 @@
       <div #readerContainer class="reader__stage" [class.reader__stage--zoomed]="zoom > 1" role="region" aria-label="Publication pages" [attr.aria-busy]="isLoading">
         <div class="reader__book-wrap"><div #flipbookContainer class="reader__book"></div></div>
         @if (isLoading) {
-          <div class="reader__state" role="status">
-            <div class="reader__loading-mark" aria-hidden="true"></div><p>Loading publication...</p>
+          <div class="reader__state">
+            <app-page-loader variant="public" mode="inline" [inverse]="true" label="Loading publication..." skeleton="reader" />
           </div>
         } @else if (errorMessage) {
           <div class="reader__state" role="alert">

@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, OnInit, Output, HostListener, Inject, OnChanges, OnDestroy, SimpleChanges, inject, DestroyRef, signal, AfterViewInit, ElementRef, QueryList, ViewChild, ViewChildren } from '@angular/core';
-import { Subject, catchError, debounceTime, distinctUntilChanged, finalize, map, of, switchMap } from 'rxjs';
+import { PageLoaderComponent } from '../page-loader/page-loader';
+import { Component, EventEmitter, Input, OnInit, Output, HostListener, Inject, OnChanges, OnDestroy, SimpleChanges, inject, DestroyRef, signal, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { EMPTY, Subject, catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap } from 'rxjs';
 import { Media } from '../../../models/media.model';
 import { MediaService } from '../../../core/services/media.service';
 import { CommonModule, DOCUMENT } from '@angular/common';
@@ -13,15 +14,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-media-picker-modal',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule,
+  imports: [PageLoaderComponent, CommonModule, RouterModule, FormsModule,
     MediaDetailsPanelComponent,
     MediaUploaderComponent,
     MediaGridComponent,
   ],
   templateUrl: './media-picker-modal.html',
+  styleUrl: './media-picker-modal.scss',
 })
 
 export class MediaPickerModalComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit {
+  private static nextId = 0;
+  readonly dialogTitleId = `media-picker-title-${MediaPickerModalComponent.nextId++}`;
   @Input() isOpen= false;
   @Input() title = 'Select Media'
 
@@ -43,9 +47,11 @@ export class MediaPickerModalComponent implements OnInit, OnChanges, OnDestroy, 
   readonly searchTerm = signal('');
   readonly isLoading = signal(false);
   readonly isSubmitting = signal(false);
+  readonly loadError = signal<string | null>(null);
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly searchSubject = new Subject<string>();
+  private readonly reloadSubject = new Subject<string>();
 
   private previousBodyOverflow = '';
 
@@ -93,28 +99,7 @@ export class MediaPickerModalComponent implements OnInit, OnChanges, OnDestroy, 
   }
 
   loadMedia(): void {
-    this.isLoading.set(true);
-
-    this.mediaService.getMedia({
-      search: this.searchTerm().trim() || undefined,
-      type: 'image',
-      page: 1,
-      limit: 50
-    })
-    .pipe(
-      finalize(() => {
-        this.isLoading.set(false);
-      })
-    )
-    .subscribe({
-      next: response => {
-        this.mediaList.set(response.data);
-        this.validateSelectedMedia();
-      },
-      error: error => {
-        console.error('Failed to load media:', error);
-      }
-    });
+    this.reloadSubject.next(this.searchTerm().trim());
   }
 
   onSearchChange(value: string): void {
@@ -256,6 +241,7 @@ isSelected(mediaId: string): boolean {
 
   private focusInitialElement(): void {
     setTimeout(() => {
+      if (!this.isOpen || this.destroyRef.destroyed) return;
       const target =
         this.searchInput?.nativeElement ??
         this.dialogContainer?.nativeElement;
@@ -279,13 +265,11 @@ isSelected(mediaId: string): boolean {
   }
 
   private setupSearch(): void {
-    this.searchSubject
+    this.reloadSubject
       .pipe(
-        map(value => value.trim()),
-        debounceTime(300),
-        distinctUntilChanged(),
         switchMap(search => {
           this.isLoading.set(true);
+          this.loadError.set(null);
 
           return this.mediaService.getMedia({
             search: search || undefined,
@@ -293,18 +277,9 @@ isSelected(mediaId: string): boolean {
             page: 1,
             limit: 50
           }).pipe(
-            catchError(error => {
-              console.error('Failed to search media:', error);
-
-              return of({
-                data: [],
-                pagination: {
-                  page: 1,
-                  limit: 50,
-                  total: 0,
-                  totalPages: 0
-                }
-              });
+            catchError(() => {
+              this.loadError.set('The media library could not be loaded. Please try again.');
+              return EMPTY;
             }),
             finalize(() => {
               this.isLoading.set(false);
@@ -317,6 +292,13 @@ isSelected(mediaId: string): boolean {
         this.mediaList.set(response.data);
         this.validateSelectedMedia();
       });
+
+    this.searchSubject.pipe(
+      map(value => value.trim()),
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(search => this.reloadSubject.next(search));
   }
 
   private validateSelectedMedia(): void {

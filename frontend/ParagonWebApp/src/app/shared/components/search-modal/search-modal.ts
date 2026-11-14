@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../page-loader/page-loader';
 import {
   AfterViewInit,
   Component,
@@ -32,7 +33,7 @@ type SearchMode =
 @Component({
   selector: 'app-search-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [PageLoaderComponent, CommonModule, FormsModule],
   templateUrl: './search-modal.html',
   styleUrl: './search-modal.scss'
 })

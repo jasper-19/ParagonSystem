@@ -44,18 +44,13 @@ h1 { font: 400 clamp(2.75rem, 5vw, 4rem)/1.12 var(--font-serif); letter-spacing:
 .board-message button { min-height: 3rem; margin-top: 1.5rem; padding: .75rem 1.5rem; border: 1px solid var(--board-ink); border-radius: 0; background: var(--board-ink); color: white; cursor: pointer; font: 600 .8125rem/1.5 var(--font-sans); }
 .board-message button:hover { background: #25254d; }
 .board-message button:focus-visible { outline: 2px solid var(--board-ink); outline-offset: 4px; }
-.board-loading > p { color: var(--board-muted); font-size: .875rem; }
-.board-skeleton { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 3rem; padding-block: 2rem; margin-top: 1.5rem; border-top: 1px solid var(--board-rule); }
-.board-skeleton > span { width: 70%; height: 1.75rem; background: #ededf1; }
-.board-skeleton > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
-.board-skeleton > div span { height: 5rem; border-bottom: 1px solid var(--board-rule); background: #f7f6f2; }
 ::selection { background: var(--board-gold); color: var(--board-ink); }
 @media (max-width: 1023px) {
-  .board-section, .board-skeleton { grid-template-columns: 11rem minmax(0, 1fr); gap: 2rem; }
+  .board-section { grid-template-columns: 11rem minmax(0, 1fr); gap: 2rem; }
   .board-member-list { gap: 0 1.5rem; }
 }
 @media (max-width: 767px) {
-  .board-section, .board-skeleton { grid-template-columns: 1fr; gap: 1.5rem; }
+  .board-section { grid-template-columns: 1fr; gap: 1.5rem; }
   .board-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; }
   .board-section-heading > p { flex-shrink: 0; margin-top: 0; }
   .board-advisers { gap: 2rem; padding: 1.5rem; }

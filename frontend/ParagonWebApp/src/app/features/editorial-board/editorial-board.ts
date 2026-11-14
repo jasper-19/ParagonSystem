@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../shared/components/page-loader/page-loader';
 import {
   Component,
   OnDestroy,
@@ -5,20 +6,20 @@ import {
   computed,
   inject,
   signal,
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 
 import { EditorialBoardService } from '../../core/services/editorial-board.service';
-import { LoaderService } from '../../shared/services/loader.service';
 import { SocketService } from '../../core/services/socket.service';
 import { SOCKET_EVENTS } from '../../core/constants/socket-events';
 
 @Component({
   selector: 'app-editorial-board',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PageLoaderComponent],
   templateUrl: './editorial-board.html',
   styleUrl: './editorial-board.scss',
 })
@@ -26,8 +27,7 @@ export class EditorialBoard implements OnInit, OnDestroy {
   private readonly editorialBoardService =
     inject(EditorialBoardService);
 
-  private readonly loaderService =
-    inject(LoaderService);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly socketService =
     inject(SocketService);
@@ -101,16 +101,15 @@ export class EditorialBoard implements OnInit, OnDestroy {
 
     if (showPageLoader) {
       this.loading.set(true);
-      this.loaderService.show();
     }
 
     this.editorialBoardService
       .loadActiveBoard()
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => {
           if (showPageLoader) {
             this.loading.set(false);
-            this.loaderService.hide();
           }
         })
       )

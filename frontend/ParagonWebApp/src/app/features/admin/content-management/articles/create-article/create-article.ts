@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../../shared/components/page-loader/page-loader';
 import { Component, inject, signal, ElementRef, HostListener, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -14,7 +15,7 @@ import { RichTextEditorComponent } from '../../../../../shared/components/rich-t
 import { Observable, of, timer, forkJoin } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BoardMember } from '../../../../../models/editorial-board.model';
-import { catchError, debounceTime, distinctUntilChanged, first, map, switchMap, take } from 'rxjs/operators';
+import { catchError, finalize, debounceTime, distinctUntilChanged, first, map, switchMap, take } from 'rxjs/operators';
 import { ConfirmationModal } from '../../../../../shared/components/confirmation-modal/confirmation-modal';
 import { ErrorModal } from '../../../../../shared/components/feedback-modal/error-modal';
 import { CoverImagSelectorComponent } from '../../../media-library/components/cover-image-selector/cover-image-selector';
@@ -54,7 +55,7 @@ type TagCandidate = {
 @Component({
   selector: 'app-create-article',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RichTextEditorComponent, ConfirmationModal, CoverImagSelectorComponent, ErrorModal],
+  imports: [PageLoaderComponent, CommonModule, ReactiveFormsModule, RichTextEditorComponent, ConfirmationModal, CoverImagSelectorComponent, ErrorModal],
   templateUrl: './create-article.html',
   styleUrl: './create-article.scss'
 })
@@ -71,6 +72,7 @@ export class CreateArticleComponent implements OnDestroy {
   readonly globalSettings = this.globalSettingsService.settings;
 
   readonly editingId = signal<string | null>(null);
+  readonly initialLoading = signal(false);
   readonly isEditMode = computed(() => this.editingId() !== null);
   readonly originalArticle = signal<Article | null>(null);
 
@@ -322,6 +324,7 @@ private readonly handleEditorialBoardUpdated = (): void => {
   private initializeEditMode(
     slug: string
   ): void {
+    this.initialLoading.set(true);
     const article$ =
       this.articleService
         .getBySlug(slug)
@@ -341,7 +344,7 @@ private readonly handleEditorialBoardUpdated = (): void => {
     forkJoin({
       article: article$,
       board: board$,
-    }).subscribe({
+    }).pipe(finalize(() => this.initialLoading.set(false))).subscribe({
       next: ({
         article,
         board,

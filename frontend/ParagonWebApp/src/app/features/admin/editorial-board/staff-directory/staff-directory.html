@@ -79,6 +79,9 @@
     </div>
   }
 
+  @if (initialLoading()) {
+    <app-page-loader variant="admin" mode="block" label="Loading staff directory&#8230;" />
+  } @else {
   <!-- ========================= -->
   <!-- Board Switcher            -->
   <!-- ========================= -->
@@ -1299,6 +1302,7 @@
     </div>
 
   </div>
+  }
 </section>
 
   <!-- Revoke Board Assignment Confirmation -->

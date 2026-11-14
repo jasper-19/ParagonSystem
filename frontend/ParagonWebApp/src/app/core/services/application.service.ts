@@ -45,6 +45,13 @@ export class ApplicationService {
 
   readonly applicationSettings$ = this.applicationSettingsSubject.asObservable();
 
+  private readonly listLoading = signal(false);
+  private readonly listError = signal<string | null>(null);
+  private readonly listLoaded = signal(false);
+  readonly loading = this.listLoading.asReadonly();
+  readonly loadError = this.listError.asReadonly();
+  readonly loaded = this.listLoaded.asReadonly();
+
   readonly total = signal(0);
   readonly totalPages = signal(1);
   readonly currentPage = signal(1);
@@ -125,6 +132,8 @@ export class ApplicationService {
       params = params.set('search', search);
     }
 
+    this.listLoading.set(true);
+    this.listError.set(null);
     this.http
       .get<PaginatedApplications>(
         this.apiUrl,
@@ -132,6 +141,7 @@ export class ApplicationService {
       )
       .pipe(
         finalize(() => {
+          this.listLoading.set(false);
           this.applicationsRefreshInProgress =
             false;
 
@@ -152,6 +162,7 @@ export class ApplicationService {
       )
       .subscribe({
         next: response => {
+          this.listLoaded.set(true);
           this.currentPage.set(response.page);
           this.pageSize.set(response.limit);
           this.total.set(response.total);
@@ -167,6 +178,7 @@ export class ApplicationService {
         },
 
         error: error => {
+          this.listError.set('Unable to load applications. Try again.');
           console.error(
             'Failed to load applications:',
             error

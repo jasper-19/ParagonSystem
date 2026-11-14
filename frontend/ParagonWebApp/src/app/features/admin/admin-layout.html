@@ -39,16 +39,11 @@
     <div class="px-6 lg:px-10 py-6 lg:py-8">
       <div class="max-w-screen-2xl mx-auto">
         <div class="admin-page-shell">
-          <div class="admin-page-content" [class.admin-page-content--hidden]="isAdminNavigating">
+          <div class="admin-page-content">
             <router-outlet></router-outlet>
           </div>
 
-          <!-- Only block UI during route navigation; background requests shouldn't hide the page. -->
-          <div *ngIf="isAdminNavigating" class="admin-loader-overlay" aria-live="assertive">
-            <div class="admin-route-loader">
-              <div role="alert" class="loader"></div>
-            </div>
-          </div>
+          <app-page-loader *ngIf="isAdminNavigating" variant="admin" mode="overlay" label="Loading workspace&#8230;" />
         </div>
       </div>
     </div>

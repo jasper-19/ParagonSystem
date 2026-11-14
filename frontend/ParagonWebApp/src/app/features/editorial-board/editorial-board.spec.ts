@@ -4,7 +4,6 @@ import { vi } from 'vitest';
 import { EditorialBoard } from './editorial-board';
 import { EditorialBoardData } from '../../models/editorial-board.model';
 import { EditorialBoardService } from '../../core/services/editorial-board.service';
-import { LoaderService } from '../../shared/services/loader.service';
 import { SocketService } from '../../core/services/socket.service';
 
 describe('Public board content and recovery', () => {
@@ -22,7 +21,6 @@ describe('Public board content and recovery', () => {
     loadActiveBoard.mockReset().mockReturnValue(of(undefined));
     TestBed.configureTestingModule({ imports: [EditorialBoard], providers: [
       { provide: EditorialBoardService, useValue: { board$: subject, getCurrentBoard: () => subject.value, loadActiveBoard } },
-      { provide: LoaderService, useValue: { show: vi.fn(), hide: vi.fn() } },
       { provide: SocketService, useValue: { onEditorialBoardUpdated: vi.fn(), off: vi.fn() } },
     ] });
   });

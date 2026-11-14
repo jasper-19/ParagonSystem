@@ -7,7 +7,6 @@ import { GetArticlesParams, ArticleSortOption } from '../../models/article-query
 import { ArticleService } from '../../core/services/article.service';
 import { CategoriesHero } from './components/hero-section/categories-hero';
 import { CategoriesArticles } from './components/articles-section/categories-articles';
-import { LoaderService } from '../../shared/services/loader.service';
 
 @Component({
   selector: 'app-categories-page',
@@ -30,7 +29,6 @@ export class CategoriesPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  private readonly loader = inject(LoaderService);
 
   private readonly reloadPending = signal(false);
   // -----------------------------------------
@@ -222,7 +220,6 @@ export class CategoriesPage {
         this.loading.set(false);
 
         if (this.initialLoading()) {
-          this.loader.hide();
           this.initialLoading.set(false);
         } else {
           this.loadingMore.set(false);
@@ -243,7 +240,6 @@ export class CategoriesPage {
         this.loadError.set('Articles could not be loaded. Check your connection and try again.');
 
         if (this.initialLoading()) {
-          this.loader.hide();
           this.initialLoading.set(false);
         } else {
           this.loadingMore.set(false);

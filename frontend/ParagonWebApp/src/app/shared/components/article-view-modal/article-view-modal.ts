@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../page-loader/page-loader';
 import {
   Component,
   EventEmitter,
@@ -22,7 +23,7 @@ import {
 @Component({
   selector: 'app-article-view-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [PageLoaderComponent, CommonModule],
   templateUrl: './article-view-modal.html',
   styleUrl: './article-view-modal.scss',
 })

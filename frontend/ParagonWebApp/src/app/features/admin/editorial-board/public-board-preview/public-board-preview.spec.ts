@@ -68,10 +68,10 @@ describe('Editorial board preview', () => {
   it('announces loading and hides records until the admin request finishes', () => {
     fixture.detectChanges();
     expect(load).toHaveBeenCalledOnce();
-    expect(fixture.nativeElement.querySelector('[role="status"][aria-busy="true"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-page-loader')).not.toBeNull();
     expect(text()).not.toContain('Sample Editor');
     loaded.next(true); request.complete(); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[aria-busy="true"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-page-loader')).toBeNull();
     expect(text()).toContain('Sample Editor');
   });
 

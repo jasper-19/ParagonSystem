@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../../shared/components/page-loader/page-loader';
 import { ConfirmationModal } from '../../../../../shared/components/confirmation-modal/confirmation-modal';
 import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,7 +17,7 @@ type IssueStatus = SpecialIssue['status'];
 @Component({
 	selector: 'app-create-special-issue',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, ConfirmationModal, CoverImagSelectorComponent],
+	imports: [PageLoaderComponent, CommonModule, ReactiveFormsModule, ConfirmationModal, CoverImagSelectorComponent],
 	templateUrl: './create-special-issue.component.html',
   styleUrl: '../../../../../shared/styles/admin-special-issues.scss',
 })
@@ -32,6 +33,7 @@ export class CreateSpecialIssueComponent {
 	readonly isEditMode = computed(() => this.editingId() !== null);
 
 	readonly isSubmitting = signal(false);
+  readonly initialLoading = signal(false);
   readonly saveError = signal('');
   readonly pdfError = signal('');
   readonly saveProgress = signal<SpecialIssueSaveProgress | null>(null);
@@ -173,8 +175,9 @@ export class CreateSpecialIssueComponent {
     const slug = String(slugParam).trim();
     if (!slug) return;
 
+    this.initialLoading.set(true);
     this.isSubmitting.set(true);
-    this.issueService.getAdminIssueBySlug(slug).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isSubmitting.set(false))).subscribe({
+    this.issueService.getAdminIssueBySlug(slug).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => { this.isSubmitting.set(false); this.initialLoading.set(false); })).subscribe({
 			next: (issue) => {
 				this.editingId.set(issue.id);
 				this.loadIssueForEdit(issue.id);

@@ -16,8 +16,7 @@
 
   <div class="board-shell board-content" [attr.aria-busy]="loading()">
     <div *ngIf="loading()" class="board-loading">
-      <p role="status">Loading the editorial board…</p>
-      <div *ngFor="let item of [1, 2]" class="board-skeleton" aria-hidden="true"><span></span><div><span></span><span></span><span></span><span></span></div></div>
+      <app-page-loader variant="public" label="Loading the editorial board..." skeleton="board" />
     </div>
 
     <div *ngIf="!loading() && loadError()" class="board-message" role="alert">

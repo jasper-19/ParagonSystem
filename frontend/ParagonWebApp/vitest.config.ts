@@ -1,7 +1,8 @@
 import { defineConfig } from 'vitest/config';
 
 // PDF.js and Angular/jsdom initialization can exhaust small CI workers when
-// every test file starts in parallel. Keep the complete suite reproducible.
+// every test file starts in parallel. Isolated processes also avoid a native
+// Windows thread-worker shutdown failure after the full suite completes.
 export default defineConfig({
-  test: { pool: 'threads', maxWorkers: 1, fileParallelism: false },
+  test: { pool: 'forks', maxWorkers: 1, fileParallelism: false },
 });

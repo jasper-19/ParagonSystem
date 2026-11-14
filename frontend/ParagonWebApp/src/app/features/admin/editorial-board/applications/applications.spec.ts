@@ -20,6 +20,7 @@ describe('Applications workspace interactions', () => {
     settingsChanges = new BehaviorSubject(settings);
     service = {
       applications$: of([]), applicationSettings$: settingsChanges,
+      loading: signal(false), loaded: signal(true), loadError: signal(null),
       totalApplications: signal(65), totalPagesCount: signal(7), activePage: signal(1), activePageSize: signal(10),
       refresh: vi.fn(), getApplicationSettings: vi.fn(() => of(settings)), updateApplicationSettings: vi.fn(() => of(settings)),
       scheduleInterview: vi.fn(), markInterviewed: vi.fn(), acceptApplication: vi.fn(), rejectApplication: vi.fn(),

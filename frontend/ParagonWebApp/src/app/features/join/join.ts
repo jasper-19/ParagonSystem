@@ -1,7 +1,8 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { PageLoaderComponent } from '../../shared/components/page-loader/page-loader';
+import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 
 import { JoinService } from './services/join.service';
@@ -20,6 +21,7 @@ import { ApplicationSettings } from '../../models/application-settings.model';
   selector: 'app-join-page',
   standalone: true,
   imports: [
+    PageLoaderComponent,
     CommonModule,
     RouterModule,
     JoinHero,
@@ -33,6 +35,7 @@ import { ApplicationSettings } from '../../models/application-settings.model';
   styleUrl: './join.scss',
 })
 export class JoinPage {
+  private readonly destroyRef = inject(DestroyRef);
   private readonly joinService = inject(JoinService);
   private readonly applicationService = inject(ApplicationService);
   private readonly route = inject(ActivatedRoute);
@@ -55,6 +58,7 @@ export class JoinPage {
     this.applicationService
       .getApplicationSettings()
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => {
           this.settingsLoaded.set(true);
         })

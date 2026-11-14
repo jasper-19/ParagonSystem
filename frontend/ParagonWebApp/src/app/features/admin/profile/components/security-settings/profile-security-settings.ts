@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../../shared/components/page-loader/page-loader';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -23,7 +24,7 @@ import { ErrorModal } from '../../../../../shared/components/feedback-modal/erro
 @Component({
   selector: 'app-security-settings',
   standalone: true,
-  imports: [CommonModule, SuccessModal, ErrorModal, ReactiveFormsModule],
+  imports: [PageLoaderComponent, CommonModule, SuccessModal, ErrorModal, ReactiveFormsModule],
   templateUrl: './profile-security-settings.html',
   styleUrl: './profile-security-settings.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

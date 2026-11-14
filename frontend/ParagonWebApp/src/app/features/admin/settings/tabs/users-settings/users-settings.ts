@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../../shared/components/page-loader/page-loader';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -22,7 +23,7 @@ import { ConfirmationService } from '../../../../../shared/components/confirmati
 @Component({
   selector: 'app-users-settings',
   standalone: true,
-  imports: [CommonModule, UserModalComponent],
+  imports: [PageLoaderComponent, CommonModule, UserModalComponent],
   templateUrl: './users-settings.html',
   styleUrl: '../../settings-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

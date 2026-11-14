@@ -5,7 +5,6 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { CategoriesPage } from './categories-page';
 import { ArticleService } from '../../core/services/article.service';
-import { LoaderService } from '../../shared/services/loader.service';
 
 describe('Top-stories filter recovery', () => {
   const queryParams = new BehaviorSubject(convertToParamMap({ sort: 'mostViewed', category: 'News' }));
@@ -23,7 +22,6 @@ describe('Top-stories filter recovery', () => {
       { provide: ArticleService, useValue: {
         categoryFeed: signal(null), categoryArticles: signal([]), articlesChanged: signal(0), loadCategoryFeed,
       } },
-      { provide: LoaderService, useValue: { hide: vi.fn() } },
     ] });
     page = TestBed.runInInjectionContext(() => new CategoriesPage());
   });

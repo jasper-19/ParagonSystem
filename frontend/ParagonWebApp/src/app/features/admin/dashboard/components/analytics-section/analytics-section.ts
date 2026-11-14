@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../../shared/components/page-loader/page-loader';
 import {
   Component,
   Input,
@@ -23,7 +24,7 @@ export interface AnalyticsMetric {
 @Component({
   selector: 'app-analytics-section',
   standalone: true,
-  imports: [CommonModule],
+  imports: [PageLoaderComponent, CommonModule],
   templateUrl: './analytics-section.html',
 })
 export class AnalyticsSection implements AfterViewInit, OnChanges, OnDestroy {

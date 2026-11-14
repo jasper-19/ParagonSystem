@@ -1,3 +1,4 @@
+import { PageLoaderComponent } from '../../../../../shared/components/page-loader/page-loader';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StaffMember } from '../../../../../models/staff-member.model';
@@ -5,7 +6,7 @@ import { StaffMember } from '../../../../../models/staff-member.model';
 @Component({
   selector: 'app-profile-overview',
   standalone: true,
-  imports: [CommonModule],
+  imports: [PageLoaderComponent, CommonModule],
   templateUrl: './profile-overview.html',
   styleUrl: './profile-overview.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

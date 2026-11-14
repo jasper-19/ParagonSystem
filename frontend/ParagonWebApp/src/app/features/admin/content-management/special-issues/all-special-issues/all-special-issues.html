@@ -16,8 +16,8 @@
   <div class="si-mobile-sort"><label for="issue-sort">Sort by</label><select id="issue-sort" #sortSelect [value]="sortField()" (change)="setSort($any(sortSelect.value))"><option value="title">Title</option><option value="type">Type</option><option value="academicYear">Academic year</option><option value="status">Status</option><option value="publishedAt">Published date</option></select><button class="si-button" type="button" (click)="sortDirection.set(sortDirection() === 'asc' ? 'desc' : 'asc')" [attr.aria-label]="'Sort ' + (sortDirection() === 'asc' ? 'descending' : 'ascending')">{{ sortDirection() === 'asc' ? 'Ascending' : 'Descending' }}</button></div>
   <div class="si-results" [attr.aria-busy]="loading()">
     @if (loading()) {
-      <div class="si-state" role="status"><p>Loading special issues…</p><div class="si-skeleton" aria-hidden="true"></div><div class="si-skeleton" aria-hidden="true"></div><div class="si-skeleton" aria-hidden="true"></div></div>
-    } @else if (loadError()) {
+    <app-page-loader variant="admin" mode="block" label="Loading special issues&#8230;" />
+  } @else if (loadError()) {
       <div class="si-state" role="alert"><h2>Unable to load issues</h2><p>{{ loadError() }}</p><button class="si-button" type="button" (click)="refreshIssues()">Try again</button></div>
     } @else if (!totalResults()) {
       <div class="si-state"><h2>No issues found</h2><p>{{ searchQuery() || statusFilter() !== 'all' ? 'Try another search or clear the filters.' : 'Create an issue to add a publication to your library.' }}</p>
