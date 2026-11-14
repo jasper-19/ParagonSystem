@@ -1,441 +1,60 @@
-<section class="space-y-8">
-  @if (loading()) {
-    <p role="status" class="text-sm text-gray-600">Loading Special Issues…</p>
+<section class="si-page" aria-labelledby="issues-heading">
+  <header class="si-heading"><div><h1 id="issues-heading">Special Issues</h1><p>Manage and organize publication issues.</p></div>
+    <a class="si-button si-primary" routerLink="/admin/create-special-issue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Create Issue</a>
+  </header>
+  @if (savedPdfMetadata(); as metadata) {
+    <div class="si-notice si-notice-success" role="status"><strong>PDF ready.</strong> {{ metadata.pageCount }} pages · {{ metadata.optimizedSizeBytes / 1048576 | number:'1.2-2' }} MB stored
+      <span class="si-muted">({{ metadata.originalSizeBytes / 1048576 | number:'1.2-2' }} MB original, {{ metadata.compressionPercent | number:'1.0-1' }}% smaller)</span></div>
   }
-  @if (feedback()) {
-    <p role="status" class="rounded-lg border border-gray-200 p-3 text-sm text-[#000035]">{{ feedback() }}</p>
-  }
-
-  <!-- Header -->
-  <div class="flex flex-col gap-6">
-
-    <!-- Top Row -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
-      <div class="space-y-2">
-        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
-          Special Issues
-        </h2>
-        <p class="text-base text-gray-600">
-          Manage and organize publication issues
-        </p>
-      </div>
-
-      <!-- CTA Button -->
-      <a
-        routerLink="/admin/create-special-issue"
-        class="inline-flex items-center gap-2 px-5 py-2.5
-               text-sm font-semibold text-white
-               bg-[#000035] hover:bg-[#0a1a2e]
-               rounded-lg transition-all duration-200
-               shadow-sm hover:shadow-md"
-      >
-        <span class="text-lg leading-none">+</span>
-        Create Issue
-      </a>
-
+  @if (feedback()) { <p class="si-notice" role="status">{{ feedback() }}</p> }
+  <div class="si-list-toolbar">
+    <div class="si-statuses" role="group" aria-label="Filter by status">
+      @for (status of statuses; track status) { <button type="button" [attr.aria-pressed]="statusFilter() === status" (click)="setStatus(status)">{{ status | titlecase }} <span>{{ issueCounts()[status] }}</span></button> }
     </div>
-
-    <!-- Search + Status -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-      <!-- Search -->
-      <div class="w-full md:w-80">
-        <input
-          type="text"
-          aria-label="Search Special Issues"
-          placeholder="Search by title, type, or year..."
-          [value]="searchQuery()"
-          (input)="onSearch($event)"
-          class="w-full px-4 py-2 border border-gray-200 rounded-lg
-                 focus:ring-2 focus:ring-[#f4b400] focus:outline-none
-                 text-sm"
-        />
-      </div>
-
-      <!-- Status Tabs -->
-      <div class="flex gap-2 flex-wrap">
-        @for (status of statuses; track status) {
-          <button
-            (click)="setStatus(status)"
-            class="px-4 py-2 text-sm font-medium rounded-lg transition capitalize"
-            [class.bg-[#000035]]="statusFilter() === status"
-            [class.text-white]="statusFilter() === status"
-            [class.bg-gray-100]="statusFilter() !== status"
-          >
-            {{ status === 'all' ? 'All' : (status | titlecase) }}
-          </button>
-        }
-      </div>
-
-    </div>
-
+    <label class="si-search"><span>Search issues</span><input type="search" aria-label="Search Special Issues" placeholder="Title, type, or academic year" [value]="searchQuery()" (input)="onSearch($event)" /></label>
   </div>
-
-  <!-- Table Section -->
-  <div class="bg-white rounded-xl shadow border border-gray-100">
-
-    @if (!loading() && filteredIssues().length === 0) {
-
-      <!-- Empty State -->
-      <div class="px-4 sm:px-6 md:px-8 py-12 sm:py-16 text-center">
-        <div class="inline-block p-4 bg-gray-100 rounded-full mb-4">
-          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-          </svg>
-        </div>
-        <p class="text-gray-500 font-medium">No issues found</p>
+  <div class="si-mobile-sort"><label for="issue-sort">Sort by</label><select id="issue-sort" #sortSelect [value]="sortField()" (change)="setSort($any(sortSelect.value))"><option value="title">Title</option><option value="type">Type</option><option value="academicYear">Academic year</option><option value="status">Status</option><option value="publishedAt">Published date</option></select><button class="si-button" type="button" (click)="sortDirection.set(sortDirection() === 'asc' ? 'desc' : 'asc')" [attr.aria-label]="'Sort ' + (sortDirection() === 'asc' ? 'descending' : 'ascending')">{{ sortDirection() === 'asc' ? 'Ascending' : 'Descending' }}</button></div>
+  <div class="si-results" [attr.aria-busy]="loading()">
+    @if (loading()) {
+      <div class="si-state" role="status"><p>Loading special issues…</p><div class="si-skeleton" aria-hidden="true"></div><div class="si-skeleton" aria-hidden="true"></div><div class="si-skeleton" aria-hidden="true"></div></div>
+    } @else if (loadError()) {
+      <div class="si-state" role="alert"><h2>Unable to load issues</h2><p>{{ loadError() }}</p><button class="si-button" type="button" (click)="refreshIssues()">Try again</button></div>
+    } @else if (!totalResults()) {
+      <div class="si-state"><h2>No issues found</h2><p>{{ searchQuery() || statusFilter() !== 'all' ? 'Try another search or clear the filters.' : 'Create an issue to add a publication to your library.' }}</p>
+        @if (searchQuery() || statusFilter() !== 'all') { <button class="si-button" type="button" (click)="resetFilters()">Clear filters</button> } @else { <a class="si-button si-primary" routerLink="/admin/create-special-issue">Create Issue</a> }
       </div>
-
     } @else {
-
-      <!-- Desktop Table View (hidden on mobile) -->
-      <div class="hidden md:block overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-100">
-
-        <thead class="bg-linear-to-r from-[#000035] to-[#1a3a52]">
-          <tr>
-            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-              Cover
-            </th>
-            <th
-              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              (click)="setSort('title')"
-              tabindex="0" (keydown.enter)="setSort('title')" (keydown.space)="$event.preventDefault(); setSort('title')"
-              [attr.aria-sort]="sortField() === 'title' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
-            >
-              Title
-              <span *ngIf="sortField() === 'title'">
-                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th
-              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              (click)="setSort('type')"
-              tabindex="0" (keydown.enter)="setSort('type')" (keydown.space)="$event.preventDefault(); setSort('type')"
-              [attr.aria-sort]="sortField() === 'type' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
-            >
-              Type
-              <span *ngIf="sortField() === 'type'">
-                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th
-              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              (click)="setSort('academicYear')"
-              tabindex="0" (keydown.enter)="setSort('academicYear')" (keydown.space)="$event.preventDefault(); setSort('academicYear')"
-              [attr.aria-sort]="sortField() === 'academicYear' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
-            >
-              Academic Year
-              <span *ngIf="sortField() === 'academicYear'">
-                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th
-              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              (click)="setSort('status')"
-              tabindex="0" (keydown.enter)="setSort('status')" (keydown.space)="$event.preventDefault(); setSort('status')"
-              [attr.aria-sort]="sortField() === 'status' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
-            >
-              Status
-              <span *ngIf="sortField() === 'status'">
-                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th
-              class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider"
-              (click)="setSort('publishedAt')"
-              tabindex="0" (keydown.enter)="setSort('publishedAt')" (keydown.space)="$event.preventDefault(); setSort('publishedAt')"
-              [attr.aria-sort]="sortField() === 'publishedAt' ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"
-            >
-              Published
-              <span *ngIf="sortField() === 'publishedAt'">
-                {{ sortDirection() === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Actions</th>
-          </tr>
-        </thead>
-
-        <tbody class="bg-white divide-y divide-gray-50">
-
+      <div class="si-table-scroll" role="region" aria-label="Special issues table" tabindex="0">
+        <table><thead><tr>
+          @for (column of [{field:'title',label:'Publication'},{field:'type',label:'Type'},{field:'academicYear',label:'Academic year'},{field:'status',label:'Status'},{field:'publishedAt',label:'Published'}]; track column.field) {
+            <th scope="col" [attr.aria-sort]="sortField() === column.field ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'"><button type="button" (click)="setSort($any(column.field))">{{ column.label }}<svg viewBox="0 0 16 16" aria-hidden="true" [class.si-sort-active]="sortField() === column.field" [class.si-sort-up]="sortDirection() === 'asc' && sortField() === column.field"><path d="m4 6 4 4 4-4"/></svg></button></th>
+          }<th scope="col">Actions</th>
+        </tr></thead><tbody>
           @for (issue of paginatedIssues(); track issue.id) {
-
-            <tr
-              class="hover:bg-[#f4b400]/10 transition-colors group cursor-pointer"
-              (click)="openIssue(issue)"
-            >
-
-              <!-- Cover -->
-              <td class="px-6 py-4">
-                <div class="w-14 aspect-3/4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                  <img
-                    [src]="issue.coverImage"
-                    [alt]="issue.title"
-                    class="w-full h-full object-cover"
-                  />
-                </div>
-              </td>
-
-              <!-- Title -->
-              <td class="px-6 py-4 font-semibold text-[#000035] max-w-xs truncate group-hover:text-[#f4b400]">
-                {{ issue.title }}
-              </td>
-
-              <!-- Type -->
-              <td class="px-6 py-4">
-                <span class="inline-block px-3 py-1 text-xs font-bold uppercase rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
-                  {{ issue.type }}
-                </span>
-              </td>
-
-              <!-- Academic Year -->
-              <td class="px-6 py-4 font-semibold text-[#000035]">
-                {{ issue.academicYear }}
-              </td>
-
-              <!-- Status -->
-              <td class="px-6 py-4">
-                <span
-                  class="inline-block px-3 py-1 text-xs font-bold rounded-full"
-                  [class.bg-green-100]="issue.status === 'published'"
-                  [class.text-green-700]="issue.status === 'published'"
-                  [class.bg-blue-100]="issue.status === 'draft'"
-                  [class.text-blue-700]="issue.status === 'draft'"
-                  [class.bg-gray-100]="issue.status === 'archived'"
-                  [class.text-gray-700]="issue.status === 'archived'"
-                >
-                  {{ issue.status | titlecase }}
-                </span>
-              </td>
-
-              <!-- Published -->
-              <td class="px-6 py-4 text-gray-500 text-sm">
-                {{ issue.publishedAt | date:'MMM d, yyyy' }}
-              </td>
-
-              <!-- Actions -->
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-2">
-
-                  <button
-                    type="button"
-                    [routerLink]="['/admin/edit-special-issue', issue.slug]"
-                    (click)="$event.stopPropagation()"
-                    class="px-3 py-1.5 text-xs font-semibold text-white bg-[#000035] hover:shadow-md rounded-lg transition"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    type="button"
-                    (click)="$event.stopPropagation(); requestArchive(issue)"
-                    [disabled]="pendingIds().has(issue.id)"
-                    class="px-3 py-1.5 text-xs font-semibold text-white bg-[#6B7280] hover:bg-[#6B7280]/60 hover:shadow-md rounded-lg transition"
-                    [class.hidden]="issue.status === 'archived'"
-                  >
-                    Archive
-                  </button>
-
-                  <button
-                    type="button"
-                    (click)="$event.stopPropagation(); requestDelete(issue)"
-                    [disabled]="pendingIds().has(issue.id)"
-                    class="px-3 py-1.5 text-xs font-semibold text-white bg-red-700 hover:bg-red-800 rounded-lg transition"
-                    [class.hidden]="issue.status !== 'archived'"
-                  >
-                    Delete
-                  </button>
-
-                </div>
-              </td>
-
+            <tr (click)="openIssue(issue)"><td><div class="si-publication"><div class="si-cover-thumb"><span aria-hidden="true">PDF</span>@if (issue.coverImage) { <img [src]="issue.coverImage" [alt]="issue.title" (error)="$any($event.target).hidden = true" /> }</div><button class="si-title-button" type="button" (click)="$event.stopPropagation(); openIssue(issue)">{{ issue.title }}<span>{{ issue.slug }}</span></button></div></td>
+              <td>{{ issue.type }}</td><td class="si-nowrap">{{ issue.academicYear }}</td><td><span class="si-status" [attr.data-status]="issue.status">{{ issue.status | titlecase }}</span></td><td class="si-nowrap">{{ issue.publishedAt | date:'MMM d, yyyy' }}</td>
+              <td><div class="si-actions"><a class="si-small-button" [routerLink]="['/admin/edit-special-issue', issue.slug]" (click)="$event.stopPropagation()" [attr.aria-label]="'Edit ' + issue.title">Edit</a>
+                @if (issue.status !== 'archived') { <button type="button" class="si-small-button" (click)="$event.stopPropagation(); requestArchive(issue)" [disabled]="pendingIds().has(issue.id)" [attr.aria-label]="'Archive ' + issue.title">{{ pendingIds().has(issue.id) ? 'Archiving…' : 'Archive' }}</button> }
+                @else { <button type="button" class="si-small-button si-danger" (click)="$event.stopPropagation(); requestDelete(issue)" [disabled]="pendingIds().has(issue.id)" [attr.aria-label]="'Delete ' + issue.title">{{ pendingIds().has(issue.id) ? 'Deleting…' : 'Delete' }}</button> }
+              </div></td>
             </tr>
-
           }
-
-        </tbody>
-
-        </table>
+        </tbody></table>
       </div>
-
-      <!-- Mobile Card View (visible only on mobile) -->
-      <div class="md:hidden divide-y divide-gray-100">
+      <div class="si-mobile-list">
         @for (issue of paginatedIssues(); track issue.id) {
-          <div
-            class="p-4 hover:bg-[#f4b400]/5 transition-colors cursor-pointer"
-            (click)="openIssue(issue)"
-          >
-
-            <!-- Cover & Title -->
-            <div class="flex gap-3 mb-3">
-              <div class="w-16 aspect-3/4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
-                <img
-                  [src]="issue.coverImage"
-                  [alt]="issue.title"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-              <div class="flex-1 min-w-0">
-                <h3 class="font-semibold text-[#000035] mb-2 text-sm leading-tight">
-                  {{ issue.title }}
-                </h3>
-                <span class="inline-block px-2.5 py-1 text-xs font-bold uppercase rounded-full bg-[#f4b400]/10 text-[#000035] border border-[#f4b400]/30">
-                  {{ issue.type }}
-                </span>
-              </div>
+          <article class="si-mobile-issue"><div class="si-publication"><div class="si-cover-thumb"><span aria-hidden="true">PDF</span>@if (issue.coverImage) { <img [src]="issue.coverImage" [alt]="issue.title" (error)="$any($event.target).hidden = true" /> }</div><button type="button" class="si-title-button" (click)="openIssue(issue)">{{ issue.title }}<span>{{ issue.type }}</span></button></div>
+            <dl class="si-mobile-meta"><div><dt>Academic year</dt><dd>{{ issue.academicYear }}</dd></div><div><dt>Status</dt><dd class="si-status" [attr.data-status]="issue.status">{{ issue.status | titlecase }}</dd></div><div><dt>Published</dt><dd>{{ issue.publishedAt | date:'MMM d, yyyy' }}</dd></div></dl>
+            <div class="si-actions"><button type="button" class="si-small-button" (click)="openIssue(issue)">View</button><a class="si-small-button" [routerLink]="['/admin/edit-special-issue', issue.slug]">Edit</a>
+              @if (issue.status !== 'archived') { <button type="button" class="si-small-button" (click)="requestArchive(issue)" [disabled]="pendingIds().has(issue.id)">{{ pendingIds().has(issue.id) ? 'Archiving…' : 'Archive' }}</button> } @else { <button type="button" class="si-small-button si-danger" (click)="requestDelete(issue)" [disabled]="pendingIds().has(issue.id)">{{ pendingIds().has(issue.id) ? 'Deleting…' : 'Delete' }}</button> }
             </div>
-
-            <!-- Meta Info -->
-            <div class="grid grid-cols-2 gap-3 mb-3 text-sm">
-
-              <div>
-                <span class="text-gray-500 text-xs block mb-1">Academic Year</span>
-                <span class="font-semibold text-[#000035]">{{ issue.academicYear }}</span>
-              </div>
-
-              <div>
-                <span class="text-gray-500 text-xs block mb-1">Status</span>
-                <span
-                  class="inline-block px-2.5 py-1 text-xs font-bold rounded-full"
-                  [class.bg-green-100]="issue.status === 'published'"
-                  [class.text-green-700]="issue.status === 'published'"
-                  [class.bg-blue-100]="issue.status === 'draft'"
-                  [class.text-blue-700]="issue.status === 'draft'"
-                  [class.bg-gray-100]="issue.status === 'archived'"
-                  [class.text-gray-700]="issue.status === 'archived'"
-                >
-                  {{ issue.status | titlecase }}
-                </span>
-              </div>
-
-              <div class="col-span-2">
-                <span class="text-gray-500 text-xs block mb-1">Published</span>
-                <span class="text-gray-600 text-sm">{{ issue.publishedAt | date:'MMM d, yyyy' }}</span>
-              </div>
-
-            </div>
-
-            <!-- Actions -->
-            <div class="flex gap-2 pt-2">
-              <button
-                type="button"
-                [routerLink]="['/admin/edit-special-issue', issue.slug]"
-                (click)="$event.stopPropagation()"
-                class="flex-1 px-3 py-2 text-xs font-semibold text-white bg-[#000035] hover:shadow-md rounded-lg transition"
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                (click)="$event.stopPropagation(); requestArchive(issue)"
-                [disabled]="pendingIds().has(issue.id)"
-                class="flex-1 px-3 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
-                [class.hidden]="issue.status === 'archived'"
-              >
-                Archive
-              </button>
-              <button
-                type="button"
-                (click)="$event.stopPropagation(); requestDelete(issue)"
-                [disabled]="pendingIds().has(issue.id)"
-                class="flex-1 px-3 py-2 text-xs font-semibold text-white bg-red-700 hover:bg-red-800 rounded-lg transition"
-                [class.hidden]="issue.status !== 'archived'"
-              >
-                Delete
-              </button>
-            </div>
-
-          </div>
+          </article>
         }
       </div>
-
     }
-
+    <footer class="si-pagination"><div class="si-page-size"><label for="issue-page-size">Rows per page</label><select id="issue-page-size" [value]="pageSize()" (change)="onPageSizeChange($event)">@for (size of pageSizeOptions; track size) { <option [value]="size">{{ size }}</option> }</select><p role="status">{{ rangeStart() }}–{{ rangeEnd() }} of {{ totalResults() }} issues</p></div>
+      <nav class="si-page-controls" aria-label="Issue pagination"><button type="button" aria-label="Previous page" [disabled]="currentPage() <= 1 || loading()" (click)="currentPage.set(currentPage() - 1)">Previous</button><div class="si-page-numbers">@for (page of pageNumbers(); track page) { <button type="button" [attr.aria-label]="'Page ' + page" [attr.aria-current]="currentPage() === page ? 'page' : null" [disabled]="loading()" (click)="currentPage.set(page)">{{ page }}</button> }</div><button type="button" aria-label="Next page" [disabled]="currentPage() >= totalPages() || loading()" (click)="currentPage.set(currentPage() + 1)">Next</button></nav>
+    </footer>
   </div>
-
-  <!-- Pagination -->
-  <div class="flex flex-col gap-4 mt-6">
-
-    <!-- Top Row: Page Size + Info -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-
-      <!-- Left: Page Size Selector -->
-      <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
-
-        <span>Show</span>
-
-        <select
-          [value]="pageSize()"
-          (change)="onPageSizeChange($event)"
-          class="px-2 py-1 sm:px-3 sm:py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm
-                 focus:ring-2 focus:ring-[#f4b400] focus:outline-none"
-        >
-        @for (size of pageSizeOptions; track size) {
-          <option [value]="size">
-            {{ size }}
-          </option>
-        }
-        </select>
-
-        <span>entries</span>
-
-      </div>
-
-      <!-- Right: Page Info -->
-      <div class="text-xs sm:text-sm text-gray-500">
-        Showing
-        <span class="font-medium text-gray-800">
-          {{ rangeStart() }}–{{ rangeEnd() }}
-        </span>
-        of
-        <span class="font-medium text-gray-800">
-          {{ totalResults() }}
-        </span>
-      </div>
-
-    </div>
-
-    <!-- Bottom Row: Pagination Controls -->
-    <div class="flex items-center justify-center gap-1 sm:gap-2">
-
-      <button
-        (click)="currentPage.set(currentPage() - 1)"
-        [disabled]="currentPage() === 1"
-        class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg border border-gray-200
-               disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Prev
-      </button>
-
-      @for (page of pageNumbers(); track page) {
-        <button
-          (click)="currentPage.set(page)"
-          class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg min-w-8 sm:min-w-10"
-          [class.bg-[#000035]]="currentPage() === page"
-          [class.text-white]="currentPage() === page"
-          [class.bg-gray-100]="currentPage() !== page"
-        >
-          {{ page }}
-        </button>
-      }
-
-      <button
-        (click)="currentPage.set(currentPage() + 1)"
-        [disabled]="currentPage() === totalPages()"
-        class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg border border-gray-200
-               disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Next
-      </button>
-
-    </div>
-
-  </div>
+  <app-special-issue-view-modal [issue]="selectedIssue()" (close)="selectedIssue.set(null)" />
 </section>
-
-<app-special-issue-view-modal
-  [issue]="selectedIssue()"
-  (close)="selectedIssue.set(null)"
-/>

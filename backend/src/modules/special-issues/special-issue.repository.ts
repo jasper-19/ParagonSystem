@@ -1,4 +1,5 @@
 import db from "../../config/db";
+import { isDevelopmentMediaFileUrl } from "./development-media-url";
 import type {
   IssueStatus,
   IssueType,
@@ -162,6 +163,7 @@ async function findList(
 
 function safeStoredMediaUrl(value: unknown, type: "image" | "pdf"): string {
   const candidate = String(value ?? "");
+  if (type === "image" && isDevelopmentMediaFileUrl(candidate)) return candidate;
 
   try {
     const url = new URL(candidate);

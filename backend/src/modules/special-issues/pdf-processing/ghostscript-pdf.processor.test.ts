@@ -21,15 +21,20 @@ function pdfBytes(payloadBytes: number, extraTrailer = ""): Buffer {
 }
 
 class FakeGhostscriptRunner implements CommandRunner {
+  calls: Array<{ executable: string; args: readonly string[]; options: CommandRunOptions }> = [];
   compressionError?: Error;
+  renderErrorSuffix?: string;
   outputBytes = pdfBytes(64);
   pageCount = 3;
+  changedText = false;
+  candidateText?: string;
 
   async run(
-    _executable: string,
+    executable: string,
     args: readonly string[],
-    _options: CommandRunOptions
+    options: CommandRunOptions
   ): Promise<CommandResult> {
+    this.calls.push({ executable, args, options });
     if (args.includes("--version")) {
       return { stdout: "10.0\n", stderr: "", durationMs: 1 };
     }
@@ -39,6 +44,20 @@ class FakeGhostscriptRunner implements CommandRunner {
         stderr: "",
         durationMs: 1,
       };
+    }
+    if (args.includes("-sDEVICE=nullpage")) {
+      if (this.renderErrorSuffix && args.some(arg => arg.endsWith(this.renderErrorSuffix!))) {
+        throw new CommandExecutionError("invalid page content", { exitCode: 1, timedOut: false, aborted: false });
+      }
+      return { stdout: "", stderr: "", durationMs: 1 };
+    }
+    if (args.includes("-sDEVICE=txtwrite")) {
+      const output = args.find(arg => arg.startsWith("-sOutputFile="))!;
+      await writeFile(output.slice("-sOutputFile=".length),
+        args.at(-1)?.endsWith(".optimized.pdf")
+          ? this.candidateText ?? (this.changedText ? "changed searchable text" : "original searchable text")
+          : "original searchable text");
+      return { stdout: "", stderr: "", durationMs: 1 };
     }
     if (this.compressionError) throw this.compressionError;
 
@@ -79,6 +98,9 @@ function processor(
       timeoutMs: 1_000,
       maxOutputBytes: 16 * 1024,
       concurrency: 1,
+      minCompressionInputBytes: 0,
+      minCompressionBytesPerPage: 0,
+      qpdfEnabled: false,
       ...overrides,
     },
     runner
@@ -109,6 +131,19 @@ test("optimizes a structurally valid PDF and normalizes its filename", async () 
   }
 });
 
+test("retains the original and removes temporary text when a candidate changes searchable characters", async () => {
+  const { directory, inputPath } = await fixture();
+  const runner = new FakeGhostscriptRunner();
+  runner.changedText = true;
+  try {
+    const result = await processor(runner, { allowedRoot: directory }).process(inputPath, "issue.pdf");
+    assert.equal(result.filePath, inputPath);
+    assert.equal(result.status, "compression-fallback");
+    assert.equal(result.optimizationReason, "text-changed");
+    assert.deepEqual(await readdir(directory), [path.basename(inputPath)]);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
 test("keeps the original when compression has no meaningful benefit", async () => {
   const { directory, inputPath } = await fixture();
   const runner = new FakeGhostscriptRunner();
@@ -121,9 +156,24 @@ test("keeps the original when compression has no meaningful benefit", async () =
     assert.equal(result.filePath, inputPath);
     assert.equal(result.compressionPercent, 0);
     assert.equal(result.temporaryOutputPath, undefined);
+    assert.equal(runner.calls.filter(call => call.args.includes("-dNODISPLAY")).length, 1);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("text validation tolerates layout whitespace but preserves word boundaries", async () => {
+  const { directory, inputPath } = await fixture();
+  try {
+    const runner = new FakeGhostscriptRunner();
+    runner.candidateText = "\n original\n\tsearchable   text \n";
+    const matching = await processor(runner, { allowedRoot: directory }).process(inputPath, "issue.pdf");
+    assert.equal(matching.status, "optimized");
+    runner.candidateText = "originalsearchable text";
+    const changed = await processor(runner, { allowedRoot: directory }).process(inputPath, "issue.pdf");
+    assert.equal(changed.filePath, inputPath);
+    assert.equal(changed.optimizationReason, "text-changed");
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
 test("falls back to a validated original after compression failure", async () => {
@@ -295,4 +345,202 @@ test("never falls back to the original after compression is cancelled", async ()
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("high quality retains the original instead of applying a lossy preset", async () => {
+  const { directory, inputPath } = await fixture();
+  const runner = new FakeGhostscriptRunner();
+  try {
+    const result = await processor(runner, { allowedRoot: directory, profile: "high-quality" }).process(inputPath, "issue.pdf");
+    assert.equal(result.filePath, inputPath);
+    assert.equal(result.optimizedSizeBytes, result.originalSizeBytes);
+    assert.equal(result.optimizationReason, "high-quality-original");
+    assert.equal(runner.calls.some(call => call.args.includes("-sDEVICE=pdfwrite")), false);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("adaptive thresholds avoid compression for a small or compact-per-page input", async () => {
+  const { directory, inputPath } = await fixture();
+  try {
+    for (const thresholds of [{ minCompressionInputBytes: 256 * 1024 }, { minCompressionBytesPerPage: 64 * 1024 }]) {
+      const runner = new FakeGhostscriptRunner();
+      const result = await processor(runner, { allowedRoot: directory, ...thresholds }).process(inputPath, "issue.pdf");
+      assert.equal(result.optimizationReason, "below-threshold");
+      assert.equal(result.filePath, inputPath);
+      assert.equal(runner.calls.length, 2);
+    }
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("named compression profiles use explicit image controls on the pdfwrite device", async () => {
+  const { directory, inputPath } = await fixture();
+  try {
+    for (const [profile, dpi] of [["balanced", 150], ["maximum", 96]] as const) {
+      const runner = new FakeGhostscriptRunner();
+      await processor(runner, { allowedRoot: directory, profile }).process(inputPath, "issue.pdf");
+      const command = runner.calls.find(call => call.args.includes("-sDEVICE=pdfwrite"));
+      assert.ok(command);
+      assert.ok(command.args.includes(`-dColorImageResolution=${dpi}`));
+      assert.ok(command.args.includes("-dSAFER"));
+      assert.ok(command.args.includes("-dPassThroughJPEGImages=true"));
+      const controls = command.args[command.args.indexOf("-c") + 1]!;
+      assert.ok(controls.includes(`/QFactor ${profile === "balanced" ? 0.4 : 0.76}`));
+      assert.ok(controls.includes("/ColorImageDict"));
+      assert.ok(controls.includes("/GrayImageDict"));
+      assert.ok(command.args.includes("-f"));
+      assert.equal(command.args.some(arg => arg.startsWith("-dJPEGQ=")), false);
+      assert.equal(command.args.some(arg => arg.startsWith("-dPDFSETTINGS=")), false);
+      assert.ok(command.options.outputFile);
+    }
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+class FakeQpdfRunner extends FakeGhostscriptRunner {
+  losslessBytes = pdfBytes(48);
+  qpdfUnavailable = false;
+  qpdfWarning = false;
+  qpdfEncrypted = false;
+  losePage = false;
+
+  override async run(executable: string, args: readonly string[], options: CommandRunOptions): Promise<CommandResult> {
+    if (executable !== "fake-qpdf") {
+      const result = await super.run(executable, args, options);
+      if (this.losePage && args.some(arg => arg.endsWith(".lossless.pdf"))) return { ...result, stdout: "2\n" };
+      return result;
+    }
+    this.calls.push({ executable, args, options });
+    if (this.qpdfUnavailable) throw new CommandExecutionError("missing", { exitCode: null, timedOut: false, aborted: false });
+    if (args.includes("--is-encrypted") && !this.qpdfEncrypted) {
+      throw new CommandExecutionError("not encrypted", { exitCode: 2, timedOut: false, aborted: false });
+    }
+    if (args.includes("--check") && this.qpdfWarning) {
+      throw new CommandExecutionError("warning", { exitCode: 3, timedOut: false, aborted: false });
+    }
+    if (args.includes("--object-streams=generate")) await writeFile(args[args.length - 1]!, this.losslessBytes);
+    return { stdout: "", stderr: "", durationMs: 1 };
+  }
+}
+
+test("optional lossless optimization validates structure, linearization and page parity", async () => {
+  const { directory, inputPath } = await fixture();
+  const runner = new FakeQpdfRunner();
+  try {
+    const result = await processor(runner, { allowedRoot: directory, profile: "high-quality", qpdfEnabled: true, qpdfExecutable: "fake-qpdf", linearize: true }).process(inputPath, "issue.pdf");
+    assert.equal(result.processor, "qpdf");
+    assert.equal(result.qpdfStatus, "selected");
+    assert.equal(result.optimizationReason, "lossless");
+    assert.ok(result.optimizedSizeBytes < result.originalSizeBytes);
+    assert.ok(runner.calls.some(call => call.args.includes("--linearize")));
+    assert.ok(runner.calls.some(call => call.args.includes("--check")));
+    assert.equal(runner.calls.filter(call => call.args.includes("-dNODISPLAY")).length, 2);
+    assert.equal(runner.calls.some(call => call.args.includes("--optimize-images")), false);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("unavailable, warning, larger or page-changing qpdf output safely retains the original", async () => {
+  const { directory, inputPath } = await fixture();
+  try {
+    for (const scenario of ["unavailable", "warning", "larger", "page-change"] as const) {
+      const runner = new FakeQpdfRunner();
+      runner.qpdfUnavailable = scenario === "unavailable";
+      runner.qpdfWarning = scenario === "warning";
+      runner.losePage = scenario === "page-change";
+      if (scenario === "larger") runner.losslessBytes = pdfBytes(8192);
+      const result = await processor(runner, { allowedRoot: directory, profile: "high-quality", qpdfEnabled: true, qpdfExecutable: "fake-qpdf" }).process(inputPath, "issue.pdf");
+      assert.equal(result.filePath, inputPath, scenario);
+      assert.equal(result.optimizedSizeBytes, result.originalSizeBytes, scenario);
+      assert.deepEqual(await readdir(directory), [path.basename(inputPath)]);
+    }
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("qpdf encryption inspection rejects encrypted input before compression", async () => {
+  const { directory, inputPath } = await fixture();
+  const runner = new FakeQpdfRunner();
+  runner.qpdfEncrypted = true;
+  try {
+    await assert.rejects(processor(runner, { allowedRoot: directory, qpdfEnabled: true, qpdfExecutable: "fake-qpdf" }).process(inputPath, "issue.pdf"),
+      error => error instanceof PdfProcessingError && error.code === "PDF_ENCRYPTED");
+    assert.equal(runner.calls.some(call => call.args.includes("-sDEVICE=pdfwrite")), false);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("availability probes share a native process and cache repeated readiness checks", async () => {
+  const runner = new FakeGhostscriptRunner();
+  const instance = processor(runner);
+  assert.deepEqual(await Promise.all(Array.from({ length: 20 }, () => instance.checkAvailability())), Array(20).fill(true));
+  await instance.checkAvailability();
+  assert.equal(runner.calls.length, 1);
+});
+
+test("the total processing deadline is not swallowed by original fallback", async () => {
+  const { directory, inputPath } = await fixture();
+  const runner: CommandRunner = {
+    run: async (_executable, _args, options) => new Promise((_resolve, reject) => {
+      const onAbort = (): void => {
+        clearTimeout(wait);
+        reject(new CommandExecutionError("cancelled", { exitCode: null, timedOut: false, aborted: true }));
+      };
+      const wait = setTimeout(onAbort, 2_000);
+      options.signal?.addEventListener("abort", onAbort, { once: true });
+      if (options.signal?.aborted) onAbort();
+    }),
+  };
+  try {
+    const instance = new GhostscriptPdfProcessor({ allowedRoot: directory, enabled: true, qpdfEnabled: false, totalTimeoutMs: 20, fallback: "original" }, runner);
+    await assert.rejects(instance.process(inputPath, "issue.pdf"), error => error instanceof PdfProcessingError && error.code === "PDF_PROCESS_TIMEOUT");
+    assert.deepEqual(await readdir(directory), [path.basename(inputPath)]);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("request cancellation does not wait for a shared availability probe", async () => {
+  const { directory, inputPath } = await fixture();
+  let startProbe: () => void = () => undefined;
+  let finishProbe: () => void = () => undefined;
+  const started = new Promise<void>(resolve => { startProbe = resolve; });
+  const pending = new Promise<void>(resolve => { finishProbe = resolve; });
+  const runner = new FakeQpdfRunner();
+  const originalRun = runner.run.bind(runner);
+  runner.run = async (executable, args, options) => {
+    if (executable === "fake-qpdf" && args.includes("--version")) {
+      startProbe();
+      await pending;
+    }
+    return originalRun(executable, args, options);
+  };
+  const controller = new AbortController();
+  try {
+    const operation = processor(runner, { allowedRoot: directory, qpdfEnabled: true, qpdfExecutable: "fake-qpdf" }).process(inputPath, "issue.pdf", { signal: controller.signal });
+    const rejected = assert.rejects(operation, error => error instanceof PdfProcessingError && error.code === "PDF_PROCESS_ABORTED");
+    await started;
+    controller.abort();
+    await rejected;
+  } finally {
+    finishProbe();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("originals with invalid page content cannot bypass validation via an adaptive skip", async () => {
+  const { directory, inputPath } = await fixture();
+  const runner = new FakeGhostscriptRunner();
+  runner.renderErrorSuffix = path.basename(inputPath);
+  try {
+    await assert.rejects(processor(runner, { allowedRoot: directory, profile: "high-quality" }).process(inputPath, "issue.pdf"),
+      error => error instanceof PdfProcessingError && error.code === "PDF_PROCESS_FAILED");
+    assert.deepEqual(await readdir(directory), [path.basename(inputPath)]);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("unrenderable optimized content falls back only to an already validated original", async () => {
+  const { directory, inputPath } = await fixture();
+  const runner = new FakeGhostscriptRunner();
+  runner.renderErrorSuffix = ".optimized.pdf";
+  try {
+    const result = await processor(runner, { allowedRoot: directory }).process(inputPath, "issue.pdf");
+    assert.equal(result.filePath, inputPath);
+    assert.equal(result.status, "compression-fallback");
+    assert.equal(result.optimizationReason, "compression-failed");
+    assert.deepEqual(await readdir(directory), [path.basename(inputPath)]);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });

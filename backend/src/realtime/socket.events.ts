@@ -3,6 +3,7 @@ import { SettingsSection } from "../modules/settings/settings.types";
 
 export const SocketEvents = {
   ARTICLES_UPDATED: "articles:updated",
+  SPECIAL_ISSUES_UPDATED: "special-issues:updated",
   APPLICATIONS_UPDATED: "applications:updated",
   MEDIA_UPDATED: "media:updated",
   APPLICATION_SETTINGS_UPDATED: "applications:settings-updated",
@@ -11,6 +12,22 @@ export const SocketEvents = {
   GLOBAL_SETTINGS_UPDATED: "settings:updated",
   USER_ACCOUNTS_UPDATED: "users:updated",
 } as const;
+
+// Public invalidation only: never broadcast issue details or draft metadata.
+export function emitSpecialIssuesUpdated(): void {
+  try {
+    getIO().emit(SocketEvents.SPECIAL_ISSUES_UPDATED);
+  } catch {
+    // A transport outage must not fail an already committed save. Readers
+    // fetch the published catalogue again when their socket reconnects.
+  }
+}
+
+export async function completeSpecialIssueMutation<T>(operation: () => Promise<T>): Promise<T> {
+  const result = await operation();
+  emitSpecialIssuesUpdated();
+  return result;
+}
 
 export type ArticlesUpdatedPayload = {
   articleId?: string;

@@ -24,13 +24,16 @@
 .reader__workspace { background: var(--reader-ink); border-block: 1px solid var(--reader-rule); }
 .reader__stage { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: min(68svh, 760px); min-height: 320px; padding: 1.5rem; overflow: hidden; background: #171747; touch-action: pan-y; }
 .reader__book-wrap { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-width: 0; }
-.reader__book { width: 100%; height: 100%; max-width: 100%; max-height: 100%; }
+.reader__book { width: 100%; height: 100%; flex-shrink: 0; }
+.reader__stage--zoomed { overflow: auto; align-items: flex-start; justify-content: flex-start; touch-action: pan-x pan-y; }
+.reader__stage--zoomed .reader__book-wrap { width: max-content; height: max-content; min-width: 100%; min-height: 100%; flex-shrink: 0; }
+.reader__zoom { display: inline-flex; gap: .25rem; align-items: center; }
 .reader__state { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; padding: 2rem; text-align: center; background: #171747; }
 .reader__state h2 { margin: 0; font-family: var(--font-serif); font-size: 1.5rem; line-height: 1.3; }
 .reader__state p { max-width: 50ch; margin: 0; color: var(--reader-muted); font-size: .9375rem; line-height: 1.65; }
 .reader__state a { color: var(--reader-honey); text-decoration: underline; }
 .reader__loading-mark { width: 3rem; height: 2px; background: var(--reader-honey); }
-.reader__toolbar { display: flex; align-items: center; gap: 1.5rem; min-height: 76px; padding: .75rem 1rem; }
+.reader__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; min-height: 76px; padding: .75rem 1rem; }
 .reader__navigation { display: flex; align-items: center; gap: .75rem; margin-right: auto; }
 .reader__page-button, .reader__fullscreen { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 44px; min-height: 44px; border: 1px solid transparent; padding: .5rem .75rem; background: transparent; color: #fff; font: inherit; font-size: .875rem; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease; }
 .reader__page-button { border-color: var(--reader-rule); }
@@ -54,6 +57,7 @@
   .reader__heading { align-items: flex-start; flex-direction: column; gap: .5rem; }
   .reader__heading h1 { font-size: 1.75rem; }
   .reader__toolbar { display: grid; grid-template-columns: 1fr auto; gap: .75rem; padding: .75rem 0; }
+  .reader__zoom { grid-column: 1 / -1; justify-content: center; }
   .reader__navigation { grid-column: 1 / -1; width: 100%; justify-content: space-between; gap: .25rem; margin: 0; }
   .reader__page-status { min-width: 5.75rem; }
   .reader__jump { gap: .5rem; }

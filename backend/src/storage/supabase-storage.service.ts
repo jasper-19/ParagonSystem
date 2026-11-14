@@ -2,6 +2,7 @@ import { supabase, storageBucket } from "../config/storage";
 import { StorageService, UploadFileOptions } from "./storage.interface";
 import { createReadStream } from "node:fs";
 import { finished } from "node:stream/promises";
+import { withStorageCancellation } from "./storage-fetch";
 
 export class SupabaseStorageService implements StorageService {
   constructor(private readonly client = supabase, private readonly bucket = storageBucket) {}
@@ -34,11 +35,11 @@ export class SupabaseStorageService implements StorageService {
     // Retain an error listener until destroy finishes, including failed fetches.
     stream.on("error", () => undefined);
     try {
-      const { error } = await this.client.storage.from(this.bucket).upload(path, stream, {
+      const { error } = await withStorageCancellation(options.signal, () => this.client.storage.from(this.bucket).upload(path, stream, {
         contentType: options.contentType,
         upsert: options.upsert ?? false,
         ...(options.cacheControl ? { cacheControl: options.cacheControl } : {}),
-      });
+      }));
       if (error) throw error;
     } catch {
       throw Object.assign(new Error("Storage upload failed"), { statusCode: 502 });

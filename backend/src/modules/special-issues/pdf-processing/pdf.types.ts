@@ -16,6 +16,9 @@ export type ProcessedPdf = {
   profile: string;
   status: PdfProcessingStatus;
   durationMs: number;
+  optimizationReason?: "compressed" | "lossless" | "below-threshold" | "high-quality-original" | "no-savings" | "compression-failed" | "text-changed";
+  qpdfStatus?: "disabled" | "unavailable" | "selected" | "no-savings" | "failed";
+  queueDurationMs?: number;
 };
 
 export type ProcessPdfOptions = {

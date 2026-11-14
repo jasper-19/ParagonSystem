@@ -1,10 +1,12 @@
 import { spawn } from "node:child_process";
 import { performance } from "node:perf_hooks";
+import { stat } from "node:fs/promises";
 
 export type CommandRunOptions = {
   timeoutMs: number;
   maxOutputBytes: number;
   signal?: AbortSignal;
+  outputFile?: { path: string; maxBytes: number };
 };
 
 export type CommandResult = {
@@ -25,6 +27,7 @@ export class CommandExecutionError extends Error {
   readonly exitCode: number | null;
   readonly timedOut: boolean;
   readonly aborted: boolean;
+  readonly resourceLimited: boolean;
 
   constructor(
     message: string,
@@ -32,6 +35,7 @@ export class CommandExecutionError extends Error {
       exitCode: number | null;
       timedOut: boolean;
       aborted: boolean;
+      resourceLimited?: boolean;
     }
   ) {
     super(message);
@@ -39,6 +43,7 @@ export class CommandExecutionError extends Error {
     this.exitCode = details.exitCode;
     this.timedOut = details.timedOut;
     this.aborted = details.aborted;
+    this.resourceLimited = details.resourceLimited ?? false;
   }
 }
 
@@ -64,6 +69,8 @@ export class SpawnCommandRunner implements CommandRunner {
       let aborted = false;
       let settled = false;
       let outputLimitExceeded = false;
+      let fileLimitExceeded = false;
+      let checkingOutput = false;
 
       const child = spawn(executable, [...args], {
         shell: false,
@@ -74,6 +81,24 @@ export class SpawnCommandRunner implements CommandRunner {
       const stop = (): void => {
         if (!child.killed) child.kill("SIGKILL");
       };
+
+      const outputMonitor = options.outputFile ? setInterval(() => {
+        if (checkingOutput || settled) return;
+        checkingOutput = true;
+        void stat(options.outputFile!.path).then(file => {
+          if (settled) return;
+          if (file.size > options.outputFile!.maxBytes) {
+            fileLimitExceeded = true;
+            stop();
+          }
+        }).catch(error => {
+          if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+            fileLimitExceeded = true;
+            stop();
+          }
+        }).finally(() => { checkingOutput = false; });
+      }, 100) : undefined;
+      outputMonitor?.unref();
 
       const timeout = setTimeout(() => {
         timedOut = true;
@@ -93,7 +118,7 @@ export class SpawnCommandRunner implements CommandRunner {
         chunk: Buffer
       ): number | null => {
         const nextBytes = currentBytes + chunk.length;
-        if (nextBytes > options.maxOutputBytes) {
+        if (nextBytes > options.maxOutputBytes || stdoutBytes + stderrBytes + chunk.length > options.maxOutputBytes) {
           outputLimitExceeded = true;
           stop();
           return null;
@@ -120,6 +145,7 @@ export class SpawnCommandRunner implements CommandRunner {
 
       child.once("error", error => {
         clearTimeout(timeout);
+        if (outputMonitor) clearInterval(outputMonitor);
         options.signal?.removeEventListener("abort", onAbort);
         if (settled) return;
         settled = true;
@@ -139,21 +165,24 @@ export class SpawnCommandRunner implements CommandRunner {
 
       child.once("close", exitCode => {
         clearTimeout(timeout);
+        if (outputMonitor) clearInterval(outputMonitor);
         options.signal?.removeEventListener("abort", onAbort);
         if (settled) return;
         settled = true;
 
-        if (exitCode !== 0 || timedOut || aborted || outputLimitExceeded) {
+        if (exitCode !== 0 || timedOut || aborted || outputLimitExceeded || fileLimitExceeded) {
           reject(
             new CommandExecutionError(
-              outputLimitExceeded
+              fileLimitExceeded
+                ? "PDF processor file limit exceeded"
+                : outputLimitExceeded
                 ? "PDF processor output limit exceeded"
                 : timedOut
                 ? "PDF processing timed out"
                 : aborted
                   ? "PDF processing was cancelled"
                   : "PDF processor rejected the document",
-              { exitCode, timedOut, aborted }
+              { exitCode, timedOut, aborted, resourceLimited: fileLimitExceeded || outputLimitExceeded }
             )
           );
           return;

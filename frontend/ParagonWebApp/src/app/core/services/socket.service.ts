@@ -139,6 +139,11 @@ export class SocketService {
     );
   }
 
+  onSpecialIssuesUpdated(callback: () => void): () => void {
+    this.connect();
+    return this.on<void>(SOCKET_EVENTS.SPECIAL_ISSUES_UPDATED, callback);
+  }
+
   onMediaUpdated(
     callback: () => void
   ): () => void {

@@ -2554,14 +2554,7 @@
 <!-- ========================= -->
 
 <ng-container *ngIf="revokingApp">
-  <div
-    class="staff-directory-dialog-overlay fixed inset-0 z-9999
-           flex items-end justify-center
-           bg-slate-950/70
-           backdrop-blur-sm
-           sm:items-center sm:p-4"
-    (click)="closeRevokeModal()"
-  >
+  <div class="action-dialog-overlay" (click)="closeRevokeModal()">
     <section
       #revokeAcceptanceDialog
       tabindex="-1"
@@ -2569,210 +2562,57 @@
       aria-modal="true"
       aria-labelledby="revoke-acceptance-title"
       aria-describedby="revoke-acceptance-description"
-      class="relative flex max-h-[94dvh]
-             w-full max-w-md flex-col
-             overflow-hidden bg-white
-             shadow-2xl
-             rounded-t-3xl
-             sm:max-h-[calc(100dvh-2rem)]
-             sm:rounded-3xl"
+      [attr.aria-busy]="revokeAcceptanceSubmitting()"
+      class="action-dialog is-danger"
       (click)="$event.stopPropagation()"
-      (keydown)="
-        onRevokeAcceptanceDialogKeydown($event)
-      "
+      (keydown)="onRevokeAcceptanceDialogKeydown($event)"
     >
-      <header
-        class="relative z-10 shrink-0
-               bg-linear-to-br
-               from-orange-500 to-orange-700
-               px-4 py-4
-               sm:px-6 sm:py-5"
+      <button
+        #revokeAcceptanceCloseButton
+        type="button"
+        class="action-dialog-close"
+        aria-label="Close revoke acceptance dialog"
+        [disabled]="revokeAcceptanceSubmitting()"
+        (click)="closeRevokeModal()"
       >
-        <div
-          class="flex items-start
-                 justify-between gap-4"
-        >
-          <div class="min-w-0">
-            <h3
-              id="revoke-acceptance-title"
-              class="text-xl font-bold
-                     text-white sm:text-2xl"
-            >
-              Revoke Acceptance
-            </h3>
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="m6 6 12 12M18 6 6 18" />
+        </svg>
+      </button>
 
-            <p
-              class="mt-1 text-sm leading-5
-                     text-white/75"
-            >
-              Return this applicant to the
-              interview-completed stage.
-            </p>
-          </div>
-
-          <button
-            #revokeAcceptanceCloseButton
-            type="button"
-            (click)="closeRevokeModal()"
-            [disabled]="
-              revokeAcceptanceSubmitting()
-            "
-            class="inline-flex h-11 w-11
-                   shrink-0 items-center
-                   justify-center rounded-xl
-                   border border-white/10
-                   bg-white/10 text-white
-                   transition-colors
-                   hover:bg-white/20
-                   disabled:cursor-not-allowed
-                   disabled:opacity-50
-                   focus-visible:outline-none
-                   focus-visible:ring-2
-                   focus-visible:ring-white"
-            aria-label="Close revoke acceptance dialog"
-          >
-            <svg
-              aria-hidden="true"
-              class="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-            <path d="M18 6 6 18"/>
-            <path d="m6 6 12 12"/>
-            </svg>
-          </button>
-        </div>
-      </header>
-
-      <div
-        class="min-h-0 flex-1 space-y-5
-               overflow-y-auto
-               overscroll-contain
-               px-4 py-5
-               sm:px-6 sm:py-6"
-      >
-        <div
-          class="rounded-2xl border
-                 border-orange-200
-                 bg-orange-50 p-4"
-        >
-          <p
-            id="revoke-acceptance-description"
-            class="text-sm leading-6
-                   text-slate-700"
-          >
-            Are you sure you want to revoke
-            the acceptance of
-            <span class="font-bold text-[#000035]">
-              {{ revokingApp.fullName }}
-            </span>?
-          </p>
-
-          <p
-            class="mt-3 text-sm leading-6
-                   text-slate-600"
-          >
-            They will return to
-            <span class="font-semibold">
-              Interview Completed
-            </span>
-            and be removed from the
-            adviser-assignment queue. They can
-            be accepted again later.
-          </p>
-        </div>
-
-        @if (revokeAcceptanceError()) {
-          <div
-            role="alert"
-            class="rounded-xl border
-                   border-red-200 bg-red-50
-                   px-4 py-3 text-sm
-                   font-medium text-red-700"
-          >
-            {{ revokeAcceptanceError() }}
-          </div>
-        }
+      <span class="action-dialog-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m10.3 3.8-8 14a2 2 0 0 0 1.7 3h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0Z" />
+          <path d="M12 9v4m0 4h.01" />
+        </svg>
+      </span>
+      <h3 id="revoke-acceptance-title" class="action-dialog-title">Revoke acceptance?</h3>
+      <div id="revoke-acceptance-description" class="action-dialog-message">
+        <p>Revoke the acceptance of <strong>{{ revokingApp.fullName }}</strong>?</p>
+        <p class="revoke-acceptance-consequence">They will return to Interview Completed and be removed from the adviser-assignment queue. They can be accepted again later.</p>
       </div>
 
-      <footer
-        class="shrink-0 border-t
-               border-slate-200
-               bg-white/95 px-4 pt-3
-               pb-[calc(0.75rem+env(safe-area-inset-bottom))]
-               backdrop-blur
-               sm:px-6 sm:pb-3"
-      >
-        <div
-          class="grid grid-cols-1 gap-3
-                 min-[420px]:grid-cols-2"
+      @if (revokeAcceptanceError()) {
+        <div role="alert" class="revoke-acceptance-error">{{ revokeAcceptanceError() }}</div>
+      }
+
+      <div class="action-dialog-actions">
+        <button
+          type="button"
+          class="action-dialog-button action-dialog-primary"
+          [disabled]="revokeAcceptanceSubmitting()"
+          [attr.aria-busy]="revokeAcceptanceSubmitting()"
+          (click)="confirmRevoke()"
         >
-          <button
-            type="button"
-            (click)="closeRevokeModal()"
-            [disabled]="
-              revokeAcceptanceSubmitting()
-            "
-            class="inline-flex min-h-11
-                   items-center justify-center
-                   rounded-xl border
-                   border-slate-300 bg-white
-                   px-4 py-2.5 text-sm
-                   font-semibold text-slate-700
-                   transition hover:bg-slate-50
-                   disabled:cursor-not-allowed
-                   disabled:opacity-50
-                   focus-visible:outline-none
-                   focus-visible:ring-2
-                   focus-visible:ring-orange-500"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            (click)="confirmRevoke()"
-            [disabled]="
-              revokeAcceptanceSubmitting()
-            "
-            [attr.aria-busy]="
-              revokeAcceptanceSubmitting()
-            "
-            class="inline-flex min-h-11
-                   items-center justify-center
-                   gap-2 rounded-xl
-                   bg-orange-600 px-4 py-2.5
-                   text-sm font-semibold
-                   text-white transition
-                   hover:bg-orange-700
-                   disabled:cursor-not-allowed
-                   disabled:opacity-50
-                   focus-visible:outline-none
-                   focus-visible:ring-2
-                   focus-visible:ring-orange-500"
-          >
-            @if (
-              revokeAcceptanceSubmitting()
-            ) {
-              <span
-                aria-hidden="true"
-                class="h-4 w-4 animate-spin
-                       rounded-full border-2
-                       border-white/30
-                       border-t-white"
-              ></span>
-
-              Revoking…
-            } @else {
-              Revoke Acceptance
-            }
-          </button>
-        </div>
-      </footer>
+          @if (revokeAcceptanceSubmitting()) {
+            <span aria-hidden="true" class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+            Revoking...
+          } @else {
+            Revoke Acceptance
+          }
+        </button>
+        <button type="button" class="action-dialog-button" [disabled]="revokeAcceptanceSubmitting()" (click)="closeRevokeModal()">Cancel</button>
+      </div>
     </section>
   </div>
 </ng-container>

@@ -129,6 +129,42 @@ describe('SpecialIssueReader lifecycle and navigation', () => {
     await Promise.all([first, second]);
     expect(render).toHaveBeenCalledOnce();
   });
+  it('renders the visible spread before deferring neighboring pages', async () => {
+    vi.useFakeTimers();
+    const render = vi.spyOn(reader as any, 'ensureFlipbookPagesRendered').mockResolvedValue(undefined);
+    await (reader as any).renderVisibleAndPrefetch(8);
+    expect(render).toHaveBeenCalledExactlyOnceWith(8, true);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(render).toHaveBeenLastCalledWith(8);
+    vi.useRealTimers();
+  });
+  it('zooms without downloading the document again and clamps the supported range', () => {
+    const doc = {} as any;
+    reader.pdfDoc = doc;
+    reader.readerContainer = new ElementRef(document.createElement('div'));
+    const render = vi.spyOn(reader as any, 'tryInitialRender').mockResolvedValue(undefined);
+    reader.setZoom(99);
+    expect(reader.zoom).toBe(3);
+    reader.setZoom(3);
+    expect(render).toHaveBeenCalledTimes(1);
+    reader.setZoom(0);
+    expect(reader.zoom).toBe(1);
+    expect(reader.pdfDoc).toBe(doc);
+  });
+  it.each(['render', 'encode'])('releases canvas backing pixels when %s fails', async (failure) => {
+    const canvas = document.createElement('canvas');
+    const task = { promise: failure === 'render' ? Promise.reject(new Error('render failed')) : Promise.resolve(), cancel: vi.fn() };
+    reader.pdfDoc = { getPage: async () => ({ getViewport: () => ({ width: 200, height: 300 }), render: () => task }) } as any;
+    const create = vi.spyOn(document, 'createElement').mockReturnValue(canvas);
+    vi.spyOn(canvas, 'getContext').mockReturnValue({} as any);
+    vi.spyOn(canvas, 'toBlob').mockImplementation(callback => callback(null));
+    await expect((reader as any).rasterizePdfPage(1, 200)).rejects.toThrow();
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+    create.mockRestore();
+    vi.restoreAllMocks();
+  });
+
 });
 
 describe('SpecialIssueReader accessible controls', () => {

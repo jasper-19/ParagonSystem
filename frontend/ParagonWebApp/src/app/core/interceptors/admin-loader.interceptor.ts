@@ -2,6 +2,7 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { SKIP_ADMIN_LOADER } from '../config/http-context';
 import { AdminLoaderService } from '../services/admin-loader.service';
 
 // ===== Admin Loader Interceptor =====
@@ -26,7 +27,7 @@ export const adminLoaderInterceptor: HttpInterceptorFn = (req, next) => {
   // static assets so admin pages don't get stuck behind unrelated
   // long-running requests.
   const isApiRequest = req.url.startsWith('/api/');
-  if (!isApiRequest || req.headers.has('x-skip-admin-loader')) {
+  if (!isApiRequest || req.context.get(SKIP_ADMIN_LOADER) || req.headers.has('x-skip-admin-loader')) {
     return next(req);
   }
 

@@ -1,6 +1,6 @@
 :host .staff-directory-dialog-overlay { background: rgb(0 0 53 / 64%); backdrop-filter: none; }
 
-:host [aria-modal='true'] {
+:host [aria-modal='true']:not(.action-dialog) {
   border-radius: 8px 8px 0 0;
   box-shadow: 0 20px 64px rgb(0 0 53 / 24%);
   font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -85,16 +85,8 @@
 
   p:first-child { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 400; color: #596477; }
 }
-:host [aria-labelledby='revoke-acceptance-title'] > div > div {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
-
-  &[role='alert'] { padding: 12px; background: #fef3f2; border: 1px solid #fecaca; border-radius: 4px; }
-}
 @media (min-width: 640px) {
-  :host [aria-modal='true'] {
+  :host [aria-modal='true']:not(.action-dialog) {
     border-radius: 6px;
     > header { padding: 24px; }
     > div.overflow-y-auto, > form > div.overflow-y-auto { padding: 24px; }
@@ -102,5 +94,5 @@
   }
 }
 @media (max-width: 639px) {
-  :host [aria-modal='true'] input, :host [aria-modal='true'] select, :host [aria-modal='true'] textarea { font-size: 16px; }
+  :host [aria-modal='true']:not(.action-dialog) input, :host [aria-modal='true']:not(.action-dialog) select, :host [aria-modal='true']:not(.action-dialog) textarea { font-size: 16px; }
 }

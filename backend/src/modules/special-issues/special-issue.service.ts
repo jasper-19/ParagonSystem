@@ -212,6 +212,7 @@ async function createUploadedIssue(
         contentType: "application/pdf",
         cacheControl: "31536000",
         upsert: false,
+        ...(signal ? { signal } : {}),
       }
     );
     uploadDurationMs = performance.now() - uploadStartedAt;
@@ -245,6 +246,9 @@ async function createUploadedIssue(
       uploadDurationMs: Number(uploadDurationMs.toFixed(2)),
       totalDurationMs: Number((performance.now() - startedAt).toFixed(2)),
       usedOptimizedPdf: processed.status === "optimized",
+      compressionStatus: processed.status,
+      ...(processed.optimizationReason ? { optimizationReason: processed.optimizationReason } : {}),
+      ...(processed.qpdfStatus ? { qpdfStatus: processed.qpdfStatus } : {}),
     });
 
     return created;
@@ -468,6 +472,7 @@ async function replaceUploadedIssuePdf(
         contentType: "application/pdf",
         cacheControl: "31536000",
         upsert: false,
+        ...(signal ? { signal } : {}),
       }
     );
 
@@ -526,6 +531,10 @@ async function replaceUploadedIssuePdf(
       compressionPercent: processed.compressionPercent,
       pageCount: processed.pageCount,
       totalDurationMs: Number((performance.now() - startedAt).toFixed(2)),
+      processingDurationMs: Number(processed.durationMs.toFixed(2)),
+      compressionStatus: processed.status,
+      ...(processed.optimizationReason ? { optimizationReason: processed.optimizationReason } : {}),
+      ...(processed.qpdfStatus ? { qpdfStatus: processed.qpdfStatus } : {}),
     });
     return updated;
   } catch (error) {

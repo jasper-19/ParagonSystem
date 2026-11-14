@@ -1,0 +1,141 @@
+{
+  "measuredAt": "2026-11-14T09:46:21.968Z",
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/157.0.8103.52",
+    "revision": "@0985600c06a688b9c669e74afde7dacd5aaed047",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "jsVersion": "15.7.112.23"
+  },
+  "pdf": "Synthetic image-heavy PDF, 4 pages, 12962183 bytes",
+  "methodology": "Actual production Angular/PDF.js/PageFlip in isolated headless Chrome; production API requests fulfilled with local fixture before network. localhost storage delivery, warm host caches; viewport tests are not physical devices. Server-written bytes may include a cancelled initial full-request buffer.",
+  "rows": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "firstPageMs": 3266,
+      "rangeRequestsAtFirstPage": 6,
+      "serverWrittenBytesAtFirstPage": 5622151,
+      "cleanup": {
+        "created": 6,
+        "revoked": 6,
+        "activeAnimationFrames": 0
+      },
+      "jsHeapUsedBytes": 5966020,
+      "pdfRequests": [
+        {
+          "range": null,
+          "writtenBytes": 1572864,
+          "status": 200,
+          "contentRange": null
+        },
+        {
+          "range": "bytes=0-262143",
+          "writtenBytes": 262144,
+          "status": 206,
+          "contentRange": "bytes 0-262143/12962183"
+        },
+        {
+          "range": "bytes=12845056-12962182",
+          "writtenBytes": 117127,
+          "status": 206,
+          "contentRange": "bytes 12845056-12962182/12962183"
+        },
+        {
+          "range": "bytes=9699328-9961471",
+          "writtenBytes": 262144,
+          "status": 206,
+          "contentRange": "bytes 9699328-9961471/12962183"
+        },
+        {
+          "range": "bytes=6291456-6553599",
+          "writtenBytes": 262144,
+          "status": 206,
+          "contentRange": "bytes 6291456-6553599/12962183"
+        },
+        {
+          "range": "bytes=3145728-3407871",
+          "writtenBytes": 262144,
+          "status": 206,
+          "contentRange": "bytes 3145728-3407871/12962183"
+        },
+        {
+          "range": "bytes=262144-3145727",
+          "writtenBytes": 2883584,
+          "status": 206,
+          "contentRange": "bytes 262144-3145727/12962183"
+        },
+        {
+          "range": "bytes=3407872-6291455",
+          "writtenBytes": 2883584,
+          "status": 206,
+          "contentRange": "bytes 3407872-6291455/12962183"
+        },
+        {
+          "range": "bytes=6553600-9699327",
+          "writtenBytes": 3145728,
+          "status": 206,
+          "contentRange": "bytes 6553600-9699327/12962183"
+        },
+        {
+          "range": "bytes=9961472-12845055",
+          "writtenBytes": 2883584,
+          "status": 206,
+          "contentRange": "bytes 9961472-12845055/12962183"
+        }
+      ]
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "firstPageMs": 1252,
+      "rangeRequestsAtFirstPage": 2,
+      "serverWrittenBytesAtFirstPage": 391,
+      "cleanup": {
+        "created": 6,
+        "revoked": 6,
+        "activeAnimationFrames": 0
+      },
+      "jsHeapUsedBytes": 9490836,
+      "pdfRequests": [
+        {
+          "range": "bytes=0-1048575",
+          "writtenBytes": 0,
+          "status": 304,
+          "contentRange": null
+        },
+        {
+          "range": "bytes=12961792-12962182",
+          "writtenBytes": 391,
+          "status": 206,
+          "contentRange": "bytes 12961792-12962182/12962183"
+        }
+      ]
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "firstPageMs": 787,
+      "rangeRequestsAtFirstPage": 1,
+      "serverWrittenBytesAtFirstPage": 0,
+      "cleanup": {
+        "created": 5,
+        "revoked": 5,
+        "activeAnimationFrames": 0
+      },
+      "jsHeapUsedBytes": 9948408,
+      "pdfRequests": [
+        {
+          "range": "bytes=0-1048575",
+          "writtenBytes": 0,
+          "status": 304,
+          "contentRange": null
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

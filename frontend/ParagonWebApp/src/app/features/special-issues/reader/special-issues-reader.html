@@ -21,7 +21,7 @@
   </header>
   <div class="reader__body">
     <div #fullscreenContainer class="reader__workspace">
-      <div #readerContainer class="reader__stage" role="region" aria-label="Publication pages" [attr.aria-busy]="isLoading">
+      <div #readerContainer class="reader__stage" [class.reader__stage--zoomed]="zoom > 1" role="region" aria-label="Publication pages" [attr.aria-busy]="isLoading">
         <div class="reader__book-wrap"><div #flipbookContainer class="reader__book"></div></div>
         @if (isLoading) {
           <div class="reader__state" role="status">
@@ -53,6 +53,11 @@
             <span>Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m10 5 7 7-7 7"/></svg>
           </button>
         </div>
+        <div class="reader__zoom" role="group" aria-label="Zoom controls">
+          <button type="button" class="reader__page-button" (click)="setZoom(zoom - 0.25)" [disabled]="isLoading || !!errorMessage || !pdfDoc || zoom <= 1" aria-label="Zoom out">-</button>
+          <button type="button" class="reader__page-button" (click)="setZoom(1)" [disabled]="isLoading || !!errorMessage || !pdfDoc" aria-label="Reset zoom">{{ zoom * 100 | number:'1.0-0' }}%</button>
+          <button type="button" class="reader__page-button" (click)="setZoom(zoom + 0.25)" [disabled]="isLoading || !!errorMessage || !pdfDoc || zoom >= 3" aria-label="Zoom in">+</button>
+        </div>
         <label class="reader__jump"><span>Go to page</span>
           <input #pageInput type="number" min="1" [max]="totalPages" step="1" [value]="currentPage"
             (change)="jumpToPage($any($event.target).value); pageInput.value = '' + currentPage"
@@ -67,6 +72,6 @@
         </button>
       </div>
     </div>
-    <p class="reader__help">Turn pages with the controls, swipe, or use the left and right arrow keys.</p>
+    <p class="reader__help">Turn pages with the controls, swipe, or use the left and right arrow keys. When zoomed in, scroll to explore the page and use the controls to turn pages.</p>
   </div>
 </main>

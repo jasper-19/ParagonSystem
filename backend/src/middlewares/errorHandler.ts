@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { PdfProcessingError } from "../modules/special-issues/pdf-processing/pdf.types";
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -41,9 +42,13 @@ export function errorHandler(
   }
 
   // Send a sanitized response — stack traces never reach the client
+  const pdfUnavailable = err instanceof PdfProcessingError && statusCode === 503 &&
+    (err.code === "PDF_PROCESSOR_UNAVAILABLE" || err.code === "PDF_PROCESSOR_DISABLED");
   const response: Record<string, unknown> = {
     error:
-      statusCode >= 500
+      pdfUnavailable
+        ? "PDF uploads are unavailable because the PDF processor is not configured. Please contact the administrator."
+        : statusCode >= 500
         ? "Internal server error"
         : isMulterError
           ? multerCode === "LIMIT_FILE_SIZE"
@@ -51,6 +56,7 @@ export function errorHandler(
             : "Invalid file upload"
           : err.message,
   };
+  if (pdfUnavailable) response["code"] = (err as PdfProcessingError).code;
 
   if (err.usage && statusCode < 500) {
     response["usage"] = err.usage;

@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { SpecialIssue, SpecialIssueType } from '../../models/special-issue.model';
 import { SpecialIssueService } from '../../core/services/special-issue.service';
 import { RouterModule } from '@angular/router';
 import { LoaderService } from '../../shared/services/loader.service';
+import { SocketService } from '../../core/services/socket.service';
+import { EMPTY, Subject, catchError, switchMap, takeUntil, tap } from 'rxjs';
 
 interface IssueTab {
   label: string;
@@ -17,7 +19,12 @@ interface IssueTab {
   templateUrl: './special-issues.html',
   styleUrl: './special-issues.scss',
 })
-export class SpecialIssues implements OnInit {
+export class SpecialIssues implements OnInit, OnDestroy {
+  private readonly reloads = new Subject<void>();
+  private readonly destroyed = new Subject<void>();
+  private stopUpdates?: () => void;
+  private stopConnect?: () => void;
+  private loaderVisible = false;
 
   issues: SpecialIssue[] = [];
   filtered: SpecialIssue[] = [];
@@ -44,9 +51,27 @@ export class SpecialIssues implements OnInit {
     private issuesService: SpecialIssueService,
     private loader: LoaderService,
     private cdr: ChangeDetectorRef,
+    private socket: SocketService,
   ) {}
 
   ngOnInit(): void {
+    this.reloads.pipe(
+      switchMap(() => this.issuesService.refresh().pipe(
+        tap(() => {
+          this.applyIssues(this.issuesService.getAll());
+          this.loadError = '';
+          this.finishLoading();
+        }),
+        catchError(() => {
+          this.loadError = 'Special issues could not be loaded. Please try again.';
+          this.finishLoading();
+          return EMPTY;
+        }),
+      )),
+      takeUntil(this.destroyed),
+    ).subscribe();
+    this.stopUpdates = this.socket.onSpecialIssuesUpdated(() => this.reloads.next());
+    this.stopConnect = this.socket.on<void>('connect', () => this.reloads.next());
     this.loadIssues();
   }
 
@@ -54,22 +79,28 @@ export class SpecialIssues implements OnInit {
     this.loading = true;
     this.loadError = '';
     this.loader.show();
+    this.loaderVisible = true;
+    this.reloads.next();
+  }
 
-    this.issuesService.refresh().subscribe({
-      next: () => {
-        this.applyIssues(this.issuesService.getAll());
-        this.loading = false;
-        this.loader.hide();
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.applyIssues([]);
-        this.loading = false;
-        this.loadError = 'Special issues could not be loaded. Please try again.';
-        this.loader.hide();
-        this.cdr.markForCheck();
-      },
-    });
+  private finishLoading(): void {
+    this.loading = false;
+    this.hideLoader();
+    this.cdr.markForCheck();
+  }
+
+  private hideLoader(): void {
+    if (this.loaderVisible) this.loader.hide();
+    this.loaderVisible = false;
+  }
+
+  ngOnDestroy(): void {
+    this.stopUpdates?.();
+    this.stopConnect?.();
+    this.destroyed.next();
+    this.destroyed.complete();
+    this.reloads.complete();
+    this.hideLoader();
   }
 
   onCoverError(issue: SpecialIssue): void {

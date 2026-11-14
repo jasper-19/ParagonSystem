@@ -10,13 +10,15 @@ import { initializeSocket } from "./realtime/socket";
 import { initializeDatabase } from "./config/db";
 import pool from "./config/db";
 import { validateEnvironment } from "./config/env";
+import { specialIssueUploadConfig } from "./config/special-issue-upload";
 
 const PORT = Number(process.env.PORT) || 3000;
 
 // Create a shared HTTP server for Express and Socket.IO
 const server = http.createServer(app);
 
-server.requestTimeout = 30_000;
+// Node's receive deadline must allow the bounded PDF upload window.
+server.requestTimeout = specialIssueUploadConfig.receiveTimeoutMs;
 server.headersTimeout = 15_000;
 server.keepAliveTimeout = 5_000;
 server.maxHeadersCount = 100;

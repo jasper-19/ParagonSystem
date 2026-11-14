@@ -6,6 +6,7 @@ import { AllSpecialIssuesComponent } from './all-special-issues';
 import { SpecialIssueService } from '../../../../../core/services/special-issue.service';
 import { ConfirmationService } from '../../../../../shared/components/confirmation-modal/confirmation.service';
 import { SpecialIssue } from '../../../../../models/special-issue.model';
+import { SocketService } from '../../../../../core/services/socket.service';
 
 describe('Special Issues list state', () => {
   const issue = { id: 'issue', title: 'Issue', slug: 'issue', type: 'Newsletter', academicYear: '2025-2026', status: 'archived', coverImage: '', pdfUrl: '', publishedAt: new Date(0) } as SpecialIssue;
@@ -22,6 +23,7 @@ describe('Special Issues list state', () => {
     confirm.mockClear(); remove.mockReset().mockReturnValue(deletion);
     TestBed.configureTestingModule({ imports: [AllSpecialIssuesComponent], providers: [
       provideRouter([]),
+      { provide: SocketService, useValue: { onSpecialIssuesUpdated: () => () => {}, on: () => () => {} } },
       { provide: ActivatedRoute, useValue: { queryParamMap: params, snapshot: { queryParamMap: params.value } } },
       { provide: ConfirmationService, useValue: { confirm } },
       { provide: SpecialIssueService, useValue: { issues$: items, refreshAdmin: () => of(items.value), deleteIssue: remove } },

@@ -3,9 +3,10 @@ import { Component, DestroyRef, computed, effect, inject, signal } from '@angula
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { firstValueFrom } from 'rxjs';
+import { EMPTY, Subject, catchError, firstValueFrom, switchMap, tap } from 'rxjs';
+import { SocketService } from '../../../../../core/services/socket.service';
 import { SpecialIssueService } from '../../../../../core/services/special-issue.service';
-import { SpecialIssue } from '../../../../../models/special-issue.model';
+import { SpecialIssue, SpecialIssuePdfMetadata } from '../../../../../models/special-issue.model';
 import { SpecialIssueViewModal } from '../../../../../shared/components/special-issue-view-modal/special-issue-view-modal';
 
 type IssueStatus = 'all' | 'published' | 'draft' | 'archived';
@@ -16,7 +17,8 @@ type SortDirection = 'asc' | 'desc';
   selector: 'app-all-special-issues',
   standalone: true,
   imports: [CommonModule, RouterModule, SpecialIssueViewModal],
-  templateUrl: './all-special-issues.html'
+  templateUrl: './all-special-issues.html',
+  styleUrl: '../../../../../shared/styles/admin-special-issues.scss',
 })
 export class AllSpecialIssuesComponent {
 
@@ -25,9 +27,13 @@ export class AllSpecialIssuesComponent {
   private router = inject(Router);
   private confirm = inject(ConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly socket = inject(SocketService);
+  private readonly reloads = new Subject<void>();
+  readonly loadError = signal('');
   private readonly queryParams = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
   readonly loading = signal(true);
   readonly feedback = signal('');
+  readonly savedPdfMetadata = signal<SpecialIssuePdfMetadata | null>(null);
   readonly pendingIds = signal<ReadonlySet<string>>(new Set());
 
   readonly currentPage = signal(1);
@@ -57,13 +63,28 @@ export class AllSpecialIssuesComponent {
   private issuesStream = toSignal(this.issueService.issues$, { initialValue: [] });
 
   constructor() {
-    this.issueService.refreshAdmin().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => this.loading.set(false),
-      error: () => {
-        this.loading.set(false);
-        this.feedback.set('Could not load Special Issues. Reload the page to try again.');
-      },
-    });
+    const metadata = this.router.getCurrentNavigation?.()?.extras.state?.['savedPdfMetadata'];
+    if (metadata && typeof metadata.optimizedSizeBytes === 'number') this.savedPdfMetadata.set(metadata);
+    this.reloads.pipe(
+      switchMap(() => this.issueService.refreshAdmin().pipe(
+        tap(() => {
+          this.loading.set(false);
+          this.loadError.set('');
+          const selected = this.selectedIssue();
+          if (selected) this.selectedIssue.set(this.issueService.getById(selected.id) ?? null);
+        }),
+        catchError(() => {
+          this.loading.set(false);
+          this.loadError.set('Could not load special issues. Please try again.');
+          return EMPTY;
+        }),
+      )),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe();
+    const stopUpdates = this.socket.onSpecialIssuesUpdated(() => this.reloads.next());
+    const stopConnect = this.socket.on<void>('connect', () => this.reloads.next());
+    this.destroyRef.onDestroy(() => { stopUpdates(); stopConnect(); this.reloads.complete(); });
+    this.reloads.next();
 
     // Sync query param → signal
     effect(() => {
@@ -96,6 +117,22 @@ export class AllSpecialIssuesComponent {
   }
 
   // ---- Computed ----
+  refreshIssues(): void {
+    this.loading.set(true);
+    this.loadError.set('');
+    this.reloads.next();
+  }
+
+  resetFilters(): void {
+    this.searchQuery.set('');
+    this.setStatus('all');
+  }
+
+  readonly issueCounts = computed(() => {
+    const list = this.issuesStream();
+    return { all: list.length, published: list.filter(i => i.status === 'published').length,
+      draft: list.filter(i => i.status === 'draft').length, archived: list.filter(i => i.status === 'archived').length };
+  });
   readonly filteredIssues = computed(() => {
     const status = this.statusFilter();
     const query = this.searchQuery().toLowerCase().trim();

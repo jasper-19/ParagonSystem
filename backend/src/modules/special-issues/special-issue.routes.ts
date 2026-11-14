@@ -16,6 +16,7 @@ import {
 } from "./special-issue.schema";
 import {
   parseSpecialIssuePdfUpload,
+  admitSpecialIssueUpload,
   requireSpecialIssuePdf,
   validateSpecialIssueCreateRequest,
 } from "./special-issue-upload.middleware";
@@ -71,6 +72,7 @@ const specialIssueUploadLimiter = rateLimit({
 router.post(
   "/",
   specialIssueUploadLimiter,
+  admitSpecialIssueUpload,
   parseSpecialIssuePdfUpload,
   validateSpecialIssueCreateRequest,
   controller.createIssue
@@ -80,6 +82,7 @@ router.patch(
   "/:id/pdf",
   validateParams(idParamSchema),
   specialIssueUploadLimiter,
+  admitSpecialIssueUpload,
   parseSpecialIssuePdfUpload,
   requireSpecialIssuePdf,
   controller.replaceIssuePdf

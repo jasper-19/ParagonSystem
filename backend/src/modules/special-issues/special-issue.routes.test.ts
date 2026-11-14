@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { access } from "node:fs/promises";
 import type { AddressInfo } from "node:net";
+import { request as httpRequest } from "node:http";
 import test from "node:test";
 import express, { type Express } from "express";
 import { errorHandler } from "../../middlewares/errorHandler";
@@ -8,6 +9,8 @@ import { signAuthToken } from "../../security/auth-token";
 import specialIssueRouter from "./special-issue.routes";
 import {
   parseSpecialIssuePdfUpload,
+  createUploadAdmission,
+  createSpecialIssuePdfUploadParser,
   type PdfUploadRequest,
   validateSpecialIssueCreateRequest,
 } from "./special-issue-upload.middleware";
@@ -136,6 +139,33 @@ test("multipart middleware writes a UUID file and removes it after response", as
   });
 });
 
+test("multipart create accepts a cover selected from the configured development media API", async () => {
+  const previousEnvironment = process.env.NODE_ENV;
+  const previousBase = process.env.API_BASE_URL;
+  process.env.NODE_ENV = "development";
+  process.env.API_BASE_URL = "http://localhost:5000";
+  const coverImage = "http://localhost:5000/api/media/11111111-1111-4111-8111-111111111111/file";
+  const app = express();
+  app.post("/upload", parseSpecialIssuePdfUpload, validateSpecialIssueCreateRequest,
+    (req, res) => res.status(201).json({ coverImage: req.body.coverImage }));
+  app.use(errorHandler);
+  try {
+    await withServer(app, async baseUrl => {
+      const form = validMultipartPdf();
+      form.set("coverImage", coverImage);
+      const response = await fetch(`${baseUrl}/upload`, { method: "POST", body: form });
+      const body = await response.json() as { coverImage?: string };
+      assert.equal(response.status, 201, JSON.stringify(body));
+      assert.equal(body.coverImage, coverImage);
+    });
+  } finally {
+    if (previousEnvironment === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousEnvironment;
+    if (previousBase === undefined) delete process.env.API_BASE_URL;
+    else process.env.API_BASE_URL = previousBase;
+  }
+});
+
 test("multipart middleware rejects a spoofed declared MIME type", async () => {
   const app = express();
   app.post(
@@ -161,5 +191,62 @@ test("multipart middleware rejects a spoofed declared MIME type", async () => {
     assert.deepEqual(await response.json(), {
       error: "Only PDF uploads are accepted",
     });
+  });
+});
+
+test("multipart uploads reject non-PDF extensions even with a PDF MIME type", async () => {
+  const app = express();
+  app.post("/upload", parseSpecialIssuePdfUpload, (_req, res) => res.sendStatus(201));
+  app.use(errorHandler);
+  const form = validMultipartPdf();
+  form.set("pdf", new Blob(["%PDF-1.7\n%%EOF"], { type: "application/pdf" }), "issue.exe");
+  await withServer(app, async baseUrl => {
+    const response = await fetch(`${baseUrl}/upload`, { method: "POST", body: form });
+    assert.equal(response.status, 415);
+  });
+});
+
+test("upload admission rejects excess work and releases capacity on response completion", async () => {
+  const app = express();
+  let finish: (() => void) | undefined;
+  app.post("/upload", createUploadAdmission(1), (_req, res) => { finish = () => res.sendStatus(201); });
+  await withServer(app, async baseUrl => {
+    const first = fetch(`${baseUrl}/upload`, { method: "POST" });
+    for (let attempt = 0; attempt < 100 && !finish; attempt++) await new Promise(resolve => setTimeout(resolve, 5));
+    assert.ok(finish);
+    const busy = await fetch(`${baseUrl}/upload`, { method: "POST" });
+    assert.equal(busy.status, 429);
+    assert.equal(busy.headers.get("retry-after"), "10");
+    finish();
+    assert.equal((await first).status, 201);
+    finish = undefined;
+    const retry = fetch(`${baseUrl}/upload`, { method: "POST" });
+    for (let attempt = 0; attempt < 100 && !finish; attempt++) await new Promise(resolve => setTimeout(resolve, 5));
+    assert.ok(finish);
+    (finish as () => void)();
+    assert.equal((await retry).status, 201);
+  });
+});
+
+test("stalled multipart requests receive a complete 408 before the socket closes", async () => {
+  const app = express();
+  app.post("/upload", createSpecialIssuePdfUploadParser(30), (_req, res) => res.sendStatus(201));
+  app.use(errorHandler);
+  await withServer(app, async baseUrl => {
+    const response = await new Promise<{ status: number | undefined; body: string }>((resolve, reject) => {
+      const req = httpRequest(`${baseUrl}/upload`, { method: "POST", headers: {
+        "Content-Type": "multipart/form-data; boundary=slow-upload", "Transfer-Encoding": "chunked",
+      } }, res => {
+        let body = "";
+        res.on("data", chunk => { body += chunk.toString(); });
+        res.on("end", () => resolve({ status: res.statusCode, body }));
+        res.on("error", reject);
+      });
+      req.on("error", reject);
+      req.write('--slow-upload\r\nContent-Disposition: form-data; name="pdf"; filename="issue.pdf"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.7\n');
+      // Deliberately leave the upload incomplete until the server times it out.
+    });
+    assert.equal(response.status, 408);
+    assert.match(JSON.parse(response.body).error, /timed out/);
   });
 });

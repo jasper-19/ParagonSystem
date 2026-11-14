@@ -1,8 +1,10 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, unlink } from "node:fs/promises";
+import { unlink } from "node:fs/promises";
 import type { NextFunction, Request, Response } from "express";
 import multer from "multer";
 import { pdfConfig } from "../../config/pdf";
+import { specialIssueUploadConfig } from "../../config/special-issue-upload";
+import { createSpecialIssueDiskStorage } from "./special-issue-disk-storage";
+import { sendReceiveTimeout } from "../../middlewares/request-receive-deadline";
 import {
   createIssueSchema,
   createMultipartIssueSchema,
@@ -23,34 +25,8 @@ export type PdfUploadRequest = Request & {
   file?: UploadedPdfFile;
 };
 
-const diskStorage = multer.diskStorage({
-  destination: (
-    _req: Request,
-    _file: UploadedPdfFile,
-    callback: (error: Error | null, destination: string) => void
-  ) => {
-    void mkdir(pdfConfig.tempRoot, { recursive: true })
-      .then(() => callback(null, pdfConfig.tempRoot))
-      .catch(error =>
-        callback(
-          error instanceof Error
-            ? error
-            : new Error("Temporary upload storage is unavailable"),
-          pdfConfig.tempRoot
-        )
-      );
-  },
-  filename: (
-    _req: Request,
-    _file: UploadedPdfFile,
-    callback: (error: Error | null, filename: string) => void
-  ) => {
-    callback(null, `${randomUUID()}.pdf`);
-  },
-});
-
 const upload = multer({
-  storage: diskStorage,
+  storage: createSpecialIssueDiskStorage(pdfConfig.tempRoot),
   limits: {
     fileSize: pdfConfig.maxUploadBytes,
     files: 1,
@@ -66,7 +42,8 @@ const upload = multer({
   ) => {
     if (
       file.fieldname !== "pdf" ||
-      file.mimetype.toLowerCase() !== "application/pdf"
+      file.mimetype.toLowerCase() !== "application/pdf" ||
+      !/\.pdf$/i.test(file.originalname)
     ) {
       callback(
         Object.assign(new Error("Only PDF uploads are accepted"), {
@@ -78,6 +55,31 @@ const upload = multer({
     callback(null, true);
   },
 }).single("pdf");
+
+export function createUploadAdmission(limit: number) {
+  let active = 0;
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (active >= limit) {
+      res.setHeader("Retry-After", "10");
+      res.status(429).json({ error: "PDF uploads are busy. Please try again shortly." });
+      return;
+    }
+    active++;
+    let released = false;
+    const release = (): void => {
+      if (released) return;
+      released = true;
+      active--;
+      res.removeListener("finish", release);
+      res.removeListener("close", release);
+    };
+    res.once("finish", release);
+    res.once("close", release);
+    next();
+  };
+}
+
+export const admitSpecialIssueUpload = createUploadAdmission(specialIssueUploadConfig.concurrency);
 
 async function removeUploadedTempFile(req: PdfUploadRequest): Promise<void> {
   if (!req.file?.path) return;
@@ -96,7 +98,8 @@ async function removeUploadedTempFile(req: PdfUploadRequest): Promise<void> {
   });
 }
 
-export function parseSpecialIssuePdfUpload(
+export function createSpecialIssuePdfUploadParser(receiveTimeoutMs: number) {
+return function parseSpecialIssuePdfUpload(
   req: PdfUploadRequest,
   res: Response,
   next: NextFunction
@@ -106,9 +109,19 @@ export function parseSpecialIssuePdfUpload(
     return;
   }
 
+  const receiveTimeout = setTimeout(() => {
+    sendReceiveTimeout(req, res, "PDF upload timed out. Please retry on a faster connection.");
+  }, receiveTimeoutMs);
+  receiveTimeout.unref();
+  const clearReceiveTimeout = (): void => { clearTimeout(receiveTimeout); };
+  res.once("close", clearReceiveTimeout);
   upload(req, res, (error: unknown) => {
+    clearReceiveTimeout();
+    res.removeListener("close", clearReceiveTimeout);
     if (error) {
-      void removeUploadedTempFile(req).finally(() => next(error));
+      void removeUploadedTempFile(req).finally(() => {
+        if (!req.aborted && !res.destroyed && !res.headersSent) next(error);
+      });
       return;
     }
 
@@ -123,6 +136,9 @@ export function parseSpecialIssuePdfUpload(
     next();
   });
 }
+}
+
+export const parseSpecialIssuePdfUpload = createSpecialIssuePdfUploadParser(specialIssueUploadConfig.receiveTimeoutMs);
 
 export function validateSpecialIssueCreateRequest(
   req: PdfUploadRequest,

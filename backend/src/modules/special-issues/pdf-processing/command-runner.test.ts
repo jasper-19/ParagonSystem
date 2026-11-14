@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import {
   CommandExecutionError,
   SpawnCommandRunner,
@@ -39,4 +42,22 @@ test("rejects an already cancelled operation before starting a child", async () 
     }),
     error => error instanceof CommandExecutionError && error.aborted
   );
+});
+
+test("enforces one combined stdout and stderr budget", async () => {
+  await assert.rejects(new SpawnCommandRunner().run(process.execPath,
+    ["-e", "process.stdout.write('x'.repeat(80));process.stderr.write('x'.repeat(80))"],
+    { timeoutMs: 10_000, maxOutputBytes: 128 }),
+    error => error instanceof CommandExecutionError && error.resourceLimited);
+});
+
+test("terminates a processor whose generated PDF exceeds its disk budget", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "paragon-output-budget-"));
+  const outputPath = path.join(directory, "output.pdf");
+  try {
+    await assert.rejects(new SpawnCommandRunner().run(process.execPath, ["-e",
+      "require('node:fs').writeFileSync(process.argv[1], Buffer.alloc(4096));setInterval(()=>{},1000)", outputPath],
+      { timeoutMs: 10_000, maxOutputBytes: 1024, outputFile: { path: outputPath, maxBytes: 128 } }),
+      error => error instanceof CommandExecutionError && error.resourceLimited && error.message.includes("file limit"));
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });

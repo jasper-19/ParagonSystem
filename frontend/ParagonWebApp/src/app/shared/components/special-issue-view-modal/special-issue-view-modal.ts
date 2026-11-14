@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { SpecialIssue } from '../../../models/special-issue.model';
 
 @Component({
@@ -7,8 +7,13 @@ import { SpecialIssue } from '../../../models/special-issue.model';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './special-issue-view-modal.html',
+  styleUrl: '../../styles/admin-special-issues.scss',
 })
-export class SpecialIssueViewModal implements OnChanges, OnDestroy {
+export class SpecialIssueViewModal implements OnChanges, OnDestroy, AfterViewChecked {
+  @ViewChild('dialog') dialog?: ElementRef<HTMLElement>;
+  @ViewChild('closeButton') closeButton?: ElementRef<HTMLButtonElement>;
+  private returnFocus?: HTMLElement;
+  private focusPending = false;
   @Input() issue: SpecialIssue | null = null;
   @Output() close = new EventEmitter<void>();
 
@@ -22,6 +27,10 @@ export class SpecialIssueViewModal implements OnChanges, OnDestroy {
 
     const isOpen = !!this.issue;
     if (isOpen) {
+      if (!this.isScrollLocked) {
+        this.returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+        this.focusPending = true;
+      }
       this.lockBodyScroll();
       this.showFullDescription = false;
     } else {
@@ -31,6 +40,28 @@ export class SpecialIssueViewModal implements OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.unlockBodyScroll();
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.focusPending && this.closeButton) {
+      this.closeButton.nativeElement.focus();
+      this.focusPending = false;
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): void {
+    if (!this.issue || !this.dialog) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.close.emit();
+    } else if (event.key === 'Tab') {
+      const elements = Array.from(this.dialog.nativeElement.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex="0"]'));
+      const first = elements[0], last = elements.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
   }
 
   private lockBodyScroll(): void {
@@ -49,6 +80,9 @@ export class SpecialIssueViewModal implements OnChanges, OnDestroy {
     document.body.style.overflow = this.previousBodyOverflow ?? '';
     this.previousBodyOverflow = null;
     this.isScrollLocked = false;
+    this.focusPending = false;
+    if (this.returnFocus?.isConnected) this.returnFocus.focus();
+    this.returnFocus = undefined;
   }
 
   toggleDescription(): void {

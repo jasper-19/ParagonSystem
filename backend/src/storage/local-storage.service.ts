@@ -1,10 +1,9 @@
 import fs from "fs/promises";
 import path from "path";
+import { constants } from "node:fs";
 import { StorageService, UploadFileOptions } from "./storage.interface";
 
-const uploadsRoot = path.join(process.cwd(), "uploads");
-
-function resolveUploadPath(objectKey: string): string {
+function resolveUploadPath(uploadsRoot: string, objectKey: string): string {
   const normalizedRoot = path.resolve(uploadsRoot);
   const resolvedPath = path.resolve(normalizedRoot, objectKey);
   const relativePath = path.relative(normalizedRoot, resolvedPath);
@@ -22,11 +21,12 @@ function resolveUploadPath(objectKey: string): string {
 }
 
 export class LocalStorageService implements StorageService {
+  constructor(private readonly root = path.join(process.cwd(), "uploads")) {}
   async upload(objectKey: string, buffer: Buffer, _options: UploadFileOptions): Promise<void> {
-    const filePath = resolveUploadPath(objectKey);
+    const filePath = resolveUploadPath(this.root, objectKey);
 
     await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, buffer);
+    await fs.writeFile(filePath, buffer, { flag: _options.upsert ? "w" : "wx" });
   }
 
   async uploadFile(
@@ -34,16 +34,16 @@ export class LocalStorageService implements StorageService {
     sourcePath: string,
     _options: UploadFileOptions
   ): Promise<void> {
-    const destinationPath = resolveUploadPath(objectKey);
+    const destinationPath = resolveUploadPath(this.root, objectKey);
     await fs.mkdir(path.dirname(destinationPath), { recursive: true });
-    await fs.copyFile(sourcePath, destinationPath);
+    await fs.copyFile(sourcePath, destinationPath, _options.upsert ? 0 : constants.COPYFILE_EXCL);
   }
 
   async remove(paths: string[]): Promise<void> {
     await Promise.all(
       paths.map(async (objectKey) => {
         try {
-          await fs.unlink(resolveUploadPath(objectKey));
+          await fs.unlink(resolveUploadPath(this.root, objectKey));
         } catch (error) {
           const code = (error as NodeJS.ErrnoException).code;
           if (code !== "ENOENT") throw error;

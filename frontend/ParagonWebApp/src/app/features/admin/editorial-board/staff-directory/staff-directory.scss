@@ -1,4 +1,5 @@
 @use './staff-directory-dialogs';
+@use '../../../../shared/styles/action-dialog';
 
 :host {
   display: block;
@@ -131,3 +132,6 @@
 @media (prefers-reduced-motion: reduce) {
   .staff-directory-workspace button, .staff-directory-workspace article { transition: none; }
 }
+
+:host .revoke-acceptance-consequence { margin-top: 10px; }
+:host .revoke-acceptance-error { margin-top: 18px; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; background: #fff1f2; color: #b42318; font-size: 13px; line-height: 1.5; text-align: center; }

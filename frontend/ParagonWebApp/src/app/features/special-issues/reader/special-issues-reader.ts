@@ -16,6 +16,8 @@ import { SpecialIssue } from "../../../models/special-issue.model";
 import { SpecialIssueService } from "../../../core/services/special-issue.service";
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { Subscription } from "rxjs";
+import { ownPageFlipAnimation } from "./page-flip-lifecycle";
+import { PdfRenderQueue } from "./pdf-render-queue";
 
 @Component({
   selector: 'app-special-issues-reader',
@@ -58,6 +60,9 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
   readonly SPREAD_BREAKPOINT = 1024;
 
   isLoading = false;
+  zoom = 1;
+  private stopBookAnimation?: () => void;
+  private prefetchTimer?: ReturnType<typeof setTimeout>;
   private viewReady = false;
   private resizeTimeout?: ReturnType<typeof setTimeout>;
   errorMessage = '';
@@ -66,6 +71,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
   private loadingTask?: pdfjsLib.PDFDocumentLoadingTask;
   private generation = 0;
   private initialization = 0;
+  private readonly renderQueue = new PdfRenderQueue(2);
   private pendingPages = new Map<number, Promise<void>>();
   private renderTasks = new Set<pdfjsLib.RenderTask>();
 
@@ -107,6 +113,12 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
             // Load PDF document
             const loadingTask = this.loadingTask = pdfjsLib.getDocument({
               url: this.issue.pdfUrl,
+              // PDF.js 5.7 requires disabling streaming for disableAutoFetch to work.
+              // Range-capable stores fetch only needed chunks; others fall back to a full request.
+              disableRange: false,
+              disableStream: true,
+              disableAutoFetch: true,
+              rangeChunkSize: 256 * 1024,
               maxImageSize: 40_000_000,
               stopAtErrors: true,
             });
@@ -175,10 +187,15 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
 
   private destroyFlipbook(): void {
     this.generation++;
+    clearTimeout(this.prefetchTimer);
+    this.stopBookAnimation?.();
+    this.stopBookAnimation = undefined;
     for (const task of this.renderTasks) task.cancel();
     this.renderTasks.clear();
     this.pendingPages.clear();
+    this.renderQueue.cancelPending();
     try {
+      this.pageFlip?.off?.('flip');
       if (this.pageFlip?.destroy) this.pageFlip.destroy();
     } catch {}
     this.pageFlip = null;
@@ -247,8 +264,8 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
       pageWidth = Math.floor(pageHeight * pageAspect);
     }
 
-    this.pageFlipPageWidth = Math.max(1, pageWidth);
-    this.pageFlipPageHeight = Math.max(1, pageHeight);
+    this.pageFlipPageWidth = Math.max(1, Math.floor(pageWidth * this.zoom));
+    this.pageFlipPageHeight = Math.max(1, Math.floor(pageHeight * this.zoom));
 
     // Constrain the measured book, not its centering wrapper. PageFlip otherwise
     // chooses a spread on wide, short screens even when single-page mode is set.
@@ -259,6 +276,8 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
     containerEl.replaceChildren();
     // PageFlip.destroy removes its root; retain the Angular-owned container.
     const bookRoot = document.createElement('div');
+    // Let touch/mouse scroll the enlarged pages; controls still turn pages.
+    bookRoot.style.pointerEvents = this.zoom > 1 ? 'none' : '';
     containerEl.appendChild(bookRoot);
     const pageElements: HTMLElement[] = [];
     for (let p = 1; p <= this.totalPages; p++) {
@@ -290,6 +309,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
         height: this.pageFlipPageHeight,
         size: 'fixed',
         usePortrait: !this.isSpreadMode,
+        useMouseEvents: true,
         startPage: Math.max(0, this.currentPage - 1),
         autoSize: true,
         showCover: true,
@@ -297,6 +317,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
         maxShadowOpacity: 0.5,
       });
 
+      this.stopBookAnimation = ownPageFlipAnimation(this.pageFlip);
       if (this.pageFlip?.loadFromHTML) {
         this.pageFlip.loadFromHTML(pageElements);
       }
@@ -313,7 +334,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
             } else {
               this.currentPage = pageNumber;
             }
-            void this.ensureFlipbookPagesRendered(pageNumber).catch(() => {
+            void this.renderVisibleAndPrefetch(pageNumber).catch(() => {
               if (!this.destroyed && generation === this.generation) {
                 this.errorMessage = 'Unable to render this page. Please reload the publication.';
                 this.cdr.markForCheck();
@@ -332,18 +353,42 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
         this.pageFlip.flip(initialPage - 1);
       } catch {}
     }
-    await this.ensureFlipbookPagesRendered(initialPage);
+    await this.renderVisibleAndPrefetch(initialPage);
     if (!this.destroyed && generation === this.generation) this.cdr.detectChanges();
   }
 
-  private async ensureFlipbookPagesRendered(centerPage: number): Promise<void> {
+  private async renderVisibleAndPrefetch(page: number): Promise<void> {
+    const generation = this.generation;
+    // Display the requested page/spread before spending CPU on neighboring pages.
+    await this.ensureFlipbookPagesRendered(page, true);
+    if (this.destroyed || generation !== this.generation) return;
+    if (this.zoom > 1) {
+      // PageFlip places the standalone cover in the right-hand half of a spread.
+      // Start panning at that page rather than an enlarged empty left cover slot.
+      const stage = this.readerContainer?.nativeElement;
+      if (stage) {
+        stage.scrollLeft = this.isSpreadMode && this.currentPage === 1 ? this.pageFlipPageWidth : 0;
+        stage.scrollTop = 0;
+      }
+    }
+    clearTimeout(this.prefetchTimer);
+    this.prefetchTimer = setTimeout(() => {
+      if (this.destroyed || generation !== this.generation) return;
+      // Prefetch failures must not hide already readable pages; navigation retries them.
+      void this.ensureFlipbookPagesRendered(page).catch(() => {});
+    }, 100);
+  }
+
+  private async ensureFlipbookPagesRendered(centerPage: number, visibleOnly = false): Promise<void> {
     if (!this.pdfDoc) return;
     const containerEl = this.flipbookContainer?.nativeElement;
     if (!containerEl) return;
 
-    const radius = 3;
-    const start = Math.max(1, centerPage - radius);
-    const end = Math.min(this.totalPages, centerPage + radius);
+    const radius = 2;
+    const firstVisible = this.isSpreadMode && centerPage > 1 && centerPage % 2 !== 0 ? centerPage - 1 : centerPage;
+    const lastVisible = this.isSpreadMode && firstVisible > 1 ? firstVisible + 1 : firstVisible;
+    const start = Math.max(1, visibleOnly ? firstVisible : centerPage - radius);
+    const end = Math.min(this.totalPages, visibleOnly ? lastVisible : centerPage + radius);
 
     const generation = this.generation;
     for (let p = start; p <= end; p++) {
@@ -352,6 +397,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
       let pending = this.pendingPages.get(p);
       if (!pending) {
         pending = this.renderPdfPageToObjectUrl(p, this.pageFlipPageWidth).then(url => {
+          if (!url) return;
           if (this.destroyed || generation !== this.generation) { URL.revokeObjectURL(url); return; }
           this.pageImageUrlCache.set(p, url);
           const img = containerEl.querySelector('img[data-page="' + p + '"]') as HTMLImageElement | null;
@@ -370,7 +416,15 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private async renderPdfPageToObjectUrl(pageNumber: number, targetWidth: number): Promise<string> {
+  private renderPdfPageToObjectUrl(pageNumber: number, targetWidth: number): Promise<string> {
+    const generation = this.generation;
+    return this.renderQueue.run(() => {
+      if (this.destroyed || generation !== this.generation || Math.abs(pageNumber - this.currentPage) > 4) return Promise.resolve('');
+      return this.rasterizePdfPage(pageNumber, targetWidth);
+    });
+  }
+
+  private async rasterizePdfPage(pageNumber: number, targetWidth: number): Promise<string> {
     if (!this.pdfDoc) throw new Error('PDF not loaded');
     if (typeof document === 'undefined') throw new Error('Document not available');
 
@@ -385,19 +439,29 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
     canvas.width = Math.max(1, Math.floor(viewport.width));
     canvas.height = Math.max(1, Math.floor(viewport.height));
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas context not available');
+    try {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context not available');
+      const task = page.render({ canvas, canvasContext: ctx, viewport });
+      this.renderTasks.add(task);
+      try { await task.promise; } finally { this.renderTasks.delete(task); }
+      const blob: Blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Failed to create blob'))), 'image/jpeg', 0.92);
+      });
+      return URL.createObjectURL(blob);
+    } finally {
+      // Also release backing pixels when rendering, cancellation, or encoding fails.
+      canvas.width = canvas.height = 0;
+    }
+  }
 
-    const task = page.render({ canvas, canvasContext: ctx, viewport });
-    this.renderTasks.add(task);
-    try { await task.promise; } finally { this.renderTasks.delete(task); }
-
-    const blob: Blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Failed to create blob'))), 'image/jpeg', 0.92);
-    });
-
-    canvas.width = canvas.height = 0;
-    return URL.createObjectURL(blob);
+  setZoom(value: number): void {
+    if (!this.pdfDoc || this.isLoading || !Number.isFinite(value)) return;
+    const zoom = Math.max(1, Math.min(3, Math.round(value * 4) / 4));
+    if (zoom === this.zoom) return;
+    this.zoom = zoom;
+    this.readerContainer.nativeElement.scrollTo?.({ left: 0, top: 0 });
+    void this.tryInitialRender();
   }
 
   nextPage() {

@@ -1,12 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpEventType, provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { SpecialIssue } from '../../models/special-issue.model';
+import { SpecialIssue, SpecialIssueSaveProgress } from '../../models/special-issue.model';
 import { API_ENDPOINTS } from '../config/api.config';
 import { SpecialIssueService } from './special-issue.service';
+import { authInterceptor } from '../interceptors/auth.interceptor';
+import { SKIP_ADMIN_LOADER } from '../config/http-context';
 
 describe('SpecialIssueService', () => {
   let service: SpecialIssueService;
@@ -29,7 +31,7 @@ describe('SpecialIssueService', () => {
     TestBed.configureTestingModule({
       providers: [
         SpecialIssueService,
-        provideHttpClient(),
+        provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
       ],
     });
@@ -126,4 +128,50 @@ describe('SpecialIssueService', () => {
     expect(failure?.pdfReplaced).toBe(true);
     expect(failure?.replacement?.pdfUrl).toBe('https://example.com/new.pdf');
   });
+  it('reports actual transport progress separately from processing and committed readiness', () => {
+    const states: SpecialIssueSaveProgress[] = [];
+    const { id: _id, ...payload } = issue;
+    const save = service.createIssue(payload, new File(['pdf'], 'new.pdf'), state => states.push(state));
+    expect(states).toEqual([]); // Saving remains cold until subscribed.
+    save.subscribe();
+    const request = http.expectOne(API_ENDPOINTS.specialIssues);
+    expect(request.request.reportProgress).toBe(true);
+    expect(request.request.withCredentials).toBe(true);
+    expect(request.request.headers.get('X-CSRF-Protection')).toBe('1');
+    expect(request.request.headers.has('x-skip-admin-loader')).toBe(false);
+    expect(request.request.context.get(SKIP_ADMIN_LOADER)).toBe(true);
+    request.event({ type: HttpEventType.UploadProgress, loaded: 20, total: 100 });
+    expect(states.at(-1)).toEqual({ phase: 'uploading', loaded: 20, total: 100, percent: 20 });
+    request.event({ type: HttpEventType.UploadProgress, loaded: 100, total: 100 });
+    expect(states.at(-1)?.phase).toBe('processing');
+    expect(states.some(state => state.phase === 'ready')).toBe(false);
+    request.flush(issue);
+    expect(states.at(-1)?.phase).toBe('ready');
+  });
+
+  it('leaves unknown totals indeterminate and never reports failed processing as ready', () => {
+    const states: SpecialIssueSaveProgress[] = [];
+    const { id: _id, ...payload } = issue;
+    service.createIssue(payload, new File(['pdf'], 'new.pdf'), state => states.push(state)).subscribe({ error: () => {} });
+    const request = http.expectOne(API_ENDPOINTS.specialIssues);
+    request.event({ type: HttpEventType.UploadProgress, loaded: 20 });
+    expect(states.at(-1)?.percent).toBeUndefined();
+    request.flush({ error: 'Invalid PDF' }, { status: 400, statusText: 'Bad Request' });
+    expect(states.some(state => state.phase === 'ready')).toBe(false);
+  });
+
+  it('waits for metadata saving after replacement and preserves PDF metrics', () => {
+    const states: SpecialIssueSaveProgress[] = [];
+    const { id, ...payload } = issue;
+    const pdfMetadata = { originalSizeBytes: 1000, optimizedSizeBytes: 600, compressionPercent: 40, pageCount: 8 };
+    let result: SpecialIssue | undefined;
+    service.updateIssue(id, payload, new File(['pdf'], 'new.pdf'), state => states.push(state)).subscribe(value => result = value);
+    http.expectOne(API_ENDPOINTS.specialIssues + '/' + id + '/pdf').flush({ ...issue, pdfMetadata });
+    expect(states.at(-1)?.phase).toBe('saving');
+    expect(states.some(state => state.phase === 'ready')).toBe(false);
+    http.expectOne(API_ENDPOINTS.specialIssues + '/' + id).flush({ ...issue, pdfMetadata });
+    expect(states.at(-1)?.phase).toBe('ready');
+    expect(result?.pdfMetadata).toEqual(pdfMetadata);
+  });
+
 });

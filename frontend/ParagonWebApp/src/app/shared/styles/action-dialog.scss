@@ -1,0 +1,22 @@
+:host { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+.action-dialog-overlay { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,53,.22); }
+.action-dialog { box-sizing:border-box; position:relative; width:100%; max-width:440px; max-height:calc(100dvh - 48px); overflow-y:auto; overscroll-behavior:contain; padding:32px 44px; border:1px solid #e7e7ed; border-radius:16px; background:#fff; color:#000035; text-align:center; box-shadow:0 12px 48px rgba(0,0,53,.06); font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif; }
+.action-dialog-close { position:absolute; top:20px; right:20px; display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid #dedee5; border-radius:10px; background:white; color:#343441; cursor:pointer; }
+.action-dialog-close svg { width:20px; height:20px; }
+.action-dialog-icon { display:grid; place-items:center; width:48px; height:48px; margin:0 auto 14px; border-radius:12px; background:#fff4d3; color:#8a6400; }
+.action-dialog-icon svg { width:26px; height:26px; }
+.is-danger .action-dialog-icon { background:#ffe5e7; color:#d72d3b; }
+.is-success .action-dialog-icon { background:#dcfce7; color:#168849; }
+.action-dialog-title { margin:0; font-family:inherit; font-size:26px; line-height:1.25; letter-spacing:-.6px; font-weight:650; overflow-wrap:anywhere; }
+.action-dialog-message { margin:10px 0 0; color:#6a6a78; font-size:14px; line-height:1.6; white-space:pre-line; overflow-wrap:anywhere; }
+.action-dialog-actions { display:flex; flex-direction:column; gap:12px; margin-top:36px; }
+.action-dialog-button { display:flex; align-items:center; justify-content:center; width:100%; min-height:44px; padding:10px 16px; border:1px solid #dcdce3; border-radius:9px; background:#fff; color:#000035; font:500 14px/1.4 'Segoe UI','Helvetica Neue',Arial,sans-serif; cursor:pointer; overflow-wrap:anywhere; }
+.action-dialog-primary { background:#000035; border-color:#000035; color:#fff; }
+.is-danger .action-dialog-primary { background:#d92f3b; border-color:#d92f3b; color:#fff; }
+.action-dialog-button:hover,.action-dialog-close:hover { background:#f5f5f8; }
+.action-dialog-primary:hover { background:#17174c; }
+.is-danger .action-dialog-primary:hover { background:#d72d3b; border-color:#d72d3b; }
+.action-dialog button:focus-visible { outline:2px solid #000035; outline-offset:3px; }
+.action-dialog button:disabled { cursor:wait; opacity:.55; }
+.action-dialog-details { margin:20px 0 0; padding:14px 14px 14px 30px; border:1px solid #f6d5d8; border-radius:8px; background:#fff6f6; color:#6a3940; text-align:left; font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+@media(max-width:480px) { .action-dialog-overlay { padding:16px; } .action-dialog { max-height:calc(100dvh - 32px); padding:32px 24px 24px; } .action-dialog-close { top:12px; right:12px; } .action-dialog-title { font-size:24px; } }

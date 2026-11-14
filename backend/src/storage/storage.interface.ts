@@ -2,6 +2,7 @@ export type UploadFileOptions = {
     contentType: string;
     cacheControl?: string;
     upsert?: boolean;
+    signal?: AbortSignal;
 };
 
 export interface StorageService {

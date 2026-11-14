@@ -46,3 +46,30 @@ test("publishing a draft assigns its first publication time without overwriting 
   await update("issue-id", { status: "published", publishedAt: "2026-10-01" });
   assert.doesNotMatch(statement, /COALESCE/);
 });
+
+test("development media covers survive response mapping without becoming accepted PDF URLs", async () => {
+  const keys = ["NODE_ENV", "API_BASE_URL", "LOCAL_STORAGE_URL"] as const;
+  const original = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+  process.env.NODE_ENV = "test";
+  process.env.API_BASE_URL = "http://localhost:5000";
+  process.env.LOCAL_STORAGE_URL = "http://localhost:3000/uploads";
+  const coverImage = "http://localhost:5000/api/media/12345678-1234-1234-1234-123456789abc/file";
+  mock.method(db, "query", async () => ({ rows: [{
+    id: "issue-id", cover_image: coverImage, pdf_url: coverImage,
+  }] }));
+  try {
+    const developmentResult = await findAdmin(query);
+    assert.equal(developmentResult.items[0]?.coverImage, coverImage);
+    assert.equal(developmentResult.items[0]?.pdfUrl, "");
+    process.env.NODE_ENV = "production";
+    const productionResult = await findAdmin(query);
+    assert.equal(productionResult.items[0]?.coverImage, "");
+    assert.equal(productionResult.items[0]?.pdfUrl, "");
+  } finally {
+    for (const key of keys) {
+      const value = original[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});

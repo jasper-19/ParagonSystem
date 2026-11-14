@@ -58,9 +58,17 @@
     @if (showConfirmModal() || showSuccessModal() || showSubmissionError()) {
       <div class="join-dialog-backdrop">
         <section #submissionDialog class="join-feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="join-feedback-title" aria-describedby="join-feedback-message" tabindex="-1">
-          <header><h2 id="join-feedback-title">{{ showConfirmModal() ? 'Submit application?' : showSuccessModal() ? 'Application submitted' : submissionErrorTitle() }}</h2><button type="button" class="join-dialog-close" (click)="closeFeedback()" aria-label="Close application dialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+          <button type="button" class="join-dialog-close" (click)="closeFeedback()" aria-label="Close application dialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+          <div class="join-feedback-icon" [class.is-success]="showSuccessModal()" [class.is-error]="showSubmissionError()" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              @if (showSuccessModal()) { <circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/> }
+              @else if (showSubmissionError()) { <path d="m10.3 4.3-8 14A1.8 1.8 0 0 0 3.9 21h16.2a1.8 1.8 0 0 0 1.6-2.7l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/> }
+              @else { <circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/> }
+            </svg>
+          </div>
+          <h2 id="join-feedback-title">{{ showConfirmModal() ? 'Submit application?' : showSuccessModal() ? 'Application submitted' : submissionErrorTitle() }}</h2>
           <div class="join-feedback-body"><p id="join-feedback-message">{{ showConfirmModal() ? 'Please confirm that your details are complete. You will not be able to edit this application after submission.' : showSuccessModal() ? 'Your application has been received. The editorial board will review it and contact you with the next steps.' : submissionErrorMessage() }}</p><div class="join-feedback-actions">
-            @if (showConfirmModal()) { <button type="button" class="join-text-link" (click)="closeFeedback()">Review</button><button type="button" class="join-button" (click)="confirmSubmission()">Submit</button> } @else { <button type="button" class="join-button" (click)="closeFeedback()">Close</button> }
+            @if (showConfirmModal()) { <button type="button" class="join-feedback-primary" (click)="confirmSubmission()">Submit</button><button type="button" class="join-feedback-dismiss" (click)="closeFeedback()">Review</button> } @else { <button type="button" class="join-feedback-dismiss" (click)="closeFeedback()">Close</button> }
           </div></div>
         </section>
       </div>

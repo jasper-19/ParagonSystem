@@ -7,6 +7,9 @@ import { SpecialIssues } from './special-issues';
 import { SpecialIssueService } from '../../core/services/special-issue.service';
 import { LoaderService } from '../../shared/services/loader.service';
 import { SpecialIssue } from '../../models/special-issue.model';
+import { SocketService } from '../../core/services/socket.service';
+
+const quietSocket = { onSpecialIssuesUpdated: () => () => {}, on: () => () => {} };
 
 describe('Special Issues public grouping', () => {
   it('omits empty years belonging only to the featured issue and preserves the active type', () => {
@@ -18,12 +21,14 @@ describe('Special Issues public grouping', () => {
       issue('three', 'Tabloid', '2024-2025', '2025-01-01')];
     const component = new SpecialIssues({ refresh: () => of(issues), getAll: () => issues } as unknown as SpecialIssueService,
       { show: () => {}, hide: () => {} } as LoaderService,
-      { markForCheck: vi.fn() } as unknown as ChangeDetectorRef);
+      { markForCheck: vi.fn() } as unknown as ChangeDetectorRef,
+      quietSocket as unknown as SocketService);
     component.activeType = 'Newsletter';
     component.ngOnInit();
     expect(component.latestIssue?.id).toBe('one');
     expect(component.years).toEqual(['2025-2026']);
     expect(component.filtered.map(item => item.id)).toEqual(['two']);
+    component.ngOnDestroy();
   });
 });
 
@@ -47,6 +52,7 @@ describe('Special Issues library interactions', () => {
       provideRouter([]),
       { provide: SpecialIssueService, useValue: { refresh, getAll: () => items } },
       { provide: LoaderService, useValue: { show, hide } },
+      { provide: SocketService, useValue: quietSocket },
     ] });
   });
   afterEach(() => TestBed.resetTestingModule());

@@ -4,16 +4,20 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import routes from "./routes";
 import pool from "./config/db";
-import path from "path";
+import { localUploadsMiddleware } from "./storage/local-uploads.middleware";
+import { requestReceiveDeadline } from "./middlewares/request-receive-deadline";
 import { errorHandler } from "./middlewares/errorHandler";
 import { getAllowedOrigins } from "./config/security";
 import { csrfProtection } from "./middlewares/csrf";
 import { enforceMaintenanceMode } from "./middlewares/maintenance";
 import { pdfConfig } from "./config/pdf";
 import { pdfProcessor } from "./modules/special-issues/pdf-processing/ghostscript-pdf.processor";
+import { cachedProbe } from "./utils/cached-probe";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
+
+app.use(requestReceiveDeadline);
 
 app.set("etag", "strong"); // Enable strong ETag headers for caching
 app.disable("x-powered-by");
@@ -61,7 +65,7 @@ app.use(
       "Authorization",
       "X-CSRF-Protection",
     ],
-    exposedHeaders: ["X-Page", "X-Page-Size", "X-Has-More"],
+    exposedHeaders: ["X-Page", "X-Page-Size", "X-Has-More", "Accept-Ranges", "Content-Range", "Content-Encoding", "ETag"],
     credentials: true,
     maxAge: 600,
   })
@@ -99,8 +103,7 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ ok: true });
 });
 
-app.get("/ready", async (_req, res) => {
-  res.setHeader("Cache-Control", "no-store");
+const probeReadiness = cachedProbe(async () => {
   try {
     const [, pdfAvailable] = await Promise.all([
       pool.query("SELECT 1"),
@@ -110,35 +113,38 @@ app.get("/ready", async (_req, res) => {
     ]);
 
     if (pdfConfig.requiredForReadiness && !pdfAvailable) {
-      res.status(503).json({
+      return {
         ready: false,
         dependencies: {
           database: true,
           pdfProcessor: false,
         },
-      });
-      return;
+      };
     }
 
-    res.status(200).json({
+    return {
       ready: true,
       dependencies: {
         database: true,
         pdfProcessor: pdfAvailable,
       },
-    });
+    };
   } catch (error) {
     console.error("Readiness check failed:", error);
 
-    res.status(503).json({
-      ready: false,
-    });
+    return { ready: false };
   }
+});
+
+app.get("/ready", async (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  const result = await probeReadiness();
+  res.status(result.ready ? 200 : 503).json(result);
 });
 
 if (process.env.NODE_ENV !== "production") {
   // Serve uploaded files from the local "uploads" directory in development
-  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+  app.use("/uploads", localUploadsMiddleware());
 }
 
 export { initializeDatabase } from "./config/db";

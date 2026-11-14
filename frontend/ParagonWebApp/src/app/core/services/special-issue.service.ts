@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, EMPTY, Observable, of, throwError } from 'rxjs';
-import { catchError, expand, map, reduce, switchMap, tap } from 'rxjs/operators';
+import { HttpClient, HttpContext, HttpEventType, HttpParams, HttpResponse } from '@angular/common/http';
+import { BehaviorSubject, defer, EMPTY, Observable, of, throwError } from 'rxjs';
+import { catchError, expand, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 
-import { SpecialIssue, SpecialIssueType } from '../../models/special-issue.model';
+import { SpecialIssue, SpecialIssueType, SpecialIssueSaveProgress } from '../../models/special-issue.model';
 
 import { API_ENDPOINTS } from '../config/api.config';
+import { SKIP_ADMIN_LOADER } from '../config/http-context';
 
 // API payload type: matches server shape but keeps flexibility for date fields
 type ApiSpecialIssue = Omit<SpecialIssue, 'publishedAt'> & {
@@ -102,15 +103,17 @@ export class SpecialIssueService {
     );
   }
 
-  createIssue(payload: Omit<SpecialIssue, 'id'>, pdfFile?: File): Observable<SpecialIssue> {
+  createIssue(payload: Omit<SpecialIssue, 'id'>, pdfFile?: File,
+    onProgress?: (progress: SpecialIssueSaveProgress) => void): Observable<SpecialIssue> {
     const body: FormData | LegacyCreateIssueDto = pdfFile
       ? this.toMultipartCreatePayload(payload, pdfFile)
       : { ...this.toMetadataDto(payload), pdfUrl: payload.pdfUrl };
 
-    return this.http.post<ApiSpecialIssue>(this.api, body).pipe(
+    return this.saveRequest('POST', this.api, body, onProgress).pipe(
       map((a) => this.normalizeIssue(a)),
       tap((created) => {
         this.issuesSubject.next([created, ...this.issuesSubject.value.filter((i) => i.id !== created.id)]);
+        onProgress?.({ phase: 'ready', loaded: 0 });
       })
     );
   }
@@ -118,17 +121,20 @@ export class SpecialIssueService {
   updateIssue(
     id: string,
     patch: Omit<SpecialIssue, 'id'>,
-    pdfFile?: File
+    pdfFile?: File,
+    onProgress?: (progress: SpecialIssueSaveProgress) => void
   ): Observable<SpecialIssue> {
     const replace$: Observable<SpecialIssue | null> = pdfFile
-      ? this.replaceIssuePdf(id, pdfFile)
+      ? this.replaceIssuePdf(id, pdfFile, progress => {
+          if (progress.phase !== 'ready') onProgress?.(progress);
+        })
       : of(null);
 
     return replace$.pipe(
       switchMap((replacement) =>
-        this.http.patch<ApiSpecialIssue>(
+        this.saveRequest('PATCH',
           `${this.api}/${id}`,
-          this.toMetadataDto(patch)
+          this.toMetadataDto(patch), onProgress
         ).pipe(catchError(error => {
           if (!replacement) return throwError(() => error);
           const message = 'The PDF was replaced, but issue details could not be saved. Retry saving the details.';
@@ -140,14 +146,16 @@ export class SpecialIssueService {
       map((a) => this.normalizeIssue(a)),
       tap((updated) => {
         this.issuesSubject.next(this.issuesSubject.value.map((i) => (i.id === updated.id ? updated : i)));
+        onProgress?.({ phase: 'ready', loaded: 0 });
       })
     );
   }
 
-  replaceIssuePdf(id: string, pdfFile: File): Observable<SpecialIssue> {
+  replaceIssuePdf(id: string, pdfFile: File,
+    onProgress?: (progress: SpecialIssueSaveProgress) => void): Observable<SpecialIssue> {
     const form = new FormData();
     form.append('pdf', pdfFile, pdfFile.name);
-    return this.http.patch<ApiSpecialIssue>(`${this.api}/${id}/pdf`, form).pipe(
+    return this.saveRequest('PATCH', `${this.api}/${id}/pdf`, form, onProgress).pipe(
       map((issue) => this.normalizeIssue(issue)),
       tap((updated) => {
         this.issuesSubject.next(
@@ -155,6 +163,7 @@ export class SpecialIssueService {
             item.id === updated.id ? updated : item
           )
         );
+        onProgress?.({ phase: 'ready', loaded: 0 });
       })
     );
   }
@@ -284,5 +293,38 @@ export class SpecialIssueService {
       reduce((items, { response }) => items.concat(response.body ?? []), [] as ApiSpecialIssue[]),
       map(items => this.normalizeIssues(items))
     );
+  }
+  private saveRequest(method: 'POST' | 'PATCH', url: string, body: unknown,
+    onProgress?: (progress: SpecialIssueSaveProgress) => void): Observable<ApiSpecialIssue> {
+    return defer(() => {
+      const uploading = body instanceof FormData;
+      let last: SpecialIssueSaveProgress = { phase: uploading ? 'uploading' : 'saving', loaded: 0 };
+      onProgress?.(last);
+      return this.http.request<ApiSpecialIssue>(method, url, {
+        body, observe: 'events', reportProgress: !!onProgress,
+        // The form provides its own progress; an admin overlay would hide it.
+        context: new HttpContext().set(SKIP_ADMIN_LOADER, !!onProgress),
+      }).pipe(
+        tap(event => {
+          if (!uploading) return;
+          if (event.type === HttpEventType.UploadProgress) {
+            const total = event.total && event.total > 0 ? event.total : undefined;
+            const transferred = total !== undefined && event.loaded >= total;
+            last = {
+              phase: transferred ? 'processing' : 'uploading', loaded: event.loaded, total,
+              percent: total === undefined ? undefined : Math.min(100, Math.floor(event.loaded / total * 100)),
+            };
+            onProgress?.(last);
+          } else if (event.type === HttpEventType.ResponseHeader) {
+            onProgress?.({ ...last, phase: 'processing' });
+          }
+        }),
+        filter((event): event is HttpResponse<ApiSpecialIssue> => event.type === HttpEventType.Response),
+        map(response => {
+          if (!response.body) throw new Error('The server returned an empty save response.');
+          return response.body;
+        })
+      );
+    });
   }
 }

@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { AsyncValidatorFn, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SpecialIssue, SpecialIssueType } from '../../../../../models/special-issue.model';
+import { SpecialIssue, SpecialIssueType, SpecialIssueSaveProgress, SpecialIssuePdfMetadata } from '../../../../../models/special-issue.model';
 import { SpecialIssueService } from '../../../../../core/services/special-issue.service';
 import { of, timer } from 'rxjs';
 import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
@@ -17,7 +17,8 @@ type IssueStatus = SpecialIssue['status'];
 	selector: 'app-create-special-issue',
 	standalone: true,
 	imports: [CommonModule, ReactiveFormsModule, ConfirmationModal, CoverImagSelectorComponent],
-	templateUrl: './create-special-issue.component.html'
+	templateUrl: './create-special-issue.component.html',
+  styleUrl: '../../../../../shared/styles/admin-special-issues.scss',
 })
 export class CreateSpecialIssueComponent {
 
@@ -33,6 +34,16 @@ export class CreateSpecialIssueComponent {
 	readonly isSubmitting = signal(false);
   readonly saveError = signal('');
   readonly pdfError = signal('');
+  readonly saveProgress = signal<SpecialIssueSaveProgress | null>(null);
+  readonly pdfMetadata = signal<SpecialIssuePdfMetadata | null>(null);
+  readonly saveProgressLabel = computed(() => {
+    const state = this.saveProgress();
+    if (!state) return '';
+    if (state.phase === 'uploading') return state.percent === undefined ? 'Uploading PDF...' : 'Uploading PDF: ' + state.percent + '%';
+    if (state.phase === 'processing') return 'Upload complete. Validating, optimizing, and storing the PDF...';
+    if (state.phase === 'saving') return 'Saving issue details...';
+    return 'PDF ready. Issue saved.';
+  });
 	readonly slugManuallyEdited = signal(false);
 	readonly selectedCoverMedia = signal<Media | null>(null);
 	readonly selectedPdfName = signal<string | null>(null);
@@ -163,7 +174,7 @@ export class CreateSpecialIssueComponent {
     if (!slug) return;
 
     this.isSubmitting.set(true);
-    this.issueService.getAdminIssueBySlug(slug).pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
+    this.issueService.getAdminIssueBySlug(slug).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isSubmitting.set(false))).subscribe({
 			next: (issue) => {
 				this.editingId.set(issue.id);
 				this.loadIssueForEdit(issue.id);
@@ -196,6 +207,7 @@ export class CreateSpecialIssueComponent {
 
 		this.selectedCoverMedia.set(this.buildMediaFromUrl(issue.coverImage));
 		this.pdfDisplayText.set(this.fileLabel(issue.pdfUrl));
+    this.pdfMetadata.set(issue.pdfMetadata ?? null);
 		this.setMinPublishDateForAcademicYear(issue.academicYear);
 	}
 
@@ -225,6 +237,7 @@ export class CreateSpecialIssueComponent {
 
   this.isSubmitting.set(true);
   this.saveError.set('');
+  this.saveProgress.set(null);
 
 	const value = this.form.getRawValue();
 
@@ -248,19 +261,35 @@ export class CreateSpecialIssueComponent {
 	};
 
 	const request$ = this.isEditMode()
-		? this.issueService.updateIssue(this.editingId()!, payload, this.selectedPdfFile() ?? undefined)
-		: this.issueService.createIssue(payload, this.selectedPdfFile() ?? undefined);
+		? this.issueService.updateIssue(this.editingId()!, payload, this.selectedPdfFile() ?? undefined, progress => this.saveProgress.set(progress))
+		: this.issueService.createIssue(payload, this.selectedPdfFile() ?? undefined, progress => this.saveProgress.set(progress));
 
-	request$.pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
-		next: () => this.router.navigate(['/admin/all-special-issues']),
+	request$.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isSubmitting.set(false))).subscribe({
+		next: (saved) => {
+      this.pdfMetadata.set(saved.pdfMetadata ?? null);
+      this.router.navigate(['/admin/all-special-issues'], { state: { savedPdfMetadata: saved.pdfMetadata } });
+    },
 		error: (err) => {
       if (err?.pdfReplaced && err.replacement?.pdfUrl) {
+        this.pdfMetadata.set(err.replacement.pdfMetadata ?? null);
         this.selectedPdfFile.set(null);
         this.selectedPdfName.set(null);
         this.form.controls.pdfUrl.setValue(err.replacement.pdfUrl);
         this.pdfDisplayText.set(this.fileLabel(err.replacement.pdfUrl));
       }
-      this.saveError.set(typeof err?.error?.error === 'string' ? err.error.error : typeof err?.error?.message === 'string' ? err.error.message : 'Unable to save the special issue. Check your connection and try again.');
+      this.saveProgress.set(null);
+      const fieldLabels: Record<string, string> = {
+        title: 'Title', slug: 'Slug', type: 'Type', academicYear: 'Academic year',
+        coverImage: 'Cover image', pdfUrl: 'PDF', publishedAt: 'Publication date',
+        description: 'Description', status: 'Status',
+      };
+      const details = Array.isArray(err?.error?.details) ? err.error.details
+        .filter((detail: unknown): detail is { field?: string; message: string } =>
+          !!detail && typeof detail === 'object' && typeof (detail as { message?: unknown }).message === 'string')
+        .map((detail: { field?: string; message: string }) =>
+          `${typeof detail.field === 'string' && Object.hasOwn(fieldLabels, detail.field) ? fieldLabels[detail.field] + ': ' : ''}${detail.message}`)
+        .join(' ') : '';
+      this.saveError.set(details || (typeof err?.error?.error === 'string' ? err.error.error : typeof err?.error?.message === 'string' ? err.error.message : 'Unable to save the special issue. Check your connection and try again.'));
     },
 	});
 }
@@ -298,6 +327,7 @@ export class CreateSpecialIssueComponent {
 }
 
 	onCoverMediaChange(media: Media | null): void {
+    if (this.isSubmitting()) return;
 		this.selectedCoverMedia.set(media);
 		this.form.controls.coverImage.setValue(media?.fileUrl || media?.filePath || '');
 		this.form.controls.coverImage.markAsDirty();

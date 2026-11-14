@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isDevelopmentMediaFileUrl } from "./development-media-url";
 
 export const ISSUE_STATUS_VALUES = ["draft", "published", "archived"] as const;
 export type IssueStatus = (typeof ISSUE_STATUS_VALUES)[number];
@@ -87,7 +88,7 @@ const coverImageSchema = z
   .max(MAX_DATA_URL_CHARS)
   .refine(
     value =>
-      isHttpsUrl(value) ||
+      isHttpsUrl(value) || isDevelopmentMediaFileUrl(value) ||
       /^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=\r\n]+$/i.test(value),
     "Cover image must be an HTTPS URL or supported image data URL"
   );
