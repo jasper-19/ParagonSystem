@@ -1,6 +1,8 @@
+import { activityActionLabel, activityDescription, activityModuleLabel } from '../../../../models/activity-log-presentation';
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivityLog } from '../../../../models/activity-log.model';
+import { activityActorName, activityActorType } from '../../../../models/activity-log-actor';
 
 @Component({
   standalone: true,
@@ -19,6 +21,8 @@ export class ActivityLogTableComponent {
   onView(log: ActivityLog) {
     this.view.emit(log);
   }
+
+  readonly formatAction = activityActionLabel;
 
   getActionClass(
     action: string
@@ -100,53 +104,20 @@ export class ActivityLogTableComponent {
   getActorLabel(
     log: ActivityLog
   ): string {
-    return (
-      log.userName?.trim() ||
-      'System activity'
-    );
+    return activityActorName(log);
   }
 
   getActorType(
     log: ActivityLog
   ): string {
-    return log.userName
-      ? 'Administrator'
-      : 'Automated system';
+    return activityActorType(log);
   }
 
-  formatModule(
-    module: string | null | undefined
-  ): string {
-    if (!module) {
-      return 'System';
-    }
-
-    return module
-      .toLowerCase()
-      .split('_')
-      .filter(Boolean)
-      .map(word =>
-        word.charAt(0).toUpperCase() +
-        word.slice(1)
-      )
-      .join(' ');
+  formatModule(module?: string | null): string {
+    return activityModuleLabel(module);
   }
 
-    formatDescription(log: ActivityLog): string {
-    const description = log.description || '';
-
-    if (log.module === 'EDITORIAL_BOARDS' && log.action === 'SATISFY') {
-      const satisfied = log.metadata?.['satisfied'];
-
-      if (satisfied === true) return 'Marked the editorial board as satisfied.';
-      if (satisfied === false) return 'Marked the editorial board as not satisfied.';
-
-      return 'Updated the editorial board satisfaction status.';
-    }
-
-    return description
-      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, 'this record')
-      .replace(/\btrue\b/g, 'Yes')
-      .replace(/\bfalse\b/g, 'No');
+  formatDescription(log: ActivityLog): string {
+    return activityDescription(log);
   }
 }

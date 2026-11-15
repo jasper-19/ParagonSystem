@@ -256,13 +256,15 @@ export async function updateMedia(id: string, data: unknown) {
   return updated;
 }
 
-export async function deleteMedia(id: string) {
+export async function deleteMedia(id: string, afterDelete?: () => Promise<void>) {
   const deleted = await repository.remove(id);
 
   if (!deleted) {
     throw Object.assign(new Error("Media not found"), { statusCode: 404 });
   }
 
+  // The row is already deleted even if subsequent object cleanup fails.
+  await afterDelete?.();
   await storageService.remove([deleted.storagePath]);
 }
 

@@ -88,8 +88,6 @@ export const createBoard = asyncHandler(
         coAdviserName
       );
 
-    emitEditorialBoardUpdated();
-
     notificationService
       .create(
         `New editorial board created for ${academicYear}.`,
@@ -97,7 +95,7 @@ export const createBoard = asyncHandler(
       )
       .catch(() => {});
 
-    auditLog(
+    await auditLog(
       req,
       "CREATE",
       "EDITORIAL_BOARDS",
@@ -115,6 +113,8 @@ export const createBoard = asyncHandler(
       }
     );
 
+    emitEditorialBoardUpdated();
+
     res.status(201).json(board);
   }
 );
@@ -126,9 +126,7 @@ export const activateBoard = asyncHandler(
 
     const board = await service.activateBoard(boardId);
 
-    emitEditorialBoardUpdated();
-
-    auditLog(
+    await auditLog(
       req,
       "ACTIVATE",
       "EDITORIAL_BOARDS",
@@ -141,6 +139,8 @@ export const activateBoard = asyncHandler(
         },
       }
     );
+
+    emitEditorialBoardUpdated();
 
     res.json(board);
   }
@@ -157,9 +157,7 @@ export const deleteBoard = asyncHandler(
 
     await service.deleteBoard(boardId);
 
-    emitEditorialBoardUpdated();
-
-    auditLog(
+    await auditLog(
       req,
       "DELETE",
       "EDITORIAL_BOARDS",
@@ -168,6 +166,8 @@ export const deleteBoard = asyncHandler(
         resourceId: boardId,
       }
     );
+
+    emitEditorialBoardUpdated();
 
     res.status(204).send();
   }
@@ -207,11 +207,7 @@ export const addMember = asyncHandler(
       role
     );
 
-    if (await service.isActiveBoard(boardId)) {
-      emitEditorialBoardUpdated();
-    }
-
-    auditLog(
+    await auditLog(
       req,
       "ADD_MEMBER",
       "EDITORIAL_BOARDS",
@@ -226,6 +222,10 @@ export const addMember = asyncHandler(
         },
       }
     );
+
+    if (await service.isActiveBoard(boardId)) {
+      emitEditorialBoardUpdated();
+    }
 
     res.status(201).json(member);
   }
@@ -272,9 +272,7 @@ export const assignApplication =
             parsed.data
           );
 
-      emitEditorialBoardUpdated();
-
-      auditLog(
+      await auditLog(
         req,
         "ASSIGN_APPLICATION",
         "EDITORIAL_BOARDS",
@@ -295,6 +293,8 @@ export const assignApplication =
           },
         }
       );
+
+    emitEditorialBoardUpdated();
 
       notificationService
         .create(
@@ -338,11 +338,7 @@ export const updateMember = asyncHandler(
       yearLevel
     );
 
-    if (await service.isActiveBoard(boardId)) {
-      emitEditorialBoardUpdated();
-    }
-
-    auditLog(
+    await auditLog(
       req,
       "UPDATE_MEMBER",
       "EDITORIAL_BOARDS",
@@ -358,6 +354,10 @@ export const updateMember = asyncHandler(
       }
     );
 
+    if (await service.isActiveBoard(boardId)) {
+      emitEditorialBoardUpdated();
+    }
+
     res.json(member);
   }
 );
@@ -370,11 +370,7 @@ export const removeMember = asyncHandler(
 
     await service.removeBoardMember(memberId);
 
-    if (await service.isActiveBoard(boardId)) {
-      emitEditorialBoardUpdated();
-    }
-
-    auditLog(
+    await auditLog(
       req,
       "REMOVE_MEMBER",
       "EDITORIAL_BOARDS",
@@ -386,6 +382,10 @@ export const removeMember = asyncHandler(
         },
       }
     );
+
+    if (await service.isActiveBoard(boardId)) {
+      emitEditorialBoardUpdated();
+    }
 
     res.status(204).send();
   }
@@ -403,11 +403,7 @@ export const revokeMember = asyncHandler(
 
     await service.revokeBoardMember(boardId, memberId);
 
-    if (await service.isActiveBoard(boardId)) {
-      emitEditorialBoardUpdated();
-    }
-
-    auditLog(
+    await auditLog(
       req,
       "REVOKE_MEMBER",
       "EDITORIAL_BOARDS",
@@ -419,6 +415,10 @@ export const revokeMember = asyncHandler(
         },
       }
     );
+
+    if (await service.isActiveBoard(boardId)) {
+      emitEditorialBoardUpdated();
+    }
 
     res.status(204).send();
   }
@@ -460,9 +460,7 @@ export const satisfyBoard = asyncHandler(
         satisfied
       );
 
-    emitEditorialBoardUpdated();
-
-    auditLog(
+    await auditLog(
       req,
       "SATISFY",
       "EDITORIAL_BOARDS",
@@ -476,6 +474,8 @@ export const satisfyBoard = asyncHandler(
         },
       }
     );
+
+    emitEditorialBoardUpdated();
 
     res.json(board);
   }

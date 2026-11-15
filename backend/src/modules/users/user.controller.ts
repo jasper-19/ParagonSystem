@@ -30,7 +30,7 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
   const { username, password, role, staffId } = req.body as any;
   const user = await service.createUser({ username, password, role, staffId });
-  auditLog(req, "CREATE", "USERS", `Created user: ${user.username}`, {
+  await auditLog(req, "CREATE", "USERS", `Created user: ${user.username}`, {
     resourceId: user.id,
     details: { username: user.username, role: user.role, staffId: user.staffId ?? null },
   });
@@ -59,17 +59,24 @@ export const patchUser = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
+  await auditLog(req, "UPDATE", "USERS", `Updated user: ${updated.username}`, {
+    resourceId: updated.id,
+    details: {
+      fields: Object.keys(req.body), role: updated.role, isActive: updated.isActive,
+      staffId: updated.staffId ?? null, passwordChanged: password !== undefined,
+    },
+  });
+
   if (
     password !== undefined ||
     role !== undefined ||
     isActive === false
   ) {
     await sessionRepository.revokeAllOtherSessions(id);
+    await auditLog(req, "REVOKE_OTHER_SESSIONS", "AUTH", "Revoked sessions after account update", {
+      resourceId: id,
+    });
   }
-  auditLog(req, "UPDATE", "USERS", `Updated user: ${updated.username}`, {
-    resourceId: updated.id,
-    details: { fields: Object.keys(req.body as Record<string, unknown>) },
-  });
   emitUserAccountsUpdated();
   res.json(service.toPublicUser(updated));
 });

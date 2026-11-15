@@ -11,16 +11,28 @@ import {
 } from "./settings.types";
 
 let cached: { value: GlobalSettings; expiresAt: number } | null = null;
+let refreshInFlight: Promise<GlobalSettings> | null = null;
 const CACHE_TTL_MS = 15_000;
+
+function cacheSettings(value: GlobalSettings): GlobalSettings {
+  // A read started before a write must never restore an older policy.
+  if (!cached || value.version >= cached.value.version) {
+    cached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+  }
+  return cached.value;
+}
 
 export async function getSettings(forceRefresh = false): Promise<GlobalSettings> {
   if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
     return cached.value;
   }
 
-  const value = await repository.get();
-  cached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
-  return value;
+  if (!refreshInFlight) {
+    refreshInFlight = repository.get().then(cacheSettings).finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
 }
 
 export async function updateSection(
@@ -50,12 +62,15 @@ export async function updateSection(
     );
   }
 
-  cached = { value: updated, expiresAt: Date.now() + CACHE_TTL_MS };
+  cacheSettings(updated);
   return updated;
 }
 
-export async function getPublicSettings() {
-  const settings = await getSettings();
+export async function getPublicSettings(minimumVersion = 0) {
+  let settings = await getSettings();
+  // Invalidation events carry the committed version, so another instance's
+  // cached policy cannot mask that save. Ordinary visitors share the TTL cache.
+  if (settings.version < minimumVersion) settings = await getSettings(true);
   return {
     general: settings.general,
     maintenance: {

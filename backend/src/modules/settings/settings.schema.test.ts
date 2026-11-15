@@ -61,3 +61,13 @@ test("maintenance mode requires a useful public message", () => {
   );
 });
 
+test("media policy rejects duplicate types and general settings trim email", () => {
+  assert.equal(publishingMediaSettingsSchema.safeParse({
+    ...DEFAULT_PUBLISHING_MEDIA_SETTINGS,
+    allowedMimeTypes: ["image/jpeg", "image/jpeg"],
+  }).success, false);
+  assert.equal(generalSettingsSchema.parse({
+    ...DEFAULT_GENERAL_SETTINGS, contactEmail: " editor@example.test ",
+  }).contactEmail, "editor@example.test");
+});
+

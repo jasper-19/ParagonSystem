@@ -17,7 +17,7 @@ const httpsUrlOrEmpty = z
 export const generalSettingsSchema = z.object({
   siteName: z.string().trim().min(2).max(120),
   organizationName: z.string().trim().min(2).max(160),
-  contactEmail: z.union([z.literal(""), z.email().max(254)]),
+  contactEmail: z.string().trim().pipe(z.union([z.literal(""), z.email().max(254)])),
   logoUrl: httpsUrlOrEmpty,
   timezone: z
     .string()
@@ -43,7 +43,8 @@ export const publishingMediaSettingsSchema = z.object({
   allowedMimeTypes: z
     .array(z.enum(SUPPORTED_MEDIA_MIME_TYPES))
     .min(1)
-    .max(SUPPORTED_MEDIA_MIME_TYPES.length),
+    .max(SUPPORTED_MEDIA_MIME_TYPES.length)
+    .refine(values => new Set(values).size === values.length, "Media types must be unique"),
   optimizeImages: z.boolean(),
 });
 

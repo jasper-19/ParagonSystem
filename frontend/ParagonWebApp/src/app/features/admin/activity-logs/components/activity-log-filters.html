@@ -88,7 +88,7 @@
             *ngFor="let module of modules"
             [value]="module"
           >
-            {{ module }}
+            {{ formatModule(module) }}
           </option>
         </select>
         <span class="pointer-events-none absolute
@@ -142,7 +142,7 @@
                   disabled:bg-slate-50
                   disabled:text-slate-400">
             <option value="">All actions</option>
-            <option *ngFor="let action of actions" [value]="action">{{ action }}</option>
+            <option *ngFor="let action of actions" [value]="action">{{ formatAction(action) }}</option>
           </select>
           <span class="pointer-events-none absolute
        right-3 top-1/2 flex

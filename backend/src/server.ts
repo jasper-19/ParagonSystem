@@ -11,6 +11,7 @@ import { initializeDatabase } from "./config/db";
 import pool from "./config/db";
 import { validateEnvironment } from "./config/env";
 import { specialIssueUploadConfig } from "./config/special-issue-upload";
+import { drainAuditLogs } from "./modules/activity-logs/activity-log.audit";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -69,6 +70,7 @@ async function shutdown(signal: string): Promise<void> {
     }
 
     try {
+      await drainAuditLogs();
       await pool.end();
     } catch (poolError) {
       console.error("Database pool shutdown failed:", poolError);

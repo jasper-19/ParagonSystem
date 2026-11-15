@@ -1,4 +1,5 @@
 import { PageLoaderComponent } from '../../../shared/components/page-loader/page-loader';
+import { PublicationDatePipe } from '../../../shared/pipes/publication-date.pipe';
 import {
   ChangeDetectionStrategy,
   AfterViewInit,
@@ -38,7 +39,7 @@ interface SettingsTabDefinition {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [PageLoaderComponent,
+  imports: [PageLoaderComponent, PublicationDatePipe,
     CommonModule,
     GeneralSettingsComponent,
     UsersSettingsComponent,

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
 import * as service from "./media.service";
+import { auditLog } from "../activity-logs/activity-log.audit";
 
 export const getMedia = asyncHandler(async (req: Request, res: Response) => {
   const rawSearch = req.query["search"];
@@ -27,18 +28,25 @@ export const getMedia = asyncHandler(async (req: Request, res: Response) => {
 export const uploadMedia = asyncHandler(async (req: Request, res: Response) => {
   const file = (req as Request & { file?: service.UploadInput }).file;
   const created = await service.createMediaFromUpload(file);
+  await auditLog(req, "UPLOAD", "MEDIA", "Uploaded media", {
+    resourceId: created.id,
+    details: { mimeType: created.mimeType, size: created.size },
+  });
   res.status(201).json(created);
 });
 
 export const updateMedia = asyncHandler(async (req: Request, res: Response) => {
   const id = String(sanitizeValue(req.params["id"]) || "");
   const updated = await service.updateMedia(id, req.body);
+  await auditLog(req, "UPDATE", "MEDIA", "Updated media metadata", {
+    resourceId: id, details: { fields: Object.keys(req.body) },
+  });
   res.json(updated);
 });
 
 export const deleteMedia = asyncHandler(async (req: Request, res: Response) => {
   const id = String(sanitizeValue(req.params["id"]) || "");
-  await service.deleteMedia(id);
+  await service.deleteMedia(id, () => auditLog(req, "DELETE", "MEDIA", "Deleted media", { resourceId: id }));
   res.status(204).send();
 });
 

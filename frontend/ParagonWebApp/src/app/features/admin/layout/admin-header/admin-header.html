@@ -13,12 +13,12 @@
     </div>
 
     <div class="header-clock" aria-label="Current date and time">
-      <span class="header-date">{{ now() | date:'EEE, MMM d' }}</span>
-      <span class="header-time">{{ now() | date:'h:mm a' }}</span>
+      <span class="header-date">{{ now() | publicationDate:'date' }}</span>
+      <span class="header-time">{{ now() | publicationDate:'time' }}</span>
     </div>
 
     <div class="header-account">
-      <span class="tablet-time">{{ now() | date:'h:mm a' }}</span>
+      <span class="tablet-time">{{ now() | publicationDate:'time' }}</span>
       <div #notificationContainer class="notification-container">
         <button #notificationButton type="button" (click)="toggleNotifications()"
           class="header-icon-button notification-trigger" aria-label="Open notifications"

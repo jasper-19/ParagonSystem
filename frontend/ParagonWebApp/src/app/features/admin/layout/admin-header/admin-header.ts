@@ -18,10 +18,11 @@ import {
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AdminAuthService } from '../../../../core/services/admin-auth.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { PublicationDatePipe } from '../../../../shared/pipes/publication-date.pipe';
 
 @Component({
   selector: 'app-admin-header',
-  imports: [CommonModule],
+  imports: [CommonModule, PublicationDatePipe],
   standalone: true,
   templateUrl: './admin-header.html',
   styleUrl: './admin-header.scss',

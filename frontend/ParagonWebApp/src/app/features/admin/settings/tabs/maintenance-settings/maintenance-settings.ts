@@ -83,7 +83,7 @@ export class MaintenanceSettingsComponent implements OnInit {
     this.saving.set(true);
     this.message.set('');
     this.service
-      .updateSection('maintenance', this.form.getRawValue(), this.version())
+      .updateSection('maintenance', this.form.getRawValue(), this.acceptedVersion ?? this.version())
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.saving.set(false)),

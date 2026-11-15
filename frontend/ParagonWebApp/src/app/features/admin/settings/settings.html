@@ -19,7 +19,7 @@
             Version {{ snapshot.version }}
           </span>
           <span class="rounded-full border border-slate-200 bg-white px-3 py-1.5">
-            Updated {{ snapshot.updatedAt | date: 'medium' }}
+            Updated {{ snapshot.updatedAt | publicationDate }}
           </span>
         </div>
       }

@@ -12,7 +12,7 @@ export const getNotifications = asyncHandler(async (_req: Request, res: Response
 /** PATCH /api/notifications/read-all */
 export const markAllRead = asyncHandler(async (req: Request, res: Response) => {
   await service.markAllRead();
-  auditLog(req, "READ_ALL", "NOTIFICATIONS", "Marked all notifications as read");
+  await auditLog(req, "READ_ALL", "NOTIFICATIONS", "Marked all notifications as read");
   res.status(204).send();
 });
 

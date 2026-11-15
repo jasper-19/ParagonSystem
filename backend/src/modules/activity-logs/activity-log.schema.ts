@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-export const createActivityLogSchema = z.object({
-  userId: z.string().uuid().optional(),
-  action: z.string().min(1).max(100),
-  resourceType: z.string().max(50).optional(),
-  resourceId: z.string().uuid().optional(),
-  details: z.record(z.string(), z.unknown()).optional(),
-  ipAddress: z.string().max(64).optional(),
-  userAgent: z.string().max(1024).optional(),
+export const activityLogQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(1_000_000).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  module: z.string().trim().max(50).optional(),
+  action: z.string().trim().max(100).optional(),
+  dateFrom: z.iso.date().optional(),
+  search: z.string().trim().max(200).optional(),
 });

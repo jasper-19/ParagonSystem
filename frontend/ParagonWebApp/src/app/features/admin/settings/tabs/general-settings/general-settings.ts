@@ -101,7 +101,7 @@ export class GeneralSettingsComponent implements OnInit {
     this.message.set('');
     this.messageKind.set('');
     this.service
-      .updateSection('general', this.form.getRawValue(), this.version())
+      .updateSection('general', this.form.getRawValue(), this.acceptedVersion ?? this.version())
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.saving.set(false)),

@@ -96,8 +96,12 @@ export function emitEditorialBoardUpdated(): void {
 export function emitGlobalSettingsUpdated(
   payload: GlobalSettingsUpdatedPayload
 ): void {
-  console.log("Broadcasting settings:updated", payload);
-  getIO().emit(SocketEvents.GLOBAL_SETTINGS_UPDATED, payload);
+  try {
+    getIO().emit(SocketEvents.GLOBAL_SETTINGS_UPDATED, payload);
+  } catch {
+    // The database save is already committed. A transport outage must not
+    // turn it into a failed HTTP response; clients refresh on reconnect.
+  }
 }
 
 export function emitUserAccountsUpdated(): void {

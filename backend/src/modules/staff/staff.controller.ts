@@ -39,7 +39,7 @@ export const createFromApplication = asyncHandler(async (req: Request, res: Resp
   }
 
   const member = await service.createStaffFromApplication(applicationId, section, role);
-  auditLog(req, "CREATE", "STAFF", `Created staff from application: ${applicationId}`, {
+  await auditLog(req, "CREATE", "STAFF", `Created staff from application: ${applicationId}`, {
     resourceId: String((member as any).id ?? ""),
     details: {
       applicationId,
@@ -55,7 +55,7 @@ export const createFromApplication = asyncHandler(async (req: Request, res: Resp
 export const deleteStaff = asyncHandler(async (req: Request, res: Response) => {
   const id = req.params["id"] as string;
   await service.deleteStaffMember(id);
-  auditLog(req, "DELETE", "STAFF", `Deleted staff member: ${id}`, { resourceId: id });
+  await auditLog(req, "DELETE", "STAFF", `Deleted staff member: ${id}`, { resourceId: id });
   res.status(204).send();
 });
 
@@ -77,7 +77,7 @@ export const updateStaff = asyncHandler(async (req: Request, res: Response) => {
   }>;
 
   const member = await service.updateStaffMember(id, patch);
-  auditLog(req, "UPDATE", "STAFF", `Updated staff member: ${id}`, {
+  await auditLog(req, "UPDATE", "STAFF", `Updated staff member: ${id}`, {
     resourceId: id,
     details: { fields: Object.keys(patch) },
   });

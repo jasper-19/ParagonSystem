@@ -706,7 +706,7 @@ export async function updateArticleStatus(id: string, status: string) {
     }
     
     if (status === "Published") {
-        return repository.publish(id);
+        return publishArticle(id);
     }
 
     if (status === "Archived") {

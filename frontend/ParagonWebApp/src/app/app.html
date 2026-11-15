@@ -1,26 +1,37 @@
 @if (publicSettings()?.maintenance?.enabled && !isAdminRoute()) {
-  <main class="flex min-h-screen items-center justify-center bg-[#000035] px-5 py-12 text-white">
-    <section class="w-full max-w-xl text-center" aria-labelledby="maintenance-title">
+  <main class="maintenance" aria-labelledby="maintenance-title">
+    <header class="maintenance__masthead">
       <img
         [src]="publicSettings()?.general?.logoUrl || 'assets/PRG_Logo.png'"
         [alt]="(publicSettings()?.general?.siteName || 'Paragon') + ' logo'"
-        class="mx-auto h-16 w-auto object-contain"
+        class="maintenance__logo"
       />
-      <p class="mt-8 text-xs font-black uppercase tracking-[0.2em] text-[#F4B400]">
+      <div class="maintenance__identity">
+        <p class="maintenance__name">{{ publicSettings()?.general?.siteName || 'The Paragon' }}</p>
+        @if (publicSettings()?.general?.organizationName) {
+          <p class="maintenance__organization">{{ publicSettings()?.general?.organizationName }}</p>
+        }
+      </div>
+    </header>
+
+    <section class="maintenance__content">
+      <p class="maintenance__eyebrow">
+        <span aria-hidden="true"></span>
         Scheduled maintenance
       </p>
-      <h1 id="maintenance-title" class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-        We’ll be back shortly
+      <h1 id="maintenance-title" class="maintenance__title">
+        We&rsquo;ll be<br />back shortly<span aria-hidden="true">.</span>
       </h1>
-      <p class="mx-auto mt-4 max-w-lg text-sm leading-7 text-white/70 sm:text-base">
+      <p class="maintenance__message">
         {{ publicSettings()?.maintenance?.message }}
       </p>
-      <div class="mx-auto mt-8 h-1 w-20 rounded-full bg-[#F4B400]" aria-hidden="true"></div>
-      <p class="mt-8 text-xs text-white/45">
-        {{ publicSettings()?.general?.siteName || 'The Paragon' }}
-        · {{ publicSettings()?.general?.organizationName }}
-      </p>
     </section>
+
+    <footer class="maintenance__footer">
+      <p>Thank you for your patience.</p>
+      <span class="maintenance__footer-rule" aria-hidden="true"></span>
+      <p>We look forward to welcoming you back.</p>
+    </footer>
   </main>
 } @else {
   <router-outlet />

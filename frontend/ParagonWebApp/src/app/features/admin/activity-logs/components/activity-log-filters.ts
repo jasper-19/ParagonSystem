@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild, Output, EventEmitter, Input, OnDestroy } from '@angular/core';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { activityActionLabel, activityModuleLabel } from '../../../../models/activity-log-presentation';
 
 export interface ActivityLogFilters {
   module?: string;
@@ -20,6 +21,8 @@ export interface ActivityLogFilters {
   host: { class: 'block' },
 })
 export class ActivityLogFiltersComponent implements OnDestroy {
+  readonly formatModule = activityModuleLabel;
+  readonly formatAction = activityActionLabel;
 
   @ViewChild(
     'searchInput'

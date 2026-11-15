@@ -341,14 +341,14 @@ export const createArticle = asyncHandler(
             `New Article created: ${(article as any).title ?? "Untitled"}.`,
             "article"
         ).catch(() => {});
-        auditLog(
+        await auditLog(
             req,
             "CREATE",
             "ARTICLES",
             `Created article: ${(article as any).title ?? "Untitled"}`,
             {
                 resourceId: String((article as any).id ?? ""),
-                details: { title: (article as any).title, slug: (article as any).slug },
+                details: { title: article.title, slug: article.slug, status: article.status },
             }
         );
         emitArticlesUpdated();
@@ -375,7 +375,7 @@ export const updateArticle = asyncHandler(
       req.body
     );
 
-    auditLog(
+    await auditLog(
       req,
       "UPDATE",
       "ARTICLES",
@@ -385,6 +385,8 @@ export const updateArticle = asyncHandler(
         details: {
           title: article.title,
           slug: article.slug,
+          status: article.status,
+          fields: Object.keys(req.body),
         },
       }
     );
@@ -414,7 +416,7 @@ export const publishArticle = asyncHandler(
             `Article published: ${(article as any).title ?? id}.`,
             "article",
         ).catch(() => {});
-        auditLog(
+        await auditLog(
             req,
             "PUBLISH",
             "ARTICLES",
@@ -438,7 +440,7 @@ export const archiveArticle = asyncHandler(
         const id = sanitizeValue(req.params["id"]) as string;
 
         const article = await service.archiveArticle(id);
-        auditLog(
+        await auditLog(
             req,
             "ARCHIVE",
             "ARTICLES",
@@ -473,7 +475,7 @@ export const deleteArticle = asyncHandler(
         const id = sanitizeValue(req.params["id"]) as string;
 
         await service.deleteArticle(id);
-        auditLog(
+        await auditLog(
             req,
             "DELETE",
             "ARTICLES",

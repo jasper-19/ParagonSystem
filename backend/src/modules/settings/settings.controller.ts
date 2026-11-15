@@ -11,9 +11,12 @@ function actorId(req: Request): string | null {
 }
 
 export const getPublicSettings = asyncHandler(
-  async (_req: Request, res: Response) => {
-    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
-    res.json(await service.getPublicSettings());
+  async (req: Request, res: Response) => {
+    res.setHeader("Cache-Control", "no-store");
+    const version = Number(req.query.settingsVersion);
+    res.json(await service.getPublicSettings(
+      Number.isSafeInteger(version) && version > 0 ? version : 0
+    ));
   }
 );
 
@@ -37,7 +40,7 @@ function update(section: SettingsSection) {
       actorId(req)
     );
 
-    auditLog(
+    await auditLog(
       req,
       "UPDATE",
       "SYSTEM_SETTINGS",

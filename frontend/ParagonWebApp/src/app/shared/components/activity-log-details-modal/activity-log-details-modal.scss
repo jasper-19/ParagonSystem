@@ -33,3 +33,25 @@
 @media (max-width: 639px) { .activity-dialog { border-radius: 6px 6px 0 0; } .activity-dialog > header { padding: 18px 16px; } .activity-dialog > header .flex > .flex > div:first-child { display: none; } .activity-dialog .activity-dialog-body { padding: 20px 16px; } .activity-dialog footer { padding: 12px 16px; } .activity-dialog footer button { min-height: 44px; } }
 @media (max-height: 479px) and (min-width: 640px) { .activity-dialog { max-height: calc(100dvh - 24px); } .activity-dialog > header { padding-top: 12px; padding-bottom: 12px; } .activity-dialog footer { padding-top: 10px; padding-bottom: 10px; } }
 @media (prefers-reduced-motion: reduce) { .activity-dialog button { transition: none; } }
+
+.activity-dialog .activity-dialog-body .activity-additional-details {
+  border-top: 1px solid #e3e7ed;
+  padding-top: 20px;
+
+  .activity-detail-group { margin-top: 18px; }
+  h4 { margin: 0 0 8px; color: #647084; font-size: 12px; font-weight: 600; }
+  dl { margin: 0; }
+  .activity-detail-row {
+    display: grid;
+    grid-template-columns: minmax(0, 180px) minmax(0, 1fr);
+    gap: 8px 20px;
+    padding: 10px 0;
+    border-top: 1px solid #edf0f4;
+  }
+  dd { margin: 0; white-space: pre-wrap; }
+  .activity-detail-reference { color: #475569; font-family: ui-monospace, monospace; font-size: 12px; font-weight: 400; }
+}
+
+@media (max-width: 639px) {
+  .activity-dialog .activity-dialog-body .activity-additional-details .activity-detail-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}

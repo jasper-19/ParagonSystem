@@ -45,5 +45,23 @@ describe('Activity log details dialog', () => {
     expect(root.textContent).not.toContain('Excluded duplicate description');
     expect(root.textContent).toContain('Not recorded'); expect(root.textContent).toContain('No');
     expect(fixture.componentInstance.formatIp(log.ipAddress)).toBe('192.0.2.1');
+    expect(root.querySelector('pre')).toBeNull();
+  });
+
+  it('renders professional groups and refreshes details when a different record opens', async () => {
+    fixture.componentRef.setInput('log', { ...log, metadata: { fields: ['title', 'image'], size: 1572864,
+      mimeType: 'image/webp', actorType: 'user', requestId: 'request-reference', notes: 'private interview text' } });
+    fixture.detectChanges(); await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Changed fields');
+    expect(root.textContent).toContain('Title, Cover image');
+    expect(root.textContent).toContain('1.5 MB');
+    expect(root.textContent).toContain('Reference identifiers');
+    expect(root.textContent).toContain('Withheld for privacy');
+    expect(root.textContent).not.toContain('private interview text');
+    expect(root.querySelector('.activity-detail-reference')?.textContent).toBe('request-reference');
+    fixture.componentRef.setInput('log', { ...log, metadata: { description: 'Only duplicate description' } });
+    fixture.detectChanges(); await fixture.whenStable();
+    expect(root.querySelector('[aria-labelledby="activity-metadata-title"]')).toBeNull();
   });
 });

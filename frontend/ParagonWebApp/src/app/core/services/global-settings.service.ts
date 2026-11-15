@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
-import { Observable, finalize, tap } from 'rxjs';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
 import { API_ENDPOINTS } from '../config/api.config';
 import {
   GeneralGlobalSettings,
@@ -36,6 +36,7 @@ export class GlobalSettingsService {
   private readonly http = inject(HttpClient);
   private readonly document = inject(DOCUMENT);
   private readonly socket = inject(SocketService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly api = API_ENDPOINTS.settings;
   private readonly state = signal<GlobalSettingsSnapshot | null>(null);
   private readonly publicState = signal<PublicGlobalSettings | null>(null);
@@ -48,16 +49,26 @@ export class GlobalSettingsService {
   private pendingPublicVersion = 0;
 
   constructor() {
-    this.socket.onGlobalSettingsUpdated(event => this.handleRemoteUpdate(event));
+    const removeUpdateListener = this.socket.onGlobalSettingsUpdated(event => this.handleRemoteUpdate(event));
+    const removeConnectListener = this.socket.on<void>('connect', () => {
+      // Recover invalidations missed while the transport was disconnected.
+      if (this.publicState()) this.refreshPublicSettings();
+      if (this.state()) this.refreshFullSettings();
+    });
+    this.destroyRef.onDestroy(() => {
+      removeUpdateListener?.();
+      removeConnectListener?.();
+    });
   }
 
   load(): Observable<GlobalSettingsSnapshot> {
     return this.http
       .get<GlobalSettingsSnapshot>(this.api)
-      .pipe(tap(settings => this.state.set(settings)));
+      .pipe(tap(settings => this.acceptSnapshot(settings)));
   }
 
   loadPublic(version?: number): Observable<PublicGlobalSettings> {
+    version ??= this.publicState() ? this.publicState()!.version + 1 : undefined;
     const url = version
       ? `${this.api}/public?settingsVersion=${version}`
       : `${this.api}/public`;
@@ -65,8 +76,7 @@ export class GlobalSettingsService {
       .get<PublicGlobalSettings>(url)
       .pipe(
         tap(settings => {
-          this.publicState.set(settings);
-          this.applyGeneralSettings(settings.general);
+          this.acceptPublic(settings);
         }),
       );
   }
@@ -83,21 +93,34 @@ export class GlobalSettingsService {
       })
       .pipe(
         tap(settings => {
-          this.state.set(settings);
-          const currentPublic = this.publicState();
-          if (currentPublic) {
-            this.publicState.set({
-              general: settings.general,
-              maintenance: {
-                enabled: settings.maintenance.enabled,
-                message: settings.maintenance.message,
-              },
-              version: settings.version,
-            });
-          }
-          this.applyGeneralSettings(settings.general);
+          this.acceptSnapshot(settings);
+        }),
+        catchError(error => {
+          // Keep dirty forms intact while exposing a fresh snapshot for the
+          // existing "Load latest" action after an optimistic-lock conflict.
+          if (error.status === 409) this.refreshFullSettings();
+          return throwError(() => error);
         }),
       );
+  }
+
+  private acceptSnapshot(settings: GlobalSettingsSnapshot): void {
+    if (settings.version < (this.state()?.version ?? 0)) return;
+    this.state.set(settings);
+    this.acceptPublic({
+      general: settings.general,
+      maintenance: {
+        enabled: settings.maintenance.enabled,
+        message: settings.maintenance.message,
+      },
+      version: settings.version,
+    });
+  }
+
+  private acceptPublic(settings: PublicGlobalSettings): void {
+    if (settings.version < (this.publicState()?.version ?? 0)) return;
+    this.publicState.set(settings);
+    this.applyGeneralSettings(settings.general);
   }
 
   private applyGeneralSettings(settings: GeneralGlobalSettings): void {
@@ -107,7 +130,7 @@ export class GlobalSettingsService {
 
   private handleRemoteUpdate(event: GlobalSettingsUpdatedPayload): void {
     const currentPublic = this.publicState();
-    if (currentPublic && currentPublic.version < event.version) {
+    if (!currentPublic || currentPublic.version < event.version) {
       this.pendingPublicVersion = Math.max(this.pendingPublicVersion, event.version);
       this.refreshPublicSettings();
     }
@@ -119,42 +142,49 @@ export class GlobalSettingsService {
     }
   }
 
-  private refreshPublicSettings(): void {
+  private refreshPublicSettings(retryStale = true): void {
     if (this.publicRefreshInFlight) return;
     const requestedVersion = this.pendingPublicVersion;
+    let succeeded = false;
     this.publicRefreshInFlight = true;
-    this.loadPublic(requestedVersion)
+    this.loadPublic(requestedVersion || undefined)
       .pipe(
+        tap(() => succeeded = true),
         finalize(() => {
           this.publicRefreshInFlight = false;
-          if ((this.publicState()?.version ?? 0) < this.pendingPublicVersion) {
-            this.refreshPublicSettings();
+          // Follow a newer event or retry one stale response, without looping
+          // indefinitely against a lagging server.
+          if (requestedVersion < this.pendingPublicVersion ||
+            (succeeded && retryStale && (this.publicState()?.version ?? 0) < requestedVersion)) {
+            this.refreshPublicSettings(false);
           }
         }),
       )
       .subscribe({
         error: error => {
-          this.pendingPublicVersion = this.publicState()?.version ?? 0;
           console.error('Unable to refresh public settings:', error);
         },
       });
   }
 
-  private refreshFullSettings(): void {
+  private refreshFullSettings(retryStale = true): void {
     if (this.fullRefreshInFlight) return;
+    const requestedVersion = this.pendingFullVersion;
+    let succeeded = false;
     this.fullRefreshInFlight = true;
     this.load()
       .pipe(
+        tap(() => succeeded = true),
         finalize(() => {
           this.fullRefreshInFlight = false;
-          if ((this.state()?.version ?? 0) < this.pendingFullVersion) {
-            this.refreshFullSettings();
+          if (requestedVersion < this.pendingFullVersion ||
+            (succeeded && retryStale && (this.state()?.version ?? 0) < requestedVersion)) {
+            this.refreshFullSettings(false);
           }
         }),
       )
       .subscribe({
         error: error => {
-          this.pendingFullVersion = this.state()?.version ?? 0;
           console.error('Unable to refresh global settings:', error);
         },
       });

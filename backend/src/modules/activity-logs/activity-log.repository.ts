@@ -36,7 +36,8 @@ function mapRow(row: any): ActivityLog {
     action,
     module: moduleName,
     description: detailsDescription ?? `${action} ${moduleName}`,
-    ...(row.resource_id ? { entityId: String(row.resource_id) } : {}),
+    ...(row.resource_id ? { entityId: String(row.resource_id) }
+      : typeof metadata?.resourceKey === "string" ? { entityId: metadata.resourceKey } : {}),
     entityType: moduleName,
     ...(metadata ? { metadata } : {}),
     ...(ipAddress ? { ipAddress } : {}),
@@ -92,11 +93,10 @@ export async function findAll(
   if (filters.dateFrom) {
     whereClauses.push(
       `al.created_at >=
-         $${parameterIndex}::date
+         ($${parameterIndex}::date::timestamp AT TIME ZONE 'Asia/Manila')
        AND al.created_at <
          (
-           $${parameterIndex}::date +
-           INTERVAL '1 day'
+           ($${parameterIndex}::date + INTERVAL '1 day') AT TIME ZONE 'Asia/Manila'
          )`
     );
 
@@ -117,6 +117,7 @@ export async function findAll(
         ) ILIKE $${parameterIndex}
         OR al.action
           ILIKE $${parameterIndex}
+        OR al.resource_id::text ILIKE $${parameterIndex}
         OR COALESCE(
           al.resource_type,
           ''

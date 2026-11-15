@@ -123,9 +123,9 @@ export const createIssue = asyncHandler(
     }
     const issueTitle =
       typeof issue.title === "string" ? issue.title : "Untitled";
-    auditLog(req, "CREATE", "SPECIAL_ISSUES", `Created special issue: ${issueTitle}`, {
+    await auditLog(req, "CREATE", "SPECIAL_ISSUES", `Created special issue: ${issueTitle}`, {
       resourceId: issue.id,
-      details: { title: issue.title, slug: issue.slug, type: issue.type },
+      details: { title: issue.title, slug: issue.slug, type: issue.type, status: issue.status },
     });
 
     res.status(201).json(issue);
@@ -139,9 +139,9 @@ export const updateIssue = asyncHandler(
     const id = sanitizeValue(req.params["id"]) as string;
 
     const issue = await completeSpecialIssueMutation(() => service.updateIssue(id, req.body));
-    auditLog(req, "UPDATE", "SPECIAL_ISSUES", `Updated special issue: ${issue.title ?? id}`, {
+    await auditLog(req, "UPDATE", "SPECIAL_ISSUES", `Updated special issue: ${issue.title ?? id}`, {
       resourceId: id,
-      details: { fields: Object.keys(req.body as Record<string, unknown>) },
+      details: { fields: Object.keys(req.body as Record<string, unknown>), status: issue.status },
     });
 
     res.json(issue);
@@ -165,7 +165,7 @@ export const replaceIssuePdf = asyncHandler(
       cancellation.dispose();
     }
 
-    auditLog(
+    await auditLog(
       req,
       "REPLACE_PDF",
       "SPECIAL_ISSUES",
@@ -183,7 +183,7 @@ export const updateIssueStatus = asyncHandler(
     const status = (req.body as { status: string }).status;
 
     const issue = await completeSpecialIssueMutation(() => service.updateIssueStatus(id, status));
-    auditLog(req, "UPDATE_STATUS", "SPECIAL_ISSUES", `Updated special issue status to ${status}: ${id}`, {
+    await auditLog(req, "UPDATE_STATUS", "SPECIAL_ISSUES", `Updated special issue status to ${status}: ${id}`, {
       resourceId: id,
       details: { status },
     });
@@ -199,7 +199,7 @@ export const deleteIssue = asyncHandler(
     const id = sanitizeValue(req.params["id"]) as string;
 
     await completeSpecialIssueMutation(() => service.deleteIssue(id));
-    auditLog(req, "DELETE", "SPECIAL_ISSUES", `Deleted special issue: ${id}`, {
+    await auditLog(req, "DELETE", "SPECIAL_ISSUES", `Deleted special issue: ${id}`, {
       resourceId: id,
     });
 

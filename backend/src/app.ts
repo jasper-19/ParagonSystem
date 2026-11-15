@@ -13,6 +13,7 @@ import { enforceMaintenanceMode } from "./middlewares/maintenance";
 import { pdfConfig } from "./config/pdf";
 import { pdfProcessor } from "./modules/special-issues/pdf-processing/ghostscript-pdf.processor";
 import { cachedProbe } from "./utils/cached-probe";
+import { auditRequestFailures } from "./modules/activity-logs/activity-log.middleware";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -81,6 +82,7 @@ const requestBodyLimitMb = Number.isFinite(configuredBodyLimitMb)
   ? Math.min(Math.max(configuredBodyLimitMb, 1), 20)
   : 5;
 const requestBodyLimit = `${requestBodyLimitMb}mb`;
+app.use("/api", auditRequestFailures);
 app.use(express.json({ limit: requestBodyLimit }));
 app.use(express.urlencoded({ extended: false, limit: requestBodyLimit }));
 

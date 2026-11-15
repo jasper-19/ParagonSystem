@@ -307,7 +307,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       ...(dbUser.staffId ? { staffId: dbUser.staffId } : {}),
     });
     setAuthCookie(res, token);
-    auditLog(req, "LOGIN", "AUTH", `User login: ${dbUser.username}`, {
+    await auditLog(req, "LOGIN", "AUTH", `User login: ${dbUser.username}`, {
       resourceId: dbUser.id,
       userId: dbUser.id,
       details: { role: dbUser.role, sessionId: session.id },
@@ -342,7 +342,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     ...(adminStaffId ? { staffId: adminStaffId } : {}),
   });
   setAuthCookie(res, token);
-  auditLog(req, "LOGIN", "AUTH", `Env admin login: ${adminUsername}`, {
+  await auditLog(req, "LOGIN", "AUTH", `Env admin login: ${adminUsername}`, {
+    userId: "env-admin",
     details: { username: adminUsername, role: "admin" },
   });
 
@@ -394,13 +395,16 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   }
 
   await userService.updateUser(subject, { password: newPassword });
-  auditLog(req, "CHANGE_PASSWORD", "AUTH", `Changed password for user ${subject}`, {
+  await auditLog(req, "CHANGE_PASSWORD", "AUTH", `Changed password for user ${subject}`, {
     resourceId: subject,
     userId: subject,
   });
 
   // Revoke all other sessions as a safety measure after a password change.
   await sessionRepository.revokeAllOtherSessions(subject, sessionId);
+  await auditLog(req, "REVOKE_OTHER_SESSIONS", "AUTH", "Revoked other sessions after password change", {
+    resourceId: subject,
+  });
 
   res.json({ ok: true });
 });
@@ -444,7 +448,7 @@ export const setTwoFaEnabled = asyncHandler(async (req: Request, res: Response) 
     res.status(401).json({ error: "Invalid token" });
     return;
   }
-  auditLog(req, "SET_2FA", "AUTH", `Updated 2FA setting for user ${subject}`, {
+  await auditLog(req, "SET_2FA", "AUTH", `Updated 2FA setting for user ${subject}`, {
     resourceId: subject,
     userId: subject,
     details: { enabled },
@@ -655,7 +659,7 @@ export const logoutSession = asyncHandler(async (req: Request, res: Response) =>
   if (payload?.sid === sessionId) {
     clearAuthCookie(res);
   }
-  auditLog(req, "LOGOUT_SESSION", "AUTH", `Logged out session ${sessionId}`, {
+  await auditLog(req, "LOGOUT_SESSION", "AUTH", `Logged out session ${sessionId}`, {
     resourceId: sessionId,
     userId: subject,
     details: { sessionId },
@@ -668,8 +672,10 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 
   if (payload?.sub && payload.sub !== "env-admin" && payload.sid) {
     await sessionRepository.revokeSession(payload.sub, payload.sid);
-    auditLog(req, "LOGOUT", "AUTH", `User logout: ${payload.sub}`, {
-      resourceId: payload.sid,
+  }
+  if (payload?.sub) {
+    await auditLog(req, "LOGOUT", "AUTH", "User logout", {
+      ...(payload.sid ? { resourceId: payload.sid } : {}),
       userId: payload.sub,
     });
   }

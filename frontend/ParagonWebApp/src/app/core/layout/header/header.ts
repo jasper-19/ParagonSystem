@@ -15,6 +15,7 @@ import { TemperatureService } from '../../services/temperature.service';
 import { LocationService } from '../../services/location.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { GlobalSettingsService } from '../../services/global-settings.service';
+import { PublicationDatePipe } from '../../../shared/pipes/publication-date.pipe';
 
 // ===== Header Component =====
 // Responsible for rendering the top navigation, search modal, and
@@ -23,7 +24,7 @@ import { GlobalSettingsService } from '../../services/global-settings.service';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [SearchModal, CommonModule, RouterLink, RouterLinkActive, RouterModule],
+  imports: [SearchModal, CommonModule, RouterLink, RouterLinkActive, RouterModule, PublicationDatePipe],
   templateUrl: './header.html',
   styleUrl: './header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

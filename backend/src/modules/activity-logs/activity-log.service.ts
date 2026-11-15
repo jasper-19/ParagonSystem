@@ -33,8 +33,7 @@ export async function createActivityLog(
       "test"
     ) {
       console.error(
-        "Failed to emit activity-log update:",
-        error
+        "[AUDIT_BROADCAST_FAILED]"
       );
     }
   }

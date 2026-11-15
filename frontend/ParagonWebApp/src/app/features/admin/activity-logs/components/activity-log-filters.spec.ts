@@ -13,6 +13,24 @@ describe('Activity log filter interactions', () => {
   });
   afterEach(() => { fixture.destroy(); TestBed.resetTestingModule(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
+  it('shows readable labels while submitting the original API filter codes', async () => {
+    fixture.componentRef.setInput('modules', ['SYSTEM_SETTINGS', 'MEDIA', 'AUTH', 'STAFF']);
+    fixture.componentRef.setInput('actions', ['LOGOUT_SESSION', 'REPLACE_PDF', 'AUTHENTICATION_FAILED']);
+    fixture.detectChanges(); await fixture.whenStable();
+    const module = fixture.nativeElement.querySelector('select[name="module"]') as HTMLSelectElement;
+    const action = fixture.nativeElement.querySelector('select[name="action"]') as HTMLSelectElement;
+    expect(Array.from(module.options).map(option => option.textContent?.trim())).toEqual([
+      'All modules', 'System settings', 'Media library', 'Authentication', 'Staff directory',
+    ]);
+    expect(Array.from(action.options).map(option => option.textContent?.trim())).toEqual([
+      'All actions', 'Session signed out', 'PDF replaced', 'Authentication failed',
+    ]);
+    const change = vi.fn(); component.filtersChange.subscribe(change);
+    module.value = 'SYSTEM_SETTINGS'; module.dispatchEvent(new Event('change', { bubbles: true }));
+    action.value = 'LOGOUT_SESSION'; action.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(change).toHaveBeenLastCalledWith({ module: 'SYSTEM_SETTINGS', action: 'LOGOUT_SESSION', dateFrom: undefined, search: undefined });
+  });
+
   it('debounces and trims typed search while preserving selected filters', async () => {
     vi.useFakeTimers(); const change = vi.fn(); component.filtersChange.subscribe(change);
     component.filters.module = 'ARTICLES'; component.filters.action = 'UPDATE';

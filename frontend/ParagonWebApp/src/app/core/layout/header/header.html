@@ -13,7 +13,7 @@
     </a>
     <div class="header-actions">
       <div class="header-weather"><span>{{ temperature() ?? '--' }}°C</span><span>{{ city() ?? 'Detecting…' }}</span></div>
-      <div class="header-clock"><time>{{ now() | date:'EEE, MMM d, y' }}</time><span>{{ now() | date:'h:mm:ss a' }}</span></div>
+      <div class="header-clock"><time>{{ now() | publicationDate:'date' }}</time><span>{{ now() | publicationDate:'time' }}</span></div>
       <button type="button" class="header-search-button" aria-label="Search" (click)="openSearch()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
       </button>
