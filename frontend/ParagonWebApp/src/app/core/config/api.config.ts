@@ -5,6 +5,7 @@ export const API_ENDPOINTS = {
 
   auth: `${environment.apiUrl}/auth`,
   articles: `${environment.apiUrl}/articles`,
+  dashboard: `${environment.apiUrl}/dashboard`,
   applications: `${environment.apiUrl}/applications`,
   activityLogs: `${environment.apiUrl}/activity-logs`,
   editorialBoard: `${environment.apiUrl}/editorial-board`,

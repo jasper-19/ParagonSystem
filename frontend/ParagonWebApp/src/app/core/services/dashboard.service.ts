@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { AnalyticsMode ,DashboardFeed } from '../../models/dashboard-feed.model';
+import { API_ENDPOINTS } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root',
@@ -10,7 +11,7 @@ export class DashboardService {
 
   private readonly http = inject(HttpClient);
 
-  private readonly api = 'http://localhost:3000/api/dashboard';
+  private readonly api = API_ENDPOINTS.dashboard;
 
   private readonly dashboardFeedState = signal<DashboardFeed | null>(null);
 
