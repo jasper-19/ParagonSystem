@@ -51,7 +51,7 @@ export class ArticleMeta {
       await navigator.share({
         title: this.title,
         text: this.excerpt,
-        url: window.location.href,
+        url: this.shareUrl(),
       });
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
@@ -60,7 +60,7 @@ export class ArticleMeta {
   }
 
   async copyArticleLink(): Promise<void> {
-    const url = window.location.href;
+    const url = this.shareUrl();
     this.linkCopied.set(false);
     this.copyError.set('');
     let copied = false;
@@ -102,6 +102,21 @@ export class ArticleMeta {
       textArea.remove();
       previouslyFocused?.focus();
     }
+  }
+
+  private shareUrl(): string {
+    let url = new URL(window.location.href);
+    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (canonical) {
+      try {
+        const candidate = new URL(canonical.href);
+        if (['https:', 'http:'].includes(candidate.protocol) && !candidate.username && !candidate.password
+          && candidate.pathname.replace(/\/$/, '') === url.pathname.replace(/\/$/, '')) url = candidate;
+      } catch { /* use the current article URL */ }
+    }
+    url.search = '';
+    url.hash = '';
+    return url.href;
   }
 
   private showCopiedFeedback(): void {

@@ -13,6 +13,10 @@ import { publicCache } from "../../middlewares/cache";
 import { idParamSchema } from "../../schemas/common.schema";
 
 const router = Router();
+const noStore: import('express').RequestHandler = (_req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+};
 
 /**
  * Rate limiter for article view counting
@@ -46,6 +50,7 @@ router.get("/", publicCache(300), controller.getArticles);
 
 // GET /api/articles/admin
 router.get("/admin", authenticate, requireAdmin, controller.getAdminArticles);
+router.get('/admin/by-slug/:slug', authenticate, requireAdmin, noStore, controller.getEditorArticleBySlug);
 
 // GET /api/articles/admin/:id
 router.get(
@@ -75,10 +80,11 @@ router.get("/categories", publicCache(3600), controller.getCategories);
 router.get("/tags", publicCache(3600), controller.getTags);
 
 // GET /api/articles/:slug/feed
-router.get("/:slug/feed", publicCache(300), controller.getArticleFeed);
+router.get("/:slug/preview", noStore, controller.getArticlePreview);
+router.get("/:slug/feed", noStore, controller.getArticleFeed);
 
 // GET /api/articles/:slug
-router.get("/:slug", publicCache(300), controller.getArticleBySlug);
+router.get("/:slug", noStore, controller.getArticleBySlug);
 
 // PATCH /api/articles/:slug/views
 router.patch("/:slug/views", viewLimiter, controller.incrementArticleViews);

@@ -543,7 +543,12 @@ private fetchHomepageFeed(
   }
 
   getBySlug(slug: string): Observable<Article> {
-    return this.http.get<ApiArticle>(`${this.api}/${slug}`).pipe(map((a) => this.normalizeArticle(a)));
+    return this.http.get<ApiArticle>(`${this.api}/${encodeURIComponent(slug)}`).pipe(map((a) => this.normalizeArticle(a)));
+  }
+
+  getEditorBySlug(slug: string): Observable<Article> {
+    return this.http.get<ApiArticle>(`${this.api}/admin/by-slug/${encodeURIComponent(slug)}`)
+      .pipe(map(article => this.normalizeArticle(article)));
   }
 
 private fetchArticleFeed(
@@ -591,7 +596,7 @@ private fetchArticleFeed(
 
   /** Slug availability check for async validators. */
   isSlugTaken(slug: string, ignoreId?: string): Observable<boolean> {
-    return this.getBySlug(slug).pipe(
+    return this.getEditorBySlug(slug).pipe(
       map((a) => (ignoreId ? a.id !== ignoreId : true)),
       catchError((err) => {
         // If 404, slug is not taken; otherwise conservatively return false

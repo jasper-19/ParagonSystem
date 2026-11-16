@@ -327,7 +327,7 @@ private readonly handleEditorialBoardUpdated = (): void => {
     this.initialLoading.set(true);
     const article$ =
       this.articleService
-        .getBySlug(slug)
+        .getEditorBySlug(slug)
         .pipe(take(1));
 
     const board$ =
@@ -1522,7 +1522,7 @@ cancel(): void {
 
     const slug = this.route.snapshot.paramMap.get('slug');
     if (slug) {
-      this.articleService.getBySlug(slug).subscribe({
+      this.articleService.getEditorBySlug(slug).subscribe({
         next: (article) => {
           this.originalArticle.set(article);
           this.loadArticleForEdit(article);

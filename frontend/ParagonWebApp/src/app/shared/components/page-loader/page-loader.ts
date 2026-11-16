@@ -19,7 +19,7 @@ export class PageLoaderComponent implements OnDestroy {
   readonly label = input('Loading…');
   readonly delay = input(150);
   readonly inverse = input(false);
-  readonly skeleton = input<'stories' | 'article' | 'board' | 'form' | 'reader'>('stories');
+  readonly skeleton = input<'home' | 'stories' | 'article' | 'issues' | 'board' | 'recruitment' | 'search' | 'form' | 'reader'>('stories');
   readonly visible = signal(false);
   private timer?: ReturnType<typeof setTimeout>;
 

@@ -20,7 +20,7 @@
     </div>
     <div class="issues-results" [attr.aria-busy]="loading">
       @if (loading) {
-        <app-page-loader variant="public" label="Loading special issues..." skeleton="stories" />
+        <app-page-loader variant="public" label="Loading special issues..." skeleton="issues" />
       } @else if (loadError) {
         <div class="issues-state" role="alert">
           <h2>Special issues are unavailable</h2>

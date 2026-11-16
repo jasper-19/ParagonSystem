@@ -414,7 +414,18 @@ export async function getSearchFeed(): Promise<SearchFeed> {
 
 //**Retrieve all articles optionally filtered by status */
 export async function getArticles(filters: GetArticlesFilters = {}) {
-    return repository.findAllCards(filters);
+    if (filters.status && filters.status.toLowerCase() !== 'published') {
+      throw Object.assign(new Error('Public listings only support published articles'), { statusCode: 400 });
+    }
+    return repository.findAllCards({ ...filters, status: 'Published' });
+}
+
+export async function getPublicPreview(slug: string) {
+  return repository.findPublicPreview(slug);
+}
+
+export async function getEditorArticleBySlug(slug: string) {
+  return repository.findBySlugWithCredits(slug, true);
 }
 
 //**Retrieve admin articles */

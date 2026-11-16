@@ -531,17 +531,31 @@ export async function findAdminArticles(
   };
 }
 
-export async function findBySlug(slug: string) {
+export async function findBySlug(slug: string, includeUnpublished = false) {
   if (!slug) throw new Error("Missing slug");
 
   const result = await db.query(
     `SELECT *
      FROM articles
-     WHERE slug = $1`,
+     WHERE slug = $1
+       ${includeUnpublished ? '' : "AND LOWER(status::text) = 'published'"}`,
     [slug]
   );
 
   return result.rows.length > 0 ? mapRow(result.rows[0]) : null;
+}
+
+/** Small, public-only payload for unauthenticated social crawlers. */
+export async function findPublicPreview(slug: string) {
+  const result = await db.query(
+    `SELECT title, slug, excerpt, image, status, published_at
+     FROM articles
+     WHERE slug = $1 AND LOWER(status::text) = 'published'`,
+    [slug]
+  );
+  const row = result.rows[0];
+  return row ? { title: row.title, slug: row.slug, excerpt: row.excerpt, image: row.image,
+    status: row.status, publishedAt: row.published_at } : null;
 }
 
 export async function findCreditsByArticleId(
@@ -981,9 +995,10 @@ export async function getPublishedCountsByDate() {
 }
 
 export async function findBySlugWithCredits(
-  slug: string
+  slug: string,
+  includeUnpublished = false
 ) {
-  const article = await findBySlug(slug);
+  const article = await findBySlug(slug, includeUnpublished);
 
   if (!article) {
     return null;

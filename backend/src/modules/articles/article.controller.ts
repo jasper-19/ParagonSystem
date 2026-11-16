@@ -280,7 +280,7 @@ export const getArticleFeed = asyncHandler(
 
     const articleFeed = await service.getArticleFeed(slug);
 
-    setPublicCache(res);
+    res.set('Cache-Control', 'no-store');
 
     res.json(articleFeed);
   }
@@ -298,10 +298,34 @@ export const getArticleBySlug = asyncHandler(
             res.status(404).json({ message: "Article not found" });
             return;
         }
-        setPublicCache(res);
+        res.set('Cache-Control', 'no-store');
         res.json(article);
     }
 );
+
+export const getArticlePreview = asyncHandler(async (req: Request, res: Response) => {
+  const slug = req.params['slug'] as string;
+  if (!/^[a-z0-9-]{1,255}$/.test(slug)) {
+    res.status(404).json({ error: 'Article not found' });
+    return;
+  }
+  const article = await service.getPublicPreview(slug);
+  if (!article) {
+    res.status(404).json({ error: 'Article not found' });
+    return;
+  }
+  res.json(article);
+});
+
+export const getEditorArticleBySlug = asyncHandler(async (req: Request, res: Response) => {
+  res.set('Cache-Control', 'private, no-store');
+  const article = await service.getEditorArticleBySlug(req.params['slug'] as string);
+  if (!article) {
+    res.status(404).json({ error: 'Article not found' });
+    return;
+  }
+  res.json(article);
+});
 
 /** GET /api/articles/category/:category */
 export const getArticlesByCategory = asyncHandler(

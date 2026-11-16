@@ -1,29 +1,236 @@
-@if (visible()) {
-  <div class="page-loader" [class.page-loader--admin]="variant() === 'admin'" [class.page-loader--public]="variant() === 'public'" [class.page-loader--inline]="mode() === 'inline'" [class.page-loader--overlay]="mode() === 'overlay'" [class.page-loader--inverse]="inverse()" role="status" aria-live="polite" aria-atomic="true">
+@if (active() && (variant() === 'public' || visible())) {
+  <div class="page-loader"
+    [class.page-loader--admin]="variant() === 'admin'"
+    [class.page-loader--public]="variant() === 'public'"
+    [class.page-loader--inline]="mode() === 'inline'"
+    [class.page-loader--overlay]="mode() === 'overlay'"
+    [class.page-loader--inverse]="inverse()"
+    [attr.role]="visible() ? 'status' : null"
+    aria-live="polite" aria-atomic="true">
     @if (variant() === 'admin') {
       <span class="spinner" aria-hidden="true"></span>
       <span class="page-loader__label">{{ label() }}</span>
     } @else {
-      <span class="page-loader__sr-only">{{ label() }}</span>
-      <div class="public-skeleton" [class.public-skeleton--inline]="mode() === 'inline' && skeleton() !== 'reader'" [class.public-skeleton--reader]="skeleton() === 'reader'" aria-hidden="true">
+      @if (visible()) {
+        <span class="page-loader__sr-only">{{ label() }}</span>
+      }
+      <div class="public-skeleton"
+        [class.public-skeleton--inline]="mode() === 'inline' && skeleton() !== 'reader'"
+        [class.public-skeleton--reader]="skeleton() === 'reader'"
+        aria-hidden="true">
         @if (mode() === 'inline' && skeleton() !== 'reader') {
-          <div class="skeleton-inline"><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line skeleton-line--short"></span></div>
+          <div class="skeleton-inline">
+            <span class="skeleton skeleton-line"></span>
+            <span class="skeleton skeleton-line skeleton-line--short"></span>
+          </div>
         } @else {
           @switch (skeleton()) {
+            @case ('home') {
+              <div class="skeleton-home">
+                <span class="skeleton skeleton-heading"></span>
+                <div class="skeleton-feature">
+                  <div class="skeleton-copy">
+                    <span class="skeleton skeleton-line skeleton-line--short"></span>
+                    <span class="skeleton skeleton-headline"></span>
+                    <span class="skeleton skeleton-headline skeleton-line--medium"></span>
+                    <span class="skeleton skeleton-line"></span>
+                    <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                    <span class="skeleton skeleton-line skeleton-line--short"></span>
+                    <span class="skeleton skeleton-action"></span>
+                  </div>
+                  <div class="skeleton skeleton-feature-image"></div>
+                </div>
+                <div class="skeleton-navigation">
+                  <span class="skeleton skeleton-line"></span>
+                  <span class="skeleton skeleton-action"></span>
+                </div>
+              </div>
+              <div class="skeleton-popular">
+                <div class="skeleton-popular-shell">
+                  <span class="skeleton skeleton-heading"></span>
+                  <div class="skeleton-popular-grid">
+                    @for (story of [1,2,3,4]; track story) {
+                      <div class="skeleton-popular-row">
+                        <span class="skeleton skeleton-rank"></span>
+                        <div class="skeleton-copy">
+                          <span class="skeleton skeleton-line skeleton-line--short"></span>
+                          <span class="skeleton skeleton-title"></span>
+                          <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                        </div>
+                        <span class="skeleton skeleton-popular-image"></span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
             @case ('article') {
-              <div class="skeleton-article"><span class="skeleton skeleton-line skeleton-line--short"></span><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-title skeleton-line--medium"></span><span class="skeleton skeleton-line skeleton-line--short"></span><div class="skeleton skeleton-hero"></div><div class="skeleton-body">@for (line of [1,2,3,4]; track line) { <span class="skeleton skeleton-line"></span> }<span class="skeleton skeleton-line skeleton-line--medium"></span></div></div>
+              <div class="skeleton-article">
+                <div class="skeleton-article-meta skeleton-copy">
+                  <span class="skeleton skeleton-line skeleton-line--short"></span>
+                  <span class="skeleton skeleton-headline"></span>
+                  <span class="skeleton skeleton-headline skeleton-line--medium"></span>
+                  <span class="skeleton skeleton-line"></span>
+                  <span class="skeleton skeleton-line skeleton-line--short"></span>
+                </div>
+                <div class="skeleton skeleton-hero"></div>
+                <div class="skeleton-reading">
+                  <div class="skeleton-body">
+                    @for (line of [1,2,3,4,5,6]; track line) {
+                      <span class="skeleton skeleton-line"></span>
+                    }
+                    <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                  </div>
+                  <div class="skeleton-copy skeleton-details">
+                    <span class="skeleton skeleton-title skeleton-line--medium"></span>
+                    @for (line of [1,2,3]; track line) {
+                      <span class="skeleton skeleton-line"></span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+            @case ('issues') {
+              <div class="skeleton-issues">
+                <div class="skeleton-issue-feature">
+                  <div class="skeleton skeleton-issue-cover"></div>
+                  <div class="skeleton-copy">
+                    <span class="skeleton skeleton-headline"></span>
+                    <span class="skeleton skeleton-headline skeleton-line--medium"></span>
+                    <span class="skeleton skeleton-line skeleton-line--short"></span>
+                    <span class="skeleton skeleton-line"></span>
+                    <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                    <span class="skeleton skeleton-action"></span>
+                  </div>
+                </div>
+                <span class="skeleton skeleton-heading"></span>
+                <div class="skeleton-issue-catalog">
+                  <span class="skeleton skeleton-title"></span>
+                  <div class="skeleton-issue-rows">
+                    @for (issue of [1,2]; track issue) {
+                      <div class="skeleton-issue-row">
+                        <span class="skeleton skeleton-issue-thumbnail"></span>
+                        <div class="skeleton-copy">
+                          <span class="skeleton skeleton-title"></span>
+                          <span class="skeleton skeleton-line skeleton-line--short"></span>
+                          <span class="skeleton skeleton-line"></span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
             }
             @case ('board') {
-              <div class="skeleton-grid skeleton-grid--board">@for (person of [1,2,3,4]; track person) { <div class="skeleton-person"><span class="skeleton skeleton-portrait"></span><span class="skeleton skeleton-line skeleton-line--medium"></span><span class="skeleton skeleton-line skeleton-line--short"></span></div> }</div>
+              <div class="skeleton-board">
+                @for (section of [1,2]; track section) {
+                  <div class="skeleton-board-section">
+                    <div class="skeleton-copy">
+                      <span class="skeleton skeleton-title skeleton-line--medium"></span>
+                      <span class="skeleton skeleton-line skeleton-line--short"></span>
+                    </div>
+                    <div class="skeleton-grid skeleton-grid--board">
+                      @for (person of [1,2,3,4]; track person) {
+                        <div class="skeleton-person">
+                          <span class="skeleton skeleton-portrait"></span>
+                          <div class="skeleton-copy">
+                            <span class="skeleton skeleton-title"></span>
+                            <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                            <span class="skeleton skeleton-line skeleton-line--short"></span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+            @case ('recruitment') {
+              <div class="skeleton-recruitment">
+                <div class="skeleton-recruitment-hero">
+                  <div class="skeleton-recruitment-shell">
+                    <div class="skeleton-copy">
+                      <span class="skeleton skeleton-headline"></span>
+                      <span class="skeleton skeleton-headline skeleton-line--medium"></span>
+                      <span class="skeleton skeleton-line"></span>
+                      <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                      <span class="skeleton skeleton-action"></span>
+                    </div>
+                    <div class="skeleton-copy">
+                      <span class="skeleton skeleton-title"></span>
+                      @for (item of [1,2,3]; track item) {
+                        <span class="skeleton skeleton-line"></span>
+                        <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="skeleton-recruitment-benefits">
+                  <span class="skeleton skeleton-heading"></span>
+                  <div class="skeleton-grid">
+                    @for (item of [1,2,3]; track item) {
+                      <div class="skeleton-copy">
+                        <span class="skeleton skeleton-title"></span>
+                        <span class="skeleton skeleton-line"></span>
+                        <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+            @case ('search') {
+              <div class="skeleton-search">
+                @for (result of [1,2,3]; track result) {
+                  <div class="skeleton-search-row">
+                    <div class="skeleton-copy">
+                      <span class="skeleton skeleton-line skeleton-line--short"></span>
+                      <span class="skeleton skeleton-title"></span>
+                      <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                      <span class="skeleton skeleton-line"></span>
+                    </div>
+                    <span class="skeleton skeleton-search-image"></span>
+                  </div>
+                }
+              </div>
             }
             @case ('form') {
-              <div class="skeleton-form"><span class="skeleton skeleton-title skeleton-line--medium"></span><span class="skeleton skeleton-line skeleton-line--medium"></span><div class="skeleton-fields">@for (field of [1,2,3,4]; track field) { <div><span class="skeleton skeleton-line skeleton-line--short"></span><span class="skeleton skeleton-input"></span></div> }</div><span class="skeleton skeleton-textarea"></span></div>
+              <div class="skeleton-form">
+                <span class="skeleton skeleton-title skeleton-line--medium"></span>
+                <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                <div class="skeleton-fields">
+                  @for (field of [1,2,3,4]; track field) {
+                    <div>
+                      <span class="skeleton skeleton-line skeleton-line--short"></span>
+                      <span class="skeleton skeleton-input"></span>
+                    </div>
+                  }
+                </div>
+                <span class="skeleton skeleton-textarea"></span>
+              </div>
             }
             @case ('reader') {
-              <div class="skeleton-paper"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line skeleton-line--medium"></span><span class="skeleton skeleton-page-image"></span>@for (line of [1,2,3]; track line) { <span class="skeleton skeleton-line"></span> }</div>
+              <div class="skeleton-paper">
+                <span class="skeleton skeleton-title"></span>
+                <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                <span class="skeleton skeleton-page-image"></span>
+                @for (line of [1,2,3]; track line) {
+                  <span class="skeleton skeleton-line"></span>
+                }
+              </div>
             }
             @default {
-              <div class="skeleton-grid">@for (story of [1,2,3]; track story) { <div class="skeleton-story"><div class="skeleton skeleton-image"></div><span class="skeleton skeleton-line skeleton-line--short"></span><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line skeleton-line--medium"></span><span class="skeleton skeleton-line skeleton-line--short"></span></div> }</div>
+              <div class="skeleton-grid">
+                @for (story of [1,2,3]; track story) {
+                  <div class="skeleton-story">
+                    <div class="skeleton skeleton-image"></div>
+                    <span class="skeleton skeleton-line skeleton-line--short"></span>
+                    <span class="skeleton skeleton-title"></span>
+                    <span class="skeleton skeleton-line skeleton-line--medium"></span>
+                    <span class="skeleton skeleton-line skeleton-line--short"></span>
+                  </div>
+                }
+              </div>
             }
           }
         }

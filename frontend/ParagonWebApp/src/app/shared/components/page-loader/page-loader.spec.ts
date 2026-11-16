@@ -19,6 +19,26 @@ describe('Shared page loader', () => {
 
   const status = (): HTMLElement | null => fixture.nativeElement.querySelector('[role="status"]');
 
+  it('reserves the public layout immediately while delaying its loading announcement', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.public-skeleton')).not.toBeNull();
+    expect(status()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.page-loader__sr-only')).toBeNull();
+    fixture.componentRef.setInput('active', false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.page-loader')).toBeNull();
+  });
+
+  it('continues to delay the entire admin loader', () => {
+    fixture.componentRef.setInput('variant', 'admin');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.page-loader')).toBeNull();
+    vi.advanceTimersByTime(150);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.spinner')).not.toBeNull();
+    expect(status()).not.toBeNull();
+  });
+
   it('delays its accessible loading status and cancels fast loads', () => {
     fixture.detectChanges();
     vi.advanceTimersByTime(149);
@@ -86,9 +106,13 @@ describe('Shared page loader', () => {
   });
 
   it.each([
+    ['home', '.skeleton-feature'],
     ['stories', '.skeleton-story'],
     ['article', '.skeleton-article'],
+    ['issues', '.skeleton-issue-feature'],
     ['board', '.skeleton-person'],
+    ['recruitment', '.skeleton-recruitment-hero'],
+    ['search', '.skeleton-search-row'],
     ['form', '.skeleton-form'],
     ['reader', '.skeleton-paper'],
   ] as const)('provides a decorative %s layout while keeping one accessible announcement', (layout, selector) => {
@@ -99,8 +123,19 @@ describe('Shared page loader', () => {
 
     expect(fixture.nativeElement.querySelector(`.public-skeleton[aria-hidden="true"] ${selector}`)).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.spinner')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.public-skeleton a, .public-skeleton button, .public-skeleton input, .public-skeleton [tabindex]')).toBeNull();
     expect(fixture.nativeElement.querySelectorAll('[role="status"]').length).toBe(1);
     expect(status()?.querySelector('.page-loader__sr-only')?.textContent).toBe('Loading publication content');
+  });
+
+  it('replaces the old page layout when the requested skeleton changes', () => {
+    fixture.componentRef.setInput('skeleton', 'home');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.skeleton-feature')).not.toBeNull();
+    fixture.componentRef.setInput('skeleton', 'issues');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.skeleton-feature')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.skeleton-issue-feature')).not.toBeNull();
   });
 
   it('uses compact skeleton bars for inline public work and preserves the reader page preview', () => {

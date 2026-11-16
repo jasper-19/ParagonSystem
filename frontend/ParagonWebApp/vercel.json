@@ -1,4 +1,11 @@
 {
+  "outputDirectory": "dist/ParagonWebApp/browser",
+  "functions": {
+    "api/article/*.mjs": {
+      "includeFiles": "dist/ParagonWebApp/browser/index.html",
+      "maxDuration": 15
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
@@ -32,7 +39,11 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/article/:slug",
+      "destination": "/api/article/:slug"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

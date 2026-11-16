@@ -66,4 +66,11 @@ describe('Article reading states', () => {
     expect(load).toHaveBeenLastCalledWith('reading-example');
     expect(fixture.nativeElement.querySelector('.article-error a')?.getAttribute('href')).toBe('/top-stories');
   });
+
+  it('uses the public fallback when the article image has an unsafe URL scheme', async () => {
+    feed.set({ ...example, article: { ...example.article, image: 'javascript:alert(1)' } });
+    await fixture.whenStable();
+    expect(document.querySelector('meta[property="og:image"]')?.getAttribute('content')).toContain('/assets/paragon-social-preview.jpg');
+    expect(document.querySelector('meta[name="twitter:image:alt"]')?.getAttribute('content')).toBe(example.article.title);
+  });
 });

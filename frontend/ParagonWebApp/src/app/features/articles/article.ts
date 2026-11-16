@@ -192,9 +192,11 @@ export class ArticlePage {
         this.stripHtml(article.content)
       );
 
+    const existingCanonical = this.document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    const base = existingCanonical?.href || this.document.baseURI;
     const articleUrl = new URL(
       `/article/${article.slug}`,
-      this.document.baseURI
+      base
     ).toString();
 
     const imageUrl =
@@ -261,6 +263,7 @@ export class ArticlePage {
       name: 'twitter:image',
       content: imageUrl,
     });
+    this.meta.updateTag({ name: 'twitter:image:alt', content: article.title });
 
     this.updateCanonicalLink(articleUrl);
   }
@@ -318,13 +321,17 @@ export class ArticlePage {
     }
 
     try {
-      return new URL(
+      const url = new URL(
         image,
         this.document.baseURI
-      ).toString();
+      );
+      if (url.protocol === 'https:' || (url.protocol === 'http:' && !this.document.location?.protocol?.startsWith('https'))) {
+        if (!url.username && !url.password) return url.toString();
+      }
     } catch {
-      return image;
+      // Fall back to the public brand image for invalid or unsupported URLs.
     }
+    return new URL('/assets/paragon-social-preview.jpg', this.document.baseURI).toString();
   }
 
   private updateCanonicalLink(

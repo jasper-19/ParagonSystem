@@ -49,7 +49,7 @@
           <span *ngIf="!hasSearched && recentArticles().length" class="result-count">Latest {{ recentArticles().length }}</span>
         </div>
 
-        <app-page-loader *ngIf="isLoading || (!hasSearched && isFeedLoading)" variant="public" [label]="hasSearched ? 'Searching articles…' : 'Loading recent articles…'" />
+        <app-page-loader *ngIf="isLoading || (!hasSearched && isFeedLoading)" variant="public" skeleton="search" [label]="hasSearched ? 'Searching articles…' : 'Loading recent articles…'" />
 
         <div *ngIf="!isLoading && searchError" class="search-message" role="alert">
           <h4>Search is unavailable</h4>
