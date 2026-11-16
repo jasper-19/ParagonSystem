@@ -73,4 +73,17 @@ describe('Article reading states', () => {
     expect(document.querySelector('meta[property="og:image"]')?.getAttribute('content')).toContain('/assets/paragon-social-preview.jpg');
     expect(document.querySelector('meta[name="twitter:image:alt"]')?.getAttribute('content')).toBe(example.article.title);
   });
+
+  it('does not carry another image dimensions into browser article navigation', async () => {
+    for (const [property, content] of Object.entries({ 'og:image:width': '1200', 'og:image:height': '630', 'og:image:type': 'image/jpeg' })) {
+      const tag = document.createElement('meta'); tag.setAttribute('property', property); tag.content = content;
+      document.head.appendChild(tag);
+    }
+    feed.set({ ...example, article: { ...example.article, image: 'https://images.example/different-story.webp' } });
+    await fixture.whenStable();
+    expect(document.querySelector('meta[property="og:image:width"]')).toBeNull();
+    expect(document.querySelector('meta[property="og:image:height"]')).toBeNull();
+    expect(document.querySelector('meta[property="og:image:type"]')).toBeNull();
+    expect(document.querySelector('meta[property="og:image:secure_url"]')?.getAttribute('content')).toBe('https://images.example/different-story.webp');
+  });
 });

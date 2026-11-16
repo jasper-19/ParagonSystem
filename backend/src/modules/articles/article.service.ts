@@ -1,6 +1,7 @@
 import * as repository from "./article.repository";
 import * as settingsService from "../settings/settings.service";
 import * as EditorialBoardService from "../editorial-board/editorial-board.service";
+import { getArticleImagePreview } from './article-image-preview';
 
 const ALLOWED_STATUSES = [
     "Draft",
@@ -421,7 +422,10 @@ export async function getArticles(filters: GetArticlesFilters = {}) {
 }
 
 export async function getPublicPreview(slug: string) {
-  return repository.findPublicPreview(slug);
+  const article = await repository.findPublicPreview(slug);
+  if (!article) return null;
+  const image = await getArticleImagePreview(article.image);
+  return image ? { ...article, ...image } : article;
 }
 
 export async function getEditorArticleBySlug(slug: string) {

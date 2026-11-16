@@ -1,6 +1,44 @@
 # Article sharing and SSR readiness audit
 
-Audit date: 16 November 2026. Scope: copied/native article links, initial social metadata, public article isolation, and Vercel delivery. Local implementation is ready for deployment verification; production readiness remains unverified. No deployment, database migration, secret change or live article change was performed.
+Audit date: 16 November 2026. Scope: copied/native article links, initial social metadata, public article isolation, and Vercel delivery. The initial audit made local changes only. After explicit user approval, the backend was deployed and the live article metadata flow was verified as recorded below. Actual Messenger preview ingestion and broader production readiness remain separate checks.
+
+## First-share image metadata follow-up
+
+The user reported that each article image appeared only after running Meta's debugger. The initial response lacked image dimensions. [Meta's first-party guidance](https://developers.facebook.com/documentation/sharing/best-practices) states that `og:image:width` and `og:image:height` permit immediate rendering instead of requiring asynchronous image downloading/processing. This is a documented contributor that the implementation now addresses; it does not prove that dimensions explain every platform failure.
+
+Changes:
+
+- New backend `article-image-preview.ts` enriches the published-only preview response with the exact public storage URL, `imageWidth`, `imageHeight`, and detected `imageType`. It supports existing API media UUID URLs and direct public storage media URLs. No uploaded images or database rows are changed.
+- URL resolution requires the configured API origin or configured Supabase origin, public bucket and `media/` path. It rejects credentials, query/hash, foreign origins, traversal and redirects. The existing `media_files` lookup and existing public file lookup both use ID-only visibility; this change introduces no access to applicant attachments or private buckets.
+- Image inspection uses the existing Sharp dependency, orientation-aware dimensions and raster MIME detection. Limits: two seconds for fetch/body, 2 MiB streamed bytes, 40 million pixels, four pending probes with no queue, same-image deduplication, 128 cached entries, 15-minute successful TTL, 30-second failure TTL, and object update version in cache identity. Sharp metadata processing itself is not covered by the network deadline; bounded input/pixels/concurrency limit its resource exposure.
+- Unsupported/external/oversized/unavailable images retain the original article image without invented dimensions. Optional inspection failures do not turn published previews into errors. This fallback means not every possible image obtains dimensions.
+- Initial HTML emits the paired dimensions, MIME type and `og:image:secure_url`. The existing fallback JPEG declares its measured 1424 x 752 dimensions. Browser navigation clears dimensions/type when the image URL changes, preventing stale structured metadata.
+- Existing `API_BASE_URL`, `SUPABASE_URL` and `SUPABASE_STORAGE_BUCKET` settings are used; no new environment variables, dependencies or schema changes.
+
+Validation: backend suite **114 passed**, followed by the expanded focused image suite **10 passed**; renderer **16 passed**; article browser tests **9 passed**; backend and frontend production builds passed (existing frontend CommonJS warnings). Tests cover real JPEG/PNG/WebP bytes, EXIF rotation, actual fallback bytes, excessive declared pixels, hostile URLs/paths, response errors, stream cancellation despite false Content-Length, stalled-body timeout, cache expiry/eviction/version changes and concurrency limits. Independent QA, security and code reviewers assessed supplied excerpts/results; they did not independently execute checks.
+
+A read-only real-image smoke check resolved a public article WebP as **1600 x 1600**, reused its cache without a second request, and rendered matching metadata using the actual frontend production-built shell. Total image inspection plus local rendering took about **758 ms** in this environment. This is not a cold-start latency guarantee for Render.
+
+Release process: the user approved committing, pushing and deploying this backend and frontend follow-up after local verification. Deploy the backend and frontend, then verify raw production HTML and exact image accessibility and share a previously unshared article without using the debugger. Earlier failed URLs may retain Meta's cached result; no server change can force refresh of every existing platform cache. Render cold-start latency and the renderer's five-second upstream timeout also remain relevant to first-crawl success. The final handoff records the deployed revision and live verification results.
+
+## Authorized backend release and live verification
+
+The user approved using Render's "My Workspace" and deploying the production backend. Verified target: `paragon-api` (`srv-d8p5uqernols73f6oa30`), `backend` root, `main` branch, `npm ci --include=dev && npm run build`, and `npm start`. Auto-deploy was disabled and remained disabled. The previous live release was commit `1302751` from July; later attempted releases had failed.
+
+Deployed remote main commit `bb8fa9c6c931f3c88b22bdeb5463d3cc64b2b586` as Render deployment `dep-dbthn661egvs73amaoeg`. Build completed and deployment reached **live** at 2026-11-16 15:05:48 UTC (23:05:48 Manila). No database migrations, secret changes, publications or applicant changes were performed. No local source was pushed.
+
+Live checks after release:
+
+- `/ready`: HTTP 200, database and PDF processor ready.
+- Published article preview endpoint: HTTP 200, no-store, lean article payload.
+- Both previously checked article documents: HTTP 200 for `facebookexternalhit/1.1`, article-specific title/description/canonical/Open Graph/Twitter image metadata in the initial HTML; no unavailable/noindex response.
+- Article HEAD: HTTP 200, HTML content type and no-store.
+- Both article images: final HTTP 200, `image/webp`, one public redirect.
+- Unknown preview slug: HTTP 404, no-store, `Article not found`.
+- Protected editor slug lookup without credentials: HTTP 401.
+- No error-level runtime logs returned for the new instance during the immediate post-release window.
+
+This resolves the observed missing-route blocker and verifies production metadata delivery. Actual Messenger display and refresh of previously failed platform previews remain to be checked by a fresh share. Build output also reported nine dependency audit advisories (two moderate, six high, one critical); these were not investigated or changed as part of this deployment and prevent treating this focused check as a full security certification.
 
 ## Deployment follow-up: article opens the minimal error document
 
@@ -15,6 +53,14 @@ Follow-up validation: `npm.cmd run test:share-previews` passed **14 tests**; `np
 Only frontend handler/helper/tests and the test script changed in this follow-up. No backend or schema changes are required. Reviewers assessed the supplied implementation and evidence without independently executing commands. A fresh frontend deployment is required to apply this correction; Vercel's actual packaged module layout and live metadata/image fetching still need verification. No deployment was performed by the agent.
 
 ## Findings and changes
+
+Production follow-up, 16 November 2026: after the frontend shell fix was deployed, direct public GET checks found the remaining preview blocker. Both checked article documents returned HTTP 404 with generic "Article unavailable" metadata. The Render request to `/api/articles/cics-gears-up-112-4th-year-studes-for-it-industry-with-500-hour-internship/preview` returned HTTP 404 and `{"error":"Not found"}` (the application-level missing-route response), while the same article's existing detail endpoint returned its title, Published status and image URL. The preview route is present in source since commit `c5bc41a`; the running API does not expose it. Verify Render's source commit and build/start commands, then deploy the backend with that route. Do not work around the missing route by weakening published-only checks.
+
+Image checks succeeded anonymously using `facebookexternalhit/1.1`: the article media URL redirected to a public image with final HTTP 200 and `image/webp`; the site fallback returned HTTP 200 and `image/jpeg`. These probes establish image accessibility from this environment, not successful Messenger ingestion. Restore a 200 article-specific document response before treating platform caches or optional image metadata as the cause.
+
+Render account inspection could not continue because no workspace is selected. The connector lists one workspace, "My Workspace", and requires user confirmation before using it. No Render configuration or deployment was changed.
+
+Release preparation for this follow-up passed: `node --import tsx --test src/modules/articles/article.public.test.ts` (published-only preview/public reads and protected editor regression) and `npm.cmd run build -- --outDir .share-deploy-check`. Temporary build output was removed. No application code change was needed to diagnose the missing deployed route.
 
 | Finding | Change |
 | --- | --- |

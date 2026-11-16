@@ -51,6 +51,19 @@ function metadataFor(article, origin, slug, status) {
     'og:image:alt': article ? title : SITE_NAME, 'twitter:card': 'summary_large_image',
     'twitter:title': title, 'twitter:description': description, 'twitter:image': image, 'twitter:image:alt': article ? title : SITE_NAME,
   };
+  tags['og:image:secure_url'] = image;
+  if (image === fallback) {
+    tags['og:image:width'] = '1424';
+    tags['og:image:height'] = '752';
+    tags['og:image:type'] = 'image/jpeg';
+  } else if (Number.isInteger(article?.imageWidth) && Number.isInteger(article?.imageHeight)
+    && article.imageWidth > 0 && article.imageHeight > 0
+    && article.imageWidth * article.imageHeight <= 40_000_000
+    && ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(article.imageType)) {
+    tags['og:image:width'] = String(article.imageWidth);
+    tags['og:image:height'] = String(article.imageHeight);
+    tags['og:image:type'] = article.imageType;
+  }
   if (article?.publishedAt && !Number.isNaN(Date.parse(article.publishedAt))) {
     tags['article:published_time'] = new Date(article.publishedAt).toISOString();
   }

@@ -234,6 +234,13 @@ export class ArticlePage {
       content: articleUrl,
     });
 
+    // Server dimensions describe one exact image; discard them on CSR image changes.
+    if (this.meta.getTag('property="og:image"')?.content !== imageUrl) {
+      for (const property of ['og:image:width', 'og:image:height', 'og:image:type']) {
+        this.meta.removeTag(`property="${property}"`);
+      }
+    }
+    this.meta.updateTag({ property: 'og:image:secure_url', content: imageUrl });
     this.meta.updateTag({
       property: 'og:image',
       content: imageUrl,

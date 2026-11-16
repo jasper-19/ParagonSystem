@@ -42,6 +42,35 @@ test('article-controlled values cannot inject attributes, tags or scripts', asyn
   assert.ok(html.includes('&quot;')); assert.ok(html.includes('&amp;'));
 });
 
+test('first response includes accurate paired image dimensions, MIME type and secure URL', async () => {
+  const response = await make({ fetcher: async () => Response.json({ ...article,
+    image: 'https://storage.example/public/cover.webp', imageWidth: 1600, imageHeight: 840, imageType: 'image/webp',
+  }) })(new Request('https://news.example/article/campus-news'));
+  const html = await response.text();
+  assert.equal(response.status, 200);
+  for (const [property, value] of Object.entries({ 'og:image': 'https://storage.example/public/cover.webp',
+    'og:image:secure_url': 'https://storage.example/public/cover.webp', 'og:image:width': '1600',
+    'og:image:height': '840', 'og:image:type': 'image/webp' })) {
+    assert.ok(html.includes(`property="${property}" content="${value}"`));
+    assert.equal(html.split(`property="${property}"`).length - 1, 1);
+    assert.ok(html.indexOf(`property="${property}"`) < html.indexOf('</head>'));
+  }
+});
+
+test('unknown or invalid dimensions are never guessed for an article image', async () => {
+  for (const fields of [{}, { imageWidth: 1200 }, { imageWidth: '1200', imageHeight: 630 },
+    { imageWidth: -1, imageHeight: 630 }, { imageWidth: 1200.5, imageHeight: 630 },
+    { imageWidth: 10000, imageHeight: 10000 }, { imageWidth: 1200, imageHeight: 630, imageType: 'text/html' }]) {
+    const html = await (await make({ fetcher: async () => Response.json({ ...article, imageType: 'image/jpeg', ...fields }) })(new Request('https://news.example/article/campus-news'))).text();
+    assert.doesNotMatch(html, /property="og:image:(width|height|type)"/);
+  }
+  const html = await (await make({ fetcher: async () => Response.json({ ...article, image: 'javascript:alert(1)',
+    imageWidth: 1, imageHeight: 1, imageType: 'image/png' }) })(new Request('https://news.example/article/campus-news'))).text();
+  assert.match(html, /property="og:image:width" content="1424"/);
+  assert.match(html, /property="og:image:height" content="752"/);
+  assert.match(html, /property="og:image:type" content="image\/jpeg"/);
+});
+
 test('only usable HTTPS image URLs are emitted, with a real fallback asset', async () => {
   for (const image of ['', 'javascript:alert(1)', 'data:image/png;base64,private', 'http://media.example/cover.jpg', 'https://127.0.0.1/private', 'https://user:pass@media.example/cover.jpg', 'https://[::1]/private']) {
     const html = await (await make({ fetcher: async () => Response.json({ ...article, image }) })(new Request('https://news.example/article/campus-news'))).text();
