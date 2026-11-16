@@ -2,6 +2,18 @@
 
 Audit date: 16 November 2026. Scope: copied/native article links, initial social metadata, public article isolation, and Vercel delivery. Local implementation is ready for deployment verification; production readiness remains unverified. No deployment, database migration, secret change or live article change was performed.
 
+## Deployment follow-up: article opens the minimal error document
+
+After the user deployed the initial changes, opening an article from Messenger showed "Please try again shortly." Read-only Vercel runtime logs for deployment `dpl_EdBUVBaanRobZxxW9VSrBBtVhn1U` confirmed repeated `ARTICLE_PREVIEW_UNAVAILABLE` markers on the reported article URL. Those original logs did not record the failure stage, so the exact live exception remains unconfirmed.
+
+The handler used `process.cwd()` to locate the built index. This fails when a monorepo function runs with its working directory outside the frontend project. The corrected `server/article-shell.mjs` resolves the fixed index path relative to its own module, validates the Angular shell and clears rejected read promises so subsequent requests can retry. The existing Vercel includeFiles rule remains necessary.
+
+The renderer now loads the shell before validating metadata configuration, preserves the original shell if metadata insertion fails, and logs only fixed failure stages and allowlisted error codes. API/configuration failures retain the application root and scripts while returning generic 503 metadata, no-store, noindex and Retry-After. Shell-loading failures still cannot bootstrap Angular; their diagnostic stage/code will identify that condition without exposing filesystem paths or credentials.
+
+Follow-up validation: `npm.cmd run test:share-previews` passed **14 tests**; `npm.cmd run build` passed with the existing CommonJS warnings. A child-process regression recreated a relocated monorepo layout where the old cwd-based path returned ENOENT and the corrected handler returned GET/HEAD 200. An additional smoke check used the actual production-built shell from the repository-root working directory and validated GET/HEAD plus all 12 referenced JavaScript/CSS assets. These checks mock the metadata API. `git diff --check` passed.
+
+Only frontend handler/helper/tests and the test script changed in this follow-up. No backend or schema changes are required. Reviewers assessed the supplied implementation and evidence without independently executing commands. A fresh frontend deployment is required to apply this correction; Vercel's actual packaged module layout and live metadata/image fetching still need verification. No deployment was performed by the agent.
+
 ## Findings and changes
 
 | Finding | Change |

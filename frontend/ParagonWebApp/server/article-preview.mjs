@@ -88,34 +88,41 @@ export function createArticlePreviewHandler({ readIndex, fetcher = fetch,
     let origin;
     let article = null;
     let status = 200;
+    let stage = 'shell_load';
     try {
+      shell = await readIndex();
+      stage = 'configuration';
       origin = httpsUrl(siteOrigin);
       const upstream = httpsUrl(apiBase);
       if (!origin || origin.pathname !== '/' || origin.search || origin.hash || !upstream || upstream.search || upstream.hash) throw new Error('Invalid preview configuration');
       origin = origin.origin;
-      shell = await readIndex();
+      stage = 'upstream_fetch';
       const response = await fetcher(`${upstream.href.replace(/\/$/, '')}/articles/${slug}/preview`, {
         headers: { Accept: 'application/json' }, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(5000),
       });
       if (response.status === 404) status = 404;
       else if (!response.ok) throw new Error('Preview upstream unavailable');
       else {
+        stage = 'upstream_payload';
         const candidate = await limitedJson(response);
         if (!candidate || candidate.status?.toLowerCase() !== 'published') status = 404;
         else if (candidate.slug !== slug || typeof candidate.title !== 'string' || !candidate.title.trim()
           || (candidate.excerpt != null && typeof candidate.excerpt !== 'string')) throw new Error('Invalid preview payload');
         else article = candidate;
       }
+      stage = 'render';
       const html = renderHead(shell, metadataFor(article, origin, slug, status), status !== 200);
       if (status !== 200) headers['X-Robots-Tag'] = 'noindex, nofollow';
       return new Response(request.method === 'HEAD' ? null : html, { status, headers });
-    } catch {
+    } catch (error) {
       // No raw upstream responses, article content, cookies or credentials in diagnostics.
-      console.error('[ARTICLE_PREVIEW_UNAVAILABLE]');
+      const code = ['ENOENT', 'EACCES', 'EPERM', 'ENOTDIR'].includes(error?.code) ? error.code
+        : ['AbortError', 'TimeoutError'].includes(error?.name) ? error.name : 'FAILED';
+      console.error('[ARTICLE_PREVIEW_UNAVAILABLE]', { stage, code });
       headers['X-Robots-Tag'] = 'noindex, nofollow';
       headers['Retry-After'] = '60';
       const safeOrigin = origin && typeof origin === 'string' ? origin : DEFAULT_SITE_ORIGIN;
-      let html = '<!doctype html><html lang="en"><head><title>Article temporarily unavailable</title></head><body>Please try again shortly.</body></html>';
+      let html = shell || '<!doctype html><html lang="en"><head><title>Article temporarily unavailable</title></head><body>Please try again shortly.</body></html>';
       try { if (shell) html = renderHead(shell, metadataFor(null, safeOrigin, slug, 503), true); } catch { /* retain generic 503 */ }
       return new Response(request.method === 'HEAD' ? null : html, { status: 503, headers });
     }

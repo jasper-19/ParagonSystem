@@ -98,8 +98,49 @@ test('upstream errors, malformed/oversized payloads and failures produce generic
     const response = await make({ fetcher })(new Request('https://news.example/article/campus-news'));
     assert.equal(response.status, 503); assert.equal(response.headers.get('cache-control'), 'no-store');
     assert.equal(response.headers.get('retry-after'), '60');
-    assert.doesNotMatch(await response.text(), /Campus news|An introduction|media\.example\/cover/);
+    assert.match(response.headers.get('x-robots-tag'), /noindex/);
+    const html = await response.text();
+    assert.doesNotMatch(html, /Campus news|An introduction|media\.example\/cover/);
+    assert.match(html, /<app-root/);
+    assert.match(html, /main-HASH.js/);
+    assert.match(html, /styles-HASH.css/);
   }
+});
+
+test('invalid metadata configuration preserves the Angular application shell', async () => {
+  for (const config of [{ siteOrigin: 'http://invalid.example' }, { apiBase: 'invalid' }]) {
+    const handler = make({ ...config, fetcher: async () => { throw new Error('Must not fetch'); } });
+    const response = await handler(new Request('https://news.example/article/campus-news'));
+    assert.equal(response.status, 503);
+    const html = await response.text();
+    assert.match(html, /<app-root/); assert.match(html, /main-HASH.js/);
+    assert.match(html, /noindex/);
+    assert.doesNotMatch(html, /Please try again shortly/);
+    const head = await handler(new Request('https://news.example/article/campus-news', { method: 'HEAD' }));
+    assert.equal(head.status, 503); assert.equal(await head.text(), '');
+  }
+});
+
+test('shell failures return uncached noindex responses with safe diagnostics', async () => {
+  const messages = [];
+  const originalError = console.error;
+  console.error = (...args) => messages.push(args);
+  try {
+    const handler = make({ readIndex: async () => {
+      throw Object.assign(new Error('private path and upstream credentials'), { code: 'ENOENT' });
+    } });
+    for (const method of ['GET', 'HEAD']) {
+      const response = await handler(new Request('https://news.example/article/campus-news', { method }));
+      assert.equal(response.status, 503);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+      assert.match(response.headers.get('x-robots-tag'), /noindex/);
+      assert.equal(response.headers.get('retry-after'), '60');
+      const html = await response.text();
+      assert.doesNotMatch(html, /private path|credentials|Campus news/);
+      if (method === 'HEAD') assert.equal(html, '');
+    }
+    assert.deepEqual(messages, Array.from({ length: 2 }, () => ['[ARTICLE_PREVIEW_UNAVAILABLE]', { stage: 'shell_load', code: 'ENOENT' }]));
+  } finally { console.error = originalError; }
 });
 
 test('rejects invalid paths and methods before upstream work and supports HEAD', async () => {
