@@ -163,7 +163,12 @@ me(
 
   // ===== Account management =====
   changePassword(currentPassword: string, newPassword: string): Observable<void> {
-    return this.http.patch<void>(`${this.api}/password`, { currentPassword, newPassword });
+    return this.http.patch<void>(`${this.api}/password`, { currentPassword, newPassword }).pipe(
+      tap(() => {
+        this.invalidateMeCache();
+        this.socket.reconnectWithCurrentSession();
+      })
+    );
   }
 
   setTwoFaEnabled(enabled: boolean): Observable<{ twoFaEnabled: boolean }> {

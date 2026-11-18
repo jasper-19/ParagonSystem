@@ -20,6 +20,7 @@ export interface User {
   id: string;
   username: string;
   passwordHash: string;
+  authVersion: string;
   role: UserRole;
   isActive: boolean;
   staffId?: string;
@@ -29,7 +30,7 @@ export interface User {
   updatedAt?: Date;
 }
 
-export type PublicUser = Omit<User, "passwordHash">;
+export type PublicUser = Omit<User, "passwordHash" | "authVersion">;
 
 export interface ManagedUser extends PublicUser {
   staff: AuthStaffProfile | null;

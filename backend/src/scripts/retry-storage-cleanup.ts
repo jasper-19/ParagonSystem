@@ -5,6 +5,7 @@ import {
   claimNextStorageCleanupJob,
   completeStorageCleanupJob,
   failStorageCleanupJob,
+  removeUnreferencedStorageObject,
 } from "../storage/storage-cleanup.repository";
 
 const DEFAULT_BATCH_SIZE = 25;
@@ -29,15 +30,18 @@ async function main(): Promise<void> {
   );
   let completed = 0;
   let failed = 0;
+  let protectedReferences = 0;
 
   for (let index = 0; index < batchSize; index += 1) {
     const job = await claimNextStorageCleanupJob(maxAttempts);
     if (!job) break;
 
     try {
-      await storageService.remove([job.storagePath]);
+      const removed = await removeUnreferencedStorageObject(job.storagePath,
+        () => storageService.remove([job.storagePath]));
       await completeStorageCleanupJob(job.id);
-      completed += 1;
+      if (removed) completed += 1;
+      else protectedReferences += 1;
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unknown storage error";
@@ -51,6 +55,7 @@ async function main(): Promise<void> {
       event: "storage_cleanup_batch_completed",
       completed,
       failed,
+      protectedReferences,
       batchSize,
       maxAttempts,
     })

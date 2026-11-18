@@ -129,7 +129,7 @@ test("uploads a processed PDF before creating its database record", async () => 
 
     assert.equal(result.id, "issue-id");
     assert.equal(storage.uploaded.length, 1);
-    assert.match(storage.uploaded[0]!, /^special-issues\/[a-f0-9-]+\/[a-f0-9-]+\.pdf$/);
+    assert.match(storage.uploaded[0]!, /^private-special-issues\/[a-f0-9-]+\/[a-f0-9-]+\.pdf$/);
     assert.equal(createdInput?.pdfMetadata?.originalSizeBytes, 1_000);
     assert.equal(createdInput?.pdfMetadata?.optimizedSizeBytes, 600);
     assert.equal(createdInput?.pdfUrl, `https://storage.example/${storage.uploaded[0]}`);

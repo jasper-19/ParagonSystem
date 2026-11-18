@@ -23,6 +23,7 @@ import type {
   ProcessedPdf,
 } from "./pdf-processing/pdf.types";
 import { pdfConfig } from "../../config/pdf";
+import { privatePdfKey } from '../../storage/private-pdf-path';
 
 export type SpecialIssueCreateDependencies = {
   repository: {
@@ -167,7 +168,7 @@ async function createUploadedIssue(
 ) {
   assertNotCancelled(signal);
   if (!file) {
-    return dependencies.repository.create(data as CreateIssueInput);
+    throw Object.assign(new Error('Upload a PDF file to private storage'), { statusCode: 400 });
   }
 
   if (
@@ -192,7 +193,7 @@ async function createUploadedIssue(
     throw error;
   }
   const uploadId = randomUUID();
-  const objectKey = `special-issues/${uploadId}/${uploadId}.pdf`;
+  const objectKey = privatePdfKey(uploadId);
   let uploadAttempted = false;
   let uploadDurationMs = 0;
 
@@ -210,7 +211,7 @@ async function createUploadedIssue(
       processed.filePath,
       {
         contentType: "application/pdf",
-        cacheControl: "31536000",
+        cacheControl: "0",
         upsert: false,
         ...(signal ? { signal } : {}),
       }
@@ -453,7 +454,7 @@ async function replaceUploadedIssuePdf(
   }
 
   const uploadId = randomUUID();
-  const objectKey = `special-issues/${uploadId}/${uploadId}.pdf`;
+  const objectKey = privatePdfKey(uploadId);
   let uploadAttempted = false;
   let databaseUpdated = false;
 
@@ -470,7 +471,7 @@ async function replaceUploadedIssuePdf(
       processed.filePath,
       {
         contentType: "application/pdf",
-        cacheControl: "31536000",
+        cacheControl: "0",
         upsert: false,
         ...(signal ? { signal } : {}),
       }

@@ -1,3 +1,5 @@
+import { productionDatabaseConfig } from './database-tls';
+
 function requireEnvironmentVariable(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -26,12 +28,14 @@ export function validateEnvironment(): void {
     throw new Error("JWT_SECRET must be at least 32 bytes in production");
   }
 
-  requireEnvironmentVariable("DATABASE_URL");
+  productionDatabaseConfig(process.env);
   requireEnvironmentVariable("SUPABASE_SERVICE_ROLE_KEY");
   requireHttpsUrl("SUPABASE_URL");
 
-  if (process.env.API_BASE_URL) {
-    requireHttpsUrl("API_BASE_URL");
+  requireHttpsUrl("API_BASE_URL");
+  const pdfBucket = process.env.SUPABASE_PDF_STORAGE_BUCKET || 'paragon-pdfs';
+  if (!/^[a-zA-Z0-9_-]+$/.test(pdfBucket) || pdfBucket === (process.env.SUPABASE_STORAGE_BUCKET || 'paragon-media')) {
+    throw new Error('PDF storage must use a separate private bucket');
   }
 
   if (

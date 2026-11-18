@@ -25,6 +25,8 @@ async function configuredUpload(
       limits: {
         fileSize: publishingMedia.maxUploadSizeMb * 1024 * 1024,
         files: 1,
+        fields: 0,
+        parts: 1,
       },
       fileFilter: (
         _req: Request,

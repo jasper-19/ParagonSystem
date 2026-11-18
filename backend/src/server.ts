@@ -12,6 +12,9 @@ import pool from "./config/db";
 import { validateEnvironment } from "./config/env";
 import { specialIssueUploadConfig } from "./config/special-issue-upload";
 import { drainAuditLogs } from "./modules/activity-logs/activity-log.audit";
+import { SupabasePrivatePdfStorage } from './storage/private-pdf-storage';
+import { assertPrivatePdfAccessPolicy } from './storage/private-pdf-policy';
+import { assertAuthVersionSchema } from './security/auth-version';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -41,7 +44,12 @@ initializeSocket(server);
 async function startServer() {
   try {
     validateEnvironment();
+    if (process.env.NODE_ENV === 'production') {
+      await new SupabasePrivatePdfStorage().assertPrivate();
+      await assertPrivatePdfAccessPolicy(pool);
+    }
     await initializeDatabase();
+    await assertAuthVersionSchema(pool);
 
     server.listen(PORT, () => {
       console.log(

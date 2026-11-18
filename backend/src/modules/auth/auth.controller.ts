@@ -304,6 +304,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       subject: dbUser.id,
       role: dbUser.role,
       sid: session.id,
+      passwordHash: dbUser.passwordHash,
+      authVersion: dbUser.authVersion,
       ...(dbUser.staffId ? { staffId: dbUser.staffId } : {}),
     });
     setAuthCookie(res, token);
@@ -395,6 +397,7 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   }
 
   await userService.updateUser(subject, { password: newPassword });
+  clearAuthCookie(res);
   await auditLog(req, "CHANGE_PASSWORD", "AUTH", `Changed password for user ${subject}`, {
     resourceId: subject,
     userId: subject,

@@ -1,4 +1,5 @@
 import db from "../../config/db";
+import { isPrivatePdfKey, privatePdfUrl } from '../../storage/private-pdf-path';
 import { isDevelopmentMediaFileUrl } from "./development-media-url";
 import type {
   IssueStatus,
@@ -198,7 +199,8 @@ function mapRow(row: SpecialIssueRow) {
     academicYear: row.academic_year,
     description: row.description ?? undefined,
     coverImage: safeStoredMediaUrl(row.cover_image, "image"),
-    pdfUrl: safeStoredMediaUrl(row.pdf_url, "pdf"),
+    pdfUrl: row.pdf_storage_path && isPrivatePdfKey(row.pdf_storage_path)
+      ? privatePdfUrl(row.pdf_storage_path) : safeStoredMediaUrl(row.pdf_url, "pdf"),
     status: row.status,
     publishedAt: row.published_at ?? undefined,
     createdAt: row.created_at,
@@ -389,6 +391,16 @@ export type PdfMutationState = {
   pdfUrl: string;
   storagePath: string | null;
 };
+
+export async function findPdfForDelivery(storagePath: string) {
+  const result = await db.query(
+    `SELECT status, pdf_optimized_size_bytes, pdf_sha256 FROM special_issues
+     WHERE pdf_storage_path = $1 LIMIT 1`, [storagePath]
+  );
+  const row = result.rows[0];
+  return row ? { status: String(row.status), size: Number(row.pdf_optimized_size_bytes),
+    sha256: String(row.pdf_sha256) } : null;
+}
 
 export async function findPdfMutationState(
   id: string

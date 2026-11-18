@@ -1,4 +1,4 @@
-import { ADMIN_SOCKET_ROOM, getIO } from "./socket";
+import { emitPrivateAdminEvent, getIO } from "./socket";
 import { SettingsSection } from "../modules/settings/settings.types";
 
 export const SocketEvents = {
@@ -55,26 +55,20 @@ export function emitArticlesUpdated(
     payload
   );
 
-  getIO().emit(
-    SocketEvents.ARTICLES_UPDATED,
-    payload
-  );
+  // Draft IDs and slugs must never leave the admin boundary.
+  getIO().emit(SocketEvents.ARTICLES_UPDATED);
 }
 
 export function emitApplicationsUpdated() {
     console.log("Broadcasting applications: updated")
     
-  getIO()
-    .to(ADMIN_SOCKET_ROOM)
-    .emit(SocketEvents.APPLICATIONS_UPDATED);
+  void emitPrivateAdminEvent(SocketEvents.APPLICATIONS_UPDATED);
 }
 
 export function emitMediaUpdated() {
     console.log("Broadcasting media: updated")
 
-  getIO()
-    .to(ADMIN_SOCKET_ROOM)
-    .emit(SocketEvents.MEDIA_UPDATED);
+  void emitPrivateAdminEvent(SocketEvents.MEDIA_UPDATED);
 }
 
 export function emitApplicationSettingsUpdated(): void {
@@ -106,9 +100,7 @@ export function emitGlobalSettingsUpdated(
 
 export function emitUserAccountsUpdated(): void {
   console.log("Broadcasting users:updated");
-  getIO()
-    .to(ADMIN_SOCKET_ROOM)
-    .emit(SocketEvents.USER_ACCOUNTS_UPDATED);
+  void emitPrivateAdminEvent(SocketEvents.USER_ACCOUNTS_UPDATED);
 }
 
   export function emitActivityLogsUpdated(
@@ -119,10 +111,5 @@ export function emitUserAccountsUpdated(): void {
       payload
     );
 
-    getIO()
-      .to(ADMIN_SOCKET_ROOM)
-      .emit(
-      SocketEvents.ACTIVITY_LOGS_UPDATED,
-      payload
-    );
+    void emitPrivateAdminEvent(SocketEvents.ACTIVITY_LOGS_UPDATED, payload);
   }

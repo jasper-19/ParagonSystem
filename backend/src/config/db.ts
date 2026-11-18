@@ -1,6 +1,7 @@
 import { Pool, PoolClient, PoolConfig } from "pg";
 import { performance } from "node:perf_hooks";
 import dotenv from "dotenv";
+import { productionDatabaseConfig } from "./database-tls";
 
 dotenv.config();
 
@@ -47,19 +48,7 @@ const poolConfig: PoolConfig = {
 };
 
 if (isProduction) {
-  if (!process.env.DATABASE_URL) {
-    throw new Error(
-      "DATABASE_URL is required in production"
-    );
-  }
-
-  poolConfig.connectionString =
-    process.env.DATABASE_URL;
-
-  poolConfig.ssl = {
-    rejectUnauthorized:
-      process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false",
-  };
+  Object.assign(poolConfig, productionDatabaseConfig(process.env));
 } else {
   poolConfig.user = process.env.DB_USER;
   poolConfig.host =

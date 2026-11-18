@@ -8,6 +8,20 @@ after(async () => db.end());
 
 const query = { page: 1, limit: 10, sortBy: "publishedAt", sortOrder: "desc" } as const;
 
+test('private PDF responses always emit an API delivery URL even with a stale stored public URL', async () => {
+  const previous = process.env.API_BASE_URL;
+  process.env.API_BASE_URL = 'https://api.example';
+  const id = '11111111-1111-4111-8111-111111111111';
+  mock.method(db, 'query', async () => ({ rows: [{ id, pdf_url: 'https://public.example/old.pdf',
+    pdf_storage_path: `private-special-issues/${id}/${id}.pdf` }] }));
+  try {
+    const result = await findAdmin(query);
+    assert.equal(result.items[0]?.pdfUrl, `https://api.example/api/special-issues/pdf/${id}`);
+  } finally {
+    if (previous === undefined) delete process.env.API_BASE_URL; else process.env.API_BASE_URL = previous;
+  }
+});
+
 test("development PDF responses permit only the configured local storage URL path", async () => {
   const priorEnvironment = process.env.NODE_ENV;
   const priorLocalUrl = process.env.LOCAL_STORAGE_URL;

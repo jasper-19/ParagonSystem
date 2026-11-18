@@ -48,9 +48,14 @@ node_modules/
 dist/
 **/.angular/
 .env
+.env.*
+!.env.example
+!.env.*.example
+/.tmp/
 
 # Local uploads(development only)
 backend/uploads/
+backend/private-pdfs/
 
 #Temporary image processing files
 /backend/tmp/

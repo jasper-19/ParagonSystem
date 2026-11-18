@@ -21,10 +21,17 @@ import {
   validateSpecialIssueCreateRequest,
 } from "./special-issue-upload.middleware";
 import { pdfConfig } from "../../config/pdf";
+import { createPrivatePdfHandler } from './private-pdf.controller';
 
 const router = Router();
 
 /** PUBLIC */
+const pdfReadLimiter = rateLimit({
+  windowMs: 60_000, max: 180, standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Too many PDF requests. Please try again later.' },
+});
+router.get('/pdf/:id', (_req, res, next) => { res.set('Cache-Control', 'no-store, private'); next(); },
+  pdfReadLimiter, createPrivatePdfHandler());
 
 router.get(
   "/",
@@ -58,6 +65,16 @@ router.get("/:slug", controller.getIssueBySlug);
 /** ADMIN */
 
 router.use(authenticate, requireAdmin);
+// Operational pause covers administrators too; public reads remain available.
+router.use((req, res, next) => {
+  if (process.env.SPECIAL_ISSUE_MUTATIONS_PAUSED === 'true' &&
+      !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    res.set({ 'Cache-Control': 'no-store', 'Retry-After': '120' });
+    res.status(503).json({ error: 'Special Issue updates are temporarily paused for maintenance' });
+    return;
+  }
+  next();
+});
 
 const specialIssueUploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

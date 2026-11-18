@@ -10,7 +10,7 @@ const DUMMY_PASSWORD_HASH =
   "$2b$12$9o25rMoWQmEjAxCTDm4WkuleSRJx6.FErir5UD0La6G7u7r0mZ7JC";
 
 export function toPublicUser(user: User): PublicUser {
-  const { passwordHash, ...rest } = user;
+  const { passwordHash, authVersion, ...rest } = user;
   return rest;
 }
 

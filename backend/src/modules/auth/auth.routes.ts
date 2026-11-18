@@ -26,6 +26,14 @@ const loginLimiter = rateLimit({
 });
 
 const router = Router();
+const passwordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  keyGenerator: req => req.user!.sub,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many password change attempts. Please try again later." },
+});
 
 router.post(
   "/login",
@@ -36,7 +44,7 @@ router.post(
 );
 router.post("/logout", authenticate, logout);
 router.get("/me", authenticate, me);
-router.patch("/password", authenticate, validate(changePasswordSchema), changePassword);
+router.patch("/password", authenticate, passwordLimiter, validate(changePasswordSchema), changePassword);
 router.patch("/2fa", authenticate, validate(twoFaPreferenceSchema), setTwoFaEnabled);
 router.get("/sessions", authenticate, listSessions);
 router.delete(

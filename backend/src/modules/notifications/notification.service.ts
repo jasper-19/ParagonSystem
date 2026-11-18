@@ -4,10 +4,10 @@ import * as settingsService from "../settings/settings.service";
 
 // ── SSE client registry ───────────────────────────────────────────────────────
 
-const clients = new Set<Response>();
+const clients = new Map<Response, () => Promise<boolean>>();
 
-export function addClient(res: Response): void {
-  clients.add(res);
+export function addClient(res: Response, authorize: () => Promise<boolean>): void {
+  clients.set(res, authorize);
 }
 
 export function removeClient(res: Response): void {
@@ -16,8 +16,17 @@ export function removeClient(res: Response): void {
 
 function broadcast(notification: object): void {
   const data = `data: ${JSON.stringify(notification)}\n\n`;
-  for (const client of clients) {
-    try { client.write(data); } catch { clients.delete(client); }
+  for (const [client, authorize] of clients) {
+    void (async () => {
+      try {
+        if (await authorize() && clients.has(client) && !client.writableEnded) {
+          client.write(data);
+        } else {
+          clients.delete(client);
+          client.end();
+        }
+      } catch { clients.delete(client); client.end(); }
+    })();
   }
 }
 

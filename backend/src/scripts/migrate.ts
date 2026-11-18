@@ -12,6 +12,9 @@ function migrationTimeoutMs(): number {
 async function migrate(): Promise<void> {
   const migrationPath = path.resolve(process.cwd(), "src/config/migrate.sql");
   const sql = await readFile(migrationPath, "utf8");
+  const securitySql = await readFile(
+    path.resolve(process.cwd(), "src/config/migrate.security.sql"), "utf8"
+  );
   const client = await pool.connect();
 
   try {
@@ -28,6 +31,7 @@ async function migrate(): Promise<void> {
       query_timeout: timeoutMs,
     } as unknown as QueryConfig;
     await client.query(migrationQuery);
+    await client.query({ text: securitySql, query_timeout: timeoutMs } as unknown as QueryConfig);
     await client.query("COMMIT");
     console.log("Database migration completed successfully.");
   } catch (error) {

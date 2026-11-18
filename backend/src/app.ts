@@ -65,6 +65,8 @@ app.use(
       "Content-Type",
       "Authorization",
       "X-CSRF-Protection",
+      "Range",
+      "If-Range",
     ],
     exposedHeaders: ["X-Page", "X-Page-Size", "X-Has-More", "Accept-Ranges", "Content-Range", "Content-Encoding", "ETag"],
     credentials: true,
@@ -83,8 +85,8 @@ const requestBodyLimitMb = Number.isFinite(configuredBodyLimitMb)
   : 5;
 const requestBodyLimit = `${requestBodyLimitMb}mb`;
 app.use("/api", auditRequestFailures);
-app.use(express.json({ limit: requestBodyLimit }));
-app.use(express.urlencoded({ extended: false, limit: requestBodyLimit }));
+app.use(express.json({ limit: requestBodyLimit, inflate: false }));
+app.use(express.urlencoded({ extended: false, limit: requestBodyLimit, inflate: false }));
 
 app.use("/api", csrfProtection);
 
@@ -94,6 +96,10 @@ const apiLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  // Byte-range reads have their own budget and stream admission limit. A large
+  // PDF must not exhaust the general API allowance while loading its chunks.
+  skip: req => ['GET', 'HEAD'].includes(req.method) &&
+    /^\/special-issues\/pdf\/[a-f0-9-]{36}$/.test(req.path),
   message: { error: "Too many requests, please try again later." },
 });
 app.use("/api", apiLimiter);

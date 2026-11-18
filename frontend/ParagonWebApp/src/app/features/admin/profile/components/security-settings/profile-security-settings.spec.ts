@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, defer, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { provideRouter, Router } from '@angular/router';
 import { ActiveSession, AdminAuthService } from '../../../../../core/services/admin-auth.service';
 import { ProfileSecuritySettings } from './profile-security-settings';
 
@@ -17,7 +18,7 @@ describe('Profile account security', () => {
   beforeEach(async () => {
     auth = { me: vi.fn(() => of({ user: { twoFaEnabled: true }, staff: null })), getSessions: vi.fn(() => of([current, other])), changePassword: vi.fn(() => of(undefined)), setTwoFaEnabled: vi.fn(() => of({ twoFaEnabled: false })), logoutSession: vi.fn(() => of(undefined)), invalidateMeCache: vi.fn() };
     vi.spyOn(console, 'error').mockImplementation(() => {}); vi.spyOn(console, 'warn').mockImplementation(() => {});
-    await TestBed.configureTestingModule({ imports: [ProfileSecuritySettings], providers: [{ provide: AdminAuthService, useValue: auth }] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [ProfileSecuritySettings], providers: [provideRouter([]), { provide: AdminAuthService, useValue: auth }] }).compileComponents();
     fixture = TestBed.createComponent(ProfileSecuritySettings); component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -54,7 +55,7 @@ describe('Profile account security', () => {
     expect(fixture.nativeElement.querySelector('#confirm-password').type).toBe('password');
   });
 
-  it('prevents duplicate password requests, resets sensitive form state, and reloads sessions on success', () => {
+  it('prevents duplicate password requests and requires a fresh sign-in after success', () => {
     const pending = new Subject<void>(); auth.changePassword.mockReturnValueOnce(pending);
     validForm(); component.showNewPassword = true;
     component.changePassword(); component.changePassword();
@@ -63,7 +64,11 @@ describe('Profile account security', () => {
     expect(component.changingPassword).toBe(false); expect(component.successPasswordModalOpen).toBe(true);
     expect(Object.values(component.passwordForm.getRawValue()).every(value => value === '')).toBe(true);
     expect(component.passwordForm.pristine).toBe(true); expect(component.passwordForm.untouched).toBe(true);
-    expect(component.showNewPassword).toBe(false); expect(auth.getSessions).toHaveBeenCalledTimes(2);
+    expect(component.showNewPassword).toBe(false); expect(auth.getSessions).toHaveBeenCalledTimes(1);
+    expect(component.activeSessions).toEqual([]);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    component.closePasswordSuccess();
+    expect(navigate).toHaveBeenCalledWith(['/admin/login']);
   });
 
   it('restores submission availability after a password error without claiming success', () => {

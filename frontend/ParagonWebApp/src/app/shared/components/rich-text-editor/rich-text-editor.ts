@@ -7,6 +7,8 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import Quill from 'quill';
+import { SecurityContext, inject } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR
@@ -31,6 +33,8 @@ export class RichTextEditorComponent
   @ViewChild('editor', { static: true }) editorRef!: ElementRef;
 
   private quill!: Quill;
+  private readonly sanitizer = inject(DomSanitizer);
+  private pendingValue = '';
   private onChange = (value: string) => {};
   private onTouched = () => {};
 
@@ -56,11 +60,13 @@ export class RichTextEditorComponent
 
       this.onChange(html);
     });
+    this.writeValue(this.pendingValue);
   }
 
   writeValue(value: string): void {
-    if (this.quill && value) {
-      this.quill.root.innerHTML = value;
+    this.pendingValue = this.sanitizer.sanitize(SecurityContext.HTML, value || '') || '';
+    if (this.quill) {
+      this.quill.setContents(this.quill.clipboard.convert({ html: this.pendingValue }), 'silent');
     }
   }
 

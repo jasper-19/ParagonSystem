@@ -9,6 +9,7 @@ import {
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import {
   AbstractControl,
   FormBuilder,
@@ -31,6 +32,7 @@ import { ErrorModal } from '../../../../../shared/components/feedback-modal/erro
 })
 export class ProfileSecuritySettings implements OnInit, OnDestroy {
   private readonly auth = inject(AdminAuthService);
+  private readonly router = inject(Router);
   private readonly destroy$ = new Subject<void>();
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly fb = inject(FormBuilder);
@@ -400,7 +402,7 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
           this.showConfirmPassword =
             false;
 
-          this.loadSessions();
+          this.activeSessions = [];
 
           this.cdr.markForCheck();
         },
@@ -422,6 +424,7 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
   closePasswordSuccess(): void {
     this.successPasswordModalOpen =
       false;
+    void this.router.navigate(['/admin/login']);
 
     this.cdr.markForCheck();
   }

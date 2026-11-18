@@ -12,7 +12,7 @@ async function hasValidAdminSession(req: Request): Promise<boolean> {
     if (payload.role !== "admin") return false;
     if (payload.sub === "env-admin") return true;
     if (!payload.sid) return false;
-    return sessionRepository.isSessionActive(payload.sid);
+    return sessionRepository.validateAndTouchSession(payload.sub, payload.sid, payload, false);
   } catch {
     return false;
   }

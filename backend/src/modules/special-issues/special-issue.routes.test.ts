@@ -103,6 +103,30 @@ test("authenticated non-admin users cannot access admin Special Issue routes", a
   });
 });
 
+test('operational migration pause denies every admin mutation before parsing or database work', async () => {
+  const original = process.env.SPECIAL_ISSUE_MUTATIONS_PAUSED;
+  process.env.SPECIAL_ISSUE_MUTATIONS_PAUSED = 'true';
+  const app = express(); app.use('/special-issues', specialIssueRouter); app.use(errorHandler);
+  const token = signAuthToken({ subject: 'env-admin', role: 'admin' });
+  try {
+    await withServer(app, async baseUrl => {
+      for (const [method, path] of [['POST', ''], ['PATCH', '/11111111-1111-4111-8111-111111111111'],
+        ['PATCH', '/11111111-1111-4111-8111-111111111111/pdf'],
+        ['PATCH', '/11111111-1111-4111-8111-111111111111/status'],
+        ['DELETE', '/11111111-1111-4111-8111-111111111111']]) {
+        const response = await fetch(`${baseUrl}/special-issues${path}`, { method: method!,
+          headers: { Authorization: `Bearer ${token}` } });
+        assert.equal(response.status, 503); assert.equal(response.headers.get('cache-control'), 'no-store');
+        assert.equal(response.headers.get('retry-after'), '120');
+      }
+      assert.equal((await fetch(`${baseUrl}/special-issues`, {method:'POST'})).status,401);
+    });
+  } finally {
+    if (original === undefined) delete process.env.SPECIAL_ISSUE_MUTATIONS_PAUSED;
+    else process.env.SPECIAL_ISSUE_MUTATIONS_PAUSED = original;
+  }
+});
+
 test("multipart middleware writes a UUID file and removes it after response", async () => {
   const app = express();
   let uploadedPath: string | undefined;

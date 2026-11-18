@@ -12,6 +12,7 @@ function mapRow(row: any): User {
     id: String(row.id),
     username: row.username,
     passwordHash: row.password_hash,
+    authVersion: String(row.auth_version),
     role: row.role,
     isActive: row.is_active !== false,
   };
@@ -196,6 +197,8 @@ export async function findByIdWithStaff(
          u.id,
          u.username,
          u.password_hash,
+         u.auth_version,
+         u.is_active,
          u.role,
          u.staff_id,
          u.two_fa_enabled,
@@ -302,7 +305,7 @@ export async function listManagedUsers(): Promise<ManagedUser[]> {
   );
 
   return result.rows.map(row => {
-    const { passwordHash: _passwordHash, ...user } = mapRow(row);
+    const { passwordHash: _passwordHash, authVersion: _authVersion, ...user } = mapRow(row);
     return {
       ...user,
       staff: mapJoinedStaff(row),
@@ -433,11 +436,18 @@ export async function updateUser(
   sets.push(`updated_at = NOW()`);
   values.push(id);
 
+  const revokeSessions = patch.passwordHash !== undefined || patch.role !== undefined ||
+    patch.staffId !== undefined || patch.isActive !== undefined;
   const result = await db.query(
-    `UPDATE users
+    `WITH updated AS (UPDATE users
      SET ${sets.join(", ")}
      WHERE id = $${idx}
-     RETURNING *`,
+     RETURNING *), revoked AS (
+       UPDATE user_sessions SET revoked_at = NOW()
+       WHERE user_id IN (SELECT id FROM updated)
+         AND revoked_at IS NULL AND ${revokeSessions ? "TRUE" : "FALSE"}
+       RETURNING id
+     ) SELECT * FROM updated`,
     values
   );
 

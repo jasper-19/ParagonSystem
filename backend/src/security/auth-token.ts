@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import { Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
@@ -14,6 +14,8 @@ export interface AuthTokenPayload extends JwtPayload {
   role: AuthRole;
   sid?: string;
   staffId?: string;
+  credentials?: string;
+  authVersion?: string;
 }
 
 export type AuthTokenSource = "bearer" | "cookie";
@@ -87,12 +89,16 @@ export function signAuthToken(input: {
   role: AuthRole;
   sid?: string;
   staffId?: string;
+  passwordHash?: string;
+  authVersion?: string;
 }): string {
   return jwt.sign(
     {
       role: input.role,
       ...(input.sid ? { sid: input.sid } : {}),
       ...(input.staffId ? { staffId: input.staffId } : {}),
+      ...(input.passwordHash ? { credentials: credentialFingerprint(input.passwordHash) } : {}),
+      ...(input.authVersion !== undefined ? { authVersion: input.authVersion } : {}),
     },
     getJwtSecret(),
     {
@@ -117,12 +123,30 @@ export function verifyAuthToken(token: string): AuthTokenPayload {
     typeof payload === "string" ||
     typeof payload.sub !== "string" ||
     (payload.role !== "admin" && payload.role !== "staff") ||
-    (payload.sub !== "env-admin" && typeof payload.sid !== "string")
+    (payload.sub !== "env-admin" &&
+      (typeof payload.sid !== "string" || typeof payload.credentials !== "string" ||
+       !validAuthVersion(payload.authVersion))) ||
+    (payload.sub === "env-admin" && process.env.NODE_ENV === "production" &&
+      process.env.ALLOW_ENV_ADMIN !== "true")
   ) {
     throw new Error("Invalid authentication token");
   }
 
   return payload as AuthTokenPayload;
+}
+
+export function validAuthVersion(value: unknown): value is string {
+  return typeof value === "string" && /^(0|[1-9]\d{0,18})$/.test(value) &&
+    BigInt(value) <= 9223372036854775807n;
+}
+
+// Bind sessions to the exact credentials verified at login without exposing
+// password hashes in the readable JWT. Password resets invalidate old tokens,
+// including a login racing a reset. The separate database authentication version
+// prevents restored account values from reviving a stale login.
+export function credentialFingerprint(passwordHash: string): string {
+  return createHmac("sha256", getJwtSecret())
+    .update("paragon-credentials\0").update(passwordHash).digest("hex");
 }
 
 export function getAuthToken(

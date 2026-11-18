@@ -37,7 +37,8 @@ export async function authenticate(
     if (payload.sub !== "env-admin") {
       const active = await sessionRepository.validateAndTouchSession(
         payload.sub,
-        payload.sid as string
+        payload.sid as string,
+        payload
       );
 
       if (!active) {

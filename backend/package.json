@@ -15,17 +15,21 @@
     "smoke:special-issues": "tsx src/scripts/smoke-special-issues.ts",
     "verify:special-issue-migration": "tsx src/scripts/verify-special-issue-migration.ts",
     "migrate:article-images": "tsx src/scripts/migrate-article-images.ts",
-    "generate:article-image-variants": "tsx src/scripts/generate-existing-article-image-variants.ts"
+    "generate:article-image-variants": "tsx src/scripts/generate-existing-article-image-variants.ts",
+    "prepare:private-pdf-storage": "tsx src/scripts/prepare-private-pdf-storage.ts",
+    "migrate:private-special-issue-pdfs": "tsx src/scripts/migrate-private-special-issue-pdfs.ts",
+    "verify:security-policies": "tsx src/scripts/verify-security-policies.ts",
+    "verify:private-pdf-reader": "tsx src/scripts/verify-private-pdf-reader.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.108.2",
+    "@supabase/supabase-js": "2.109.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
@@ -35,12 +39,12 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "pg": "^8.20.0",
-    "sharp": "^0.35.2",
+    "sharp": "0.35.5",
     "socket.io": "^4.8.3",
     "ua-parser-js": "^2.0.10",
     "ws": "^8.21.0",
     "xss": "^1.0.15",
-    "zod": "^4.3.6"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

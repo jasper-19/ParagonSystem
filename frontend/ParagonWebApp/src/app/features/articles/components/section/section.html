@@ -2,4 +2,4 @@
 <figure *ngIf="isImage(section)" class="body-image"><img [src]="section.src" [alt]="section.caption || 'Article image'" loading="lazy" decoding="async"/><figcaption *ngIf="section.caption">{{ section.caption }}</figcaption></figure>
 <blockquote *ngIf="isQuote(section)" class="body-quote"><p>“{{ section.text }}”</p><footer *ngIf="section.author">— {{ section.author }}</footer></blockquote>
 <h2 *ngIf="isHeading(section)" class="body-heading">{{ section.text }}</h2>
-<figure *ngIf="isEmbed(section) && safeEmbedUrl" class="body-embed"><iframe [src]="safeEmbedUrl" title="Embedded article media" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></figure>
+<figure *ngIf="isEmbed(section) && safeEmbedUrl" class="body-embed"><iframe [src]="safeEmbedUrl" sandbox="allow-scripts allow-presentation" title="Embedded article media" loading="lazy" referrerpolicy="no-referrer" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe></figure>

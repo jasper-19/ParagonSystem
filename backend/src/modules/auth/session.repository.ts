@@ -1,5 +1,6 @@
 import db from "../../config/db";
 import { UserSession, CreateUserSessionInput, SessionMetadataPatch } from "./session.types";
+import { AuthTokenPayload, credentialFingerprint, validAuthVersion } from "../../security/auth-token";
 
 
 function mapRow(
@@ -217,14 +218,37 @@ export async function isSessionActive(sessionId: string): Promise<boolean> {
 
 export async function validateAndTouchSession(
   userId: string,
-  sessionId: string
+  sessionId: string,
+  identity: AuthTokenPayload,
+  touch = true
 ): Promise<boolean> {
+  if (!validAuthVersion(identity.authVersion)) return false;
+  const current = await db.query(
+    `SELECT u.password_hash, u.auth_version::text AS auth_version
+     FROM users u JOIN user_sessions s ON s.user_id = u.id
+     WHERE u.id = $1 AND s.id = $2 AND u.is_active = TRUE
+       AND u.role = $3 AND u.staff_id IS NOT DISTINCT FROM $4::uuid
+       AND s.revoked_at IS NULL
+       AND COALESCE(s.last_active_at, s.created_at) >= NOW() - INTERVAL '8 hours'`,
+    [userId, sessionId, identity.role, identity.staffId ?? null]
+  );
+  const passwordHash = current.rows[0]?.password_hash;
+  if (!passwordHash || current.rows[0]?.auth_version !== identity.authVersion ||
+      identity.credentials !== credentialFingerprint(passwordHash)) {
+    return false;
+  }
+  if (!touch) return true;
+
   const result = await db.query(
     `UPDATE user_sessions
      SET last_active_at = NOW()
      WHERE id = $1
        AND user_id = $2
        AND revoked_at IS NULL
+       AND EXISTS (SELECT 1 FROM users u WHERE u.id = $2
+         AND u.is_active = TRUE AND u.role = $3
+         AND u.staff_id IS NOT DISTINCT FROM $4::uuid AND u.password_hash = $5
+         AND u.auth_version = $6::bigint)
        AND COALESCE(
          last_active_at,
          created_at
@@ -233,6 +257,10 @@ export async function validateAndTouchSession(
     [
       sessionId,
       userId,
+      identity.role,
+      identity.staffId ?? null,
+      passwordHash,
+      identity.authVersion,
     ]
   );
 

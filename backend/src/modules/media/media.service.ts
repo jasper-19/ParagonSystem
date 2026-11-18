@@ -149,6 +149,18 @@ export async function createMediaFromUpload(file: UploadInput | undefined) {
   const fileType = detectMediaType(mimeType);
   const isImage = fileType === "image";
 
+  if (isImage) {
+    const formats: Record<string, string> = {
+      "image/jpeg": "jpeg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
+    };
+    try {
+      const metadata = await sharp(file.buffer, { limitInputPixels: 40_000_000 }).metadata();
+      if (metadata.format !== formats[mimeType]) throw new Error("Mismatched image format");
+    } catch {
+      throw Object.assign(new Error("File content does not match its image type"), { statusCode: 400 });
+    }
+  }
+
   if (!isImage && !hasExpectedFileSignature(file.buffer, mimeType)) {
     throw Object.assign(new Error("File content does not match its media type"), {
       statusCode: 400,
