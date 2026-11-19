@@ -722,3 +722,24 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_storage_cleanup_jobs_pending_path
 CREATE INDEX IF NOT EXISTS idx_storage_cleanup_jobs_pending_created
   ON paragon_internal.storage_cleanup_jobs(created_at)
   WHERE completed_at IS NULL;
+
+-- Photo credits may name outside people or organizations. Other credit types
+-- still require a real staff reference. Existing references and names survive.
+ALTER TABLE public.article_credits ALTER COLUMN staff_id DROP NOT NULL;
+-- Legacy articles.photo_by allows 2,000 characters; retaining it as one credit
+-- avoids splitting names or organizations containing commas.
+ALTER TABLE public.article_credits ALTER COLUMN credited_name TYPE VARCHAR(2000);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'public.article_credits'::regclass
+      AND conname = 'article_credits_staff_or_external_photo'
+  ) THEN
+    ALTER TABLE public.article_credits
+      ADD CONSTRAINT article_credits_staff_or_external_photo
+      CHECK (staff_id IS NOT NULL OR credit_type = 'photo');
+  END IF;
+END
+$$;
+-- End photo credit migration.

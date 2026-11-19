@@ -99,6 +99,12 @@ const articleCreditIdsSchema = z
   )
   .max(20, "Too many credited staff members");
 
+// A name is one credit, even when it contains commas. Keep the legacy
+// 2,000-character photo-credit limit so older text credits can be retained.
+export const externalPhotoCreditsSchema = z.array(
+  z.string().trim().min(1, "Photo credit name is required").max(2000)
+).max(20, "Too many external photo credits");
+
 /** Schema for POST /api/articles */
 export const createArticleSchema = z.object({
   title: z
@@ -162,6 +168,8 @@ export const createArticleSchema = z.object({
   photoByIds: articleCreditIdsSchema
     .optional()
     .default([]),
+
+  externalPhotoCredits: externalPhotoCreditsSchema.optional(),
 
   graphicByIds: articleCreditIdsSchema
     .optional()
@@ -247,6 +255,8 @@ export const updateArticleSchema = z.object({
   authorIds: articleCreditIdsSchema.optional(),
 
   photoByIds: articleCreditIdsSchema.optional(),
+
+  externalPhotoCredits: externalPhotoCreditsSchema.optional(),
 
   graphicByIds: articleCreditIdsSchema.optional(),
 

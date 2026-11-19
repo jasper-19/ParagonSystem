@@ -2,6 +2,7 @@ import * as repository from "./article.repository";
 import * as settingsService from "../settings/settings.service";
 import * as EditorialBoardService from "../editorial-board/editorial-board.service";
 import { getArticleImagePreview } from './article-image-preview';
+import { externalPhotoCreditsSchema } from './article.schema';
 
 const ALLOWED_STATUSES = [
     "Draft",
@@ -31,6 +32,7 @@ type ArticleStatus = (typeof ALLOWED_STATUSES)[number];
 type CreateArticleCreditPayload = {
   authorIds?: string[];
   photoByIds?: string[];
+  externalPhotoCredits?: string[];
   graphicByIds?: string[];
   illustrationByIds?: string[];
 
@@ -188,7 +190,8 @@ async function resolveCreditGroup(
 }
 
 async function prepareArticleCredits(
-  data: CreateArticleCreditPayload
+  data: CreateArticleCreditPayload,
+  existingPhotos: repository.ArticleCreditInput[] = []
 ): Promise<repository.ArticleCreditInput[]> {
   const authorIds =
     normalizeStaffIds(data.authorIds);
@@ -222,10 +225,7 @@ async function prepareArticleCredits(
       "author"
     ),
 
-    resolveCreditGroup(
-      photoByIds,
-      "photo"
-    ),
+    resolvePhotoCredits(photoByIds, existingPhotos),
 
     resolveCreditGroup(
       graphicByIds,
@@ -238,12 +238,38 @@ async function prepareArticleCredits(
     ),
   ]);
 
+  const externalNames = externalPhotoCreditsSchema.parse(data.externalPhotoCredits ?? []);
+  const seen = new Set(photographers.map(credit => credit.creditedName.trim().toLowerCase()));
+  const externalPhotos: repository.ArticleCreditInput[] = [];
+  for (const name of externalNames) {
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    externalPhotos.push({ staffId: null, creditedName: name, creditType: 'photo' });
+  }
+  if (creditNames([...photographers, ...externalPhotos], 'photo').length > 2000) {
+    throw Object.assign(new Error('Photo credits must be at most 2000 characters in total'), { statusCode: 400 });
+  }
+
   return [
     ...authors,
     ...photographers,
+    ...externalPhotos,
     ...graphicArtists,
     ...illustrators,
   ];
+}
+
+async function resolvePhotoCredits(
+  staffIds: string[],
+  existingPhotos: repository.ArticleCreditInput[]
+): Promise<repository.ArticleCreditInput[]> {
+  // Historical staff credits remain valid on edit after a board changes.
+  const existingById = new Map(existingPhotos.filter(credit => credit.staffId)
+    .map(credit => [credit.staffId, credit]));
+  const additions = await resolveCreditGroup(staffIds.filter(id => !existingById.has(id)), 'photo');
+  const addedById = new Map(additions.map(credit => [credit.staffId, credit]));
+  return staffIds.map(id => existingById.get(id) ?? addedById.get(id)!);
 }
 
 export async function getHomepageFeed(): Promise<HomepageFeed> {
@@ -613,10 +639,21 @@ export async function updateArticle(
     );
   }
 
-  const credits =
-    await prepareArticleCredits(
-      articleData
-    );
+  const existingCredits = await repository.findCreditsByArticleId(id);
+  const existingPhotos = existingCredits.filter(credit => credit.creditType === 'photo');
+  // Omission means preserve external credits; [] explicitly clears them.
+  // Legacy free text stays a single name so commas are never interpreted as
+  // separators (organizations and individual names may legitimately use them).
+  const externalPhotoCredits = articleData.externalPhotoCredits ?? (
+    existingPhotos.length
+      ? existingPhotos.filter(credit => credit.staffId === null).map(credit => credit.creditedName)
+      : existing.photoby.trim() ? [existing.photoby.trim()] : []
+  );
+  const credits = await prepareArticleCredits({
+    ...articleData,
+    photoByIds: articleData.photoByIds ?? existingPhotos.flatMap(credit => credit.staffId ? [credit.staffId] : []),
+    externalPhotoCredits,
+  }, existingPhotos);
 
   const repositoryPayload = {
     ...articleData,

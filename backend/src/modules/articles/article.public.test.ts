@@ -55,6 +55,10 @@ test('public slug/feed/preview/list endpoints never expose drafts, and admin edi
     assert.equal((await fetch(`${base}/admin/by-slug/draft-story`)).status, 401);
     const staffToken = signAuthToken({ subject: 'env-admin', role: 'staff' });
     assert.equal((await fetch(`${base}/admin/by-slug/draft-story`, { headers: { Authorization: `Bearer ${staffToken}` } })).status, 403);
+    for (const [method, suffix] of [['POST', ''], ['PATCH', '/11111111-1111-4111-8111-111111111111']] as const) {
+      assert.equal((await fetch(base + suffix, { method })).status, 401);
+      assert.equal((await fetch(base + suffix, { method, headers: { Authorization: 'Bearer ' + staffToken } })).status, 403);
+    }
     const token = signAuthToken({ subject: 'env-admin', role: 'admin' });
     const editor = await fetch(`${base}/admin/by-slug/draft-story`, { headers: { Authorization: `Bearer ${token}` } });
     assert.equal(editor.status, 200);

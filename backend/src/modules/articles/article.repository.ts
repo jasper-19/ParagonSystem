@@ -17,7 +17,7 @@ export type CreateArticleRepositoryInput =
 export type ArticleCreditType = (typeof ARTICLE_CREDIT_TYPES)[number];
 
 export type ArticleCreditInput = {
-  staffId: string;
+  staffId: string | null;
   creditedName: string
   creditType: ArticleCreditType;
 };
@@ -95,7 +95,7 @@ function mapCreditRow(row: any): ArticleCredit {
   return {
     id: String(row.id),
     articleId: String(row.article_id),
-    staffId: String(row.staff_id),
+    staffId: row.staff_id == null ? null : String(row.staff_id),
     creditedName: row.credited_name,
     creditType: row.credit_type as ArticleCreditType,
     createdAt: row.created_at,
