@@ -1,5 +1,6 @@
+import { beginDbLogin, requireTwoFaChange } from "./login-flow.service";
+import { reserveCredentialAttempt } from './login-challenge.repository';
 import { performance } from "node:perf_hooks";
-import { UAParser } from "ua-parser-js";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { asyncHandler } from "../../utils/asyncHandler";
@@ -13,14 +14,6 @@ import {
   setAuthCookie,
   signAuthToken,
 } from "../../security/auth-token";
-
-type ParsedSessionMetadata = {
-  browserName?: string;
-  browserVersion?: string;
-  osName?: string;
-  osVersion?: string;
-  deviceType: string;
-};
 
 const authBenchmarkEnabled =
   process.env
@@ -136,76 +129,6 @@ function formatDeviceLabel(
   }
 }
 
-function parseSessionMetadata(
-  userAgent?: string
-): ParsedSessionMetadata {
-  if (!userAgent?.trim()) {
-    return {
-      deviceType: "desktop",
-    };
-  }
-
-  const parser =
-    new UAParser(userAgent);
-
-  const browser =
-    parser.getBrowser();
-
-  const os =
-    parser.getOS();
-
-  const device =
-    parser.getDevice();
-
-  let deviceType =
-    "desktop";
-
-  if (device.type === "mobile") {
-    deviceType = "mobile";
-  } else if (
-    device.type === "tablet"
-  ) {
-    deviceType = "tablet";
-  } else if (
-    device.type
-  ) {
-    deviceType =
-      device.type;
-  }
-
-  return {
-    ...(browser.name
-      ? {
-          browserName:
-            browser.name.trim(),
-        }
-      : {}),
-
-    ...(browser.version
-      ? {
-          browserVersion:
-            browser.version.trim(),
-        }
-      : {}),
-
-    ...(os.name
-      ? {
-          osName:
-            os.name.trim(),
-        }
-      : {}),
-
-    ...(os.version
-      ? {
-          osVersion:
-            os.version.trim(),
-        }
-      : {}),
-
-    deviceType,
-  };
-}
-
 /**
  * POST /api/auth/login
  * Body: { username: string, password: string }
@@ -228,93 +151,14 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
+  if (!await reserveCredentialAttempt(username, req.ip || 'unknown')) {
+    res.status(429).json({ error: 'Too many sign-in attempts. Please try again later.' });
+    return;
+  }
   // Prefer DB-backed users. This is the "proper" auth path.
   const dbUser = await userService.authenticate(username, password);
   if (dbUser) {
-    const userAgent = req.get("user-agent") || undefined;
-    const ipAddress = (req as any).ip as string | undefined;
-
-    let session = await sessionRepository.findReusableSession({
-      userId: dbUser.id,
-      ...(userAgent ? { userAgent } : {}),
-      ...(ipAddress ? { ipAddress } : {}),
-    });
-
-    if (!session) {
-      const sessionMetadata =
-        parseSessionMetadata(
-          userAgent
-        );
-
-      session =
-        await sessionRepository
-          .createSession({
-            userId:
-              dbUser.id,
-
-            ...(userAgent
-              ? { userAgent }
-              : {}),
-
-            ...(ipAddress
-              ? { ipAddress }
-              : {}),
-
-            ...sessionMetadata,
-          });
-    } else {
-      const hasStoredMetadata =
-        Boolean(
-          session.deviceType
-        );
-
-      if (
-        !hasStoredMetadata &&
-        userAgent
-      ) {
-        const sessionMetadata =
-          parseSessionMetadata(
-            userAgent
-          );
-
-        const updatedSession =
-          await sessionRepository
-            .updateSessionMetadata(
-              session.id,
-              sessionMetadata
-            );
-
-        if (updatedSession) {
-          session = updatedSession;
-        } else {
-          await sessionRepository
-            .touchSession(
-              session.id
-            );
-        }
-      } else {
-        await sessionRepository
-          .touchSession(
-            session.id
-          );
-      }
-    }
-
-    const token = signAuthToken({
-      subject: dbUser.id,
-      role: dbUser.role,
-      sid: session.id,
-      passwordHash: dbUser.passwordHash,
-      authVersion: dbUser.authVersion,
-      ...(dbUser.staffId ? { staffId: dbUser.staffId } : {}),
-    });
-    setAuthCookie(res, token);
-    await auditLog(req, "LOGIN", "AUTH", `User login: ${dbUser.username}`, {
-      resourceId: dbUser.id,
-      userId: dbUser.id,
-      details: { role: dbUser.role, sessionId: session.id },
-    });
-    res.json({ ok: true });
+    await beginDbLogin(req, res, dbUser);
     return;
   }
 
@@ -423,14 +267,6 @@ export const setTwoFaEnabled = asyncHandler(async (req: Request, res: Response) 
     return;
   }
 
-  if (enabled) {
-    res.status(501).json({
-      error:
-        "Two-factor authentication is unavailable until TOTP or WebAuthn enrollment is configured",
-    });
-    return;
-  }
-
   const payload = (req as Request & { user?: AuthTokenPayload; }).user;
   const subject = payload?.sub;
 
@@ -446,6 +282,7 @@ export const setTwoFaEnabled = asyncHandler(async (req: Request, res: Response) 
     return;
   }
 
+  await requireTwoFaChange(subject, payload, enabled);
   const updated = await userService.updateUser(subject, { twoFaEnabled: enabled });
   if (!updated) {
     res.status(401).json({ error: "Invalid token" });
@@ -457,7 +294,8 @@ export const setTwoFaEnabled = asyncHandler(async (req: Request, res: Response) 
     details: { enabled },
   });
 
-  res.json({ twoFaEnabled: updated.twoFaEnabled ?? enabled });
+  clearAuthCookie(res);
+  res.json({ twoFaEnabled: updated.twoFaEnabled ?? enabled, reauthenticationRequired: true });
 });
 
 /**

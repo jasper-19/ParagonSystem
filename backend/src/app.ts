@@ -85,6 +85,7 @@ const requestBodyLimitMb = Number.isFinite(configuredBodyLimitMb)
   : 5;
 const requestBodyLimit = `${requestBodyLimitMb}mb`;
 app.use("/api", auditRequestFailures);
+app.use('/api/auth/mail-relay/claim', express.json({ limit: '2kb', inflate: false, type: () => true }));
 app.use(express.json({ limit: requestBodyLimit, inflate: false }));
 app.use(express.urlencoded({ extended: false, limit: requestBodyLimit, inflate: false }));
 

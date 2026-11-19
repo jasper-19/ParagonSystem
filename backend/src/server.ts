@@ -15,6 +15,7 @@ import { drainAuditLogs } from "./modules/activity-logs/activity-log.audit";
 import { SupabasePrivatePdfStorage } from './storage/private-pdf-storage';
 import { assertPrivatePdfAccessPolicy } from './storage/private-pdf-policy';
 import { assertAuthVersionSchema } from './security/auth-version';
+import { assertGoogleEmailSchema } from './security/google-email-schema';
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -50,6 +51,7 @@ async function startServer() {
     }
     await initializeDatabase();
     await assertAuthVersionSchema(pool);
+    await assertGoogleEmailSchema(pool);
 
     server.listen(PORT, () => {
       console.log(

@@ -48,6 +48,9 @@ export interface AdminMeResponse {
   staff: StaffMember | null;
 }
 
+export type LoginResult = { ok: true } | { twoFactorRequired: true; maskedEmail: string };
+export interface LoginChallenge { kind: 'email' | 'google-link'; maskedEmail: string }
+
 @Injectable({ providedIn: "root" })
 export class AdminAuthService {
   constructor() {
@@ -82,9 +85,9 @@ export class AdminAuthService {
   login(
     username: string,
     password: string
-  ): Observable<void> {
+  ): Observable<LoginResult> {
     return this.http
-      .post<{ ok: boolean }>(
+      .post<LoginResult>(
         `${this.api}/login`,
         {
           username,
@@ -92,13 +95,45 @@ export class AdminAuthService {
         }
       )
       .pipe(
-        tap(() => {
-          this.meRequest$ = null;
-          this.socket.reconnectWithCurrentSession();
-        }),
-
-        map(() => undefined)
+        tap(result => this.acceptLoginResult(result))
       );
+  }
+
+  private acceptLoginResult(result: LoginResult): void {
+    this.meRequest$ = null;
+    if ('ok' in result && result.ok) this.socket.reconnectWithCurrentSession();
+  }
+
+  startGoogleLogin(): Observable<{ authorizationUrl: string }> {
+    return this.http.post<{ authorizationUrl: string }>(`${this.api}/google/start`, {});
+  }
+
+  linkGoogleAccount(username: string, password: string): Observable<LoginResult> {
+    return this.http.post<LoginResult>(`${this.api}/google/link`, { username, password }).pipe(
+      tap(result => this.acceptLoginResult(result))
+    );
+  }
+
+  loginChallenge(): Observable<LoginChallenge> {
+    return this.http.get<LoginChallenge>(`${this.api}/login/challenge`);
+  }
+
+  verifyLoginCode(code: string): Observable<LoginResult> {
+    return this.http.post<LoginResult>(`${this.api}/2fa/verify`, { code }).pipe(
+      tap(result => this.acceptLoginResult(result))
+    );
+  }
+
+  resendLoginCode(): Observable<{ maskedEmail: string }> {
+    return this.http.post<{ maskedEmail: string }>(`${this.api}/2fa/resend`, {});
+  }
+
+  cancelLogin(): Observable<{ ok: true }> {
+    return this.http.post<{ ok: true }>(`${this.api}/login/cancel`, {});
+  }
+
+  finishGoogleLogin(): Observable<AdminMeResponse> {
+    return this.me(true).pipe(tap(() => this.socket.reconnectWithCurrentSession()));
   }
 
   logout(): Observable<void> {
@@ -171,8 +206,10 @@ me(
     );
   }
 
-  setTwoFaEnabled(enabled: boolean): Observable<{ twoFaEnabled: boolean }> {
-    return this.http.patch<{ twoFaEnabled: boolean }>(`${this.api}/2fa`, { enabled });
+  setTwoFaEnabled(enabled: boolean): Observable<{ twoFaEnabled: boolean; reauthenticationRequired?: boolean }> {
+    return this.http.patch<{ twoFaEnabled: boolean; reauthenticationRequired?: boolean }>(`${this.api}/2fa`, { enabled }).pipe(
+      tap(() => { this.meRequest$ = null; this.socket.reconnectWithCurrentSession(); })
+    );
   }
 
   // ===== Session management =====

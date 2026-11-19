@@ -24,7 +24,6 @@ export async function authenticate(username: string, password: string): Promise<
   const passwordMatch = await bcrypt.compare(password, user.passwordHash);
   if (!passwordMatch) return null;
 
-  await repository.setLastLogin(user.id);
   return user;
 }
 

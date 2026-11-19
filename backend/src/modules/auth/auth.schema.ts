@@ -22,3 +22,5 @@ export const changePasswordSchema = z.object({
 export const twoFaPreferenceSchema = z.object({
   enabled: z.boolean(),
 });
+
+export const emailCodeSchema = z.object({ code: z.string().regex(/^\d{6}$/) });

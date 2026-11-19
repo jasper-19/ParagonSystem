@@ -41,9 +41,12 @@ button:focus-visible, input[type=checkbox]:focus-visible { outline: 2px solid va
 .login-divider { display: flex; align-items: center; gap: 1rem; margin-top: .25rem; color: var(--login-muted); font-size: .75rem; line-height: 1.5; }
 .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: #dcdce3; }
 .login-social { display: flex; align-items: center; justify-content: center; gap: .75rem; }
-.login-social button { display: grid; place-items: center; width: 3rem; height: 2.75rem; padding: 0; border: 1px solid #b5b5c2; border-radius: .25rem; background: white; color: var(--login-ink); }
+.login-social button { display: flex; align-items: center; justify-content: center; gap: .75rem; width: 100%; min-height: 3rem; padding: .75rem; border: 1px solid #b5b5c2; border-radius: .25rem; background: white; color: var(--login-ink); }
 .login-social button:hover { border-color: var(--login-ink); background: #f7f6f2; }
 .login-social svg { width: 1.25rem; height: 1.25rem; }
+.login-social button:disabled, .login-secondary:disabled { cursor: default; opacity: .6; }
+.login-secondary { min-height: 2.75rem; padding: .5rem; border: 1px solid #b5b5c2; border-radius: .25rem; background: white; color: var(--login-ink); }
+.login-notice { margin: 0; color: var(--login-muted); font-size: .8125rem; line-height: 1.65; }
 .login-photo-panel { display: block; width: 50%; padding: 0; background: var(--login-ink); }
 .login-photo { position: relative; height: 100%; min-height: 32.5rem; overflow: hidden; }
 .login-photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center bottom; }

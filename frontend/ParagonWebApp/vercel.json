@@ -1,6 +1,7 @@
 {
   "outputDirectory": "dist/ParagonWebApp/browser",
   "functions": {
+    "api/auth-mail.mjs": { "maxDuration": 60 },
     "api/article/*.mjs": {
       "includeFiles": "dist/ParagonWebApp/browser/index.html",
       "maxDuration": 15

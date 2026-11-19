@@ -1,11 +1,11 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
-import { AdminAuthService } from '../../../core/services/admin-auth.service';
+import { finalize, Subscription, take, timer } from 'rxjs';
+import { AdminAuthService, LoginResult } from '../../../core/services/admin-auth.service';
 
 @Component({
   selector: 'app-admin-login',
@@ -14,22 +14,156 @@ import { AdminAuthService } from '../../../core/services/admin-auth.service';
   templateUrl: './admin-login.html',
   styleUrl: './admin-login.scss',
 })
-export class AdminLoginComponent {
+export class AdminLoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AdminAuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private resendCountdown?: Subscription;
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly showPassword = signal(false);
   readonly capsLockOn = signal(false);
+  readonly emailStep = signal(false);
+  readonly googleLinkStep = signal(false);
+  readonly maskedEmail = signal('');
+  readonly message = signal('');
+  readonly resendSeconds = signal(0);
+
+  readonly codeForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
+  });
 
   readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
+
+  ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.has('twoFaChanged')) {
+      this.message.set('Two-factor authentication was updated. Please sign in again.');
+    }
+    const google = this.route.snapshot.queryParamMap.get('google');
+    if (google === 'error') {
+      this.error.set('Google sign-in could not be completed. Please try again using your registered staff Gmail account.');
+      return;
+    }
+    this.loading.set(true);
+    if (google === 'success') {
+      // The URL is only a status hint. Confirm the server session before entering admin.
+      this.auth.finishGoogleLogin().pipe(
+        finalize(() => this.loading.set(false)), takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
+        next: response => response.user ? this.navigateAfterLogin() : this.error.set('Please sign in again.'),
+        error: () => this.error.set('Your Google session could not be verified. Please sign in again.'),
+      });
+      return;
+    }
+    this.auth.loginChallenge().pipe(
+      finalize(() => this.loading.set(false)), takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: challenge => {
+        this.maskedEmail.set(challenge.maskedEmail);
+        this.googleLinkStep.set(challenge.kind === 'google-link');
+        this.emailStep.set(challenge.kind === 'email');
+        if (challenge.kind === 'email') { this.startResendCountdown(); this.focusCode(); }
+      },
+      error: (err: HttpErrorResponse) => {
+        if (google === 'link' || google === 'verify' || err.status !== 404) {
+          this.error.set('Your sign-in request expired or could not be loaded. Please sign in again.');
+        }
+      },
+    });
+  }
+
+  startGoogleLogin(): void {
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.error.set(null);
+    this.auth.startGoogleLogin().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: result => {
+        const url = new URL(result.authorizationUrl);
+        if (url.origin !== 'https://accounts.google.com') {
+          this.loading.set(false);
+          this.error.set('Unable to start Google sign-in.');
+          return;
+        }
+        window.location.assign(url.href);
+      },
+      error: err => { this.loading.set(false); this.error.set(this.getLoginErrorMessage(err)); },
+    });
+  }
+
+  verifyCode(): void {
+    if (this.loading()) return;
+    if (this.codeForm.invalid) { this.codeForm.markAllAsTouched(); this.focusCode(); return; }
+    this.loading.set(true);
+    this.error.set(null);
+    this.auth.verifyLoginCode(this.codeForm.getRawValue().code).pipe(
+      finalize(() => this.loading.set(false)), takeUntilDestroyed(this.destroyRef)
+    ).subscribe({ next: result => this.handleLoginResult(result), error: err => this.error.set(this.getLoginErrorMessage(err)) });
+  }
+
+  resendCode(): void {
+    if (this.loading() || this.resendSeconds() > 0) return;
+    this.loading.set(true);
+    this.error.set(null);
+    this.message.set('');
+    this.auth.resendLoginCode().pipe(
+      finalize(() => this.loading.set(false)), takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: result => {
+        this.maskedEmail.set(result.maskedEmail);
+        this.codeForm.reset();
+        this.message.set('A new code has been sent. Use the most recent email.');
+        this.startResendCountdown(); this.focusCode();
+      },
+      error: err => this.error.set(this.getLoginErrorMessage(err)),
+    });
+  }
+
+  backToLogin(): void {
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.auth.cancelLogin().pipe(
+      finalize(() => this.loading.set(false)), takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: () => {
+        this.resendCountdown?.unsubscribe(); this.resendSeconds.set(0);
+        this.emailStep.set(false); this.googleLinkStep.set(false);
+        this.codeForm.reset(); this.form.reset(); this.error.set(null); this.message.set('');
+        void this.router.navigate([], { relativeTo: this.route, queryParams: { google: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      },
+      error: err => this.error.set(this.getLoginErrorMessage(err)),
+    });
+  }
+
+  private startResendCountdown(): void {
+    this.resendCountdown?.unsubscribe();
+    this.resendSeconds.set(60);
+    this.resendCountdown = timer(1000, 1000).pipe(take(60), takeUntilDestroyed(this.destroyRef)).subscribe(tick => this.resendSeconds.set(59 - tick));
+  }
+
+  private focusCode(): void {
+    queueMicrotask(() => document.getElementById('admin-email-code')?.focus());
+  }
+
+  private handleLoginResult(result: LoginResult): void {
+    this.form.controls.password.reset();
+    if ('twoFactorRequired' in result) {
+      this.googleLinkStep.set(false); this.emailStep.set(true);
+      this.maskedEmail.set(result.maskedEmail); this.startResendCountdown(); this.focusCode();
+    } else if (result.ok) this.navigateAfterLogin();
+  }
+
+  private navigateAfterLogin(): void {
+    const requested = this.route.snapshot.queryParamMap.get('returnUrl');
+    const path = requested?.split(/[?#]/)[0];
+    const safe = path === '/admin' || (path?.startsWith('/admin/') && path !== '/admin/login');
+    void this.router.navigateByUrl(safe && requested ? requested : '/admin');
+  }
 
   togglePasswordVisibility(): void {
     this.showPassword.update(v => !v);
@@ -59,23 +193,16 @@ export class AdminLoginComponent {
 
     const { username, password } = this.form.getRawValue();
 
-    this.auth
-      .login(username.trim(), password)
+    const request = this.googleLinkStep()
+      ? this.auth.linkGoogleAccount(username.trim(), password)
+      : this.auth.login(username.trim(), password);
+    request
       .pipe(
         finalize(() => this.loading.set(false)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-      next: () => {
-        const requestedReturnUrl =
-          this.route.snapshot.queryParamMap.get('returnUrl');
-        const returnUrl =
-          requestedReturnUrl?.startsWith('/admin') &&
-          !requestedReturnUrl.startsWith('//')
-            ? requestedReturnUrl
-            : '/admin';
-        this.router.navigateByUrl(returnUrl);
-      },
+      next: result => this.handleLoginResult(result),
       error: (err: unknown) => {
         this.error.set(this.getLoginErrorMessage(err));
       },
@@ -106,7 +233,7 @@ export class AdminLoginComponent {
       return 'Too many sign-in attempts. Please wait a moment and try again.';
     }
 
-    if (error.status === 401 || error.status === 403) {
+    if ((error.status === 401 || error.status === 403) && !this.emailStep() && !this.googleLinkStep()) {
       return 'The username or password is incorrect.';
     }
 

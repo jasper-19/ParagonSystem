@@ -18,20 +18,22 @@
           <h1
             id="admin-login-title"
           >
-            Welcome home
+            {{ emailStep() ? 'Check your Gmail' : googleLinkStep() ? 'Link your Google account' : 'Welcome home' }}
           </h1>
           <p>
-            Please enter your details.
+            {{ emailStep() ? 'Enter the six-digit code sent to ' + maskedEmail() + '.' : googleLinkStep() ? 'Confirm your PARAGON username and password. Your registered staff Gmail must match ' + maskedEmail() + '.' : 'Please enter your details.' }}
           </p>
         </div>
       </header>
 
       <form
+        *ngIf="!emailStep()"
         [formGroup]="form"
         (ngSubmit)="submit()"
         [attr.aria-busy]="loading()"
         novalidate
       >
+        <p *ngIf="message()" class="login-notice" role="status">{{ message() }}</p>
         <div>
           <label for="admin-username" class="field-label">
             Username
@@ -199,15 +201,19 @@
             *ngIf="loading()"
             aria-hidden="true"
           ></span>
-          <span>{{ loading() ? 'Signing in…' : 'Login' }}</span>
+          <span>{{ loading() ? 'Signing in…' : googleLinkStep() ? 'Link Google and sign in' : 'Login' }}</span>
         </button>
 
-        <div class="login-divider"><span>Or continue with</span></div>
+        <button *ngIf="googleLinkStep()" type="button" class="login-secondary" (click)="backToLogin()" [disabled]="loading()">Back to login</button>
 
-        <div class="login-social">
+        <div *ngIf="!googleLinkStep()" class="login-divider"><span>Or continue with</span></div>
+
+        <div *ngIf="!googleLinkStep()" class="login-social">
           <button
             type="button"
             aria-label="Continue with Google"
+            (click)="startGoogleLogin()"
+            [disabled]="loading()"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M21.6 12.23c0-.7-.06-1.22-.2-1.76H12v3.33h5.52c-.11.83-.73 2.08-2.1 2.92l-.02.11 2.97 2.3.21.02c1.93-1.78 3.04-4.4 3.04-6.92z" />
@@ -215,17 +221,31 @@
               <path d="M6.21 13.8A6.83 6.83 0 0 1 5.84 12c0-.63.11-1.24.35-1.8l-.01-.12-3.11-2.42-.1.05A10 10 0 0 0 2 12c0 1.6.38 3.1 1.06 4.43l3.15-2.44z" />
               <path d="M12 5.96c1.93 0 3.23.83 3.97 1.52l2.9-2.83C17.07 3.02 14.76 2 12 2 8.06 2 4.68 4.45 3.01 7.57l3.17 2.47C7.02 7.73 9.3 5.96 12 5.96z" />
             </svg>
+            <span>Continue with Google</span>
           </button>
 
-          <button
-            type="button"
-            aria-label="Continue with Facebook"
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.46h-1.26c-1.24 0-1.62.77-1.62 1.56V12h2.76l-.44 2.89h-2.32v6.99A10 10 0 0 0 22 12z" />
-            </svg>
-          </button>
         </div>
+      </form>
+
+      <form *ngIf="emailStep()" [formGroup]="codeForm" (ngSubmit)="verifyCode()" [attr.aria-busy]="loading()" novalidate>
+        <div>
+          <label for="admin-email-code" class="field-label">Verification code</label>
+          <div class="login-input-wrap">
+            <input id="admin-email-code" type="text" formControlName="code" inputmode="numeric"
+              autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-required="true"
+              [attr.aria-invalid]="codeForm.controls.code.touched && codeForm.controls.code.invalid"
+              aria-describedby="admin-code-help" />
+          </div>
+          <p id="admin-code-help" class="login-notice">Codes expire after five minutes and can be used once.</p>
+          <p *ngIf="codeForm.controls.code.touched && codeForm.controls.code.invalid" class="login-field-error" role="alert">Enter the six-digit code from your email.</p>
+        </div>
+        <p *ngIf="error()" class="login-server-error" role="alert">{{ error() }}</p>
+        <p *ngIf="message()" class="login-notice" role="status">{{ message() }}</p>
+        <button type="submit" class="login-submit" [disabled]="loading()">{{ loading() ? 'Please wait…' : 'Verify and sign in' }}</button>
+        <button type="button" class="login-secondary" (click)="resendCode()" [disabled]="loading() || resendSeconds() > 0">
+          {{ resendSeconds() > 0 ? 'Resend code in ' + resendSeconds() + 's' : 'Resend code' }}
+        </button>
+        <button type="button" class="login-secondary" (click)="backToLogin()" [disabled]="loading()">Back to login</button>
       </form>
     </div>
 

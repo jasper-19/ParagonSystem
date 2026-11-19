@@ -80,6 +80,13 @@ describe('Profile account security', () => {
     component.closePasswordError(); expect(component.errorPasswordModalOpen).toBe(false);
   });
 
+  it('requires a new login when the server revokes sessions after a 2FA change', () => {
+    auth.setTwoFaEnabled.mockReturnValueOnce(of({ twoFaEnabled: false, reauthenticationRequired: true }));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    component.setTwoFA(false);
+    expect(navigate).toHaveBeenCalledWith(['/admin/login'], { queryParams: { twoFaChanged: 'true' } });
+  });
+
   it('disables the 2FA control while updating and rolls back on failure', () => {
     const pending = new Subject<{ twoFaEnabled: boolean }>(); auth.setTwoFaEnabled.mockReturnValueOnce(pending);
     const toggle = fixture.nativeElement.querySelector('input[type="checkbox"]') as HTMLInputElement;

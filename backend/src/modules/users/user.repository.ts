@@ -437,7 +437,7 @@ export async function updateUser(
   values.push(id);
 
   const revokeSessions = patch.passwordHash !== undefined || patch.role !== undefined ||
-    patch.staffId !== undefined || patch.isActive !== undefined;
+    patch.staffId !== undefined || patch.isActive !== undefined || patch.twoFaEnabled !== undefined;
   const result = await db.query(
     `WITH updated AS (UPDATE users
      SET ${sets.join(", ")}

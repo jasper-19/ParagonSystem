@@ -298,6 +298,9 @@ export class ProfileSecuritySettings implements OnInit, OnDestroy {
           this.twoFaMessageKind = 'success';
 
           this.auth.invalidateMeCache();
+          if (response.reauthenticationRequired) {
+            void this.router.navigate(['/admin/login'], { queryParams: { twoFaChanged: 'true' } });
+          }
           this.cdr.markForCheck();
         },
         error: (err) => {

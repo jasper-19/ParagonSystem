@@ -43,7 +43,7 @@ function getCookieName(): string {
     : "paragon_session";
 }
 
-function getCookieSameSite(): "lax" | "strict" | "none" {
+export function getCookieSameSite(): "lax" | "strict" | "none" {
   const configured = process.env.AUTH_COOKIE_SAME_SITE?.toLowerCase();
 
   if (
@@ -57,7 +57,7 @@ function getCookieSameSite(): "lax" | "strict" | "none" {
   return process.env.NODE_ENV === "production" ? "none" : "lax";
 }
 
-function readCookie(cookieHeader: string | undefined, name: string): string | undefined {
+export function readCookie(cookieHeader: string | undefined, name: string): string | undefined {
   if (!cookieHeader) {
     return undefined;
   }
