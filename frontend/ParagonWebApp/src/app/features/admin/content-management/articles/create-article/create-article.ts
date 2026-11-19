@@ -36,7 +36,7 @@ interface CreateArticleForm {
 type CreditField = 'author' | 'photoby' | 'graphicby' | 'illusrationby';
 
 type SelectedCredit = {
-  staffId: string;
+  staffId: string | null;
   name: string;
 };
 
@@ -86,6 +86,7 @@ export class CreateArticleComponent implements OnDestroy {
   readonly creditSuggestions = signal<BoardMember[]>([]);
   readonly activeCreditField = signal<CreditField | null>(null);
   readonly highlightedIndex  = signal<number>(-1);
+  readonly photoCreditError = signal('');
   readonly creditInput = signal<Record<CreditField, string>>({
     author: '',
     photoby: '',
@@ -218,7 +219,7 @@ export class CreateArticleComponent implements OnDestroy {
     image: [''],
 
     author: ['', Validators.required],
-    photoby: [''],
+    photoby: ['', Validators.maxLength(2000)],
     graphicby: [''],
     illusrationby: [''],
 
@@ -464,6 +465,10 @@ private readonly handleEditorialBoardUpdated = (): void => {
       }
     }
 
+    // Preserve legacy free text as one credit; commas may belong to a name.
+    if (!next.photoby.length && article.photoby?.trim()) {
+      next.photoby.push({ staffId: null, name: article.photoby.trim() });
+    }
     this.selectedCredits.set(next);
 
     this.syncCreditsFieldToForm(
@@ -1036,12 +1041,17 @@ private hydrateSelectedCreditsFromForm(): void {
     if (!raw) {
       continue;
     }
+    if (field === 'photoby') {
+      const member = this.allMembers.find(candidate => candidate.name.trim().toLowerCase() === raw.toLowerCase());
+      next.photoby = [{ staffId: member?.staffId ?? null, name: raw }];
+      continue;
+    }
     const names = raw
       .split(',')
       .map(name => name.trim())
       .filter(Boolean);
     next[field] = names
-      .map(name => {
+      .map((name): SelectedCredit | null => {
         const member = this.allMembers.find(
           candidate =>
             candidate.name.trim().toLowerCase() ===
@@ -1086,7 +1096,8 @@ private addCredit(
   const existing = current[field];
   if (
     existing.some(
-      credit => credit.staffId === staffId
+      credit => credit.staffId === staffId ||
+        (field === 'photoby' && credit.name.toLowerCase() === name.toLowerCase())
     )
   ) {
     return;
@@ -1106,17 +1117,41 @@ private addCredit(
 
 removeCredit(
   field: CreditField,
-  staffId: string
+  staffId: string | null,
+  name?: string
 ): void {
   const current = this.selectedCredits();
   const nextList = current[field].filter(
-    credit => credit.staffId !== staffId
+    credit => staffId === null ? credit.name !== name : credit.staffId !== staffId
   );
   this.selectedCredits.set({
     ...current,
     [field]: nextList,
   });
   this.syncCreditsFieldToForm(field);
+  if (field === 'photoby') this.photoCreditError.set('');
+}
+
+addExternalPhotoCredit(): void {
+  const name = this.creditInput().photoby.trim();
+  if (!name) return;
+  const current = this.selectedCredits();
+  if (current.photoby.some(credit => credit.name.toLowerCase() === name.toLowerCase())) {
+    this.creditInput.set({ ...this.creditInput(), photoby: '' });
+    this.closeCreditSuggestions();
+    return;
+  }
+  const externalCount = current.photoby.filter(credit => credit.staffId === null).length;
+  const totalLength = [...current.photoby.map(credit => credit.name), name].join(', ').length;
+  if (externalCount >= 20 || totalLength > 2000) {
+    this.photoCreditError.set('Use at most 20 external credits and 2,000 characters in total.');
+    return;
+  }
+  this.selectedCredits.set({ ...current, photoby: [...current.photoby, { staffId: null, name }] });
+  this.photoCreditError.set('');
+  this.creditInput.set({ ...this.creditInput(), photoby: '' });
+  this.syncCreditsFieldToForm('photoby');
+  this.closeCreditSuggestions();
 }
 
 onCreditFocus(field: CreditField): void {
@@ -1128,6 +1163,7 @@ onCreditFocus(field: CreditField): void {
 onCreditInput(field: CreditField, event: Event): void {
   const input = event.target as HTMLInputElement;
   const value = input.value ?? '';
+  if (field === 'photoby') this.photoCreditError.set('');
   this.creditInput.set({ ...this.creditInput(), [field]: value });
   this.activeCreditField.set(field);
   this.highlightedIndex.set(0);
@@ -1168,7 +1204,7 @@ private updateCreditSuggestions(
         );
   this.creditSuggestions.set(filtered);
   this.highlightedIndex.set(
-    filtered.length ? 0 : -1
+    field === 'photoby' && search ? -1 : filtered.length ? 0 : -1
   );
 }
 
@@ -1185,6 +1221,7 @@ private commitTypedCredit(
       member.name.trim().toLowerCase() === typed
   );
   if (!exactMatch) {
+    if (field === 'photoby') this.addExternalPhotoCredit();
     return;
   }
   this.addCredit(field, exactMatch);
@@ -1215,7 +1252,8 @@ private getSelectedCreditIds(
   field: CreditField
 ): string[] {
   return this.selectedCredits()[field]
-    .map(credit => credit.staffId);
+    .map(credit => credit.staffId)
+    .filter((id): id is string => id !== null);
 }
 
 //autosave methods
@@ -1230,7 +1268,7 @@ private setupAutosave(): void {
 
       localStorage.setItem(
         this.autosaveKey,
-        JSON.stringify(value)
+        JSON.stringify({ ...value, selectedCredits: this.selectedCredits() })
       );
 
       this.lastSavedAt.set(new Date());
@@ -1248,6 +1286,24 @@ private restoreDraft(): void {
   const parsed = JSON.parse(saved);
 
   this.form.patchValue(parsed);
+  const storedCredits = parsed.selectedCredits;
+  if (storedCredits && typeof storedCredits === 'object') {
+    const restored = { ...this.selectedCredits() };
+    for (const field of ['author', 'photoby', 'graphicby', 'illusrationby'] as CreditField[]) {
+      if (Array.isArray(storedCredits[field])) {
+        restored[field] = storedCredits[field].filter((credit: SelectedCredit) =>
+          credit && typeof credit.name === 'string' &&
+          (typeof credit.staffId === 'string' || (field === 'photoby' && credit.staffId === null))
+        );
+      }
+    }
+    this.selectedCredits.set(restored);
+    // Explicit stored empty arrays represent removals, even if an older
+    // draft also contains a stale display string.
+    for (const field of ['author', 'photoby', 'graphicby', 'illusrationby'] as CreditField[]) {
+      if (Array.isArray(storedCredits[field])) this.syncCreditsFieldToForm(field);
+    }
+  }
   this.refreshSuggestedTags(
     this.form.controls.excerpt.value
   );
@@ -1261,6 +1317,7 @@ private restoreDraft(): void {
 
 private executeSave(): void {
   this.commitAllTypedCredits();
+  if (this.photoCreditError()) return;
   this.form.updateValueAndValidity();
 
   const selectedTags =
@@ -1292,6 +1349,10 @@ private executeSave(): void {
 
     photoByIds:
       this.getSelectedCreditIds('photoby'),
+
+    externalPhotoCredits: this.selectedCredits().photoby
+      .filter(credit => credit.staffId === null)
+      .map(credit => credit.name),
 
     graphicByIds:
       this.getSelectedCreditIds('graphicby'),
@@ -1547,6 +1608,7 @@ private clearFormState(): void {
   this.suggestedTags.set([]);
   this.creditInput.set({ author: '', photoby: '', graphicby: '', illusrationby: '' });
   this.selectedCredits.set({ author: [], photoby: [], graphicby: [], illusrationby: [] });
+  this.photoCreditError.set('');
 
   this.creditSuggestions.set([]);
   this.activeCreditField.set(null);
@@ -1601,6 +1663,13 @@ private buildMediaFromUrl(url: string | null | undefined): Media | null {
 
 //Keyboard navigation for credit suggestions
 handleKeyDown(event: KeyboardEvent): void {
+  if (event.key === 'Enter' && this.activeCreditField() === 'photoby' &&
+      this.creditInput().photoby.trim() && this.highlightedIndex() < 0) {
+    event.preventDefault();
+    this.commitTypedCredit('photoby');
+    this.closeCreditSuggestions();
+    return;
+  }
 
   const suggestions = this.creditSuggestions();
 

@@ -49,6 +49,15 @@ describe('Article reading states', () => {
     expect(document.querySelector('meta[property="og:image"]')?.getAttribute('content')).toContain('/assets/paragon-social-preview.jpg');
   });
 
+  it('displays an external organization credit including commas and HTML-looking text literally', async () => {
+    const name = 'Campus News Agency, Inc. <img src=x onerror=alert(1)>';
+    feed.set({ ...example, article: { ...example.article, photoby: name,
+      credits: [{ staffId: null, creditedName: name, creditType: 'photo' }] } });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.article-credits')?.textContent).toContain(name);
+    expect(fixture.nativeElement.querySelector('img[src="x"]')).toBeNull();
+  });
+
   it('removes the previous story while another article loads', async () => {
     feed.set(null);
     await fixture.whenStable();

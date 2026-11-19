@@ -99,7 +99,7 @@ export type AdminArticleCreditType =
 export interface AdminArticleCredit {
   id: string;
   articleId: string;
-  staffId: string;
+  staffId: string | null;
   creditedName: string;
   creditType: AdminArticleCreditType;
   createdAt: Date;
@@ -321,7 +321,7 @@ private normalizeAdminArticleDetail(
       credit => ({
         id: String(credit.id),
         articleId: String(credit.articleId),
-        staffId: String(credit.staffId),
+        staffId: credit.staffId == null ? null : String(credit.staffId),
         creditedName:
           credit.creditedName ?? '',
         creditType: credit.creditType,
@@ -639,6 +639,7 @@ private fetchArticleFeed(
       // Structured active-board credit IDs
       authorIds: updated.authorIds,
       photoByIds: updated.photoByIds,
+      externalPhotoCredits: updated.externalPhotoCredits,
       graphicByIds: updated.graphicByIds,
       illustrationByIds: updated.illustrationByIds,
 

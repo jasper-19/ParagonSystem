@@ -55,7 +55,7 @@ const statuses = new Map(Object.entries({
 const fieldLabels = new Map(Object.entries({
   title: 'title', slug: 'web address', status: 'status', category: 'category', tags: 'tags',
   content: 'article content', excerpt: 'summary', image: 'cover image', featured: 'featured placement',
-  authorIds: 'authors', photoByIds: 'photo credits', graphicByIds: 'graphic credits', illustrationByIds: 'illustration credits',
+  authorIds: 'authors', photoByIds: 'photo credits', externalPhotoCredits: 'external photo credits', graphicByIds: 'graphic credits', illustrationByIds: 'illustration credits',
   altText: 'alternative text', caption: 'caption', role: 'role', isActive: 'account access', staffId: 'linked staff member',
   password: 'password', fullName: 'name', email: 'email address', studentId: 'student ID',
   yearLevel: 'year level', collegeId: 'college', programId: 'program', positionId: 'position',

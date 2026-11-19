@@ -19,7 +19,7 @@ export type ArticleCreditType =
   | 'illustration';
 
 export interface ArticleCredit {
-  staffId: string;
+  staffId: string | null;
   creditedName: string;
   creditType: ArticleCreditType;
 }
@@ -45,6 +45,7 @@ export interface Article {
 
   authorIds?: string[];
   photoByIds?: string[];
+  externalPhotoCredits?: string[];
   graphicByIds?: string[];
   illustrationByIds?: string[];
 

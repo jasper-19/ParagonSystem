@@ -42,6 +42,19 @@ describe('Admin article preview accessibility', () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
+  it('displays external photo credits with null staff references as plain text', () => {
+    const name = 'Agency, Inc. <img src=x onerror=alert(1)>';
+    fixture.componentRef.setInput('article', {
+      id: 'external', title: 'External photos', status: 'Draft', featured: false,
+      views: 0, excerpt: '', category: 'News', tags: [], createdAt: new Date(),
+      credits: [{ id: 'outside', articleId: 'external', staffId: null,
+        creditedName: name, creditType: 'photo', createdAt: new Date() }],
+    } satisfies AdminArticleDetail);
+    fixture.detectChanges();
+    expect(dialog().textContent).toContain(name);
+    expect(dialog().querySelector('img[src="x"]')).toBeNull();
+  });
+
   it('retains the article metadata and all four structured credit groups', () => {
     const article = {
       id: 'article-test', title: 'Campus test report', status: 'Published', featured: true,

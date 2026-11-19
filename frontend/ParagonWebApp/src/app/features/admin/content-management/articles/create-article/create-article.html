@@ -606,7 +606,10 @@
       ? 'photo-credit-option-' + highlightedIndex()
       : null
   "
-  placeholder="Search photojournalist..."
+  placeholder="Search staff or enter a person or organization..."
+  maxlength="2000"
+  aria-describedby="photo-credit-help photo-credit-error"
+  [attr.aria-invalid]="photoCreditError() || form.controls.photoby.invalid ? true : null"
   [value]="creditInput().photoby"
   (input)="onCreditInput('photoby', $event)"
   (focus)="onCreditFocus('photoby')"
@@ -617,12 +620,24 @@
          focus:border-[#f4b400] focus:outline-none
          focus:ring-4 focus:ring-[#f4b400]/10"
 />
+          <p id="photo-credit-help" class="mt-2 text-xs text-slate-500">
+            Select a staff member, or type an outside person or organization and press Enter or Add credit.
+          </p>
+          @if (creditInput().photoby.trim()) {
+            <button type="button" (click)="addExternalPhotoCredit()"
+              class="mt-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-[#000035] hover:bg-slate-50">
+              Add external credit: {{ creditInput().photoby.trim() }}
+            </button>
+          }
+          <p id="photo-credit-error" role="status" class="mt-2 text-xs text-red-600">
+            {{ photoCreditError() || (form.controls.photoby.invalid ? 'Photo credits must be at most 2,000 characters in total.' : '') }}
+          </p>
 
           @if (selectedCredits().photoby.length) {
             <div class="mt-3 flex flex-wrap gap-2">
               @for (
                 credit of selectedCredits().photoby;
-                track credit.staffId
+                track credit.staffId ?? credit.name.toLowerCase()
               ) {
                 <span
                   class="inline-flex min-h-10 items-center gap-2 px-3 py-1.5 rounded-full
@@ -631,10 +646,11 @@
                   <span class="font-semibold">
                     {{ credit.name }}
                   </span>
+                  @if (credit.staffId === null) { <span class="text-xs text-slate-500">External</span> }
                   <button
                     type="button"
                     class="flex h-7 w-7 items-center justify-center rounded-full text-slate-500 hover:bg-red-100"
-                    (click)="removeCredit('photoby', credit.staffId)"
+                    (click)="removeCredit('photoby', credit.staffId, credit.name)"
                     [attr.aria-label]="'Remove ' + credit.name + ' from photo credits'"
                   >
                     ×
