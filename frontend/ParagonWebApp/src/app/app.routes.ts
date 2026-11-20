@@ -109,5 +109,6 @@ export const routes: Routes = [
     ],
   },
 
-  { path: '**', redirectTo: '' },
+  { path: 'error/:status', loadComponent: () => import('./shared/components/error-page/error-route').then(m => m.ErrorRoute), title: 'Page unavailable | The Paragon' },
+  { path: '**', loadComponent: () => import('./shared/components/error-page/error-route').then(m => m.ErrorRoute), data: { status: 404 }, title: 'Page not found | The Paragon' },
 ];

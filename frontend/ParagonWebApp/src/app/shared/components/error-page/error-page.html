@@ -1,0 +1,39 @@
+<section class="error-page" [class.error-page--embedded]="embedded()" aria-label="Page unavailable">
+  @if (!embedded()) {
+    <header class="masthead">
+      <a routerLink="/" aria-label="Publication home" class="identity">
+        <img [src]="settings()?.general?.logoUrl || '/assets/PRG_Logo.png'" alt="" width="48" height="48" />
+        <span>{{ settings()?.general?.siteName || 'The Paragon' }}<small>{{ settings()?.general?.organizationName || 'The campus publication' }}</small></span>
+      </a>
+      <span class="masthead-note">Every story matters.</span>
+    </header>
+  }
+  <div class="error-content" aria-live="polite">
+    <div class="edition" aria-hidden="true">
+      <span class="edition-label">THE PARAGON / STATUS</span>
+      <span class="edition-code" [class.edition-code--word]="detail().code.length > 3">{{ detail().code }}</span>
+      <span class="edition-rule"></span>
+      <span class="edition-caption">A brief interruption.<br />The story continues.</span>
+    </div>
+    <div class="copy">
+      <p class="eyebrow">{{ detail().code }} &nbsp; / &nbsp; {{ detail().label }}</p>
+      <h1>{{ detail().title }}</h1>
+      <p class="message">{{ detail().message }}</p>
+      <nav class="actions" aria-label="Error recovery">
+        @if (detail().code === '401') {
+          <a class="primary" routerLink="/admin/login">Sign in <span aria-hidden="true">↗</span></a>
+        } @else if (detail().retry && allowRetry()) {
+          <button class="primary" type="button" (click)="retry.emit()">Try again <span aria-hidden="true">↻</span></button>
+        } @else {
+          <a class="primary" routerLink="/">Back to home <span aria-hidden="true">↗</span></a>
+        }
+        @if ((detail().retry && allowRetry()) || detail().code === '401') {
+          <a class="secondary" routerLink="/">Back to home</a>
+        } @else {
+          <a class="secondary" routerLink="/top-stories">Explore stories</a>
+        }
+      </nav>
+    </div>
+  </div>
+  <footer><span>Keep exploring the publication</span><nav aria-label="Publication links"><a routerLink="/top-stories">Latest stories</a><a routerLink="/special-issues">Special issues</a><a routerLink="/editorial-board">Editorial board</a></nav></footer>
+</section>

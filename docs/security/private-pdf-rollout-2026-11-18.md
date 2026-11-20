@@ -4,6 +4,8 @@
 
 ## Behavior and API contract
 
+**Production follow-up:** the approved migration and separately approved public-original purge completed on 18 November. See the [rollout evidence](production-rollout-2026-11-18.md); the pre-release text above is historical.
+
 - New PDF uploads/replacements use `private-special-issues/<uuid>/<uuid>.pdf` in a separate private bucket. Default bucket: `paragon-pdfs`; override with `SUPABASE_PDF_STORAGE_BUCKET`. It must differ from the public media bucket.
 - The existing `pdf_storage_path` column encodes routing through this canonical prefix. No application columns change. Old paths continue to use public storage until migrated. Cleanup routes both prefixes to the correct bucket. Retry workers recheck issue/media references under table locks immediately before storage deletion, and skip files still in use.
 - API representations derive a permanent delivery URL from the private path, even if an old public URL remains in `pdf_url`: `GET|HEAD /api/special-issues/pdf/:uuid`.

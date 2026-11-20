@@ -5,7 +5,7 @@
     </button>
     <nav class="header-desktop-nav" aria-label="Main navigation">
       <a routerLink="/" routerLinkActive="is-current" [routerLinkActiveOptions]="{exact: true}" ariaCurrentWhenActive="page">Home</a>
-      <a routerLink="/top-stories" routerLinkActive="is-current" ariaCurrentWhenActive="page">Top Stories</a>
+      <a routerLink="/top-stories" routerLinkActive="is-current" ariaCurrentWhenActive="page">Top Articles</a>
       <a routerLink="/special-issues" routerLinkActive="is-current" ariaCurrentWhenActive="page">Special Issues</a>
     </nav>
     <a routerLink="/" class="header-brand" aria-label="Paragon home">
@@ -21,7 +21,7 @@
   </div>
   <nav *ngIf="mobileMenuOpen" id="public-mobile-navigation" class="header-mobile-nav" aria-label="Mobile navigation">
     <a routerLink="/" (click)="closeMobileMenu()" routerLinkActive="is-current" [routerLinkActiveOptions]="{exact: true}" ariaCurrentWhenActive="page">Home</a>
-    <a routerLink="/top-stories" (click)="closeMobileMenu()" routerLinkActive="is-current" ariaCurrentWhenActive="page">Top Stories</a>
+    <a routerLink="/top-stories" (click)="closeMobileMenu()" routerLinkActive="is-current" ariaCurrentWhenActive="page">Top Articles</a>
     <a routerLink="/special-issues" (click)="closeMobileMenu()" routerLinkActive="is-current" ariaCurrentWhenActive="page">Special Issues</a>
   </nav>
 </header>

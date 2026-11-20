@@ -4,6 +4,8 @@ Local changes only. No production SQL, deployment, environment change or account
 
 ## Problem and behavior
 
+**Production follow-up:** the approved security migration and backend release completed on 18 November. See the [rollout evidence](production-rollout-2026-11-18.md); the local-only statement above describes the pre-release state.
+
 An account update revoked existing sessions, but an asynchronous password check could finish later and create another session. Comparing current role, active status, staff assignment and password denies access while those values differ; restoring the earlier values could make that late session valid again.
 
 The database now maintains `public.users.auth_version`, a nonnegative bigint. A private-schema, invoker-rights trigger advances it whenever password hash, role, staff assignment, active status or username actually changes. Restoring values advances it again. Metadata and no-op updates preserve it. Supplying a different version directly in an UPDATE cannot reset it. Arithmetic overflow rejects the update rather than wrapping.

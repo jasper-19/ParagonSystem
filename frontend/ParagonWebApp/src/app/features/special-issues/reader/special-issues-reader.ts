@@ -1,3 +1,4 @@
+import { ErrorPage } from '../../../shared/components/error-page/error-page';
 import { PageLoaderComponent } from '../../../shared/components/page-loader/page-loader';
 
 import { CommonModule } from "@angular/common";
@@ -23,7 +24,7 @@ import { PdfRenderQueue } from "./pdf-render-queue";
 @Component({
   selector: 'app-special-issues-reader',
   standalone: true,
-  imports: [CommonModule, RouterModule, PageLoaderComponent],
+  imports: [ErrorPage, CommonModule, RouterModule, PageLoaderComponent],
   templateUrl: './special-issues-reader.html',
   styleUrl: './special-issues-reader.scss',
 })
@@ -67,6 +68,8 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
   private viewReady = false;
   private resizeTimeout?: ReturnType<typeof setTimeout>;
   errorMessage = '';
+  errorStatus = 500;
+  reloadPublication(): void { window.location.reload(); }
   private destroyed = false;
   private loadSubscription?: Subscription;
   private loadingTask?: pdfjsLib.PDFDocumentLoadingTask;
@@ -96,7 +99,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
    */
   async ngOnInit(): Promise<void> {
     const slug = this.route.snapshot.paramMap.get('slug');
-    if (!slug) { this.errorMessage = 'Publication not found.'; return; }
+    if (!slug) { this.errorStatus = 404; this.errorMessage = 'Publication not found.'; return; }
 
     this.isLoading = true;
     this.loadSubscription = this.issueService
@@ -139,6 +142,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
         },
         error: (err) => {
           this.isLoading = false;
+          this.errorStatus = err?.status ?? 500;
           this.errorMessage = 'This publication could not be loaded.';
           this.cdr.markForCheck();
         },

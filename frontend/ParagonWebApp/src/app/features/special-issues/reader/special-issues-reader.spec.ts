@@ -1,3 +1,5 @@
+import { signal } from '@angular/core';
+import { GlobalSettingsService } from '../../../core/services/global-settings.service';
 import { vi } from 'vitest';
 import { ChangeDetectorRef, ElementRef, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -174,7 +176,8 @@ describe('SpecialIssueReader accessible controls', () => {
     vi.spyOn(SpecialIssueReader.prototype, 'ngOnInit').mockResolvedValue(undefined);
     vi.spyOn(SpecialIssueReader.prototype, 'ngAfterViewInit').mockImplementation(() => {});
     TestBed.configureTestingModule({ imports: [SpecialIssueReader], providers: [
-      provideRouter([]), { provide: SpecialIssueService, useValue: {} },
+      provideRouter([]),
+        { provide: GlobalSettingsService, useValue: { publicSettings: signal(null) } }, { provide: SpecialIssueService, useValue: {} },
     ] });
     fixture = TestBed.createComponent(SpecialIssueReader);
     fixture.componentInstance.totalPages = 5;
@@ -233,6 +236,13 @@ describe('SpecialIssueReader accessible controls', () => {
       expect(button(fixture, 'Previous page').disabled).toBe(true);
       expect(button(fixture, 'Next page').disabled).toBe(true);
       expect((fixture.nativeElement.querySelector('input[aria-label="Go to page"]') as HTMLInputElement).disabled).toBe(true);
+      if (state.errorMessage) {
+        const errorPage = fixture.nativeElement.querySelector('app-error-page');
+        expect(errorPage).not.toBeNull();
+        expect(fixture.componentInstance.fullscreenContainer.nativeElement.contains(errorPage)).toBe(true);
+        expect(fixture.componentInstance.readerContainer.nativeElement.contains(errorPage)).toBe(false);
+        expect(fixture.componentInstance.readerContainer.nativeElement.style.display).toBe('none');
+      }
     }
   });
 

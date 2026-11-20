@@ -19,8 +19,6 @@
   </ng-container>
 </main>
 <ng-template #loading>
-  <section *ngIf="articleError() as error; else articleLoading" class="article-error" aria-labelledby="article-error-title">
-    <h1 id="article-error-title">Article unavailable</h1><p role="alert">{{ error }}</p><div><button type="button" (click)="retryArticle()">Try again</button><a routerLink="/top-stories">Browse all articles</a></div>
-  </section>
+  <app-error-page *ngIf="articleError(); else articleLoading" [embedded]="true" [status]="articleErrorStatus()" (retry)="retryArticle()" />
 </ng-template>
 <ng-template #articleLoading><app-page-loader variant="public" label="Loading article..." skeleton="article" /></ng-template>

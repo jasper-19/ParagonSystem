@@ -171,6 +171,7 @@ export class ArticleService {
   readonly articleFeed =
     this.articleFeedState.asReadonly();
   private readonly articleFeedErrorState = signal<string | null>(null);
+  readonly articleFeedErrorStatus = signal<number | null>(null);
   readonly articleFeedError = this.articleFeedErrorState.asReadonly();
 
   private readonly categoryFeedState =
@@ -877,6 +878,7 @@ refreshHomepageFeed(): void {
     this.currentArticleFeedSlug = slug;
     this.articleFeedState.set(null);
     this.articleFeedErrorState.set(null);
+    this.articleFeedErrorStatus.set(null);
 
     this.getArticleFeed(slug)
       .subscribe({
@@ -887,6 +889,7 @@ refreshHomepageFeed(): void {
 
         error: err => {
           if (this.currentArticleFeedSlug !== slug) return;
+          this.articleFeedErrorStatus.set(err.status ?? 500);
           this.articleFeedErrorState.set(err.status === 404
             ? 'This article is unavailable. It may have moved or is no longer published.'
             : 'The article could not be loaded. Check your connection and try again.');

@@ -21,16 +21,14 @@
   </header>
   <div class="reader__body">
     <div #fullscreenContainer class="reader__workspace">
-      <div #readerContainer class="reader__stage" [class.reader__stage--zoomed]="zoom > 1" role="region" aria-label="Publication pages" [attr.aria-busy]="isLoading">
+      @if (errorMessage) {
+        <app-error-page style="overflow: auto; width: 100%" [embedded]="true" [status]="errorStatus" (retry)="reloadPublication()" />
+      }
+      <div #readerContainer [style.display]="errorMessage ? 'none' : null" class="reader__stage" [class.reader__stage--zoomed]="zoom > 1" role="region" aria-label="Publication pages" [attr.aria-busy]="isLoading">
         <div class="reader__book-wrap"><div #flipbookContainer class="reader__book"></div></div>
         @if (isLoading) {
           <div class="reader__state">
             <app-page-loader variant="public" mode="inline" [inverse]="true" label="Loading publication..." skeleton="reader" />
-          </div>
-        } @else if (errorMessage) {
-          <div class="reader__state" role="alert">
-            <h2>Unable to open publication</h2><p>{{ errorMessage }}</p>
-            <a routerLink="/special-issues">Back to Library</a>
           </div>
         } @else if (!flipbookAvailable) {
           <div class="reader__state" role="alert">
@@ -41,7 +39,7 @@
           </div>
         }
       </div>
-      <div class="reader__toolbar" role="group" aria-label="Reader controls">
+      <div [style.display]="errorMessage ? 'none' : null" class="reader__toolbar" role="group" aria-label="Reader controls">
         <div class="reader__navigation">
           <button type="button" class="reader__page-button" (click)="prevPage()"
             [disabled]="isLoading || !!errorMessage || !flipbookAvailable || !canGoPrev" aria-label="Previous page">

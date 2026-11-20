@@ -6,6 +6,8 @@
 
 **Additional 18 November follow-up:** the stale-login/account-restoration race is now addressed locally with a database-managed authentication version. See the [authentication rollout handoff](authentication-version-rollout-2026-11-18.md). This adds a users column and trigger; the security SQL must precede deployment. Production remains unchanged.
 
+**Production rollout, 18 November:** the approved code, scoped database hardening and private PDF migration are now deployed. The verified public original was deleted after separate approval; editing was resumed. See the [production rollout evidence and remaining controls](production-rollout-2026-11-18.md). Earlier statements below about unchanged production describe the initial audit, not the completed rollout.
+
 ## Scope and evidence
 
 Reviewed Angular browser code and Vercel preview handlers; Express route protection, sessions, CSRF, rate limits, HTML handling, uploads, storage, realtime notifications, database queries and startup configuration; package manifests/lockfiles; tracked credential signatures; and read-only production metadata and anonymous HTTP responses.

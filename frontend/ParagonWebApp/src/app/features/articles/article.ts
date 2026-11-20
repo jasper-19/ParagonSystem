@@ -1,6 +1,7 @@
+import { ErrorPage } from '../../shared/components/error-page/error-page';
 import { Component, inject, DestroyRef, DOCUMENT } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { filter, map, tap } from 'rxjs/operators';
 import { distinctUntilChanged, shareReplay } from 'rxjs';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,7 +22,7 @@ import { imageVariant } from '../../shared/utils/image-variant.util';
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
+    ErrorPage,
     ArticleSectionComponent,
     ArticleMeta,
     Related,
@@ -45,6 +46,7 @@ export class ArticlePage {
   private readonly pageTitle = inject(Title);
   private readonly document = inject(DOCUMENT);
   readonly articleFeed = this.articleService.articleFeed;
+  readonly articleErrorStatus = this.articleService.articleFeedErrorStatus;
   readonly articleError = this.articleService.articleFeedError;
 
   private readonly articleFeed$ = toObservable(this.articleFeed);

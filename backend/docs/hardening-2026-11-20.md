@@ -38,3 +38,16 @@ The existing `npm run cleanup:special-issue-storage -- --batch-size=25 --max-att
 The change prevents new lost cleanup paths; it does not discover or repair older orphaned objects. A remote storage operation's outcome after a network timeout remains uncertain; pending jobs provide delayed reconciliation. No live Supabase fault injection was performed.
 
 Independent reviewer, QA, and security agents reviewed the supplied design but could not access files or execute tools. Their outage-recovery and mocked-concurrency concerns were addressed with durable pre-upload reservations and real local PostgreSQL tests. Independent source inspection remains unverified. Existing unrelated documentation and header edits were preserved.
+
+## Production release — 20 November 2026, 17:05 Asia/Manila
+
+The user explicitly approved migration and deployment and confirmed Render's `My Workspace` (`tea-d8oj261194ac73c2aqcg`). Released source: `69f8f39203d8b8d30c89c96c61b85036c068a8c6`, pushed to `main`.
+
+- Migration preflight: production Supabase project `paragon-db` (`jymekuhvtvokfimzxjsl`) already contains all nine cleanup columns, UUID/timestamp/attempt defaults, the pending-path unique index, pending-created index, and RLS. No DDL or data migration was necessary or run. Pending and exhausted cleanup counts were both zero after deployment.
+- Render: service `srv-d8p5uqernols73f6oa30`, deployment `dep-dc00ppu7bikc7393guh0`, exact release commit, `live` at 17:04:35. The normal Render build succeeded. Existing automatic deployment remains off. Previous live deployment: `dep-dbvghblg1s2s73f5pg2g`.
+- Vercel: Git integration automatically deployed the same commit, deployment `dpl_ADeq27qA3qRthQGa23QWyPLyoWFq`, `READY`, production alias `https://paragon-system-gvlg.vercel.app`. Previous production deployment: `dpl_6baCBP3gToeUJcXX1yfh1UhfpKku`.
+- Release validation: TypeScript emitted successfully to a temporary output directory; the existing local `dist` directory denied writes. Backend suite: 194 passed, 3 opt-in skips, 0 failures.
+- After the backend became live, `/health` and `/ready` returned 200; readiness confirmed database and PDF processor availability. Homepage feed and application settings returned 200. Dashboard feed and application list correctly returned 401 without authentication. The public frontend and login page returned 200 HTML. No live publication, account, applicant, or storage mutation was used for smoke checks.
+- Immediate Render error scan and Vercel error/fatal log scan returned no entries. This is an initial release check, not long-term monitoring. Authenticated admin mutations were covered locally, not exercised against production records. Cleanup scheduling remains unverified as noted above.
+
+This deployment record was appended locally after the release commit; it is not included in the deployed source commit.

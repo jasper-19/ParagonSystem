@@ -1,3 +1,4 @@
+import { GlobalSettingsService } from '../../core/services/global-settings.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
@@ -27,9 +28,10 @@ describe('Article reading states', () => {
     feed.set(example); error.set(null); load.mockClear();
     await TestBed.configureTestingModule({ imports: [ArticlePage], providers: [
       provideRouter([]),
+      { provide: GlobalSettingsService, useValue: { publicSettings: signal(null) } },
       { provide: ActivatedRoute, useValue: { paramMap: of(params), snapshot: { paramMap: params } } },
       { provide: ArticleService, useValue: {
-        articleFeed: feed.asReadonly(), articleFeedError: error.asReadonly(), slugChanged: signal(null),
+        articleFeedErrorStatus: signal(500), articleFeed: feed.asReadonly(), articleFeedError: error.asReadonly(), slugChanged: signal(null),
         loadArticleFeed: load, incrementViews: vi.fn().mockReturnValue(of(null)), clearSlugChanged: vi.fn(),
       } },
     ] }).compileComponents();
@@ -69,11 +71,11 @@ describe('Article reading states', () => {
   it('offers retry and an archive link instead of an endless loader after a failed request', async () => {
     feed.set(null); error.set('The article could not be loaded. Check your connection and try again.');
     await fixture.whenStable();
-    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain('try again');
+    expect(fixture.nativeElement.querySelector('[aria-live="polite"]')?.textContent).toContain('try again');
     expect(fixture.nativeElement.querySelector('app-page-loader')).toBeNull();
-    fixture.nativeElement.querySelector('.article-error button').click();
+    fixture.nativeElement.querySelector('app-error-page button').click();
     expect(load).toHaveBeenLastCalledWith('reading-example');
-    expect(fixture.nativeElement.querySelector('.article-error a')?.getAttribute('href')).toBe('/top-stories');
+    expect(fixture.nativeElement.querySelector('app-error-page a[href="/top-stories"]')?.getAttribute('href')).toBe('/top-stories');
   });
 
   it('uses the public fallback when the article image has an unsafe URL scheme', async () => {
