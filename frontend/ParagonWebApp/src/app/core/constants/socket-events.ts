@@ -8,6 +8,7 @@ export const SOCKET_EVENTS = {
   ACTIVITY_LOGS_UPDATED: 'activity-logs:updated',
   GLOBAL_SETTINGS_UPDATED: 'settings:updated',
   USER_ACCOUNTS_UPDATED: 'users:updated',
+  STAFF_UPDATED: 'staff:updated',
 
 
   DASHBOARD_UPDATED: 'dashboard:updated',

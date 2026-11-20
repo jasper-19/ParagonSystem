@@ -209,4 +209,9 @@ export class SocketService {
     return this.on<void>(SOCKET_EVENTS.USER_ACCOUNTS_UPDATED, callback);
   }
 
+  onStaffUpdated(callback: () => void): () => void {
+    this.connect();
+    return this.on<void>(SOCKET_EVENTS.STAFF_UPDATED, callback);
+  }
+
 }

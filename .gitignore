@@ -43,6 +43,7 @@ Thumbs.db
 
 # Ignore ALL node_modules everywhere
 node_modules/
+graphify-out/
 
 # Angular build
 dist/

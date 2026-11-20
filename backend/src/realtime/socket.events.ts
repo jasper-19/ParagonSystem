@@ -11,7 +11,17 @@ export const SocketEvents = {
   ACTIVITY_LOGS_UPDATED: "activity-logs:updated",
   GLOBAL_SETTINGS_UPDATED: "settings:updated",
   USER_ACCOUNTS_UPDATED: "users:updated",
+  STAFF_UPDATED: "staff:updated",
 } as const;
+
+// Private invalidation only: profile clients fetch details through the auth API.
+export async function emitStaffUpdated(): Promise<void> {
+  try {
+    await emitPrivateAdminEvent(SocketEvents.STAFF_UPDATED);
+  } catch {
+    // The staff save is committed. Clients recover on socket reconnection.
+  }
+}
 
 // Public invalidation only: never broadcast issue details or draft metadata.
 export function emitSpecialIssuesUpdated(): void {

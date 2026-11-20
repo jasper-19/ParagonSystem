@@ -1,4 +1,5 @@
 import * as repository from "./staff.repository";
+import { emitStaffUpdated } from "../../realtime/socket.events";
 
 export async function getStaffMembers() {
   return repository.findAll();
@@ -65,5 +66,6 @@ export async function updateStaffMember(
   if (!updated) {
     throw Object.assign(new Error("Staff member not found"), { statusCode: 404 });
   }
+  await emitStaffUpdated();
   return updated;
 }
