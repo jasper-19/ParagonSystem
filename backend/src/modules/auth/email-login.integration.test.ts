@@ -11,7 +11,7 @@ import pool from '../../config/db';
 import authRouter from './auth.routes';
 import { authenticate } from '../../middlewares/authenticate';
 import { csrfProtection } from '../../middlewares/csrf';
-import { getUserById } from '../users/user.service';
+import { getUserById, updateUser } from '../users/user.service';
 import { challengeUser } from './login-flow.service';
 import * as challenges from './login-challenge.repository';
 import { codeHash } from './email-code.service';
@@ -42,6 +42,7 @@ test('local PostgreSQL: Google linking, email verification, replay, limits, and 
     process.env.FRONTEND_URL = 'http://localhost:4200';
     process.env.AUTH_SMTP_HOST = 'smtp.fixture.invalid'; process.env.AUTH_SMTP_PORT = '465';
     process.env.AUTH_SMTP_USER = 'fixture'; process.env.AUTH_SMTP_PASSWORD = 'fixture'; process.env.AUTH_EMAIL_FROM = 'fixture@example.com';
+    delete process.env.AUTH_MAIL_RELAY_URL; // Always use the mocked transport.
     let sentCode = ''; let failMail = false;
     mock.method(nodemailer, 'createTransport', () => ({
       sendMail: async (mail: { text: string }) => {
@@ -82,6 +83,14 @@ test('local PostgreSQL: Google linking, email verification, replay, limits, and 
         queued = result.then(() => undefined, () => undefined);
         return result;
       });
+      // Repository transactions must stay in the isolated, rolled-back fixture.
+      mock.method(pool, 'connect', async () => ({
+        query: (sql: string, params?: unknown[]) => pool.query(
+          sql === 'BEGIN' ? 'SAVEPOINT account_update' :
+          sql === 'COMMIT' ? 'RELEASE SAVEPOINT account_update' :
+          sql === 'ROLLBACK' ? 'ROLLBACK TO SAVEPOINT account_update' : sql, params),
+        release: () => {},
+      }));
       await assertGoogleEmailSchema(pool);
       const app = express(); app.use(express.json(), csrfProtection); app.use('/api/auth', authRouter);
       app.get('/private', authenticate, (_req, res) => res.json({ ok: true }));
@@ -245,6 +254,35 @@ test('local PostgreSQL: Google linking, email verification, replay, limits, and 
         assert.equal(await challenges.getChallenge(pending.id), undefined);
         await assert.rejects(() => challengeUser(snapshot));
         assert.notEqual((await getUserById(userId))!.authVersion, user.authVersion);
+      });
+      await t.test('developer Google account has no staff, requires verification, and can be revoked', async () => {
+        const developerId = '33333333-3333-4333-8333-333333333333';
+        await client.query(`INSERT INTO users (id,username,password_hash,role,two_fa_enabled,developer_email)
+          VALUES ($1,'developer-fixture',$2,'admin',TRUE,'fixture@gmail.com')`,
+          [developerId, await bcrypt.hash(password, 12)]);
+        assert.equal((await request('/api/auth/login', { username: 'developer-fixture', password })).status, 401);
+        for (const patch of [{ twoFaEnabled: false }, { staffId }, { role: 'staff' }, { password }]) {
+          await assert.rejects(() => updateUser(developerId, patch), /Developer accounts/);
+        }
+        const started = await request('/api/auth/google/start', {});
+        const authorization = new URL((await started.json() as { authorizationUrl: string }).authorizationUrl);
+        googleNonce = authorization.searchParams.get('nonce')!;
+        const callback = await request(`/api/auth/google/callback?code=fixture-code&state=${authorization.searchParams.get('state')}`,
+          undefined, cookieOf(started, 'paragon_login'));
+        assert.match(callback.headers.get('location')!, /google=verify$/);
+        const pending = cookieOf(callback, 'paragon_login');
+        assert.equal((await request('/private', undefined, pending)).status, 401);
+        const verified = await request('/api/auth/2fa/verify', { code: sentCode }, pending);
+        assert.equal(verified.status, 200);
+        const session = cookieOf(verified, 'paragon_session');
+        const profile = await (await request('/api/auth/me', undefined, session)).json() as { staff: unknown; user: { role: string } };
+        assert.equal(profile.staff, null); assert.equal(profile.user.role, 'admin');
+        const factor = await fetch(`${base}/api/auth/2fa`, { method: 'PATCH', headers: {
+          Origin: 'http://localhost:4200', 'X-CSRF-Protection': '1', 'Content-Type': 'application/json', Cookie: session,
+        }, body: JSON.stringify({ enabled: false }) });
+        assert.equal(factor.status, 403);
+        await client.query('UPDATE users SET is_active=FALSE WHERE id=$1', [developerId]);
+        assert.equal((await request('/private', undefined, session)).status, 401);
       });
     } finally {
       if (server) { server.closeAllConnections(); await new Promise<void>(resolve => server!.close(() => resolve())); }

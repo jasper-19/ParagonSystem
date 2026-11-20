@@ -8,6 +8,7 @@ import { beginDbLogin, challengeUser, clearPendingLogin, deliverChallenge, login
 import { codeHash, maskEmail } from './email-code.service';
 import { completeDbLogin } from './complete-login';
 import { auditLog } from '../activity-logs/activity-log.audit';
+import { developerEmail, enrollDeveloperIdentity } from './developer-account.repository';
 
 export const googleStart = asyncHandler(async (req: Request, res: Response) => {
   const oauth = startGoogleOAuth();
@@ -26,6 +27,7 @@ export const googleCallback = asyncHandler(async (req: Request, res: Response) =
     const pending = await challenges.consumeOAuth(id, state);
     if (!pending) throw loginError();
     const identity = await finishGoogleOAuth(code, pending.data);
+    await enrollDeveloperIdentity(identity);
     const linked = await findGoogleIdentity(identity.subject);
     if (!linked) {
       const link = await challenges.createChallenge('google-link', identity);
@@ -34,7 +36,8 @@ export const googleCallback = asyncHandler(async (req: Request, res: Response) =
       return;
     }
     const account = await users.getUserWithStaffById(linked.user_id);
-    if (!account?.user.isActive || linked.email !== identity.email || account.staff?.email.trim().toLowerCase() !== identity.email) throw loginError();
+    const email = account?.staff?.email.trim().toLowerCase() || await developerEmail(linked.user_id);
+    if (!account?.user.isActive || linked.email !== identity.email || email !== identity.email) throw loginError();
     await beginDbLogin(req, res, account.user, destination);
   } catch {
     // OAuth errors may contain authorization codes or tokens; never log them.

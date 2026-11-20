@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { User, PublicUser, UserWithStaff } from "./user.types";
 import * as repository from "./user.repository";
+import { developerEmail } from '../auth/developer-account.repository';
 
 const BCRYPT_ROUNDS = Math.min(
   Math.max(Number(process.env.BCRYPT_ROUNDS) || 12, 12),
@@ -16,7 +17,7 @@ export function toPublicUser(user: User): PublicUser {
 
 export async function authenticate(username: string, password: string): Promise<User | null> {
   const user = await repository.findByUsername(username);
-  if (!user || !user.isActive) {
+  if (!user || !user.isActive || await developerEmail(user.id)) {
     await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
     return null;
   }
@@ -73,6 +74,11 @@ export async function updateUser(
 ): Promise<User | undefined> {
   const existing = await repository.findById(id);
   if (!existing) return undefined;
+
+  if (await developerEmail(id) && (patch.password !== undefined || patch.role !== undefined ||
+      patch.staffId !== undefined || patch.twoFaEnabled === false)) {
+    throw Object.assign(new Error('Developer accounts use Google sign-in and mandatory verification; their identity cannot be changed here.'), { statusCode: 403 });
+  }
 
   const repoPatch: any = {};
   if (patch.password !== undefined) {

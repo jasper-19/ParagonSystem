@@ -8,7 +8,8 @@ export async function assertGoogleEmailSchema(db: {
         AND c.relname IN ('google_identities','login_challenges','auth_email_limits','auth_attempt_limits')) AS tables_ready,
     EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
       WHERE n.nspname = 'paragon_internal' AND p.proname = 'advance_auth_version'
-        AND strpos(pg_get_functiondef(p.oid), 'NEW.two_fa_enabled') > 0) AS factor_version_ready,
+        AND strpos(pg_get_functiondef(p.oid), 'NEW.two_fa_enabled') > 0
+        AND strpos(pg_get_functiondef(p.oid), 'NEW.developer_email') > 0) AS factor_version_ready,
     EXISTS (SELECT 1 FROM pg_trigger t WHERE t.tgrelid = 'public.staff_members'::regclass
       AND t.tgname = 'staff_invalidate_google_identity' AND NOT t.tgisinternal
       AND t.tgenabled IN ('O','A')) AS email_trigger_ready`);

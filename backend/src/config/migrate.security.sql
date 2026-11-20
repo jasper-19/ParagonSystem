@@ -35,12 +35,26 @@ ALTER TABLE public.users ADD COLUMN IF NOT EXISTS auth_version bigint NOT NULL D
 CREATE SCHEMA IF NOT EXISTS paragon_internal;
 REVOKE ALL ON SCHEMA paragon_internal FROM PUBLIC;
 
+-- Operator-provisioned Google-only administrators; never set by a public API.
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS developer_email text;
+CREATE UNIQUE INDEX IF NOT EXISTS users_developer_email_unique ON public.users(developer_email)
+  WHERE developer_email IS NOT NULL;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.users'::regclass
+    AND conname = 'users_developer_account_policy') THEN
+    ALTER TABLE public.users ADD CONSTRAINT users_developer_account_policy CHECK (
+      developer_email IS NULL OR (developer_email = lower(trim(developer_email))
+        AND developer_email ~ '^[^[:space:]@]+@gmail[.]com$'
+        AND role = 'admin' AND staff_id IS NULL AND two_fa_enabled IS TRUE));
+  END IF;
+END $$;
+
 CREATE OR REPLACE FUNCTION paragon_internal.advance_auth_version()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = pg_catalog AS $$
 BEGIN
-  IF ROW(NEW.password_hash, NEW.role, NEW.staff_id, NEW.is_active, NEW.username, NEW.two_fa_enabled)
+  IF ROW(NEW.password_hash, NEW.role, NEW.staff_id, NEW.is_active, NEW.username, NEW.two_fa_enabled, NEW.developer_email)
      IS DISTINCT FROM
-     ROW(OLD.password_hash, OLD.role, OLD.staff_id, OLD.is_active, OLD.username, OLD.two_fa_enabled) THEN
+     ROW(OLD.password_hash, OLD.role, OLD.staff_id, OLD.is_active, OLD.username, OLD.two_fa_enabled, OLD.developer_email) THEN
     NEW.auth_version := OLD.auth_version + 1;
   ELSE
     NEW.auth_version := GREATEST(OLD.auth_version, NEW.auth_version);

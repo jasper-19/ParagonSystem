@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthTokenPayload, clearAuthCookie, credentialFingerprint, getCookieSameSite, readCookie } from '../../security/auth-token';
 import { User } from '../users/user.types';
+import { developerEmail } from './developer-account.repository';
 import * as userService from '../users/user.service';
 import * as challenges from './login-challenge.repository';
 import { getGoogleIdentity } from './google-identity.repository';
@@ -33,8 +34,9 @@ export function loginError(message = 'Verification expired or invalid. Please si
 
 export async function linkedGmail(userId: string): Promise<{ subject: string; email: string }> {
   const [identity, account] = await Promise.all([getGoogleIdentity(userId), userService.getUserWithStaffById(userId)]);
+  const email = account?.staff?.email.trim().toLowerCase() || await developerEmail(userId);
   if (!identity || !account?.user.isActive ||
-      account.staff?.email.trim().toLowerCase() !== identity.email || !/^[^\s@]+@gmail\.com$/.test(identity.email)) {
+      email !== identity.email || !/^[^\s@]+@gmail\.com$/.test(identity.email)) {
     throw loginError('Sign in with Google and link your staff Gmail account before using email verification.', 409);
   }
   return identity;
@@ -93,6 +95,9 @@ export async function beginDbLogin(req: Request, res: Response, user: User, redi
 }
 
 export async function requireTwoFaChange(userId: string, payload: AuthTokenPayload | undefined, enabled: boolean): Promise<void> {
+  if (!enabled && await developerEmail(userId)) {
+    throw loginError('Email verification is required for developer accounts.', 403);
+  }
   if (!payload?.iat || Date.now() / 1000 - payload.iat > 300) {
     throw loginError('Please sign in again before changing two-factor authentication.', 403);
   }

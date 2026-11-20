@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as userService from "../users/user.service";
+import { findByUsername } from '../users/user.repository';
 import * as staffRepository from "../staff/staff.repository";
 import * as sessionRepository from "./session.repository";
 import { auditLog } from "../activity-logs/activity-log.audit";
@@ -159,6 +160,12 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const dbUser = await userService.authenticate(username, password);
   if (dbUser) {
     await beginDbLogin(req, res, dbUser);
+    return;
+  }
+
+  // A database account must never fall back to the legacy environment identity.
+  if (await findByUsername(username)) {
+    res.status(401).json({ error: 'Invalid credentials' });
     return;
   }
 
