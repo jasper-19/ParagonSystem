@@ -3,43 +3,12 @@ import * as service from "./application.service";
 import * as notificationService from "../notifications/notification.service";
 import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { sanitizeValue } from "../../middlewares/sanitize";
 import { emitApplicationsUpdated, emitApplicationSettingsUpdated } from "../../realtime/socket.events";
 
 /** GET /api/applications?page=&limit=&status=&search=&sort=&order= */
 export const getApplications = asyncHandler(
   async (req: Request, res: Response) => {
-    const query: service.GetApplicationsQuery = {};
-
-    const status = req.query["status"];
-    if (typeof status === "string" && status.trim() !== "") {
-      query.status = sanitizeValue(status) as string;
-    }
-
-    const search = req.query["search"];
-    if (typeof search === "string" && search.trim() !== "") {
-      query.search = sanitizeValue(search) as string;
-    }
-
-    const page = req.query["page"];
-    if (typeof page === "string" && page.trim() !== "") {
-      query.page = Number(sanitizeValue(page));
-    }
-
-    const limit = req.query["limit"];
-    if (typeof limit === "string" && limit.trim() !== "") {
-      query.limit = Number(sanitizeValue(limit));
-    }
-
-    const sort = req.query["sort"];
-    if (typeof sort === "string" && sort.trim() !== "") {
-      query.sort = sanitizeValue(sort) as string;
-    }
-
-    const order = req.query["order"];
-    if (order === "asc" || order === "desc") {
-      query.order = order;
-    }
+    const query = res.locals["validatedQuery"] as service.GetApplicationsQuery;
 
     const applications = await service.getApplications(query);
 

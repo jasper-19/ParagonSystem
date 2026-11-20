@@ -1,5 +1,6 @@
 import db from "../../config/db";
 import { MediaType } from "./media.schema";
+import { mediaStoragePaths } from "./media-storage-paths";
 
 type MediaRow = {
   id: string;
@@ -253,8 +254,8 @@ export type CreateMediaInput = {
   height?: number;
 };
 
-export async function create(input: CreateMediaInput) {
-  const result = await db.query(
+export async function create(input: CreateMediaInput, connection: Pick<typeof db, 'query'> = db) {
+  const result = await connection.query(
     `INSERT INTO media_files
     (
       file_name,
@@ -312,37 +313,55 @@ export async function update(id: string, input: UpdateMediaInput) {
 }
 
 export async function remove(id: string): Promise<{ id: string; storagePath: string } | null> {
-  const usage = await findPublishedArticleUsageByMediaId(id);
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    // Prevent an article publication racing the usage check and deletion.
+    await client.query('LOCK TABLE articles, media_files IN SHARE ROW EXCLUSIVE MODE');
+    const usage = await findPublishedArticleUsageByMediaId(id, client);
 
-  if (usage.length > 0) {
-    throw Object.assign(
-      new Error("Media is currently used by published articles."),
-      {
-        statusCode: 409,
-        usage,
-      }
+    if (usage.length > 0) {
+      throw Object.assign(
+        new Error("Media is currently used by published articles."),
+        {
+          statusCode: 409,
+          usage,
+        }
+      );
+    }
+
+    const result = await client.query(
+      `DELETE FROM media_files
+       WHERE id = $1
+       RETURNING id, storage_path`,
+      [id]
     );
-  }
 
-  const result = await db.query(
-    `DELETE FROM media_files
-     WHERE id = $1
-     RETURNING id, storage_path`,
-    [id]
-  );
-
-  if (!result.rows.length) return null;
-  const row = result.rows[0] as { id: string; storage_path: string };
-  return {
-    id: String(row.id),
-    storagePath: row.storage_path,
-  };
+    if (!result.rows.length) { await client.query('COMMIT'); return null; }
+    const row = result.rows[0] as { id: string; storage_path: string };
+    // Commit the retry records with the deletion, before touching external storage.
+    await client.query(
+      `INSERT INTO paragon_internal.storage_cleanup_jobs (storage_path, reason)
+       SELECT path, 'media_deleted' FROM unnest($1::text[]) AS path
+       ON CONFLICT (storage_path) WHERE completed_at IS NULL DO NOTHING`,
+      [mediaStoragePaths(row.storage_path)]
+    );
+    await client.query('COMMIT');
+    return {
+      id: String(row.id),
+      storagePath: row.storage_path,
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally { client.release(); }
 }
 
-export async function findPublishedArticleUsageByMediaId(mediaId: string) {
+export async function findPublishedArticleUsageByMediaId(mediaId: string, connection: Pick<typeof db, 'query'> = db) {
   const baseUrl = getApiBaseUrl();
 
-  const result = await db.query(
+  const result = await connection.query(
     `
     SELECT
       id,

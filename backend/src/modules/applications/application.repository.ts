@@ -1,4 +1,5 @@
 import db from "../../config/db";
+import { applicationListQuerySchema } from "./application.schema";
 
 type ApplicationSettingsRow = {
   id: number;
@@ -86,9 +87,11 @@ function mapListRow(row: any) {
   };
 }
 
-export async function findAll(query: ApplicationListQuery = {}) {
-  const page = Math.max(Number(query.page ?? 1), 1);
-  const limit = Math.min(Math.max(Number(query.limit ?? 10), 1), 50);
+export async function findAll(input: ApplicationListQuery = {}) {
+  const parsed = applicationListQuerySchema.safeParse(input);
+  if (!parsed.success) throw Object.assign(new Error("Invalid application query"), { statusCode: 400 });
+  const query = parsed.data;
+  const { page, limit } = parsed.data;
   const offset = (page - 1) * limit;
 
   const where: string[] = [];
@@ -218,28 +221,44 @@ export async function create(data: unknown) {
   }
 }
 
-export async function updateStatus(id: string, status: string) {
+type Status = "pending" | "interview_scheduled" | "interview_completed" | "accepted" | "rejected";
 
-  if (!id || !status) {
-    throw new Error("Missing id or status");
-  }
-
+/** Keep status and dependent fields consistent, with a row lock for competing actions. */
+async function transition(id: string, status: Status, interviewDate?: string, notes?: string) {
+  const client = await db.connect();
   try {
-
-    const result = await db.query(
-      `UPDATE applications
-       SET status = $1
-       WHERE id = $2
-       RETURNING *`,
-      [status, id]
+    await client.query("BEGIN");
+    const result = await client.query("SELECT * FROM applications WHERE id = $1 FOR UPDATE", [id]);
+    const current = result.rows[0];
+    if (!current) throw Object.assign(new Error("Application not found"), { statusCode: 404 });
+    if (current.assigned && status !== "accepted") {
+      throw Object.assign(new Error("Remove the staff assignment before changing acceptance"), { statusCode: 409 });
+    }
+    const date = status === "pending" ? null : interviewDate ?? current.interview_date;
+    if (status === "interview_scheduled" && !date) {
+      throw Object.assign(new Error("Schedule an interview date first"), { statusCode: 409 });
+    }
+    const interviewed = status === "accepted" || status === "interview_completed" ? true :
+      status === "rejected" ? Boolean(current.interviewed) : false;
+    const updated = await client.query(
+      `UPDATE applications SET status = $2, interviewed = $3, interview_date = $4,
+        interview_notes = COALESCE($5, interview_notes),
+        assigned = CASE WHEN $6::boolean THEN assigned ELSE false END,
+        assigned_section = CASE WHEN $6::boolean THEN assigned_section ELSE NULL END,
+        assigned_role = CASE WHEN $6::boolean THEN assigned_role ELSE NULL END
+       WHERE id = $1 RETURNING *`,
+      [id, status, interviewed, date, notes ?? null, status === 'accepted']
     );
-
-    return mapRow(result.rows[0]);
-
+    await client.query("COMMIT");
+    return mapRow(updated.rows[0]);
   } catch (error) {
-    console.error("Error updating application status:", error);
+    await client.query("ROLLBACK");
     throw error;
-  }
+  } finally { client.release(); }
+}
+
+export async function updateStatus(id: string, status: string) {
+  return transition(id, status as Status);
 }
 
 export async function findById(id: string) {
@@ -259,131 +278,51 @@ export async function findById(id: string) {
 }
 
 export async function scheduleInterview(id: string, interviewDate: string) {
-  if (!id || !interviewDate) throw new Error('Missing id or interviewDate');
-
-  try {
-    const result = await db.query(
-      `UPDATE applications
-       SET status = 'interview_scheduled', interview_date = $1
-       WHERE id = $2
-       RETURNING *`,
-      [interviewDate, id]
-    );
-
-    return mapRow(result.rows[0]);
-  } catch (error) {
-    console.error('Error scheduling interview:', error);
-    throw error;
-  }
+  return transition(id, "interview_scheduled", interviewDate);
 }
 
 export async function markInterviewed(id: string) {
-  if (!id) throw new Error('Missing id');
-
-  try {
-    const result = await db.query(
-      `UPDATE applications
-       SET interviewed = true,
-           status = 'interview_completed'
-       WHERE id = $1
-       RETURNING *`,
-      [id]
-    );
-
-    return mapRow(result.rows[0]);
-  } catch (error) {
-    console.error('Error marking application as interviewed:', error);
-    throw error;
-  }
+  return transition(id, "interview_completed");
 }
 
 export async function acceptApplication(id: string, interviewNotes?: string) {
-  if (!id) throw new Error('Missing id');
-
-  try {
-    const result = await db.query(
-      `UPDATE applications
-       SET status          = 'accepted',
-           interviewed     = true,
-           interview_notes = COALESCE($2, interview_notes)
-       WHERE id = $1
-       RETURNING *`,
-      [id, interviewNotes ?? null]
-    );
-
-    return mapRow(result.rows[0]);
-  } catch (error) {
-    console.error('Error accepting application:', error);
-    throw error;
-  }
+  return transition(id, "accepted", undefined, interviewNotes);
 }
 
 export async function rejectApplication(id: string) {
-  if (!id) throw new Error('Missing id');
-
-  try {
-    const result = await db.query(
-      `UPDATE applications
-       SET status = 'rejected'
-       WHERE id = $1
-       RETURNING *`,
-      [id]
-    );
-
-    return mapRow(result.rows[0]);
-  } catch (error) {
-    console.error('Error rejecting application:', error);
-    throw error;
-  }
+  return transition(id, "rejected");
 }
 
-/** Permanently delete an application by ID. */
 export async function remove(id: string) {
-  await db.query(`DELETE FROM applications WHERE id = $1`, [id]);
+  const result = await db.query("DELETE FROM applications WHERE id = $1 RETURNING id", [id]);
+  if (!result.rows.length) throw Object.assign(new Error("Application not found"), { statusCode: 404 });
 }
 
-export async function assignApplication(
-  id: string,
-  section: string,
-  role: string
-) {
-  if (!id || !section || !role) throw new Error('Missing id, section, or role');
-
+export async function assignApplication(id: string, section: string, role: string) {
+  const client = await db.connect();
   try {
-    const result = await db.query(
-      `UPDATE applications
-       SET assigned = true,
-           assigned_section = $1,
-           assigned_role = $2
-       WHERE id = $3
-       RETURNING *`,
-      [section, role, id]
-    );
-
-    return mapRow(result.rows[0]);
+    await client.query("BEGIN");
+    const current = await client.query("SELECT status FROM applications WHERE id = $1 FOR UPDATE", [id]);
+    if (!current.rows[0]) throw Object.assign(new Error("Application not found"), { statusCode: 404 });
+    if (current.rows[0].status !== "accepted") {
+      throw Object.assign(new Error("Only accepted applications can be assigned"), { statusCode: 409 });
+    }
+    const updated = await client.query(
+      `UPDATE applications SET assigned = true, assigned_section = $2, assigned_role = $3
+       WHERE id = $1 RETURNING *`, [id, section, role]);
+    await client.query("COMMIT");
+    return mapRow(updated.rows[0]);
   } catch (error) {
-    console.error('Error assigning application:', error);
+    await client.query("ROLLBACK");
     throw error;
-  }
+  } finally { client.release(); }
 }
 
 export async function addInterviewNotes(id: string, notes: string) {
-  if (!id || !notes) throw new Error('Missing id or notes');
-
-  try {
-    const result = await db.query(
-      `UPDATE applications
-       SET interview_notes = $1
-       WHERE id = $2
-       RETURNING *`,
-      [notes, id]
-    );
-
-    return mapRow(result.rows[0]);
-  } catch (error) {
-    console.error('Error adding interview notes:', error);
-    throw error;
-  }
+  const result = await db.query(
+    "UPDATE applications SET interview_notes = $2 WHERE id = $1 RETURNING *", [id, notes]);
+  if (!result.rows[0]) throw Object.assign(new Error("Application not found"), { statusCode: 404 });
+  return mapRow(result.rows[0]);
 }
 
 export async function getDashboardSummary() {
@@ -414,16 +353,16 @@ export async function getDashboardSummary() {
   };
 }
 
-export async function getCreatedCountsByDate() {
+export async function getCreatedCountsByDate(start: Date, end: Date) {
   const result = await db.query(`
     SELECT
-      created_at::date AS date,
+      to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
       COUNT(*) AS count
     FROM applications
-    WHERE created_at IS NOT NULL
-    GROUP BY created_at::date
+    WHERE created_at >= $1 AND created_at < $2
+    GROUP BY 1
     ORDER BY date ASC
-  `);
+  `, [start.toISOString(), end.toISOString()]);
 
   return result.rows.map(row => ({
     date: row.date,

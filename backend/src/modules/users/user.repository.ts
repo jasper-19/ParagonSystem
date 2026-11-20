@@ -438,20 +438,44 @@ export async function updateUser(
 
   const revokeSessions = patch.passwordHash !== undefined || patch.role !== undefined ||
     patch.staffId !== undefined || patch.isActive !== undefined || patch.twoFaEnabled !== undefined;
-  const result = await db.query(
-    `WITH updated AS (UPDATE users
-     SET ${sets.join(", ")}
-     WHERE id = $${idx}
-     RETURNING *), revoked AS (
-       UPDATE user_sessions SET revoked_at = NOW()
-       WHERE user_id IN (SELECT id FROM updated)
-         AND revoked_at IS NULL AND ${revokeSessions ? "TRUE" : "FALSE"}
-       RETURNING id
-     ) SELECT * FROM updated`,
-    values
-  );
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    // Serialize membership changes before reading the count on this connection.
+    if (patch.role !== undefined || patch.isActive !== undefined) {
+      await client.query("SET LOCAL lock_timeout = '5s'");
+      await client.query("LOCK TABLE users IN SHARE ROW EXCLUSIVE MODE");
+      const existing = await client.query("SELECT role, is_active FROM users WHERE id = $1", [id]);
+      const current = existing.rows[0];
+      if (current?.role === "admin" && current.is_active &&
+          (patch.isActive === false || (patch.role !== undefined && patch.role !== "admin"))) {
+        const count = await client.query("SELECT COUNT(*) AS count FROM users WHERE role = 'admin' AND is_active = TRUE");
+        if (Number(count.rows[0].count) <= 1) {
+          throw Object.assign(new Error("At least one active administrator is required"), { statusCode: 409 });
+        }
+      }
+    }
+    const result = await client.query(
+      `WITH updated AS (UPDATE users
+       SET ${sets.join(", ")}
+       WHERE id = $${idx}
+       RETURNING *), revoked AS (
+         UPDATE user_sessions SET revoked_at = NOW()
+         WHERE user_id IN (SELECT id FROM updated)
+           AND revoked_at IS NULL AND ${revokeSessions ? "TRUE" : "FALSE"}
+         RETURNING id
+       ) SELECT * FROM updated`,
+      values
+    );
 
-  return result.rows[0] ? mapRow(result.rows[0]) : undefined;
+    await client.query("COMMIT");
+    return result.rows[0] ? mapRow(result.rows[0]) : undefined;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function setLastLogin(id: string): Promise<void> {

@@ -8,29 +8,32 @@ import { DashboardAnalytics, } from "./dashboard.types";
 export async function getDashboardFeed(
   mode: DashboardAnalyticsMode = "daily"
 ): Promise<DashboardFeed> {
+  const buckets = buildBuckets(mode);
+  const start = buckets[0]!.start;
+  const end = buckets[buckets.length - 1]!.end;
   const [articles, applications, specialIssues, staff, articleTrendRows, applicationTrendRows] = await Promise.all([
     articleRepository.getDashboardSummary(),
     applicationRepository.getDashboardSummary(),
     specialIssueRepository.getDashboardSummary(),
     staffRepository.getDashboardSummary(),
-    articleRepository.getPublishedCountsByDate(),
-    applicationRepository.getCreatedCountsByDate(),
+    articleRepository.getPublishedCountsByDate(start, end),
+    applicationRepository.getCreatedCountsByDate(start, end),
   ]);
 
   const analytics: DashboardAnalytics = {
     metrics: [
       {
-        label: `Published Articles (${mode})`,
+        label: "Published Articles (all time)",
         value: articles.published,
         change: 0,
       },
       {
-        label: `Applications (${mode})`,
+        label: "Applications (all time)",
         value: applications.total,
         change: 0,
       },
     ],
-    trend: buildTrend(mode, articleTrendRows, applicationTrendRows),
+    trend: buildTrend(buckets, articleTrendRows, applicationTrendRows),
   };
 
   return {
@@ -42,106 +45,52 @@ export async function getDashboardFeed(
   };
 }
 
-function toDateKey(date: string | Date): string {
-  return new Date(date).toISOString().slice(0, 10);
+type TrendRow = { date: string | Date; count: number };
+export type TrendBucket = { start: Date; end: Date; label: string };
+
+// SQL grouping and chart boundaries both use UTC, independent of the host timezone.
+export function buildBuckets(mode: DashboardAnalyticsMode, now = new Date()): TrendBucket[] {
+  const count = mode === "daily" ? 30 : mode === "yearly" ? 5 : 12;
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  return Array.from({ length: count }, (_, index) => {
+    const offset = count - 1 - index;
+    const start = new Date(today);
+    if (mode === "monthly") {
+      start.setUTCDate(1);
+      start.setUTCMonth(start.getUTCMonth() - offset);
+    } else if (mode === "yearly") {
+      start.setUTCMonth(0, 1);
+      start.setUTCFullYear(start.getUTCFullYear() - offset);
+    } else {
+      start.setUTCDate(start.getUTCDate() - offset * (mode === "weekly" ? 7 : 1));
+    }
+    const end = new Date(start);
+    if (mode === "monthly") end.setUTCMonth(end.getUTCMonth() + 1);
+    else if (mode === "yearly") end.setUTCFullYear(end.getUTCFullYear() + 1);
+    else end.setUTCDate(end.getUTCDate() + (mode === "weekly" ? 7 : 1));
+    const label = mode === "yearly" ? String(start.getUTCFullYear()) :
+      (mode === "weekly" ? "Week of " : "") + start.toLocaleDateString("en-US", {
+        timeZone: "UTC", month: "short", ...(mode === "monthly" ? { year: "2-digit" } : { day: "numeric" }),
+      });
+    return { start, end, label };
+  });
 }
 
-function buildTrend(
-  mode: DashboardAnalyticsMode,
-  articleRows: { date: string | Date; count: number }[],
-  applicationRows: { date: string | Date; count: number }[]
-) {
-  const labels: string[] = [];
-  const articles: number[] = [];
-  const applications: number[] = [];
-
-  const articleMap = new Map(
-    articleRows.map(row => [toDateKey(row.date), row.count])
-  );
-
-  const applicationMap = new Map(
-    applicationRows.map(row => [toDateKey(row.date), row.count])
-  );
-
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-
-  let bucketCount = 30;
-  let bucketType: "day" | "week" | "month" | "year" = "day";
-
-  if (mode === "weekly") {
-    bucketCount = 12;
-    bucketType = "week";
-  }
-
-  if (mode === "monthly") {
-    bucketCount = 12;
-    bucketType = "month";
-  }
-
-  if (mode === "yearly") {
-    bucketCount = 5;
-    bucketType = "year";
-  }
-
-  for (let i = bucketCount - 1; i >= 0; i--) {
-    const bucketStart = new Date(now);
-
-    if (bucketType === "day") {
-      bucketStart.setDate(now.getDate() - i);
-    }
-
-    if (bucketType === "week") {
-      bucketStart.setDate(now.getDate() - i * 7);
-    }
-
-    if (bucketType === "month") {
-      bucketStart.setMonth(now.getMonth() - i);
-      bucketStart.setDate(1);
-    }
-
-    if (bucketType === "year") {
-      bucketStart.setFullYear(now.getFullYear() - i);
-      bucketStart.setMonth(0, 1);
-    }
-
-    bucketStart.setHours(0, 0, 0, 0);
-
-    const bucketEnd = new Date(bucketStart);
-
-    if (bucketType === "day") bucketEnd.setDate(bucketStart.getDate() + 1);
-    if (bucketType === "week") bucketEnd.setDate(bucketStart.getDate() + 7);
-    if (bucketType === "month") bucketEnd.setMonth(bucketStart.getMonth() + 1);
-    if (bucketType === "year") bucketEnd.setFullYear(bucketStart.getFullYear() + 1);
-
-    const label =
-      bucketType === "day"
-        ? bucketStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-        : bucketType === "week"
-          ? `Week of ${bucketStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-          : bucketType === "month"
-            ? bucketStart.toLocaleDateString("en-US", { month: "short", year: "2-digit" })
-            : String(bucketStart.getFullYear());
-
-    labels.push(label);
-
-    const countInBucket = (
-      rows: { date: string | Date; count: number }[]
-    ) =>
-      rows
-        .filter(row => {
-          const date = new Date(row.date);
-          return date >= bucketStart && date < bucketEnd;
-        })
-        .reduce((sum, row) => sum + row.count, 0);
-
-    articles.push(countInBucket(articleRows));
-    applications.push(countInBucket(applicationRows));
-  }
-
-  return {
-    labels,
-    articles,
-    applications,
+export function buildTrend(buckets: TrendBucket[], articleRows: TrendRow[], applicationRows: TrendRow[]) {
+  // Repositories return ordered date counts; advance once through each series.
+  const aggregate = (rows: TrendRow[]) => {
+    let cursor = 0;
+    return buckets.map(bucket => {
+      let total = 0;
+      while (cursor < rows.length) {
+        const row = rows[cursor]!;
+        const date = new Date(row.date);
+        if (date >= bucket.end) break;
+        if (date >= bucket.start) total += row.count;
+        cursor++;
+      }
+      return total;
+    });
   };
+  return { labels: buckets.map(bucket => bucket.label), articles: aggregate(articleRows), applications: aggregate(applicationRows) };
 }

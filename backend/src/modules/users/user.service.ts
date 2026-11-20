@@ -73,17 +73,6 @@ export async function updateUser(
 ): Promise<User | undefined> {
   const existing = await repository.findById(id);
   if (!existing) return undefined;
-  if (
-    existing.role === "admin" &&
-    existing.isActive &&
-    (patch.isActive === false || (patch.role && patch.role !== "admin")) &&
-    await repository.countActiveAdmins() <= 1
-  ) {
-    throw Object.assign(
-      new Error("At least one active administrator is required"),
-      { statusCode: 409 }
-    );
-  }
 
   const repoPatch: any = {};
   if (patch.password !== undefined) {

@@ -976,17 +976,17 @@ export async function getDashboardSummary() {
   };
 }
 
-export async function getPublishedCountsByDate() {
+export async function getPublishedCountsByDate(start: Date, end: Date) {
   const result = await db.query(`
     SELECT
-      published_at::date AS date,
+      to_char(published_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
       COUNT(*) AS count
     FROM articles
-    WHERE published_at IS NOT NULL
+    WHERE published_at >= $1 AND published_at < $2
       AND LOWER(status::text) = 'published'
-    GROUP BY published_at::date
+    GROUP BY 1
     ORDER BY date ASC
-  `);
+  `, [start.toISOString(), end.toISOString()]);
 
   return result.rows.map(row => ({
     date: row.date,

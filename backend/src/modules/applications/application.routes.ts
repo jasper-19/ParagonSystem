@@ -1,11 +1,12 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import * as controller from "./application.controller";
-import { validate, validateParams } from "../../middlewares/validate";
+import { validate, validateParams, validateQuery } from "../../middlewares/validate";
 import { authenticate } from "../../middlewares/authenticate";
 import { requireAdmin } from "../../middlewares/requireAdmin";
 import { idParamSchema } from "../../schemas/common.schema";
 import {
+  applicationListQuerySchema,
   createApplicationSchema,
   updateStatusSchema,
   scheduleInterviewSchema,
@@ -37,7 +38,7 @@ router.use(authenticate, requireAdmin);
 
 router.patch("/settings", validate(updateApplicationSettingsSchema), controller.updateApplicationSettings);
 
-router.get("/", controller.getApplications);
+router.get("/", validateQuery(applicationListQuerySchema), controller.getApplications);
 
 router.get("/:id", validateParams(idParamSchema), controller.getApplicationById);
 

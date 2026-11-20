@@ -55,7 +55,7 @@ export const updateStatusSchema = z.object({
 
 /** Schema for PATCH /api/applications/:id/interview */
 export const scheduleInterviewSchema = z.object({
-  interviewDate: z.string().min(1, "Interview date is required"),
+  interviewDate: z.iso.datetime({ offset: true, local: true, message: "Interview date must be a valid ISO date and time" }),
 });
 
 /** Schema for PATCH /api/applications/:id/interview-notes */
@@ -93,3 +93,12 @@ export const updateApplicationSettingsSchema = z
       message: "At least one settings field is required",
     }
   );
+
+export const applicationListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(1_000_000).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  status: z.enum(["all", "pending", "interview_scheduled", "interview_completed", "accepted", "rejected"]).optional(),
+  search: z.string().trim().max(255).optional(),
+  sort: z.enum(["createdAt", "fullName", "status", "studentId"]).optional(),
+  order: z.enum(["asc", "desc"]).optional(),
+});

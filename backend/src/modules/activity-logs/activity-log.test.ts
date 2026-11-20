@@ -165,7 +165,10 @@ test("failure middleware records security/failed mutations once and excludes URL
   assert.equal(writes[0]!.details.actorType, "anonymous");
   assert.equal(writes[0]!.details.outcome, "failure");
   assert.equal(writes[1]!.details.route, "/api/media/:id");
-  assert.doesNotMatch(JSON.stringify(writes), /private|bad/);
+  // Random UUIDs can contain "bad"; inspect request-derived values without IDs.
+  const sanitizedWrites = writes.map(item => ({ ...item,
+    details: { ...item.details, requestId: undefined } }));
+  assert.doesNotMatch(JSON.stringify(sanitizedWrites), /private|bad/);
 });
 
 test("activity API is admin-only, rejects forged creation and validates filters before querying", async () => {
@@ -205,7 +208,8 @@ test("environment admin logout is audited as a human administrator", async () =>
 });
 
 test("media controllers audit completed changes and never audit failed uploads as success", async () => {
-  const { writes } = captureWrites(sql => {
+  const { writes } = captureWrites((sql, values) => {
+    if (sql.startsWith('SELECT storage_path')) return { rows: (values[0] as string[]).map(storage_path => ({ storage_path })) };
     if (sql.includes("FROM system_settings")) return { rows: [{ version: 1, updated_at: new Date() }] };
     if (sql.includes("INSERT INTO media_files") || sql.includes("UPDATE media_files")) {
       return { rows: [{ id: entity, file_name: "private.pdf", mime_type: "application/pdf", size: 14, created_at: new Date() }] };
@@ -213,6 +217,7 @@ test("media controllers audit completed changes and never audit failed uploads a
     if (sql.includes("DELETE FROM media_files")) return { rows: [{ id: entity, storage_path: "private.pdf" }] };
     return undefined;
   });
+  mock.method(db, 'connect', async () => ({ query: db.query.bind(db), release: () => {} }));
   mock.method(storageService, "upload", async () => undefined);
   let cleanupFails = false;
   mock.method(storageService, "remove", async () => { if (cleanupFails) throw new Error("Storage unavailable"); });
@@ -232,7 +237,7 @@ test("media controllers audit completed changes and never audit failed uploads a
     attachFile = false;
     assert.equal((await fetch(`${base}/media`, { method: "POST" })).status, 400);
     cleanupFails = true;
-    assert.equal((await fetch(`${base}/media/${entity}`, { method: "DELETE" })).status, 500);
+    assert.equal((await fetch(`${base}/media/${entity}`, { method: "DELETE" })).status, 204);
   });
   assert.deepEqual(writes.map(item => item.action), ["UPLOAD", "UPDATE", "DELETE", "DELETE"]);
   assert.doesNotMatch(JSON.stringify(writes), /private/);

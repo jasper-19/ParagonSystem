@@ -12,7 +12,8 @@ export async function removeUnreferencedStorageObject(storagePath: string, remov
     await client.query("SET LOCAL idle_in_transaction_session_timeout = '120s'");
     await client.query('LOCK TABLE special_issues, media_files IN SHARE ROW EXCLUSIVE MODE');
     const references = await client.query(`SELECT 1 FROM special_issues WHERE pdf_storage_path=$1
-      UNION ALL SELECT 1 FROM media_files WHERE storage_path=$1 LIMIT 1`, [storagePath]);
+      UNION ALL SELECT 1 FROM media_files WHERE storage_path=$1
+        OR storage_path = regexp_replace($1, '/(thumbnail|medium)[.]webp$', '/large.webp') LIMIT 1`, [storagePath]);
     if (references.rows.length) { await client.query('COMMIT'); return false; }
     await withStorageCancellation(AbortSignal.timeout(60_000), remove);
     await client.query('COMMIT');
@@ -37,7 +38,8 @@ export async function claimNextStorageCleanupJob(
        FROM paragon_internal.storage_cleanup_jobs AS queued
        WHERE completed_at IS NULL
          AND NOT EXISTS (SELECT 1 FROM special_issues s WHERE s.pdf_storage_path = queued.storage_path)
-         AND NOT EXISTS (SELECT 1 FROM media_files m WHERE m.storage_path = queued.storage_path)
+         AND NOT EXISTS (SELECT 1 FROM media_files m WHERE m.storage_path = queued.storage_path
+           OR m.storage_path = regexp_replace(queued.storage_path, '/(thumbnail|medium)[.]webp$', '/large.webp'))
          AND attempts < $1
          AND (
            attempts = 0
