@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import * as service from "./application.service";
-import * as notificationService from "../notifications/notification.service";
 import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { emitApplicationsUpdated, emitApplicationSettingsUpdated } from "../../realtime/socket.events";
@@ -36,11 +35,6 @@ export const createApplication = asyncHandler(
     const application = await service.createApplication(req.body);
 
 
-    notificationService.createForEvent(
-      "application",
-      `New application received from ${(application as any).fullName ?? 'an applicant'}.`,
-      "application"
-    ).catch(() => {});
     await auditLog(
       req,
       "CREATE",
@@ -133,11 +127,6 @@ export const acceptApplication = asyncHandler(
     const updated = await service.acceptApplication(id, interviewNotes);
 
 
-    notificationService.createForEvent(
-      "application",
-      `Application accepted: ${(updated as any).fullName ?? id}.`,
-      "application"
-    ).catch(() => {});
     await auditLog(req, "ACCEPT", "APPLICATIONS", `Accepted application: ${id}`, {
       resourceId: id,
       details: { notesChanged: interviewNotes !== undefined },
@@ -154,11 +143,6 @@ export const rejectApplication = asyncHandler(
     const updated = await service.rejectApplication(id);
 
     
-    notificationService.createForEvent(
-      "application",
-      `Application rejected: ${(updated as any).fullName ?? id}.`,
-      "application"
-    ).catch(() => {});
     await auditLog(req, "REJECT", "APPLICATIONS", `Rejected application: ${id}`, {
       resourceId: id,
     });

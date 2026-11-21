@@ -2,11 +2,15 @@ import { isIP } from "node:net";
 import { randomUUID } from "node:crypto";
 import { Request } from "express";
 import * as activityLogService from "./activity-log.service";
+import * as notificationService from "../notifications/notification.service";
+import { getSettings } from "../settings/settings.service";
+import { describeAuditNotification, notificationEnabled } from "./activity-notification.policy";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sensitiveKey = /password|secret|token|cookie|authorization|email|full.?name|notes|phone|address|content|buffer|base64/i;
 const pending = new Set<Promise<void>>();
 const requestIds = new WeakMap<Request, string>();
+const notifiedActions = new WeakMap<Request, Set<string>>();
 
 export function auditRequestId(req: Request): string {
   let id = requestIds.get(req);
@@ -82,9 +86,31 @@ export function auditLog(
       }));
     }
   })();
-  pending.add(write);
-  void write.then(() => pending.delete(write), () => pending.delete(write));
-  return write;
+  const notice = describeAuditNotification(action, resourceType, options.outcome ?? "success");
+  const key = JSON.stringify([action, resourceType, options.resourceId ?? null]);
+  let seen = notifiedActions.get(req);
+  if (!seen) { seen = new Set(); notifiedActions.set(req, seen); }
+  const shouldNotify = notice !== null && !seen.has(key);
+  if (shouldNotify) seen.add(key); // Deduplicate concurrent hooks before their first await.
+  const notify = (async () => {
+    if (!shouldNotify || !notice) return;
+    try {
+      if (notificationEnabled(notice, (await getSettings()).notifications)) {
+        await notificationService.create(notice.message, notice.type);
+      }
+    } catch (error) {
+      const code = (error as { code?: unknown } | null)?.code;
+      console.error("[NOTIFICATION_WRITE_FAILED]", JSON.stringify({
+        action: cleanText(action, 100), module: cleanText(resourceType, 50), requestId,
+        code: typeof code === "string" && /^[A-Z0-9_]{1,40}$/.test(code) ? code : "UNKNOWN",
+      }));
+    }
+  })();
+  // The two independent side effects run together; either failure must preserve a committed save.
+  const completed = Promise.all([write, notify]).then(() => {});
+  pending.add(completed);
+  void completed.then(() => pending.delete(completed), () => pending.delete(completed));
+  return completed;
 }
 
 /** HTTP has stopped accepting requests before this is called. DB timeouts bound pending writes. */

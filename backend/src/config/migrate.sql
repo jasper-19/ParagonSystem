@@ -290,6 +290,11 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
+-- Match the bounded unread feed without indexing already-read history.
+CREATE INDEX IF NOT EXISTS idx_notifications_unread_created
+  ON public.notifications (created_at DESC, id DESC)
+  WHERE is_read = FALSE;
+
 -- ============================================================
 -- users table (authentication accounts)
 -- ============================================================

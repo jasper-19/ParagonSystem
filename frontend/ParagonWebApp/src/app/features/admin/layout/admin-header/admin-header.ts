@@ -24,6 +24,8 @@ import { PublicationDatePipe } from '../../../../shared/pipes/publication-date.p
   selector: 'app-admin-header',
   imports: [CommonModule, PublicationDatePipe],
   standalone: true,
+  // Keep the stream and unread state within this authenticated admin view.
+  providers: [NotificationService],
   templateUrl: './admin-header.html',
   styleUrl: './admin-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,6 +64,10 @@ export class AdminHeaderComponent implements OnInit, OnDestroy, AfterViewChecked
 
   /** Proxy to the service signal so the template binds to live data. */
   readonly notifications = this.notificationService.notifications;
+  readonly notificationsLoading = this.notificationService.loading;
+  readonly notificationsError = this.notificationService.error;
+  readonly notificationsSessionExpired = this.notificationService.sessionExpired;
+  readonly markingNotificationsRead = this.notificationService.markingRead;
 
   readonly dropdownOpen = signal(false);
 
@@ -94,7 +100,10 @@ export class AdminHeaderComponent implements OnInit, OnDestroy, AfterViewChecked
 
   markAllAsRead(): void {
     this.notificationService.markAllRead();
-    this.closeNotifications(true);
+  }
+
+  retryNotifications(): void {
+    this.notificationService.refresh();
   }
 
   get unreadCount(): number {

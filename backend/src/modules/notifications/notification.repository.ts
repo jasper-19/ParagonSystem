@@ -15,7 +15,7 @@ export async function findUnread() {
     `SELECT id, message, type, is_read, created_at
      FROM notifications
      WHERE is_read = FALSE
-     ORDER BY created_at DESC
+     ORDER BY created_at DESC, id DESC
      LIMIT 50`
   );
   return result.rows.map(mapRow);

@@ -1,6 +1,5 @@
 import { Request, Response, } from "express";
 import * as service from "./article.service"
-import * as notificationService from "../notifications/notification.service";
 import { auditLog } from "../activity-logs/activity-log.audit";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sanitizeValue } from "../../middlewares/sanitize";
@@ -360,11 +359,6 @@ export const createArticle = asyncHandler(
 
         const article = await service.createArticle(req.body);
 
-        notificationService.createForEvent(
-            "articleCreated",
-            `New Article created: ${(article as any).title ?? "Untitled"}.`,
-            "article"
-        ).catch(() => {});
         await auditLog(
             req,
             "CREATE",
@@ -435,11 +429,6 @@ export const publishArticle = asyncHandler(
 
         const article = await service.publishArticle(id);
 
-        notificationService.createForEvent(
-            "articlePublished",
-            `Article published: ${(article as any).title ?? id}.`,
-            "article",
-        ).catch(() => {});
         await auditLog(
             req,
             "PUBLISH",

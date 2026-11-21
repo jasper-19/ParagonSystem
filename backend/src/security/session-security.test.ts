@@ -72,15 +72,30 @@ test("live delivery fails closed on expiry, non-admin tokens and database errors
 });
 
 test("account security updates atomically revoke sessions", async () => {
-  mock.method(pool, "query", async (sql: string, params: unknown[]) => {
-    assert.match(sql, /WITH updated AS \(UPDATE users/);
-    assert.match(sql, /UPDATE user_sessions SET revoked_at = NOW\(\)/);
-    assert.match(sql, /user_id IN \(SELECT id FROM updated\)/);
-    assert.match(sql, /AND revoked_at IS NULL AND TRUE/);
-    assert.deepEqual(params, [false, userId]);
-    return { rows: [] };
-  });
+  const statements: string[] = [];
+  let released = false;
+  mock.method(pool, "connect", async () => ({
+    query: async (sql: string, params: unknown[] = []) => {
+      statements.push(sql);
+      if (["BEGIN", "COMMIT", "SET LOCAL lock_timeout = '5s'", "LOCK TABLE users IN SHARE ROW EXCLUSIVE MODE"].includes(sql)) {
+        return { rows: [] };
+      }
+      if (sql.startsWith("SELECT role, is_active")) return { rows: [{ role: "admin", is_active: true }] };
+      if (sql.startsWith("SELECT COUNT(*)")) return { rows: [{ count: 2 }] };
+      assert.match(sql, /WITH updated AS \(UPDATE users/);
+      assert.match(sql, /UPDATE user_sessions SET revoked_at = NOW\(\)/);
+      assert.match(sql, /user_id IN \(SELECT id FROM updated\)/);
+      assert.match(sql, /AND revoked_at IS NULL AND TRUE/);
+      assert.deepEqual(params, [false, userId]);
+      return { rows: [] };
+    },
+    release: () => { released = true; },
+  }));
   assert.equal(await updateUser(userId, { isActive: false }), undefined);
+  assert.equal(statements[0], "BEGIN");
+  assert.equal(statements[statements.length - 1], "COMMIT");
+  assert.ok(statements.some(sql => sql.includes("WITH updated AS (UPDATE users")));
+  assert.equal(released, true);
 });
 
 test("restoring the same credentials and permissions cannot revive a stale login", async () => {

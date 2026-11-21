@@ -24,6 +24,24 @@ export async function authenticate(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  return authenticateSession(req, res, next, true);
+}
+
+/** Background notification reads validate sessions without extending idle time. */
+export async function authenticatePassive(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  return authenticateSession(req, res, next, false);
+}
+
+async function authenticateSession(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+  touchSession: boolean
+): Promise<void> {
   const authToken = getAuthToken(req);
 
   if (!authToken) {
@@ -38,7 +56,8 @@ export async function authenticate(
       const active = await sessionRepository.validateAndTouchSession(
         payload.sub,
         payload.sid as string,
-        payload
+        payload,
+        touchSession
       );
 
       if (!active) {

@@ -28,7 +28,7 @@
             <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
           </svg>
           @if (notifications().length > 0) {
-            <span class="notification-badge">{{ notifications().length }}</span>
+            <span class="notification-badge">{{ notifications().length >= 50 ? '50+' : notifications().length }}</span>
           }
         </button>
 
@@ -38,10 +38,18 @@
             <div class="notification-heading">
               <h2 id="notification-panel-title">Notifications</h2>
               @if (notifications().length > 0) {
-                <span class="notification-count">{{ notifications().length }} new</span>
+                <span class="notification-count">{{ notifications().length >= 50 ? '50+' : notifications().length }} unread</span>
               }
             </div>
             <div class="notification-list">
+              @if (notificationsError()) {
+                <div class="notification-empty" role="status">
+                  <p>{{ notificationsError() }}</p>
+                  @if (!notificationsSessionExpired()) {
+                    <button type="button" (click)="retryNotifications()" [disabled]="notificationsLoading()">Try again</button>
+                  }
+                </div>
+              }
               @for (n of notifications(); track n.id) {
                 <div class="notification-item">
                   <span class="notification-dot" aria-hidden="true"></span>
@@ -56,20 +64,20 @@
                   </div>
                 </div>
               }
-              @if (notifications().length === 0) {
+              @if (notifications().length === 0 && !notificationsError()) {
                 <div class="notification-empty">
                   <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
                     <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
                   </svg>
-                  <p>No new notifications</p>
-                  <span>You're all caught up!</span>
+                  <p>{{ notificationsLoading() ? 'Loading notifications…' : 'No new notifications' }}</p>
+                  @if (!notificationsLoading()) { <span>You're all caught up!</span> }
                 </div>
               }
             </div>
             @if (notifications().length > 0) {
               <div class="notification-footer">
-                <button type="button" (click)="markAllAsRead()">Mark all as read</button>
+                <button type="button" (click)="markAllAsRead()" [disabled]="markingNotificationsRead()">{{ markingNotificationsRead() ? 'Marking as read…' : 'Mark all as read' }}</button>
               </div>
             }
           </div>
