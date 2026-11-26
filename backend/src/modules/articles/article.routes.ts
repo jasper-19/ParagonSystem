@@ -12,7 +12,12 @@ import {
 import { publicCache } from "../../middlewares/cache";
 import { idParamSchema } from "../../schemas/common.schema";
 
+import { sitemapHandler, sitemapCountHandler, resolveArticleSlug } from "./article-seo";
+
 const router = Router();
+router.get("/sitemap/count", sitemapCountHandler("articles"));
+router.get("/sitemap/page", sitemapHandler("articles"));
+router.get("/:slug/resolve", resolveArticleSlug);
 const noStore: import('express').RequestHandler = (_req, res, next) => {
   res.set('Cache-Control', 'no-store');
   next();

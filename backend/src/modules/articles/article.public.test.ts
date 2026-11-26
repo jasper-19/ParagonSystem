@@ -26,6 +26,7 @@ test('public slug/feed/preview/list endpoints never expose drafts, and admin edi
       return { rows: [{ id: '11111111-1111-4111-8111-111111111111', title: status === 'Draft' ? 'Private draft' : 'Published title',
         slug: typeof slug === 'string' && slug !== 'Published' ? slug : 'public-story', status,
         excerpt: 'Public introduction', content: '<p>Article body</p>', image: 'https://images.example/news.jpg',
+        seo_description: 'Alternate description', language: 'fil', content_modified_at: '2026-01-01T10:00:00.000Z',
         category: 'News', author: 'Campus writer', published_at: new Date(), created_at: new Date() }] };
     }
     if (sql.includes('FROM article_credits')) return { rows: [] };
@@ -47,6 +48,13 @@ test('public slug/feed/preview/list endpoints never expose drafts, and admin edi
     const body = await preview.json() as Record<string, unknown>;
     assert.equal(body['title'], 'Published title');
     assert.equal(body['content'], undefined); assert.equal(body['author'], undefined);
+    const feed = await fetch(base + '/public-story/feed');
+    assert.equal(feed.status, 200);
+    const { article } = await feed.json() as { article: Record<string, unknown> };
+    assert.equal(article['status'], 'Published');
+    assert.equal(article['seoDescription'], 'Alternate description');
+    assert.equal(article['language'], 'fil');
+    assert.equal(article['modifiedAt'], '2026-01-01T10:00:00.000Z');
     for (const status of ['Draft', 'Archived', 'Scheduled']) {
       assert.equal((await fetch(`${base}?status=${status}`)).status, 400);
     }

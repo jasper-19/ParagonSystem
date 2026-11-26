@@ -35,6 +35,9 @@ function mapRow(row: any) {
     title: row.title,
     slug: row.slug,
     excerpt: row.excerpt,
+    seoDescription: row.seo_description ?? null,
+    language: row.language ?? "mul",
+    modifiedAt: row.content_modified_at ?? null,
     content: sanitizeArticleHtml(String(row.content ?? "")),
     image: row.image,
 
@@ -548,14 +551,15 @@ export async function findBySlug(slug: string, includeUnpublished = false) {
 /** Small, public-only payload for unauthenticated social crawlers. */
 export async function findPublicPreview(slug: string) {
   const result = await db.query(
-    `SELECT title, slug, excerpt, image, status, published_at
+    `SELECT title, slug, excerpt, image, status, published_at, seo_description, language, content_modified_at
      FROM articles
      WHERE slug = $1 AND LOWER(status::text) = 'published'`,
     [slug]
   );
   const row = result.rows[0];
   return row ? { title: row.title, slug: row.slug, excerpt: row.excerpt, image: row.image,
-    status: row.status, publishedAt: row.published_at } : null;
+    status: row.status, publishedAt: row.published_at, seoDescription: row.seo_description ?? null,
+    language: row.language ?? "mul", modifiedAt: row.content_modified_at ?? null } : null;
 }
 
 export async function findCreditsByArticleId(
@@ -671,11 +675,11 @@ export async function create(data: unknown) {
         tags,
         status,
         featured,
-        published_at
+        published_at, seo_description, language
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10, $11, $12, $13, $14
+        $8, $9, $10, $11, $12, $13, $14, $15, $16
       )
       RETURNING *`,
       [
@@ -698,6 +702,8 @@ export async function create(data: unknown) {
         "published"
           ? new Date()
           : null,
+        d.seoDescription || null,
+        d.language ?? "mul",
       ]
     );
 
@@ -738,6 +744,9 @@ export async function create(data: unknown) {
     };
   } catch (error) {
     await client.query("ROLLBACK");
+    if ((error as { code?: string }).code === "23505") {
+      throw Object.assign(new Error("This article URL is already reserved. Choose a different slug."), { statusCode: 409 });
+    }
 
     console.error(
       "Error creating article:",
@@ -780,7 +789,9 @@ export async function update(
          category = $10,
          tags = $11,
          status = $12,
-         featured = $13
+         featured = $13,
+         seo_description = CASE WHEN $15::boolean THEN $16 ELSE seo_description END,
+         language = COALESCE($17, language)
        WHERE id = $14
        RETURNING *`,
       [
@@ -800,6 +811,9 @@ export async function update(
         d.status,
         d.featured ?? false,
         id,
+        Object.prototype.hasOwnProperty.call(d, "seoDescription"),
+        d.seoDescription || null,
+        d.language ?? null,
       ]
     );
     const updatedRow = result.rows[0];
@@ -829,6 +843,9 @@ export async function update(
     };
   } catch (error) {
     await client.query("ROLLBACK");
+    if ((error as { code?: string }).code === "23505") {
+      throw Object.assign(new Error("This article URL is already reserved. Choose a different slug."), { statusCode: 409 });
+    }
 
     console.error(
       "Error updating article:",

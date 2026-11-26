@@ -11,7 +11,7 @@ DECLARE
 BEGIN
   FOREACH relation_name IN ARRAY ARRAY[
     'activity_logs','application_settings','applications','article_credits',
-    'articles','colleges','editorial_board_members','editorial_boards',
+    'articles','article_slug_history','colleges','editorial_board_members','editorial_boards',
     'media_files','notifications','programs','special_issues','staff_members',
     'system_settings','user_sessions','users'
   ] LOOP

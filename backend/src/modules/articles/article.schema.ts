@@ -132,6 +132,9 @@ export const createArticleSchema = z.object({
     .max(MAX_ARTICLE_CONTENT_CHARS)
     .transform(sanitizeArticleHtml),
 
+  seoDescription: z.string().trim().max(300).nullable().optional(),
+  language: z.enum(["en", "fil", "mul"]).optional(),
+
   image: articleImageSchema.optional(),
 
   /**
@@ -228,6 +231,9 @@ export const updateArticleSchema = z.object({
     .max(MAX_ARTICLE_CONTENT_CHARS)
     .transform(sanitizeArticleHtml)
     .optional(),
+
+  seoDescription: z.string().trim().max(300).nullable().optional(),
+  language: z.enum(["en", "fil", "mul"]).optional(),
 
   image: articleImageSchema.optional(),
 

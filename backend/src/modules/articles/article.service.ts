@@ -360,7 +360,7 @@ export async function getArticleFeed(
 
   const used = new Set<string>([article.id]);
 
-  const [relatedRaw, otherRaw] = await Promise.all([
+  const [relatedRaw, otherRaw, imagePreview, credits] = await Promise.all([
     repository.findAllCards({
       status: "Published",
       category: article.category,
@@ -373,6 +373,8 @@ export async function getArticleFeed(
       sort: "latest",
       limit: ARTICLE_FEED_LIMITS.queryBuffer,
     }),
+    getArticleImagePreview(article.image),
+    repository.findCreditsByArticleId(article.id),
   ]);
 
   const related = excludeUsed(
@@ -386,7 +388,12 @@ export async function getArticleFeed(
   ).slice(0, ARTICLE_FEED_LIMITS.otherStories);
 
   return {
-    article: toPublicArticle(article),
+    article: toPublicArticle({
+      ...article,
+      credits: credits.map(({ creditType, creditedName }) => ({ creditType, creditedName })),
+      ...(imagePreview && { socialImage: imagePreview.image, imageWidth: imagePreview.imageWidth,
+        imageHeight: imagePreview.imageHeight, imageType: imagePreview.imageType }),
+    }),
     related: related.map(toPublicArticleCard),
     otherStories: otherStories.map(toPublicArticleCard),
   };
@@ -794,7 +801,6 @@ function toPublicArticleCard(article: any) {
 function toPublicArticle(article: any) {
   const {
     id,
-    status,
     featured,
     createdAt,
     updatedAt,

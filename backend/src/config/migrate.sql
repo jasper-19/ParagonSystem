@@ -748,3 +748,69 @@ BEGIN
 END
 $$;
 -- End photo credit migration.
+
+
+-- SEO fields retain unknown historical modification times instead of inventing dates.
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS seo_description varchar(300);
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'mul'
+  CHECK (language IN ('en', 'fil', 'mul'));
+ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS content_modified_at timestamptz;
+
+-- Reserve both current and former URLs atomically, preventing another article
+-- from taking a historical URL. Deferred FK allows the BEFORE INSERT trigger.
+CREATE TABLE IF NOT EXISTS public.article_slug_history (
+  slug varchar(255) PRIMARY KEY,
+  article_id uuid NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE
+    DEFERRABLE INITIALLY DEFERRED,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.article_slug_history ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.article_slug_history FROM PUBLIC;
+CREATE INDEX IF NOT EXISTS article_slug_history_article_id ON public.article_slug_history(article_id);
+INSERT INTO public.article_slug_history(slug, article_id)
+  SELECT slug, id FROM public.articles ON CONFLICT (slug) DO NOTHING;
+CREATE SCHEMA IF NOT EXISTS paragon_internal;
+REVOKE ALL ON SCHEMA paragon_internal FROM PUBLIC;
+CREATE OR REPLACE FUNCTION paragon_internal.track_article_seo()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = pg_catalog AS $$
+DECLARE owner_id uuid;
+BEGIN
+  IF TG_OP = 'INSERT' OR NEW.slug IS DISTINCT FROM OLD.slug THEN
+    INSERT INTO public.article_slug_history(slug, article_id) VALUES (NEW.slug, NEW.id)
+      ON CONFLICT (slug) DO UPDATE SET slug = EXCLUDED.slug
+      RETURNING article_id INTO owner_id;
+    IF owner_id <> NEW.id THEN
+      RAISE EXCEPTION 'Article URL is reserved' USING ERRCODE = '23505';
+    END IF;
+  END IF;
+  IF TG_OP = 'INSERT' THEN
+    IF lower(NEW.status::text) = 'published' THEN
+      NEW.published_at := COALESCE(NEW.published_at, now());
+      NEW.content_modified_at := NEW.published_at;
+    END IF;
+  ELSE
+    -- Views and featured-order changes must not refresh search timestamps.
+    IF ROW(NEW.title, NEW.slug, NEW.excerpt, NEW.content, NEW.image, NEW.author,
+           NEW.photo_by, NEW.graphic_by, NEW.illustration_by, NEW.category, NEW.tags,
+           NEW.seo_description, NEW.language)
+       IS DISTINCT FROM
+       ROW(OLD.title, OLD.slug, OLD.excerpt, OLD.content, OLD.image, OLD.author,
+           OLD.photo_by, OLD.graphic_by, OLD.illustration_by, OLD.category, OLD.tags,
+           OLD.seo_description, OLD.language) THEN
+      NEW.content_modified_at := now();
+    ELSE
+      NEW.content_modified_at := OLD.content_modified_at;
+    END IF;
+    NEW.published_at := OLD.published_at;
+    IF lower(NEW.status::text) = 'published' AND lower(OLD.status::text) <> 'published'
+       AND OLD.published_at IS NULL THEN
+      NEW.published_at := now();
+      NEW.content_modified_at := now();
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION paragon_internal.track_article_seo() FROM PUBLIC;
+DROP TRIGGER IF EXISTS articles_track_seo ON public.articles;
+CREATE TRIGGER articles_track_seo BEFORE INSERT OR UPDATE ON public.articles
+  FOR EACH ROW EXECUTE FUNCTION paragon_internal.track_article_seo();

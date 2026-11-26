@@ -23,14 +23,18 @@ import {
 import { pdfConfig } from "../../config/pdf";
 import { createPrivatePdfHandler } from './private-pdf.controller';
 
+import { sitemapHandler, sitemapCountHandler } from "../articles/article-seo";
+
 const router = Router();
+router.get("/sitemap/count", sitemapCountHandler("special_issues"));
+router.get("/sitemap/page", sitemapHandler("special_issues"));
 
 /** PUBLIC */
 const pdfReadLimiter = rateLimit({
   windowMs: 60_000, max: 180, standardHeaders: true, legacyHeaders: false,
   message: { error: 'Too many PDF requests. Please try again later.' },
 });
-router.get('/pdf/:id', (_req, res, next) => { res.set('Cache-Control', 'no-store, private'); next(); },
+router.get('/pdf/:id', (_req, res, next) => { res.set({ 'Cache-Control': 'no-store, private', 'X-Robots-Tag': 'noindex' }); next(); },
   pdfReadLimiter, createPrivatePdfHandler());
 
 router.get(
