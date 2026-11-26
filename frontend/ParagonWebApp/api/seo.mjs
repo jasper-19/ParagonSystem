@@ -24,6 +24,10 @@ export function GET(request) {
     url.pathname = routed;
   }
   url.searchParams.delete('__page');
+  // Vercel may also expose the rewrite's named path capture as a query key.
+  if (url.searchParams.get('page') === url.pathname.slice(1)) {
+    url.searchParams.delete('page');
+  }
   request = new Request(url, { method: request.method });
   const path = url.pathname;
   return path === '/robots.txt' || path === '/sitemap.xml' || path.startsWith('/sitemaps/')
