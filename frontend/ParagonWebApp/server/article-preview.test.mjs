@@ -186,7 +186,7 @@ test('rejects invalid paths and methods before upstream work and supports HEAD',
 
 test('build configuration routes article URLs to the function and bundles the built shell', async () => {
   const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
-  assert.ok(config.rewrites.some(route => route.destination.startsWith('/api/seo?__page=')));
+  assert.ok(config.routes.some(route => route.dest?.startsWith('/api/seo?__page=')));
   assert.equal(config.functions['api/article/*.mjs'].includeFiles, `${config.outputDirectory}/index.csr.html`);
   assert.equal(config.functions['api/article/*.mjs'].maxDuration, 15);
   const handler = await import('../api/article/[slug].mjs');

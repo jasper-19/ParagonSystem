@@ -1,71 +1,66 @@
 {
-  "outputDirectory": "dist/ParagonWebApp/browser",
-  "functions": {
-    "api/auth-mail.mjs": { "maxDuration": 60 },
-    "api/seo.mjs": {
-      "includeFiles": "dist/ParagonWebApp/server/**",
-      "maxDuration": 60
-    },
-    "api/article/*.mjs": {
-      "includeFiles": "dist/ParagonWebApp/browser/index.csr.html",
-      "maxDuration": 15
-    }
-  },
-  "headers": [
-    {
-      "source": "/admin/:path*",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
-    },
-    {
-      "source": "/api/article/:path*",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
-    },
-    {
-      "source": "/index.csr.html",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://paragon-api-4zfk.onrender.com wss://paragon-api-4zfk.onrender.com https://*.supabase.co https://api.open-meteo.com https://nominatim.openstreetmap.org; media-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
-        },
-        {
-          "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=(self), payment=(), usb=()"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/api/seo?__page=/"
-    },
-    {
-      "source": "/admin/:path*",
-      "destination": "/index.csr.html"
-    },
-    {
-      "source": "/:page((?!api/).*)",
-      "destination": "/api/seo?__page=/:page"
-    }
-  ]
+    "outputDirectory":  "dist/ParagonWebApp/browser",
+    "functions":  {
+                      "api/auth-mail.mjs":  {
+                                                "maxDuration":  60
+                                            },
+                      "api/seo.mjs":  {
+                                          "includeFiles":  "dist/ParagonWebApp/server/**",
+                                          "maxDuration":  60
+                                      },
+                      "api/article/*.mjs":  {
+                                                "includeFiles":  "dist/ParagonWebApp/browser/index.csr.html",
+                                                "maxDuration":  15
+                                            }
+                  },
+    "routes":  [
+                   {
+                       "src":  "^/admin(?:/.*)?$",
+                       "headers":  {
+                                       "X-Robots-Tag":  "noindex, nofollow"
+                                   },
+                       "continue":  true
+                   },
+                   {
+                       "src":  "^/api/article(?:/.*)?$",
+                       "headers":  {
+                                       "X-Robots-Tag":  "noindex"
+                                   },
+                       "continue":  true
+                   },
+                   {
+                       "src":  "^/index[.]csr[.]html$",
+                       "headers":  {
+                                       "X-Robots-Tag":  "noindex"
+                                   },
+                       "continue":  true
+                   },
+                   {
+                       "src":  "^/.*$",
+                       "headers":  {
+                                       "Content-Security-Policy":  "default-src \u0027self\u0027; base-uri \u0027self\u0027; object-src \u0027none\u0027; frame-ancestors \u0027none\u0027; form-action \u0027self\u0027; script-src \u0027self\u0027; style-src \u0027self\u0027 \u0027unsafe-inline\u0027; img-src \u0027self\u0027 data: blob: https:; font-src \u0027self\u0027 data:; connect-src \u0027self\u0027 https://paragon-api-4zfk.onrender.com wss://paragon-api-4zfk.onrender.com https://*.supabase.co https://api.open-meteo.com https://nominatim.openstreetmap.org; media-src \u0027self\u0027 blob: https:; worker-src \u0027self\u0027 blob:; manifest-src \u0027self\u0027; upgrade-insecure-requests",
+                                       "Cross-Origin-Opener-Policy":  "same-origin",
+                                       "Permissions-Policy":  "camera=(), microphone=(), geolocation=(self), payment=(), usb=()",
+                                       "Referrer-Policy":  "strict-origin-when-cross-origin",
+                                       "X-Content-Type-Options":  "nosniff",
+                                       "X-Frame-Options":  "DENY"
+                                   },
+                       "continue":  true
+                   },
+                   {
+                       "src":  "^/$",
+                       "dest":  "/api/seo?__page=/"
+                   },
+                   {
+                       "handle":  "filesystem"
+                   },
+                   {
+                       "src":  "^/admin(?:/.*)?$",
+                       "dest":  "/index.csr.html"
+                   },
+                   {
+                       "src":  "^/(?!api(?:/|$))(.*)$",
+                       "dest":  "/api/seo?__page=/$1"
+                   }
+               ]
 }
