@@ -1,0 +1,100 @@
+<main id="main-content" class="information-page" aria-labelledby="information-title">
+  <div class="information-shell">
+    <header class="information-heading" [class.information-heading--story]="pageKey() === 'our-story'">
+      <div>
+        <h1 id="information-title">{{ page().title }}</h1>
+        <p class="information-deck">{{ page().introduction }}</p>
+      </div>
+      @if (pageKey() === 'our-story') {
+        <p class="story-identity">The Official Student Publication of <strong>{{ organization() }}</strong></p>
+      }
+    </header>
+
+    @if (page().draft) {
+      <aside class="information-draft" aria-label="Policy approval status">
+        <strong>Draft for editorial review</strong>
+        <p>This proposed policy has not yet been approved by the publication.</p>
+      </aside>
+    }
+
+    @if (pageKey() === 'our-story') {
+      <div class="story-statement">
+        <p>Liberating Voices.<br /><span>Amplifying the Truth.</span></p>
+        <div>
+          <p>{{ siteName() }} brings the campus into focus through journalism, student perspectives, and creative expression.</p>
+          <a routerLink="/top-stories" class="information-action">Explore our stories <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" /></svg></a>
+        </div>
+      </div>
+    }
+
+    <div class="information-layout" [class.information-layout--contact]="pageKey() === 'contact-us'">
+      <aside class="information-sidebar">
+        @if (pageKey() === 'contact-us') {
+          <div class="contact-details">
+            <h2>The publication desk</h2>
+            <p>{{ siteName() }}<br />{{ organization() }}</p>
+            @if (contactEmail()) {
+              <span class="contact-label">Email</span>
+              <a class="contact-email" [href]="emailLink()">{{ contactEmail() }}</a>
+            } @else {
+              <p class="contact-unavailable">Email contact details are not currently available. You can reach Paragon on Facebook.</p>
+            }
+            <a class="information-action" href="https://www.facebook.com/paragon.csug" target="_blank" rel="noopener noreferrer">
+              Paragon on Facebook <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg>
+              <span class="visually-hidden">(opens in a new tab)</span>
+            </a>
+          </div>
+        } @else {
+          <nav class="information-contents" aria-label="On this page">
+            <h2>On this page</h2>
+            @for (section of page().sections; track section.id) {
+              <a [href]="'/' + pageKey() + '#' + section.id" (click)="goToSection($event, section.id)">{{ section.title }}</a>
+            }
+          </nav>
+        }
+      </aside>
+
+      <div class="information-reading">
+        @for (section of page().sections; track section.id; let first = $first) {
+          <section class="information-section" [attr.aria-labelledby]="section.id" [class.information-section--lead]="pageKey() === 'our-story' && first">
+            <h2 [id]="section.id" tabindex="-1">{{ section.title }}</h2>
+            @for (paragraph of section.paragraphs; track $index) {
+              <p>{{ pageKey() === 'contact-us' && first && !contactEmail() ? 'Reach Paragon through its Facebook page for story ideas, corrections, and general inquiries.' : paragraph }}</p>
+            }
+            @if (section.items) {
+              <ul>@for (item of section.items; track item) { <li>{{ item }}</li> }</ul>
+            }
+            @if (pageKey() === 'contact-us' && first) {
+              <div class="contact-topics">
+                @for (topic of contactTopics; track topic.title) {
+                  <div class="contact-topic">
+                    <div><h3>{{ topic.title }}</h3><p>{{ topic.description }}</p></div>
+                    @if (contactEmail()) {
+                      <a [href]="emailLink(topic.subject)" [attr.aria-label]="'Email about ' + topic.title.toLowerCase()">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+              @if (contactEmail()) { <p class="contact-hint">Email links open your device&rsquo;s email app. You can also copy the address above.</p> }
+            }
+            @if (pageKey() === 'contact-us' && section.id === 'helpful-details') {
+              <a routerLink="/join" class="information-text-link">Explore staff opportunities</a>
+            }
+            @if (section.id === 'the-people') {
+              <div class="information-links">
+                <a routerLink="/editorial-board" class="information-text-link">Meet the editorial board</a>
+                <a routerLink="/join" class="information-text-link">Become a Paragon staff member</a>
+              </div>
+            }
+            @if (section.id === 'our-work') {
+              <a routerLink="/special-issues" class="information-text-link">Browse special issues</a>
+            }
+          </section>
+        }
+
+      </div>
+    </div>
+  </div>
+</main>

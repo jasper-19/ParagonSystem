@@ -79,6 +79,36 @@ test('preview and query variants are noindex; clean routes retain SSR status', a
   assert.equal((await handler(request('/join/'))).status, 308);
 });
 
+test('information routes render directly while unapproved policy drafts remain noindex', async () => {
+  const handler = createPublicPageHandler({ siteOrigin: origin, apiBase,
+    fetcher: async () => { throw new Error('Static information routes must not resolve content through the API'); },
+    render: async req => new Response(`<main>${new URL(req.url).pathname}</main>`, {
+      headers: { 'Content-Type': 'text/html' },
+    }) });
+  const pages = ['/our-story', '/contact-us', '/ethics-policy', '/privacy-policy', '/terms-of-service'];
+  for (const path of pages) {
+    const response = await handler(request(path));
+    assert.equal(response.status, 200, path);
+    assert.match(await response.text(), new RegExp(path));
+    assert.equal(response.headers.get('x-robots-tag'),
+      path.endsWith('-policy') || path === '/terms-of-service' ? 'noindex' : null, path);
+    assert.equal((await handler(request(path, 'HEAD'))).status, 200, path);
+    assert.equal(await (await handler(request(path, 'HEAD'))).text(), '', path);
+    assert.equal((await handler(request(`${path}/`))).status, 308, path);
+  }
+});
+
+test('static sitemap includes publication and contact pages but excludes unapproved policies', async () => {
+  const handler = createDiscoveryHandler({ siteOrigin: origin, apiBase,
+    fetcher: async () => { throw new Error('Static sitemap must not require the API'); } });
+  const response = await handler(request('/sitemaps/pages.xml'));
+  assert.equal(response.status, 200);
+  const xml = await response.text();
+  assert.match(xml, /<loc>https:\/\/news.example\/our-story<\/loc>/);
+  assert.match(xml, /<loc>https:\/\/news.example\/contact-us<\/loc>/);
+  assert.doesNotMatch(xml, /ethics-policy|privacy-policy|terms-of-service/);
+});
+
 test('sitemap index shards published URLs and omits fabricated lastmod dates', async () => {
   const handler = createDiscoveryHandler({ siteOrigin: origin, apiBase, fetcher: async url => {
     if (url.endsWith('/count')) return Response.json({ count: url.includes('/articles/') ? 1001 : 0 });

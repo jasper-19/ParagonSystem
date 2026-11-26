@@ -64,6 +64,11 @@ export const routes: Routes = [
         path: 'join',
         loadComponent: () => import('./features/join/join').then(m => m.JoinPage),
       },
+      ...(['our-story', 'ethics-policy', 'contact-us', 'privacy-policy', 'terms-of-service'] as const).map(page => ({
+        path: page,
+        loadComponent: () => import('./features/public-information/public-information').then(m => m.PublicInformationPage),
+        data: { page },
+      })),
     ],
   },
 

@@ -13,5 +13,8 @@ describe('Footer', () => {
     const fixture = TestBed.createComponent(Footer);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('a[href="/join"]')).not.toBeNull();
+    for (const path of ['/our-story', '/ethics-policy', '/contact-us', '/privacy-policy', '/terms-of-service']) {
+      expect(fixture.nativeElement.querySelector(`a[href="${path}"]`)).not.toBeNull();
+    }
   });
 });

@@ -3,7 +3,8 @@ import { API_BASE, SITE_ORIGIN, SLUG, configuredUrl, publicJson, errorResponse }
 const PAGE_SIZE = 1000;
 const escapeXml = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]);
 const envelope = (type, body) => `<?xml version="1.0" encoding="UTF-8"?><${type} xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}</${type}>`;
-const staticPaths = ['/', '/top-stories', '/special-issues', '/editorial-board', '/join'];
+// Unapproved policy drafts are served as previews but are not discoverable through the sitemap.
+const staticPaths = ['/', '/top-stories', '/special-issues', '/editorial-board', '/join', '/our-story', '/contact-us'];
 
 export function createDiscoveryHandler({ fetcher = fetch, siteOrigin = SITE_ORIGIN, apiBase = API_BASE, preview = false } = {}) {
   return async request => {

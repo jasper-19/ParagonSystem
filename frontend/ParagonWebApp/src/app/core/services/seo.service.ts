@@ -14,12 +14,18 @@ export const SEO_SITE_ORIGIN = new InjectionToken<string>('SEO_SITE_ORIGIN', {
 });
 const DESCRIPTION = 'Campus news, stories and student publications from Paragon at Cagayan State University Gonzaga.';
 const FALLBACK_IMAGE = '/assets/paragon-social-preview.jpg';
-const PAGES: Record<string, { title: string; description: string }> = {
+const PAGES: Record<string, { title: string; description: string; noindex?: boolean }> = {
   '/': { title: SITE_NAME, description: DESCRIPTION },
   '/top-stories': { title: 'Latest stories', description: 'Read the latest campus news, features, editorials, sports and literary works from CSU Gonzaga.' },
   '/special-issues': { title: 'Special issues', description: 'Explore Paragon tabloids, newsletters and literary folios from Cagayan State University Gonzaga.' },
   '/editorial-board': { title: 'Editorial board', description: 'Meet the student journalists and editorial board behind Paragon at CSU Gonzaga.' },
   '/join': { title: 'Join Paragon', description: 'Discover opportunities to join the Paragon student publication at Cagayan State University Gonzaga.' },
+  '/our-story': { title: 'Our Story', description: 'Learn about Paragon, the student publication of Cagayan State University Gonzaga, and explore its campus journalism.' },
+  '/contact-us': { title: 'Contact Us', description: 'Find contact channels for Paragon at CSU Gonzaga, including story ideas, corrections and publication inquiries.' },
+  // Keep unapproved policy drafts out of search results until editorial review is complete.
+  '/ethics-policy': { title: 'Ethics Policy', description: 'Review the draft editorial ethics guidance for Paragon at CSU Gonzaga.', noindex: true },
+  '/privacy-policy': { title: 'Privacy Policy', description: 'Review the draft information about privacy and use of the Paragon website.', noindex: true },
+  '/terms-of-service': { title: 'Terms of Service', description: 'Review the draft guidance for using the Paragon website and its publications.', noindex: true },
 };
 interface PageMetadata {
   title: string;

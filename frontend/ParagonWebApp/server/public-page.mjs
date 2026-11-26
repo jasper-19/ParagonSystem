@@ -1,6 +1,9 @@
 import { API_BASE, SITE_ORIGIN, SLUG, configuredUrl, publicJson, errorResponse } from './seo-http.mjs';
 
-const publicPaths = new Set(['/', '/top-stories', '/special-issues', '/editorial-board', '/join']);
+const publicPaths = new Set(['/', '/top-stories', '/special-issues', '/editorial-board', '/join',
+  '/our-story', '/contact-us', '/ethics-policy', '/privacy-policy', '/terms-of-service']);
+// These pages are usable previews; indexing waits for editorial approval of their wording.
+const draftPolicyPaths = new Set(['/ethics-policy', '/privacy-policy', '/terms-of-service']);
 
 export function createPublicPageHandler({ render, fetcher = fetch, siteOrigin = SITE_ORIGIN, apiBase = API_BASE,
   preview = false } = {}) {
@@ -40,7 +43,7 @@ export function createPublicPageHandler({ render, fetcher = fetch, siteOrigin = 
       headers.set('Cache-Control', 'no-store');
       headers.set('X-Content-Type-Options', 'nosniff');
       const filtered = [...incoming.searchParams.keys()].some(key => !/^(utm_.+|fbclid|gclid)$/i.test(key));
-      if (preview || filtered || response.status >= 400) headers.set('X-Robots-Tag', 'noindex');
+      if (preview || filtered || draftPolicyPaths.has(path) || response.status >= 400) headers.set('X-Robots-Tag', 'noindex');
       return new Response(head ? null : response.body, { status: response.status, headers });
     } catch {
       console.error('[PUBLIC_PAGE_UNAVAILABLE]');
