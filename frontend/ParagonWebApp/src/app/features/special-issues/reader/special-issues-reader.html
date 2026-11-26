@@ -8,6 +8,7 @@
       <div class="reader__publication">
         <h1>{{ issue?.title || 'Publication reader' }}</h1>
         @if (issue) {
+          @if (issue.description) { <p>{{ issue.description }}</p> }
           <p class="reader__meta"><span>{{ issue.type }}</span><span>{{ issue.academicYear }}</span></p>
         }
       </div>

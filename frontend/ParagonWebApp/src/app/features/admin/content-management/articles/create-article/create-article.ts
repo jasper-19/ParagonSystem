@@ -215,6 +215,8 @@ export class CreateArticleComponent implements OnDestroy {
     title: ['', Validators.required],
     slug: ['', [Validators.required], [this.slugUniqueValidator]],
     excerpt: ['', Validators.required],
+    seoDescription: ['', Validators.maxLength(300)],
+    language: ['mul' as 'en' | 'fil' | 'mul', Validators.required],
     content: ['', Validators.required],
     image: [''],
 
@@ -497,6 +499,8 @@ private loadArticleForEdit(article: Article): void {
     title: article.title,
     slug: article.slug,
     excerpt: article.excerpt,
+    seoDescription: article.seoDescription ?? '',
+    language: article.language ?? 'mul',
     content: article.content,
     image: article.image,
 
@@ -1626,6 +1630,8 @@ private clearFormState(): void {
     title: '',
     slug: '',
     excerpt: '',
+    seoDescription: '',
+    language: 'mul',
     content: '',
     image: '',
 

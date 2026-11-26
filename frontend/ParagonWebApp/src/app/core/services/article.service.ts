@@ -13,7 +13,8 @@ import { API_ENDPOINTS } from '../config/api.config';
 import { SocketService } from './socket.service';
 
 // API representation where date fields may be strings (or Date objects)
-type ApiArticle = Omit<Article, 'createdAt' | 'publishedAt'> & {
+type ApiArticle = Omit<Article, 'createdAt' | 'publishedAt' | 'modifiedAt'> & {
+  modifiedAt?: string | Date | null;
   createdAt?: string | Date;
   publishedAt?: string | Date | null;
 };
@@ -261,6 +262,7 @@ export class ArticleService {
       ...a,
       createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
       publishedAt: a.publishedAt ? new Date(a.publishedAt) : undefined,
+      modifiedAt: a.modifiedAt ? new Date(a.modifiedAt) : undefined,
     } as Article;
   }
 
@@ -628,6 +630,8 @@ private fetchArticleFeed(
       title: updated.title,
       slug: updated.slug,
       excerpt: updated.excerpt,
+      seoDescription: updated.seoDescription,
+      language: updated.language,
       content: updated.content,
       image: updated.image,
 

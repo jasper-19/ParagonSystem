@@ -41,11 +41,11 @@ test('deployed handler reads a relocated monorepo bundle independently of proces
       await mkdir(dirname(target), { recursive: true });
       await copyFile(new URL(`../${file}`, import.meta.url), target);
     }
-    const index = join(project, 'dist/ParagonWebApp/browser/index.html');
+    const index = join(project, 'dist/ParagonWebApp/browser/index.csr.html');
     await mkdir(dirname(index), { recursive: true });
     await writeFile(index, shell);
     // The old cwd-based lookup fails in this exact layout.
-    await assert.rejects(access(join(bundleRoot, 'dist/ParagonWebApp/browser/index.html')), { code: 'ENOENT' });
+    await assert.rejects(access(join(bundleRoot, 'dist/ParagonWebApp/browser/index.csr.html')), { code: 'ENOENT' });
     const script = `
       import assert from 'node:assert/strict';
       globalThis.fetch = async () => Response.json({slug:'campus-news',title:'Campus news',status:'Published'});

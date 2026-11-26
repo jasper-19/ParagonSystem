@@ -7,9 +7,10 @@ import {
   OnInit,
   inject,
   signal,
+  PLATFORM_ID,
 } from '@angular/core';
 import { SearchModal } from '../../../shared/components/search-modal/search-modal';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterModule } from '@angular/router';
 import { TemperatureService } from '../../services/temperature.service';
 import { LocationService } from '../../services/location.service';
@@ -30,6 +31,7 @@ import { PublicationDatePipe } from '../../../shared/pipes/publication-date.pipe
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Header implements OnInit, OnDestroy {
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   // ----- Injected services (functional `inject` to keep constructor-less) -----
   private tempService = inject(TemperatureService);
@@ -82,6 +84,7 @@ export class Header implements OnInit, OnDestroy {
 
   // ===== Lifecycle hooks =====
   ngOnInit(): void {
+    if (!this.isBrowser) return;
     // Keep the clock update outside Angular's zone to avoid unnecessary
     // change detection cycles; we manually trigger detection when needed.
     this.ngZone.runOutsideAngular(() => {

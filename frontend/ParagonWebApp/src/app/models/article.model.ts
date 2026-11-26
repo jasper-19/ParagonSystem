@@ -30,8 +30,15 @@ export interface Article {
   title: string;
   slug: string;
   excerpt: string;
+  seoDescription?: string | null;
+  language?: 'en' | 'fil' | 'mul' | null;
+  modifiedAt?: Date;
   content: string;
   image: string;
+  socialImage?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageType?: string;
 
   /**
    * Legacy display-name fields.
@@ -73,6 +80,7 @@ export type CreateArticle = Omit<
   | 'views'
   | 'createdAt'
   | 'publishedAt'
+  | 'modifiedAt'
   | 'credits'
 >;
 

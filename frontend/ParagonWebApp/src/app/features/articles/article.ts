@@ -1,11 +1,11 @@
 import { ErrorPage } from '../../shared/components/error-page/error-page';
-import { Component, inject, DestroyRef, DOCUMENT } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, DestroyRef, DOCUMENT, PLATFORM_ID, effect } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, map, tap } from 'rxjs/operators';
-import { distinctUntilChanged, shareReplay } from 'rxjs';
+import { shareReplay } from 'rxjs';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Meta, Title } from '@angular/platform-browser';
+import { SeoService } from '../../core/services/seo.service';
 import { ArticleService } from '../../core/services/article.service';
 import { ArticleViewService } from './services/article-view.service';
 import { Article as ArticleModel } from '../../models/article.model';
@@ -42,8 +42,8 @@ export class ArticlePage {
   private readonly destroyRef = inject(DestroyRef);
   private viewService = inject(ArticleViewService);
   private router = inject(Router);
-  private readonly meta = inject(Meta);
-  private readonly pageTitle = inject(Title);
+  private readonly seo = inject(SeoService);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly document = inject(DOCUMENT);
   readonly articleFeed = this.articleService.articleFeed;
   readonly articleErrorStatus = this.articleService.articleFeedErrorStatus;
@@ -77,6 +77,17 @@ export class ArticlePage {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
+  constructor() {
+    effect(() => {
+      const error = this.articleError();
+      const status = this.articleErrorStatus();
+      if (error) {
+        const slug = this.route.snapshot.paramMap.get('slug');
+        this.seo.setUnavailable('/article/' + slug, status ?? 503);
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.route.paramMap
       .pipe(
@@ -88,7 +99,7 @@ export class ArticlePage {
             !!slug
         ),
         tap(slug => {
-          this.document.defaultView?.scrollTo({
+          if (this.isBrowser) this.document.defaultView?.scrollTo({
             top: 0,
             left: 0,
             behavior: 'auto',
@@ -97,11 +108,9 @@ export class ArticlePage {
           this.articleService
             .loadArticleFeed(slug);
 
-          this.articleService
-            .incrementViews(slug)
-            .subscribe({
-              error: () => {},
-            });
+          if (this.isBrowser) {
+            this.articleService.incrementViews(slug).subscribe({ error: () => {} });
+          }
         }),
         takeUntilDestroyed(
           this.destroyRef
@@ -112,22 +121,12 @@ export class ArticlePage {
     this.article$
       .pipe(
         filter((article): article is ArticleModel => !!article),
-        distinctUntilChanged(
-          (previous, current) =>
-            previous.id === current.id &&
-            previous.title === current.title &&
-            previous.excerpt === current.excerpt &&
-            previous.image === current.image &&
-            previous.slug === current.slug
-        ),
         takeUntilDestroyed(
           this.destroyRef
         )
       )
       .subscribe(article => {
-        this.updateArticleMetadata(
-          article
-        );
+        this.seo.setArticle(article);
       });
 
     this.slugChanged$
@@ -180,103 +179,6 @@ export class ArticlePage {
     if (slug) this.articleService.loadArticleFeed(slug);
   }
 
-  private updateArticleMetadata(
-    article: ArticleModel
-  ): void {
-    const siteName = 'Paragon Campus Press';
-
-    const title =
-      `${article.title} | ${siteName}`;
-
-    const description =
-      this.normalizeDescription(
-        article.excerpt ||
-        this.stripHtml(article.content)
-      );
-
-    const existingCanonical = this.document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    const base = existingCanonical?.href || this.document.baseURI;
-    const articleUrl = new URL(
-      `/article/${article.slug}`,
-      base
-    ).toString();
-
-    const imageUrl =
-      this.toAbsoluteUrl(article.image);
-
-    this.pageTitle.setTitle(title);
-
-    this.meta.updateTag({
-      name: 'description',
-      content: description,
-    });
-
-    this.meta.updateTag({
-      property: 'og:type',
-      content: 'article',
-    });
-
-    this.meta.updateTag({
-      property: 'og:site_name',
-      content: siteName,
-    });
-
-    this.meta.updateTag({
-      property: 'og:title',
-      content: article.title,
-    });
-
-    this.meta.updateTag({
-      property: 'og:description',
-      content: description,
-    });
-
-    this.meta.updateTag({
-      property: 'og:url',
-      content: articleUrl,
-    });
-
-    // Server dimensions describe one exact image; discard them on CSR image changes.
-    if (this.meta.getTag('property="og:image"')?.content !== imageUrl) {
-      for (const property of ['og:image:width', 'og:image:height', 'og:image:type']) {
-        this.meta.removeTag(`property="${property}"`);
-      }
-    }
-    this.meta.updateTag({ property: 'og:image:secure_url', content: imageUrl });
-    this.meta.updateTag({
-      property: 'og:image',
-      content: imageUrl,
-    });
-
-    this.meta.updateTag({
-      property: 'og:image:alt',
-      content: article.title,
-    });
-
-    this.meta.updateTag({
-      name: 'twitter:card',
-      content: 'summary_large_image',
-    });
-
-    this.meta.updateTag({
-      name: 'twitter:title',
-      content: article.title,
-    });
-
-    this.meta.updateTag({
-      name: 'twitter:description',
-      content: description,
-    });
-
-    this.meta.updateTag({
-      name: 'twitter:image',
-      content: imageUrl,
-    });
-    this.meta.updateTag({ name: 'twitter:image:alt', content: article.title });
-
-    this.updateCanonicalLink(articleUrl);
-  }
-
   private stripHtml(html: string): string {
     return html
       .replace(/<[^>]*>/g, ' ')
@@ -288,82 +190,6 @@ export class ArticlePage {
       .replace(/&#39;/gi, "'")
       .replace(/\s+/g, ' ')
       .trim();
-  }
-
-  // Helper methods for metadata processing
-  private normalizeDescription(
-    value: string
-  ): string {
-    const normalized = value
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    const maxLength = 200;
-
-    if (normalized.length <= maxLength) {
-      return normalized;
-    }
-
-    const shortened =
-      normalized.slice(0, maxLength);
-
-    const lastSpace =
-      shortened.lastIndexOf(' ');
-
-    return `${
-      lastSpace > 0
-        ? shortened.slice(0, lastSpace)
-        : shortened
-    }…`;
-  }
-
-  private toAbsoluteUrl(
-    value: string | null | undefined
-  ): string {
-    const image = String(value ?? '').trim();
-
-    if (!image) {
-      return new URL(
-        '/assets/paragon-social-preview.jpg',
-        this.document.baseURI
-      ).toString();
-    }
-
-    try {
-      const url = new URL(
-        image,
-        this.document.baseURI
-      );
-      if (url.protocol === 'https:' || (url.protocol === 'http:' && !this.document.location?.protocol?.startsWith('https'))) {
-        if (!url.username && !url.password) return url.toString();
-      }
-    } catch {
-      // Fall back to the public brand image for invalid or unsupported URLs.
-    }
-    return new URL('/assets/paragon-social-preview.jpg', this.document.baseURI).toString();
-  }
-
-  private updateCanonicalLink(
-    url: string
-  ): void {
-    let link =
-      this.document.querySelector<HTMLLinkElement>(
-        'link[rel="canonical"]'
-      );
-
-    if (!link) {
-      link =
-        this.document.createElement('link');
-
-      link.setAttribute(
-        'rel',
-        'canonical'
-      );
-
-      this.document.head.appendChild(link);
-    }
-
-    link.setAttribute('href', url);
   }
 
 }

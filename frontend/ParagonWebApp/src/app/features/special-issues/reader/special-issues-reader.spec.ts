@@ -12,9 +12,10 @@ vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => ({ GlobalWorkerOptions: {} }));
 describe('SpecialIssueReader lifecycle and navigation', () => {
   let reader: SpecialIssueReader;
   beforeEach(() => {
-    reader = new SpecialIssueReader({} as ActivatedRoute, {} as SpecialIssueService,
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    reader = TestBed.runInInjectionContext(() => new SpecialIssueReader({} as ActivatedRoute, {} as SpecialIssueService,
       { detectChanges: vi.fn(), markForCheck: vi.fn() } as unknown as ChangeDetectorRef,
-      { run: (fn: () => void) => fn(), runOutsideAngular: (fn: () => void) => fn() } as NgZone);
+      { run: (fn: () => void) => fn(), runOutsideAngular: (fn: () => void) => fn() } as NgZone));
   });
   it('labels the cover alone and disables next on the final spread', () => {
     reader.totalPages = 5;

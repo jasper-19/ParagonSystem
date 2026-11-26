@@ -1,9 +1,11 @@
 import { ErrorPage } from '../../../shared/components/error-page/error-page';
 import { PageLoaderComponent } from '../../../shared/components/page-loader/page-loader';
 
-import { CommonModule } from "@angular/common";
+import { CommonModule, isPlatformBrowser } from "@angular/common";
 import {
   Component,
+  inject,
+  PLATFORM_ID,
   HostListener,
   OnInit,
   AfterViewInit,
@@ -16,7 +18,8 @@ import {
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import { SpecialIssue } from "../../../models/special-issue.model";
 import { SpecialIssueService } from "../../../core/services/special-issue.service";
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import type * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { SeoService } from '../../../core/services/seo.service';
 import { Subscription } from "rxjs";
 import { ownPageFlipAnimation } from "./page-flip-lifecycle";
 import { PdfRenderQueue } from "./pdf-render-queue";
@@ -29,6 +32,8 @@ import { PdfRenderQueue } from "./pdf-render-queue";
   styleUrl: './special-issues-reader.scss',
 })
 export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly seo = inject(SeoService);
   /**
    * Container for the PDF reader
    */
@@ -109,6 +114,9 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
           try {
             if (this.destroyed) return;
             this.issue = issue;
+            this.seo.setIssue(issue);
+            if (!this.isBrowser) return;
+            const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
             if (!this.issue?.pdfUrl) throw new Error('PDF unavailable');
 
             // Set PDF.js worker
@@ -143,6 +151,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
         error: (err) => {
           this.isLoading = false;
           this.errorStatus = err?.status ?? 500;
+          this.seo.setUnavailable('/special-issues/' + slug, this.errorStatus);
           this.errorMessage = 'This publication could not be loaded.';
           this.cdr.markForCheck();
         },
@@ -154,6 +163,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
    * Called after the view is initialized
    */
   ngAfterViewInit(): void {
+    if (!this.isBrowser) return;
     this.viewReady = true;
     this.updateLayoutMode();
     this.tryInitialRender();
@@ -174,6 +184,7 @@ export class SpecialIssueReader implements OnInit, AfterViewInit, OnDestroy {
    * Update layout mode (spread or single page) based on window width
    */
   private updateLayoutMode() {
+    if (!this.isBrowser) return;
     const width = window.innerWidth;
     this.isSpreadMode = width >= this.SPREAD_BREAKPOINT;
   }

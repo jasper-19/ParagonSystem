@@ -89,7 +89,7 @@ test('replacement tokens remain literal and optional excerpts have a useful fall
   for (const excerpt of [undefined, null, '']) {
     const result = await make({ fetcher: async () => Response.json({ ...article, excerpt }) })(new Request('https://news.example/article/campus-news'));
     assert.equal(result.status, 200);
-    assert.match(await result.text(), /content="Read campus news and stories from Paragon Campus Press\."/);
+    assert.match(await result.text(), /content="Read campus news and stories from Paragon - Cagayan State University Gonzaga\."/);
   }
 });
 
@@ -186,8 +186,8 @@ test('rejects invalid paths and methods before upstream work and supports HEAD',
 
 test('build configuration routes article URLs to the function and bundles the built shell', async () => {
   const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
-  assert.deepEqual(config.rewrites[0], { source: '/article/:slug', destination: '/api/article/:slug' });
-  assert.equal(config.functions['api/article/*.mjs'].includeFiles, `${config.outputDirectory}/index.html`);
+  assert.ok(config.rewrites.some(route => route.destination.startsWith('/api/seo?__page=')));
+  assert.equal(config.functions['api/article/*.mjs'].includeFiles, `${config.outputDirectory}/index.csr.html`);
   assert.equal(config.functions['api/article/*.mjs'].maxDuration, 15);
   const handler = await import('../api/article/[slug].mjs');
   assert.equal(typeof handler.GET, 'function'); assert.equal(typeof handler.HEAD, 'function');

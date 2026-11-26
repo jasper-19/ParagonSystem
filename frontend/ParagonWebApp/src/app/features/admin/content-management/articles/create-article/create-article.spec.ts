@@ -24,10 +24,10 @@ class StubArticleEditor implements ControlValueAccessor {
 const writer = { staffId: 'writer-id', name: 'Campus Writer', position: 'Writer' };
 const photographer = { staffId: 'photo-id', name: 'Staff Photographer', position: 'Photographer' };
 const board = { sections: [{ members: [writer, photographer] }] };
-const base: Article = { id: 'story-id', title: 'Campus Story', slug: 'campus-story', excerpt: 'Introduction',
+const base = { id: 'story-id', title: 'Campus Story', slug: 'campus-story', excerpt: 'Introduction',
   content: '<p>Body</p>', image: '', author: writer.name, photoby: '', graphicby: '', illusrationby: '',
   category: 'News', tags: ['campus'], status: 'Draft', featured: false, views: 0, createdAt: new Date(),
-  credits: [{ staffId: writer.staffId, creditedName: writer.name, creditType: 'author' }] };
+  credits: [{ staffId: writer.staffId, creditedName: writer.name, creditType: 'author' }] } satisfies Article;
 
 describe('Article photo credits', () => {
   let fixture: ComponentFixture<CreateArticleComponent>;

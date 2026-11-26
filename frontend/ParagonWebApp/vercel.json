@@ -2,12 +2,28 @@
   "outputDirectory": "dist/ParagonWebApp/browser",
   "functions": {
     "api/auth-mail.mjs": { "maxDuration": 60 },
+    "api/seo.mjs": {
+      "includeFiles": "dist/ParagonWebApp/server/**",
+      "maxDuration": 60
+    },
     "api/article/*.mjs": {
-      "includeFiles": "dist/ParagonWebApp/browser/index.html",
+      "includeFiles": "dist/ParagonWebApp/browser/index.csr.html",
       "maxDuration": 15
     }
   },
   "headers": [
+    {
+      "source": "/admin/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/api/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+    },
+    {
+      "source": "/index.csr.html",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+    },
     {
       "source": "/(.*)",
       "headers": [
@@ -40,12 +56,12 @@
   ],
   "rewrites": [
     {
-      "source": "/article/:slug",
-      "destination": "/api/article/:slug"
+      "source": "/admin/:path*",
+      "destination": "/index.csr.html"
     },
     {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
+      "source": "/:page((?!api/).*)",
+      "destination": "/api/seo?__page=/:page"
     }
   ]
 }

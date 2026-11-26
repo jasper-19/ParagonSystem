@@ -38,13 +38,14 @@ describe('GlobalSettingsService consistency', () => {
 
   it('keeps full and public state at the latest version despite reordered responses', () => {
     service.load().subscribe();
+    document.title = 'Current article | Paragon';
     const oldRead = fullRequest();
     service.updateSection('general', snapshot(2).general, 1).subscribe();
     http.expectOne(req => req.method === 'PATCH').flush(snapshot(2));
     oldRead.flush(snapshot(1));
     expect(service.settings()?.version).toBe(2);
     expect(service.publicSettings()?.version).toBe(2);
-    expect(document.title).toContain('Publication 2');
+    expect(document.title).toBe('Current article | Paragon');
     service.loadPublic().subscribe();
     http.expectOne(req => req.url.includes('/public')).flush(publicSnapshot(1));
     expect(service.publicSettings()?.version).toBe(2);

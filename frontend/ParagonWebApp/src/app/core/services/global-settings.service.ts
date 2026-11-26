@@ -1,4 +1,3 @@
-import { DOCUMENT } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
@@ -34,7 +33,6 @@ const SECTION_PATHS: Record<GlobalSettingsSection, string> = {
 @Injectable({ providedIn: 'root' })
 export class GlobalSettingsService {
   private readonly http = inject(HttpClient);
-  private readonly document = inject(DOCUMENT);
   private readonly socket = inject(SocketService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly api = API_ENDPOINTS.settings;
@@ -120,12 +118,6 @@ export class GlobalSettingsService {
   private acceptPublic(settings: PublicGlobalSettings): void {
     if (settings.version < (this.publicState()?.version ?? 0)) return;
     this.publicState.set(settings);
-    this.applyGeneralSettings(settings.general);
-  }
-
-  private applyGeneralSettings(settings: GeneralGlobalSettings): void {
-    this.document.title = `${settings.siteName} | ${settings.organizationName}`;
-    this.document.documentElement.lang = 'en';
   }
 
   private handleRemoteUpdate(event: GlobalSettingsUpdatedPayload): void {

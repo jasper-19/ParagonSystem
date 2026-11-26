@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { io, Socket } from 'socket.io-client';
 
 import { SOCKET_EVENTS } from '../constants/socket-events';
@@ -26,10 +27,12 @@ export interface GlobalSettingsUpdatedPayload {
   providedIn: 'root',
 })
 export class SocketService {
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private socket?: Socket;
 
   connect(): void {
+    if (!this.isBrowser) return;
     if (this.socket) {
       if (!this.socket.connected) {
         this.socket.connect();

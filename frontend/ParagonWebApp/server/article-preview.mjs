@@ -1,6 +1,6 @@
 export const DEFAULT_SITE_ORIGIN = 'https://paragon-system-gvlg.vercel.app';
 export const DEFAULT_API_BASE = 'https://paragon-api-4zfk.onrender.com/api';
-const SITE_NAME = 'Paragon Campus Press';
+const SITE_NAME = 'Paragon - Cagayan State University Gonzaga';
 const FALLBACK_IMAGE = '/assets/paragon-social-preview.jpg';
 const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -41,7 +41,7 @@ function renderHead(shell, metadata, noindex) {
 function metadataFor(article, origin, slug, status) {
   const fallback = new URL(FALLBACK_IMAGE, origin).href;
   const title = article ? plainText(article.title, 255) : status === 404 ? 'Article unavailable' : 'Article temporarily unavailable';
-  const description = (article ? plainText(article.excerpt, 200) : '') || 'Read campus news and stories from Paragon Campus Press.';
+  const description = (article ? plainText(article.seoDescription || article.excerpt, 300) : '') || 'Read campus news and stories from Paragon - Cagayan State University Gonzaga.';
   const url = new URL(`/article/${slug}`, origin).href;
   const image = article && typeof article.image === 'string' && article.image.trim()
     ? httpsUrl(article.image.trim(), origin)?.href ?? fallback : fallback;

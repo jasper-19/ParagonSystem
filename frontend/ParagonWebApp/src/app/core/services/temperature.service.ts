@@ -1,6 +1,7 @@
 import { interval, map, switchMap, startWith, combineLatest, filter, catchError, EMPTY } from "rxjs";
 import { HttpClient } from "@angular/common/http";
-import { Injectable, inject, Injector } from "@angular/core";
+import { Injectable, inject, Injector, PLATFORM_ID } from "@angular/core";
+import { isPlatformBrowser } from '@angular/common';
 import { LocationService } from "./location.service";
 import { toObservable } from "@angular/core/rxjs-interop";
 
@@ -19,11 +20,13 @@ export class TemperatureService {
   private http = inject(HttpClient);
   private locationService = inject(LocationService);
   private injector = inject(Injector);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   // Public helper that returns an Observable<number | null>
   // - Emits the latest temperature value from the open-meteo API
   // - Emits `null` if the response does not contain temperature
   getTemperature() {
+    if (!this.isBrowser) return EMPTY;
     return combineLatest([
       // Convert the LocationService.coords signal into an Observable
       toObservable(this.locationService.coords, { injector: this.injector }).pipe(

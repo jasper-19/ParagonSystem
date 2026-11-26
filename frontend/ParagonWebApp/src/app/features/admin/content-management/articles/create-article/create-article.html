@@ -156,6 +156,22 @@
         <p class="text-xs text-slate-500">Short description for previews and SEO</p>
       </div>
 
+      <section class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-3" aria-labelledby="search-preview-heading">
+        <h2 id="search-preview-heading" class="text-sm font-bold text-[#000035]">Search preview</h2>
+        <label for="article-seo-description" class="block text-sm font-medium">Description override (optional)</label>
+        <textarea id="article-seo-description" formControlName="seoDescription" rows="3" maxlength="300"
+          aria-describedby="article-seo-description-help"
+          class="w-full rounded-xl border-2 border-slate-200 px-4 py-3 focus:border-[#F4B400] focus:outline-none"
+          placeholder="Leave blank to use the article excerpt"></textarea>
+        <p id="article-seo-description-help" class="text-xs text-slate-500">Up to 300 characters. Search engines may choose a different snippet.</p>
+        <label for="article-language" class="block text-sm font-medium">Article language</label>
+        <select id="article-language" formControlName="language" class="w-full rounded-xl border-2 border-slate-200 px-4 py-3 focus:border-[#F4B400] focus:outline-none">
+          <option value="mul">English and Filipino</option>
+          <option value="en">English</option>
+          <option value="fil">Filipino</option>
+        </select>
+      </section>
+
       <!-- Content -->
       <div class="bg-white rounded-2xl shadow-lg border-2 border-slate-200 p-4 sm:p-5 lg:p-6 space-y-3">
         <div class="flex items-center gap-2">

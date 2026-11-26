@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 // Resolve from this bundled module, not Vercel's process working directory.
-const shellUrl = new URL('../dist/ParagonWebApp/browser/index.html', import.meta.url);
+const shellUrl = new URL('../dist/ParagonWebApp/browser/index.csr.html', import.meta.url);
 
 export function createArticleShellLoader(readShell = () => readFile(shellUrl, 'utf8')) {
   let pending;

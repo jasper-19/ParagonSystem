@@ -37,7 +37,19 @@
             ],
             "styles": [
               "src/styles.css"
-            ]
+            ],
+            "server": "src/main.server.ts",
+            "outputMode": "server",
+            "ssr": {
+              "entry": "src/server.ts"
+            },
+            "security": {
+              "allowedHosts": [
+                "paragon-system-gvlg.vercel.app",
+                "localhost",
+                "127.0.0.1"
+              ]
+            }
           },
           "configurations": {
             "production": {
@@ -95,7 +107,9 @@
         },
         "test": {
           "builder": "@angular/build:unit-test",
-          "options": { "runnerConfig": "vitest.config.ts" }
+          "options": {
+            "runnerConfig": "vitest.config.ts"
+          }
         }
       }
     }
