@@ -27,16 +27,16 @@
 .brand-identity { display: flex; min-width: 0; align-items: center; gap: .625rem; }
 .brand-logo { width: 2.5rem; height: 2.5rem; flex-shrink: 0; object-fit: contain; }
 .brand-name { color: var(--sidebar-gold); font-size: 1rem; font-weight: 650; letter-spacing: -.025em; }
-.sidebar-toggle { display: flex; width: 2.5rem; height: 2.75rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 4px; color: #c4c4d2; transition: background-color 150ms, color 150ms; }
+.sidebar-toggle { display: flex; width: 2.5rem; height: 2.75rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 4px; color: #c4c4d2; transition: background-color var(--admin-hover-motion), color var(--admin-hover-motion); }
 .sidebar-toggle svg { width: 1.125rem; height: 1.125rem; }
-.sidebar-toggle:hover { color: white; background: #ffffff0d; }
+
 .sidebar-main { flex: 1; min-height: 0; overflow-y: auto; overflow-x: clip; overscroll-behavior: contain; padding-bottom: 1rem; }
 .sidebar-main { scrollbar-width: thin; scrollbar-color: #ffffff40 transparent; }
 .sidebar-group + .sidebar-group, .sidebar-main > .sidebar-control + .sidebar-group { margin-top: .375rem; }
-.sidebar-control { display: flex; position: relative; width: 100%; min-height: 2.75rem; align-items: center; gap: .75rem; border-radius: 5px; padding: .625rem .875rem; color: #c4c4d2; font-size: .8125rem; font-weight: 500; line-height: 1.4; text-align: left; text-decoration: none; transition: background-color 150ms, color 150ms; -webkit-tap-highlight-color: transparent; }
-.sidebar-control:hover, .sidebar-control.is-open { background: #ffffff0d; color: white; }
+.sidebar-control { display: flex; position: relative; width: 100%; min-height: 2.75rem; align-items: center; gap: .75rem; border-radius: 5px; padding: .625rem .875rem; color: #c4c4d2; font-size: .8125rem; font-weight: 500; line-height: 1.4; text-align: left; text-decoration: none; transition: background-color var(--admin-hover-motion), color var(--admin-hover-motion); -webkit-tap-highlight-color: transparent; }
+.sidebar-control.is-open { background: #ffffff0d; color: white; }
 .sidebar-control.is-active { background: #f4b40014; color: var(--sidebar-gold); }
-.sidebar-control.is-active:hover { background: #f4b40020; }
+
 .sidebar-icon { display: flex; width: 1.125rem; height: 1.125rem; align-items: center; justify-content: center; flex-shrink: 0; pointer-events: none; }
 :host ::ng-deep .sidebar-icon svg { display: block; width: 100%; height: 100%; }
 .sidebar-label { display: block; min-width: 0; overflow: hidden; white-space: nowrap; }
@@ -48,7 +48,12 @@
 .sidebar-account { flex-shrink: 0; padding-top: .75rem; border-top: 1px solid #ffffff1a; }
 .sidebar-account > * + * { margin-top: .25rem; }
 .sidebar-logout { color: #ffb6bc; }
-.sidebar-logout:hover { background: #fda4af0d; color: #ffd2d6; }
+@media (hover: hover) {
+  .sidebar-toggle:hover,
+  .sidebar-control:not(.is-active, .sidebar-logout):hover { background: #ffffff16; color: white; }
+  .sidebar-control.is-active:hover { background: #f4b40026; }
+  .sidebar-logout:hover { background: #fda4af19; color: #ffd2d6; }
+}
 .admin-sidebar:not(.is-expanded) {
   .sidebar-brand { flex-direction: column; min-height: 7rem; gap: .5rem; }
   .brand-identity { justify-content: center; }

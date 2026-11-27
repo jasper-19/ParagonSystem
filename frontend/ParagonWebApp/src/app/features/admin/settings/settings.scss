@@ -15,12 +15,13 @@
 }
 .settings-tabs { display: flex; gap: 24px; overflow-x: auto; overscroll-behavior-x: contain; border-bottom: 1px solid #dce1e8; scrollbar-width: thin; scrollbar-color: #9199a9 #f2f4f7; }
 .settings-tab {
-  position: relative; flex: 0 0 auto; min-height: 68px; padding: 10px 0 16px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #596477; text-align: left; font-family: inherit; cursor: pointer; transition: color 150ms ease-out, border-color 150ms ease-out;
+  position: relative; flex: 0 0 auto; min-height: 68px; padding: 10px 0 16px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #596477; text-align: left; font-family: inherit; cursor: pointer; transition: color var(--admin-hover-motion);
   > span:first-child { font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; }
   > span:last-child { margin-top: 4px; color: #596477; font-size: 12px; }
   &[aria-selected='true'] { border-bottom-color: #f4b400; background: transparent; color: #000035; }
-  &:hover { color: #000035; border-bottom-color: #c8cfd9; }
-  &[aria-selected='true']:hover { border-bottom-color: #f4b400; }
+  @media (hover: hover) {
+    &:not([aria-selected='true']):hover { color: #000035; border-bottom-color: var(--admin-hover-edge); }
+  }
   &:focus-visible { outline-offset: -3px; }
 }
 .settings-loading { padding: 24px 0; }

@@ -55,8 +55,10 @@
     th { color: #414d62; font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; border-bottom: 1px solid #dce1e8; }
     th, td { padding: 16px 20px; }
     td { vertical-align: top; }
-    tr:hover { background: #fafbfc; }
-    tr:hover td:first-child > div:first-child { color: #000035; }
+    @media (hover: hover) {
+      tbody tr:hover { background: var(--admin-hover-row); }
+      tbody tr:hover td:first-child > div:first-child { color: #000035; }
+    }
     td:first-child { overflow-wrap: anywhere; }
     td span, td .inline-flex { border-radius: 4px; font-weight: 500; }
     td > div > div, td > div > span { max-width: 100%; }

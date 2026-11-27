@@ -17,8 +17,8 @@
 .header-heading { display: flex; min-width: 0; align-items: center; gap: .625rem; }
 .header-heading h1 { min-width: 0; overflow: hidden; font: 600 .875rem/1.3 "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: -.015em; white-space: nowrap; text-overflow: ellipsis; }
 .title-full { display: none; }
-.header-icon-button { position: relative; display: inline-flex; width: 2.75rem; height: 2.75rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 5px; color: #53536c; transition: background-color 150ms, color 150ms; }
-.header-icon-button:hover, .header-icon-button[aria-expanded="true"] { background: #f1f1f5; color: #000035; }
+.header-icon-button { position: relative; display: inline-flex; width: 2.75rem; height: 2.75rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 5px; color: #53536c; transition: background-color var(--admin-hover-motion), color var(--admin-hover-motion); }
+.header-icon-button[aria-expanded="true"] { background: #f1f1f5; color: #000035; }
 .header-icon-button svg { width: 1.125rem; height: 1.125rem; }
 .header-clock { display: none; align-items: center; justify-content: center; gap: .75rem; white-space: nowrap; }
 .header-date { color: #53536c; font-size: .75rem; }
@@ -49,8 +49,11 @@
 .notification-empty p { color: #000035; font-size: .8125rem; font-weight: 600; }
 .notification-empty span { display: block; margin-top: .25rem; color: #53536c; font-size: .75rem; }
 .notification-footer { flex-shrink: 0; border-top: 1px solid #dcdce3; padding: .5rem .75rem; }
-.notification-footer button { min-height: 2.75rem; width: 100%; padding: .5rem; border-radius: 4px; color: #000035; font-size: .75rem; font-weight: 600; text-align: center; transition: background-color 150ms; }
-.notification-footer button:hover { background: #f1f1f5; }
+.notification-footer button { min-height: 2.75rem; width: 100%; padding: .5rem; border-radius: 4px; color: #000035; font-size: .75rem; font-weight: 600; text-align: center; transition: background-color var(--admin-hover-motion); }
+@media (hover: hover) {
+  .header-icon-button:not([aria-expanded="true"]):hover,
+  .notification-footer button:enabled:hover { background: var(--admin-hover-control); color: #000035; }
+}
 @media (min-width: 640px) {
   .header-layout { padding-inline: 1.25rem; }
   .header-heading h1 { font-size: .9375rem; }

@@ -50,7 +50,7 @@
   #article-title { font-size: 21px; font-weight: 600; line-height: 1.4; }
   #article-slug { font-size: 13px; }
   textarea { line-height: 1.65; }
-  button, a { transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease; }
+  button, a { transition: color var(--admin-hover-motion), background-color var(--admin-hover-motion), border-color var(--admin-hover-motion); }
   button { border-radius: 4px; box-shadow: none; }
   button:focus-visible, input[type='checkbox']:focus-visible {
     outline: 2px solid #000035;
@@ -63,7 +63,9 @@
     color: #000035;
     font-weight: 650;
     box-shadow: none;
-    &:hover:not(:disabled) { background: #e5a900; }
+    @media (hover: hover) {
+      &:enabled:hover { background: #ffca35; }
+    }
   }
   .draft-status {
     border: 1px solid var(--editor-line);

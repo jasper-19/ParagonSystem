@@ -8,7 +8,9 @@
     font-size: 13px;
     font-weight: 600;
 
-    &:hover { background: #171750; border-color: #171750; color: #fff; }
+    @media (hover: hover) {
+      &:hover { background: var(--admin-hover-primary); border-color: var(--admin-hover-primary); }
+    }
     &:focus-within { outline: 2px solid #000035; outline-offset: 3px; box-shadow: none; }
   }
   .media-uploader__overlay { background: rgb(0 0 53 / 65%); backdrop-filter: none; }

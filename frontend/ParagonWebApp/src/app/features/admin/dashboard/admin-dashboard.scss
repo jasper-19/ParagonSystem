@@ -51,8 +51,8 @@
   [data-variant="warning"] .stat-value, .stat-pending { color: #966500; }
 
   .range-controls { display: flex; flex-wrap: wrap; padding: .1875rem; border: 1px solid var(--dashboard-rule); border-radius: 5px; background: var(--dashboard-surface); }
-  .range-controls button { min-height: 2.375rem; padding: .375rem .75rem; border-radius: 3px; color: var(--dashboard-muted); font-size: .8125rem; text-transform: capitalize; transition: background-color 150ms; }
-  .range-controls button:hover { background: #ebebf0; color: var(--dashboard-ink); }
+  .range-controls button { min-height: 2.375rem; padding: .375rem .75rem; border-radius: 3px; color: var(--dashboard-muted); font-size: .8125rem; text-transform: capitalize; }
+
   .range-controls button[aria-pressed="true"] { background: var(--dashboard-ink); color: white; }
   .analytics-metrics { display: grid; grid-template-columns: minmax(0, 1fr); margin-bottom: 1.5rem; border-block: 1px solid var(--dashboard-rule); }
   .analytics-metric { min-width: 0; padding: 1rem 0; }
@@ -68,7 +68,7 @@
   .dashboard-button { display: inline-flex; align-items: center; justify-content: center; gap: .625rem; min-height: 2.5rem; padding: .5rem .875rem; border: 1px solid var(--dashboard-rule); border-radius: 4px; font-size: .8125rem; font-weight: 600; }
   .dashboard-button svg { width: 1rem; height: 1rem; }
   .dashboard-button--gold { background: var(--dashboard-gold); border-color: var(--dashboard-gold); color: var(--dashboard-ink); }
-  .dashboard-button--gold:hover { background: #e5a800; border-color: #e5a800; }
+
   .application-totals { display: grid; grid-template-columns: minmax(0, 1fr); margin-bottom: 1.5rem; border-block: 1px solid var(--dashboard-rule); }
   .application-totals > div { min-width: 0; padding: 1rem 0; }
   .application-totals > div + div { border-top: 1px solid var(--dashboard-rule); }
@@ -78,7 +78,7 @@
   .application-table th { padding: .75rem .875rem; background: var(--dashboard-surface); color: var(--dashboard-muted); text-align: left; font-size: .75rem; font-weight: 500; border-block: 1px solid var(--dashboard-rule); }
   .application-table td { padding: 1rem .875rem; border-bottom: 1px solid var(--dashboard-rule); vertical-align: middle; }
   .application-table tbody tr:last-child td { border-bottom: 0; }
-  .application-table tbody tr:hover { background: #fafafc; }
+
   .applicant-name { display: flex; align-items: center; gap: .625rem; font-weight: 600; overflow-wrap: anywhere; }
   .applicant-initial { display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 4px; background: #ededf3; color: var(--dashboard-ink); font-size: .75rem; font-weight: 600; }
   .application-labels { display: flex; flex-wrap: wrap; gap: .25rem .375rem; }
@@ -110,11 +110,10 @@
   .quick-action-arrow { width: 1rem; height: 1rem; color: var(--dashboard-muted); }
   .quick-action h3 { font-size: .8125rem; line-height: 1.5; font-weight: 600; }
   .quick-action p { margin-top: .375rem; color: var(--dashboard-muted); font-size: .75rem; line-height: 1.6; }
-  .quick-action:hover h3 { text-decoration: underline; text-underline-offset: 3px; }
 
   .activity-filters { display: flex; flex-wrap: wrap; gap: .25rem .5rem; border-bottom: 1px solid var(--dashboard-rule); margin-bottom: 1rem; }
   .activity-filters button { display: flex; align-items: center; justify-content: center; gap: .375rem; min-height: 2.75rem; padding: .5rem .625rem; margin-bottom: -1px; border-bottom: 2px solid transparent; color: var(--dashboard-muted); font-size: .8125rem; }
-  .activity-filters button:hover { background: var(--dashboard-surface); color: var(--dashboard-ink); }
+
   .activity-filters button[aria-pressed="true"] { border-bottom-color: var(--dashboard-gold); color: var(--dashboard-ink); font-weight: 600; }
   .activity-filters button span { padding: .0625rem .3125rem; border-radius: 3px; background: #efeff4; color: var(--dashboard-muted); font-size: .6875rem; }
   .activity-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.25rem; margin-bottom: 1rem; color: var(--dashboard-muted); font-size: .75rem; }
@@ -123,7 +122,7 @@
   .activity-page-size select { min-height: 2.5rem; padding: .375rem .625rem; border: 1px solid var(--dashboard-rule); border-radius: 4px; color: var(--dashboard-ink); background: white; }
   .activity-pagination { display: flex; align-items: center; justify-content: space-between; gap: .75rem; width: 100%; }
   .activity-pagination button { display: inline-flex; align-items: center; justify-content: center; gap: .375rem; min-height: 2.5rem; padding: .375rem .625rem; border: 1px solid var(--dashboard-rule); border-radius: 4px; color: var(--dashboard-ink); }
-  .activity-pagination button:not(:disabled):hover { background: var(--dashboard-surface); border-color: #a4a4b5; }
+
   .activity-pagination svg { width: .875rem; height: .875rem; }
   .activity-list { margin: 0; padding: 0; list-style: none; }
   .activity-list > li { display: flex; align-items: flex-start; gap: .875rem; padding: 1rem 0; border-top: 1px solid var(--dashboard-rule); }
@@ -181,4 +180,24 @@
     .application-mobile-heading > .application-status { margin-left: 2.625rem; }
   }
   @media (prefers-reduced-motion: reduce) { .range-controls button { transition: none; } }
+}
+
+@media (hover: hover) {
+  :host ::ng-deep .dashboard-workspace {
+    :is(.range-controls, .activity-filters) button:enabled:not([aria-pressed="true"]):hover {
+      background: var(--admin-hover-control);
+      color: var(--dashboard-ink);
+    }
+    .activity-pagination button:enabled:hover { background: var(--admin-hover-control); border-color: var(--admin-hover-edge); }
+    .dashboard-button--gold:hover { background: #ffca35; border-color: #b47f00; }
+    .application-table tbody tr:hover { background: var(--admin-hover-row); }
+    .quick-action:hover h3 { text-decoration: underline 2px var(--dashboard-gold); text-underline-offset: 3px; }
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  :host ::ng-deep .dashboard-workspace {
+    .quick-action-arrow { transition: translate var(--admin-hover-motion); }
+    .quick-action:hover .quick-action-arrow { translate: 3px; }
+  }
 }

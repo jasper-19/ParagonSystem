@@ -54,7 +54,7 @@
           <div class="relative mt-2">
             <input
               id="current-password"
-              class="min-h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-14 text-base text-[#000035] outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:bg-slate-100 motion-reduce:transition-none"
+              class="min-h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-14 text-base text-[#000035] outline-none transition placeholder:text-slate-400 enabled:hover:border-(--admin-hover-edge) focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:bg-slate-100 motion-reduce:transition-none"
               [class.border-red-500]="currentPasswordControl.touched && currentPasswordControl.invalid"
               [type]="showCurrentPassword ? 'text' : 'password'"
               formControlName="currentPassword"
@@ -65,7 +65,7 @@
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#000035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500 motion-reduce:transition-none"
+              class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-500 transition-colors enabled:hover:bg-(--admin-hover-control) hover:text-[#000035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500 motion-reduce:transition-none"
               (click)="togglePasswordVisibility('current')"
               [attr.aria-label]="showCurrentPassword ? 'Hide current password' : 'Show current password'"
               [attr.aria-pressed]="showCurrentPassword"
@@ -95,7 +95,7 @@
           <div class="relative mt-2">
             <input
               id="new-password"
-              class="min-h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-14 text-base text-[#000035] outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:bg-slate-100 motion-reduce:transition-none"
+              class="min-h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-14 text-base text-[#000035] outline-none transition placeholder:text-slate-400 enabled:hover:border-(--admin-hover-edge) focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:bg-slate-100 motion-reduce:transition-none"
               [class.border-red-500]="newPasswordControl.touched && (newPasswordControl.invalid || passwordForm.hasError('passwordUnchanged'))"
               [type]="showNewPassword ? 'text' : 'password'"
               formControlName="newPassword"
@@ -106,7 +106,7 @@
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#000035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500 motion-reduce:transition-none"
+              class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-500 transition-colors enabled:hover:bg-(--admin-hover-control) hover:text-[#000035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500 motion-reduce:transition-none"
               (click)="togglePasswordVisibility('new')"
               [attr.aria-label]="showNewPassword ? 'Hide new password' : 'Show new password'"
               [attr.aria-pressed]="showNewPassword"
@@ -144,7 +144,7 @@
           <div class="relative mt-2">
             <input
               id="confirm-password"
-              class="min-h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-14 text-base text-[#000035] outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:bg-slate-100 motion-reduce:transition-none"
+              class="min-h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-14 text-base text-[#000035] outline-none transition placeholder:text-slate-400 enabled:hover:border-(--admin-hover-edge) focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:bg-slate-100 motion-reduce:transition-none"
               [class.border-red-500]="confirmPasswordControl.touched && (confirmPasswordControl.invalid || passwordsDoNotMatch)"
               [type]="showConfirmPassword ? 'text' : 'password'"
               formControlName="confirmPassword"
@@ -155,7 +155,7 @@
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#000035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500 motion-reduce:transition-none"
+              class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-500 transition-colors enabled:hover:bg-(--admin-hover-control) hover:text-[#000035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500 motion-reduce:transition-none"
               (click)="togglePasswordVisibility('confirm')"
               [attr.aria-label]="showConfirmPassword ? 'Hide password confirmation' : 'Show password confirmation'"
               [attr.aria-pressed]="showConfirmPassword"

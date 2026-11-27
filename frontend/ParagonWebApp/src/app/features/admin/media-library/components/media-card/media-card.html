@@ -3,10 +3,7 @@
   class="media-card group relative w-full overflow-hidden
        rounded-(--border-radius-lg)
        bg-(--color-background-primary)
-       text-left
-       transition-shadow duration-200
-       hover:shadow-md
-       motion-reduce:transition-none"
+       text-left"
   [class.media-card--selected]="selected"
 >
 
@@ -20,10 +17,7 @@
         [alt]="media.altText || media.fileName"
         loading="lazy"
         decoding="async"
-        class="h-full w-full object-cover
-              transition-transform duration-300
-              group-hover:scale-[1.02]
-              motion-reduce:transition-none"
+        class="h-full w-full object-cover"
       />
     </ng-container>
 
@@ -49,10 +43,7 @@
             bg-linear-to-t
             from-[rgba(0,0,53,0.38)]
             to-transparent
-            opacity-0 transition-opacity duration-200
-            group-hover:opacity-100
-            group-focus-within:opacity-100
-            motion-reduce:transition-none"
+            opacity-0"
       [class.opacity-100]="selected"
     ></div>
 

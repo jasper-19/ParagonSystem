@@ -11,16 +11,16 @@
 .articles-heading { display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1.75rem; }
 .articles-heading h2 { font-family: inherit; font-size: 1.75rem; font-weight: 650; letter-spacing: -.035em; line-height: 1.25; }
 .articles-heading p { margin-top: .5rem; color: #53536c; font-size: .875rem; }
-.article-button { display: inline-flex; min-height: 2.75rem; justify-content: center; align-items: center; gap: .5rem; padding: .625rem 1rem; border-radius: 4px; font-size: .8125rem; font-weight: 600; text-decoration: none; transition: background-color 150ms; }
+.article-button { display: inline-flex; min-height: 2.75rem; justify-content: center; align-items: center; gap: .5rem; padding: .625rem 1rem; border-radius: 4px; font-size: .8125rem; font-weight: 600; text-decoration: none; transition: background-color var(--admin-hover-motion); }
 .article-button svg { width: 1rem; height: 1rem; }
 .article-button-primary { background: #000035; color: white; }
-.article-button-primary:hover { background: #1c1c50; }
+
 .articles-toolbar { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
 .articles-toolbar label, .field-label { display: block; margin-bottom: .5rem; color: #53536c; font-size: .75rem; font-weight: 500; }
 .article-search-field, .article-status-field { min-width: 0; }
 .status-filters { display: flex; overflow-x: auto; gap: .125rem; padding: .1875rem; border: 1px solid #dcdce3; border-radius: 5px; background: #f7f7f9; scrollbar-width: thin; scrollbar-color: #b9b9c7 transparent; }
-.status-filters button { min-height: 2.375rem; flex: 1; padding: .5rem .625rem; border-radius: 3px; color: #53536c; font-size: .8125rem; font-weight: 500; text-transform: capitalize; transition: background-color 150ms; }
-.status-filters button:hover { background: #ebebf0; color: #000035; }
+.status-filters button { min-height: 2.375rem; flex: 1; padding: .5rem .625rem; border-radius: 3px; color: #53536c; font-size: .8125rem; font-weight: 500; text-transform: capitalize; }
+
 .status-filters button[aria-pressed="true"] { background: #000035; color: white; }
 .articles-results { min-width: 0; border: 1px solid #dcdce3; border-radius: 6px; background: white; }
 .articles-state { display: flex; min-height: 15rem; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 2rem 1rem; color: #53536c; text-align: center; }
@@ -31,8 +31,8 @@
 table { width: 100%; min-width: 53.75rem; border-collapse: collapse; font-size: .8125rem; }
 th { padding: .875rem 1rem; background: #f7f7f9; color: #53536c; font-size: .75rem; font-weight: 600; text-align: left; white-space: nowrap; }
 td { padding: 1rem; border-top: 1px solid #ebebf0; vertical-align: middle; }
-tbody tr { cursor: pointer; transition: background-color 150ms; }
-tbody tr:hover, tbody tr:focus-visible { background: #faf9f5; }
+tbody tr { cursor: pointer; transition: background-color var(--admin-hover-motion); }
+tbody tr:focus-visible { background: var(--admin-hover-row); }
 tbody tr:focus-visible { outline-offset: -2px !important; }
 .article-title-cell { width: 32%; max-width: 22rem; }
 .article-title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
@@ -43,10 +43,10 @@ tbody tr:focus-visible { outline-offset: -2px !important; }
 .article-status[data-status="Archived"] { color: #53536c; }
 .article-featured { color: #855800; font-size: .75rem; font-weight: 600; }
 .article-actions { display: flex; flex-wrap: nowrap; gap: .375rem; }
-.article-action { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; padding: .5rem .75rem; border: 1px solid #dcdce3; border-radius: 4px; background: white; color: #000035; font-size: .75rem; font-weight: 600; transition: background-color 150ms; }
-.article-action:hover { background: #f1f1f5; }
+.article-action { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; padding: .5rem .75rem; border: 1px solid #dcdce3; border-radius: 4px; background: white; color: #000035; font-size: .75rem; font-weight: 600; transition: background-color var(--admin-hover-motion); }
+
 .article-action-danger { color: #b91c1c; }
-.article-action-danger:hover { background: #fef2f2; }
+
 .article-mobile-row { padding: 1.25rem 1rem; cursor: pointer; }
 .article-mobile-row + .article-mobile-row { border-top: 1px solid #ebebf0; }
 .article-mobile-row:focus-visible { outline-offset: -2px !important; }
@@ -62,8 +62,8 @@ tbody tr:focus-visible { outline-offset: -2px !important; }
 .article-page-summary select { width: auto; min-height: 2.5rem; padding: .375rem .5rem; font-size: .75rem; }
 .article-page-summary p { flex-basis: 100%; margin-top: .25rem; }
 .article-page-controls, .article-page-numbers { display: flex; align-items: center; justify-content: center; gap: .25rem; }
-.article-page-controls button { min-width: 2.5rem; min-height: 2.75rem; border-radius: 4px; padding: .5rem; color: #53536c; font-size: .75rem; transition: background-color 150ms; }
-.article-page-controls button:hover:not(:disabled) { background: #f1f1f5; color: #000035; }
+.article-page-controls button { min-width: 2.5rem; min-height: 2.75rem; border-radius: 4px; padding: .5rem; color: #53536c; font-size: .75rem; }
+
 .article-page-controls button[aria-current="page"] { background: #000035; color: white; }
 .article-page-numbers { display: none; }
 .article-mobile-page-indicator { text-align: center; font-size: .75rem; color: #53536c; }
@@ -87,3 +87,15 @@ tbody tr:focus-visible { outline-offset: -2px !important; }
   .articles-mobile { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .article-spinner { animation: none; } .article-button, .article-action, .status-filters button, tbody tr, .article-page-controls button { transition: none; } }
+
+@media (hover: hover) {
+  .article-button-primary:not(:disabled):hover { background: var(--admin-hover-primary); }
+  .status-filters button:enabled:not([aria-pressed="true"]):hover,
+  .article-page-controls button:enabled:not([aria-current="page"]):hover {
+    background: var(--admin-hover-control);
+    color: #000035;
+  }
+  tbody tr:hover, .article-mobile-row:hover { background: var(--admin-hover-row); }
+  .article-action:enabled:hover { background: var(--admin-hover-control); border-color: var(--admin-hover-edge); }
+  .article-action-danger:enabled:hover { background: #fff1ef; border-color: #e9a4a4; }
+}

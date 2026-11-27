@@ -27,7 +27,7 @@
       </span>
       <button
         type="button"
-        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-[#000035] shadow-sm transition-colors hover:border-amber-400 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
+        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-[#000035] shadow-sm transition-colors enabled:hover:border-(--admin-hover-edge) enabled:hover:bg-(--admin-hover-control) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
         (click)="refreshProfile()"
         [disabled]="profileRefreshing()"
         [attr.aria-label]="profileRefreshing() ? 'Refreshing profile' : 'Refresh profile'"
@@ -94,7 +94,7 @@
         </p>
       </div>
       <a
-        class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#000035] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#11115b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:w-auto motion-reduce:transition-none"
+        class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#000035] px-5 text-sm font-semibold text-white transition-colors hover:bg-(--admin-hover-primary) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:w-auto motion-reduce:transition-none"
         routerLink="/admin/staff-directory"
       >
         Open staff directory

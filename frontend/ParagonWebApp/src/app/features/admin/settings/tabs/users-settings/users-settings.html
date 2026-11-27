@@ -10,7 +10,7 @@
       </div>
       <button
         type="button"
-        class="inline-flex min-h-12 w-full touch-manipulation items-center justify-center rounded-xl bg-[#000035] px-5 text-sm font-bold text-white transition hover:bg-[#11115b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        class="inline-flex min-h-12 w-full touch-manipulation items-center justify-center rounded-xl bg-[#000035] px-5 text-sm font-bold text-white transition enabled:hover:bg-(--admin-hover-primary) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         [disabled]="eligibleStaff().length === 0"
         (click)="openCreateModal()"
       >

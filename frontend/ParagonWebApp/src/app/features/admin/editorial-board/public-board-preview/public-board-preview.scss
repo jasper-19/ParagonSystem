@@ -58,7 +58,7 @@
   cursor: pointer;
   transition: background-color 150ms ease-out, border-color 150ms ease-out;
   svg { width: 16px; height: 16px; }
-  &:hover { border-color: #8992a3; background: #f4f6f9; }
+  @media (hover: hover) { &:not(:disabled):hover { border-color: var(--admin-hover-edge); background: var(--admin-hover-control); } }
   &:active { background: #e9edf3; }
   &:focus-visible { outline: 2px solid #000035; outline-offset: 3px; }
 }
@@ -68,7 +68,7 @@
   border-color: #000035;
   color: #fff;
   svg { color: #f4b400; }
-  &:hover { background: #19194b; border-color: #19194b; }
+  @media (hover: hover) { &:not(:disabled):hover { background: var(--admin-hover-primary); border-color: var(--admin-hover-primary); } }
   &:active { background: #30305e; }
 }
 

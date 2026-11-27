@@ -21,7 +21,9 @@
   td:nth-child(5) p:last-child { margin-top: 3px; font-size: 12px; }
   td:nth-child(4) p { overflow-wrap: anywhere; }
   button { min-height: 36px; border: 1px solid #c8cfd9; border-radius: 4px; padding: 7px 10px; color: #000035; background: white; font-family: inherit; font-size: 12px; font-weight: 600; box-shadow: none; }
-  button:hover { border-color: #000035; background: #f4f6f9; box-shadow: none; }
+  @media (hover: hover) {
+    button:enabled:hover { border-color: var(--admin-hover-edge); background: var(--admin-hover-control); }
+  }
   button:focus-visible { outline: 2px solid #000035; outline-offset: 3px; box-shadow: none; }
   .log-record { padding: 18px 20px; border-color: #dce1e8; }
   .log-record > div:first-child > .flex > div:first-child { width: 36px; height: 36px; border: 1px solid #dce1e8; border-radius: 4px; background: #f2f4f7; span { color: #000035; font-weight: 600; } }

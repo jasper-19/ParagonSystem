@@ -16,6 +16,15 @@ app-public-layout {
   --public-image-motion: 420ms cubic-bezier(.2, .75, .25, 1);
 }
 
+app-admin-layout,
+app-admin-login {
+  --admin-hover-motion: 160ms cubic-bezier(.2, .75, .25, 1);
+  --admin-hover-control: #eeeff8;
+  --admin-hover-edge: #999bb8;
+  --admin-hover-row: #faf7ee;
+  --admin-hover-primary: #232359;
+}
+
 html,
 body {
   font-family: var(--font-sans);

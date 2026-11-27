@@ -116,7 +116,7 @@
           </button>
           <button
             type="submit"
-            class="min-h-12 touch-manipulation rounded-xl bg-[#000035] px-5 text-sm font-bold text-white hover:bg-[#11115b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            class="min-h-12 touch-manipulation rounded-xl bg-[#000035] px-5 text-sm font-bold text-white enabled:hover:bg-(--admin-hover-primary) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             [disabled]="isSubmitting() || form.invalid"
           >
             {{ isSubmitting() ? 'Creating account…' : 'Create administrator' }}
