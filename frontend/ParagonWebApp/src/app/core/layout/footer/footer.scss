@@ -21,4 +21,8 @@
   .publication-footer > div:first-child > div:first-child { grid-column: 1 / -1; max-width: 32rem; }
 }
 
-.publication-footer .footer-link { transition: color 150ms ease-out; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .publication-footer .footer-link { transition: color var(--public-action-motion); }
+  .publication-footer .footer-social-link svg { transition: scale var(--public-action-motion); }
+  .publication-footer .footer-social-link:hover svg { scale: 1.08; }
+}

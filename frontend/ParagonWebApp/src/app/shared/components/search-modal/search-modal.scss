@@ -41,6 +41,7 @@ svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-
 .result-count { flex-shrink: 0; color: var(--search-muted); font-size: .75rem; font-variant-numeric: tabular-nums; }
 .story-row { display: flex; align-items: flex-start; gap: 1.5rem; width: 100%; min-width: 0; padding: 1.125rem 0; border: 0; border-bottom: 1px solid var(--search-rule); background: white; text-align: left; color: var(--search-ink); }
 @media (hover: hover) {
+  .story-row:hover { background: #fff9e6; }
   .story-row:hover h4 { text-decoration: underline; text-decoration-color: var(--search-gold); text-decoration-thickness: 2px; text-underline-offset: .2em; }
 }
 .story-row:focus-visible { outline-offset: 4px; }
@@ -97,4 +98,8 @@ kbd { padding: .125rem .375rem; border: 1px solid var(--search-rule); font: inhe
   .search-footer { display: none; }
 }
 
-.clear-search { transition: background-color 150ms ease-out; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  :is(.clear-search, .story-row) {
+    transition: background-color var(--public-action-motion), color var(--public-action-motion);
+  }
+}

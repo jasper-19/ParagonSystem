@@ -27,6 +27,8 @@ a:focus-visible { outline: 2px solid var(--article-ink); outline-offset: 4px; }
 @media (max-width: 639px) { .recommendations-inner { width: calc(100% - 2rem); } .recommendation-list, .more .recommendation-list { grid-template-columns: minmax(0,1fr); gap: 1.5rem; } .article-recommendations { padding-block: 2rem; } .recommendations-heading { flex-wrap: wrap; gap: .5rem; } .recommendations-heading h2 { font-size: 1.5rem; } .more .recommendation-story > a:has(.recommendation-image) { grid-template-columns: 4.5rem minmax(0,1fr); gap: 1rem; } }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .recommendation-image img { transition: transform 280ms ease-out; }
-  .recommendation-story a:hover .recommendation-image img { transform: scale(1.035); }
+  .recommendations-heading a svg { transition: translate var(--public-action-motion); }
+  .recommendations-heading a:hover svg { translate: 4px; }
+  .recommendation-image img { transition: scale var(--public-image-motion); }
+  .recommendation-story a:hover .recommendation-image img { scale: 1.045; }
 }

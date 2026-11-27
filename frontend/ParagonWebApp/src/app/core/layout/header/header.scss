@@ -2,7 +2,7 @@
 .publication-header { background: white; color: #000035; border-bottom: 1px solid #dcdce3; }
 .publication-header-inner { width: min(100% - 3rem, 1200px); margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1rem; min-height: 72px; align-items: center; }
 .header-desktop-nav { display: flex; align-items: center; gap: 1.5rem; font-size: .75rem; font-weight: 600; }
-.header-desktop-nav a { display: flex; align-items: center; min-height: 72px; border-bottom: 2px solid transparent; padding-top: 2px; white-space: nowrap; }
+.header-desktop-nav a { position: relative; display: flex; align-items: center; min-height: 72px; border-bottom: 2px solid transparent; padding-top: 2px; white-space: nowrap; }
 .header-desktop-nav a.is-current { border-color: #f4b400; }
 
 .header-brand { display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
@@ -15,7 +15,7 @@
 .header-clock span { font-weight: 600; }
 .header-search-button, .header-menu-button { display: grid; place-items: center; width: 44px; height: 44px; cursor: pointer; }
 @media (hover: hover) {
-  .header-search-button:hover, .header-menu-button:hover { background: #f4b400; }
+  .header-search-button:hover, .header-menu-button[aria-expanded="false"]:hover { background: #fff4ce; }
 }
 .header-search-button svg, .header-menu-button svg { width: 22px; height: 22px; }
 .header-menu-button { display: none; }
@@ -41,18 +41,27 @@
   .header-mobile-nav a.is-current { background: #f4b400; color: #000035; }
 }
 
-.header-desktop-nav a {
-  transition: border-color 150ms ease-out;
-}
-
-.header-search-button, .header-menu-button {
-  transition: background-color 150ms ease-out;
+.header-desktop-nav a:not(.is-current)::before {
+  content: '';
+  position: absolute;
+  inset: auto 20% -2px;
+  height: 2px;
+  background: #000035;
+  transform: scaleX(0);
+  pointer-events: none;
 }
 
 @media (hover: hover) {
-  .header-desktop-nav a:not(.is-current):hover { border-bottom-color: #000035; }
+  .header-desktop-nav a:not(.is-current):hover::before { transform: scaleX(1); }
   .header-mobile-nav a:not(.is-current):hover { background: #f7f6f2; }
   .header-brand:hover { background: #f7f6f2; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .header-desktop-nav a::before { transition: transform var(--public-action-motion); }
+  :is(.header-search-button, .header-menu-button, .header-mobile-nav a, .header-brand) {
+    transition: background-color var(--public-action-motion);
+  }
 }
 
 .header-menu-button[aria-expanded="true"] {

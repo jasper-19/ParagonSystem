@@ -40,7 +40,7 @@
 .filter-chip--tag[aria-pressed='true'] { background: var(--stories-gold); color: var(--stories-ink); }
 .tags-toggle { border-color: transparent; text-decoration: underline; text-underline-offset: 4px; font-weight: 600; }
 @media (hover: hover) {
-  .filter-chip:not([aria-pressed="true"]):hover, .tags-toggle:hover { border-color: var(--stories-muted); background: #f7f6f2; }
+  .filter-chip:not([aria-pressed="true"]):hover, .tags-toggle:hover { border-color: #a17916; background: #fff9e6; }
 }
 .stories-shell { padding-block: 2.5rem 3.5rem; }
 .stories-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--stories-ink); padding-bottom: 1rem; margin-bottom: 1.5rem; }
@@ -60,8 +60,10 @@
   .stories-heading { align-items: center; flex-wrap: wrap; gap: .5rem; }
 }
 
-.control :is(input, select), .filter-chip, .tags-toggle {
-  transition: border-color 150ms ease-out;
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .control :is(input, select), .filter-chip, .tags-toggle {
+    transition: border-color var(--public-action-motion);
+  }
 }
 
 @media (hover: hover) {

@@ -35,7 +35,7 @@
 .reader__loading-mark { width: 3rem; height: 2px; background: var(--reader-honey); }
 .reader__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; min-height: 76px; padding: .75rem 1rem; }
 .reader__navigation { display: flex; align-items: center; gap: .75rem; margin-right: auto; }
-.reader__page-button, .reader__fullscreen { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 44px; min-height: 44px; border: 1px solid transparent; padding: .5rem .75rem; background: transparent; color: #fff; font: inherit; font-size: .875rem; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out; }
+.reader__page-button, .reader__fullscreen { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 44px; min-height: 44px; border: 1px solid transparent; padding: .5rem .75rem; background: transparent; color: #fff; font: inherit; font-size: .875rem; cursor: pointer; }
 .reader__page-button { border-color: var(--reader-rule); }
 .reader__page-button:disabled { color: #9292aa; cursor: not-allowed; }
 .reader__page-status { min-width: 7.5rem; text-align: center; white-space: nowrap; color: var(--reader-honey); font-size: .875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -47,7 +47,7 @@
   .reader__back:hover, .reader__pdf:hover, .reader__state a:hover { color: var(--reader-honey); text-decoration: underline; }
 }
 @media (hover: hover) {
-  .reader__page-button:hover:not(:disabled), .reader__fullscreen:hover { border-color: var(--reader-muted); background: #252550; }
+  .reader__page-button:hover:not(:disabled), .reader__fullscreen:hover { border-color: var(--reader-honey); background: #252550; }
 }
 .reader__page-button:active:not(:disabled), .reader__fullscreen:active { background: #3b3b62; }
 .reader :is(a, button, input):focus-visible { outline: 2px solid var(--reader-honey); outline-offset: 4px; }
@@ -74,6 +74,10 @@
   .reader__page-button span { display: none; }
   .reader__fullscreen span { display: none; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .reader__page-button, .reader__fullscreen { transition: none; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .reader__page-button, .reader__fullscreen {
+    transition: background-color var(--public-action-motion), border-color var(--public-action-motion);
+  }
+  .reader__back svg { transition: translate var(--public-action-motion); }
+  .reader__back:hover svg { translate: -4px; }
 }

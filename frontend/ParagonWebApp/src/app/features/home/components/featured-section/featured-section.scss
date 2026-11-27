@@ -13,7 +13,7 @@
 .featured-read { display: inline-flex; align-items: center; gap: 1rem; min-height: 44px; margin-top: 1rem; font-size: .8125rem; font-weight: 600; }
 .featured-read svg { width: 24px; height: 24px; }
 @media (hover: hover) {
-  .featured-read:hover { text-decoration: underline; text-underline-offset: .25em; }
+  .featured-read:hover { text-decoration: underline; text-decoration-color: var(--pub-gold); text-decoration-thickness: 2px; text-underline-offset: .25em; }
 }
 .featured-media { grid-column: 2; grid-row: 1; min-width: 0; }
 .featured-image-link { display: block; aspect-ratio: 4 / 3; overflow: hidden; background: #f7f6f2; }
@@ -29,7 +29,7 @@
 .featured-controls button { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--pub-rule); cursor: pointer; }
 .featured-controls button:last-child { background: var(--pub-gold); border-color: var(--pub-gold); }
 @media (hover: hover) {
-  .featured-controls button:hover { background: var(--pub-ink); color: white; }
+  .featured-controls button:hover { background: var(--pub-ink); border-color: var(--pub-ink); color: white; }
 }
 .featured-controls svg { width: 22px; height: 22px; }
 @keyframes story-arrive { from { opacity: .65; } to { opacity: 1; } }
@@ -52,8 +52,12 @@
 }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .featured-image-link img { transition: transform 320ms ease-out; }
-  .featured-image-link:hover img { transform: scale(1.035); }
-  .featured-read svg { transition: transform 170ms ease-out; }
-  .featured-read:hover svg { transform: translateX(4px); }
+  .featured-pagination button { transition: background-color var(--public-action-motion); }
+  .featured-controls button svg { transition: translate var(--public-action-motion); }
+  .featured-controls button:first-child:hover svg { translate: -3px; }
+  .featured-controls button:last-child:hover svg { translate: 3px; }
+  .featured-image-link img { transition: scale var(--public-image-motion); }
+  .featured-image-link:hover img { scale: 1.045; }
+  .featured-read svg { transition: translate var(--public-action-motion); }
+  .featured-read:hover svg { translate: 4px; }
 }

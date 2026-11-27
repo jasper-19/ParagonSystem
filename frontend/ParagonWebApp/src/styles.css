@@ -10,6 +10,12 @@
   --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+/* Public hover timing shared by the layout and its routed pages. */
+app-public-layout {
+  --public-action-motion: 180ms cubic-bezier(.2, .75, .25, 1);
+  --public-image-motion: 420ms cubic-bezier(.2, .75, .25, 1);
+}
+
 html,
 body {
   font-family: var(--font-sans);

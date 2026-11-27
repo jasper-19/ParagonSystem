@@ -38,6 +38,8 @@ h3 { margin-top: .75rem; font: 700 1.5rem/1.2 var(--font-serif); text-wrap: pret
 
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .story-image img { transition: transform 280ms ease-out; }
-  .story-card a:hover .story-image img { transform: scale(1.035); }
+  .load-more button svg { transition: translate var(--public-action-motion); }
+  .load-more button:enabled:hover svg { translate: 0 3px; }
+  .story-image img { transition: scale var(--public-image-motion); }
+  .story-card a:hover .story-image img { scale: 1.045; }
 }

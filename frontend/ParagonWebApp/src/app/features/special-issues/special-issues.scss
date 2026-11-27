@@ -26,7 +26,7 @@ a, button { -webkit-tap-highlight-color: rgb(244 180 0 / .2); }
 .issues-filters { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
 .issues-filters button { min-height: 44px; min-width: 44px; padding: .625rem .25rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--issue-muted); font-size: .8125rem; }
 @media (hover: hover) {
-  .issues-filters button:hover { color: var(--issue-ink); background: #f7f6f2; }
+  .issues-filters button:not(.is-active):hover { color: var(--issue-ink); background: #fff9e6; border-bottom-color: var(--issue-gold); }
 }
 .issues-filters button.is-active { color: var(--issue-ink); border-bottom-color: var(--issue-gold); font-weight: 600; }
 .issue-feature { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: clamp(2rem, 5vw, 4.5rem); align-items: center; padding-block: 3rem; }
@@ -37,7 +37,7 @@ a, button { -webkit-tap-highlight-color: rgb(244 180 0 / .2); }
 .issue-feature-copy { min-width: 0; }
 .issue-feature h2 { font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.14; letter-spacing: -.025em; }
 @media (hover: hover) {
-  :is(h2, h4) a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .12em; }
+  :is(h2, h4) a:hover { text-decoration: underline; text-decoration-color: var(--issue-gold); text-decoration-thickness: 2px; text-underline-offset: .15em; }
 }
 .issue-meta { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem 1.25rem; margin-top: 1rem; color: var(--issue-muted); font-size: .75rem; line-height: 1.7; font-variant-numeric: tabular-nums; }
 .issue-latest { color: var(--issue-ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--issue-gold); text-decoration-thickness: 2px; text-underline-offset: 5px; }
@@ -106,8 +106,18 @@ a, button { -webkit-tap-highlight-color: rgb(244 180 0 / .2); }
   .issue-row .issue-cover-fallback { padding: .5rem; font-size: .6875rem; }
 }
 
-.issues-filters button { transition: background-color 150ms ease-out, color 150ms ease-out; }
-
 @media (hover: hover) {
-  .issue-cover:hover:not(:focus-visible) { outline: 1px solid var(--issue-ink); outline-offset: -1px; }
+  .issue-cover:hover { background: #fff4ce; }
+  .issue-cover:hover:not(:focus-visible) { outline: 2px solid var(--issue-gold); outline-offset: -2px; }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  :is(.issues-filters button, .issue-cover) {
+    transition: background-color var(--public-action-motion), border-color var(--public-action-motion), color var(--public-action-motion);
+  }
+  .issue-cover img { transition: scale var(--public-image-motion); }
+  .issue-feature-cover:hover img { scale: 1.025; }
+  :is(.issue-button, .issue-read, .issue-download) svg { transition: translate var(--public-action-motion); }
+  :is(.issue-button, .issue-read):hover svg { translate: 4px; }
+  .issue-download:hover svg { translate: 0 3px; }
 }
