@@ -45,10 +45,10 @@ function brandedEmail({ subject, preheader, origin, content }) {
 <tr><td align="center" style="padding:16px 8px;">
 <!--[if mso]><table role="presentation" width="600" align="center" cellspacing="0" cellpadding="0" border="0"><tr><td><![endif]-->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;">
-<tr><td bgcolor="${navy}" style="padding:24px;background-color:${navy};color:#ffffff;border-bottom:4px solid ${honey};">
+<tr><td bgcolor="#ffffff" style="padding:24px;background-color:#ffffff;color:${navy};border-bottom:4px solid ${honey};">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-<tr><td valign="middle" style="padding-right:12px;"><img src="${site}/apple-touch-icon.png" alt="" width="48" height="48" style="display:block;width:48px;height:48px;border:0;background-color:#ffffff;"></td>
-<td valign="middle" style="font-family:${sans};font-size:13px;line-height:19px;color:#ffffff;">
+<tr><td valign="middle" style="padding-right:12px;"><img src="${site}/apple-touch-icon.png" alt="" width="48" height="48" style="display:block;width:48px;height:48px;border:0;"></td>
+<td valign="middle" style="font-family:${sans};font-size:13px;line-height:19px;color:${navy};">
 <strong style="font-family:${serif};font-size:23px;line-height:29px;">PARAGON</strong><br>${institution}
 </td></tr>
 </table>
@@ -79,12 +79,12 @@ function renderSignInEmail({ code, expiresAt, appUrl }) {
     }).format(expiresAt)} Philippine time.`;
   const reminder = 'If you did not try to sign in, you can ignore this email. Never share this code.';
   // Adjacent spans preserve a single text run in the DOM and avoid table-cell separators when copying.
-  const digits = [...code].map(digit => `<span class="otp-digit" style="display:inline-block;width:30px;line-height:42px;text-align:center;margin-right:3px;border:1px solid #d9d9e5;border-bottom:2px solid ${honey};border-radius:4px;background-color:#f4f4fa;color:${navy};">${digit}</span>`).join('');
+  const digits = [...code].map(digit => `<span class="otp-digit" style="display:inline-block;width:30px;line-height:42px;text-align:center;margin:0 2px;border:1px solid #d9d9e5;border-bottom:2px solid ${honey};border-radius:4px;background-color:#f4f4fa;color:${navy};">${digit}</span>`).join('');
 
   const content = `<h1 style="margin:0 0 12px;font-family:${serif};font-size:32px;line-height:38px;font-weight:normal;">Verify your sign-in.</h1>
 <p style="margin:0 0 16px;">Enter this one-time code to finish signing in to PARAGON.</p>
-<!--[if mso]><p style="margin:0 0 16px;font-family:Consolas,'Courier New',monospace;font-size:28px;line-height:48px;font-weight:bold;color:${navy};" dir="ltr">${code}</p><![endif]-->
-<!--[if !mso]><!--><p style="margin:0 0 16px;white-space:nowrap;font-family:Consolas,'Courier New',monospace;font-size:24px;line-height:48px;font-weight:bold;" dir="ltr">${digits}</p><!--<![endif]-->
+<!--[if mso]><p align="center" style="margin:0 0 16px;text-align:center;font-family:Consolas,'Courier New',monospace;font-size:28px;line-height:48px;font-weight:bold;color:${navy};" dir="ltr">${code}</p><![endif]-->
+<!--[if !mso]><!--><p align="center" style="margin:0 0 16px;text-align:center;white-space:nowrap;font-family:Consolas,'Courier New',monospace;font-size:24px;line-height:48px;font-weight:bold;" dir="ltr">${digits}</p><!--<![endif]-->
 <p style="margin:0 0 12px;">${expiration}</p>
 <p style="margin:0;">${reminder}</p>`;
 
