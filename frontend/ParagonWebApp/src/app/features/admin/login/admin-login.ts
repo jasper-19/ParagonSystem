@@ -26,7 +26,10 @@ export class AdminLoginComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly showPassword = signal(false);
   readonly capsLockOn = signal(false);
+  readonly verificationPage = this.route.snapshot.data?.['verification'] === true;
   readonly emailStep = signal(false);
+  readonly routeReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+  readonly digitSlots = [0, 1, 2, 3, 4, 5];
   readonly googleLinkStep = signal(false);
   readonly maskedEmail = signal('');
   readonly message = signal('');
@@ -45,7 +48,7 @@ export class AdminLoginComponent implements OnInit {
     if (this.route.snapshot.queryParamMap.has('twoFaChanged')) {
       this.message.set('Two-factor authentication was updated. Please sign in again.');
     }
-    const google = this.route.snapshot.queryParamMap.get('google');
+    const google = this.verificationPage ? null : this.route.snapshot.queryParamMap.get('google');
     if (google === 'error') {
       this.error.set('Google sign-in could not be completed. Please try again using your registered staff Gmail account.');
       return;
@@ -65,13 +68,21 @@ export class AdminLoginComponent implements OnInit {
       finalize(() => this.loading.set(false)), takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: challenge => {
+        if (challenge.kind === 'email' && !this.verificationPage) {
+          this.openVerification();
+          return;
+        }
+        if (this.verificationPage && challenge.kind !== 'email') {
+          this.error.set('No email verification is pending. Return to sign in.');
+          return;
+        }
         this.maskedEmail.set(challenge.maskedEmail);
         this.googleLinkStep.set(challenge.kind === 'google-link');
         this.emailStep.set(challenge.kind === 'email');
         if (challenge.kind === 'email') { this.startResendCountdown(); this.focusCode(); }
       },
       error: (err: HttpErrorResponse) => {
-        if (google === 'link' || google === 'verify' || err.status !== 404) {
+        if (this.verificationPage || google === 'link' || google === 'verify' || err.status !== 404) {
           this.error.set('Your sign-in request expired or could not be loaded. Please sign in again.');
         }
       },
@@ -96,8 +107,21 @@ export class AdminLoginComponent implements OnInit {
     });
   }
 
+  updateCode(input: HTMLInputElement): void {
+    const original = input.value;
+    const caret = input.selectionStart ?? original.length;
+    const digits = original.replace(/[^0-9]/g, '').slice(0, 6);
+    if (original !== digits) {
+      input.value = digits;
+      const position = Math.min(digits.length, original.slice(0, caret).replace(/[^0-9]/g, '').length);
+      input.setSelectionRange(position, position);
+    }
+    this.codeForm.controls.code.setValue(digits);
+    this.codeForm.controls.code.markAsDirty();
+  }
+
   verifyCode(): void {
-    if (this.loading()) return;
+    if (!this.emailStep() || this.loading()) return;
     if (this.codeForm.invalid) { this.codeForm.markAllAsTouched(); this.focusCode(); return; }
     this.loading.set(true);
     this.error.set(null);
@@ -107,7 +131,7 @@ export class AdminLoginComponent implements OnInit {
   }
 
   resendCode(): void {
-    if (this.loading() || this.resendSeconds() > 0) return;
+    if (!this.emailStep() || this.loading() || this.resendSeconds() > 0) return;
     this.loading.set(true);
     this.error.set(null);
     this.message.set('');
@@ -134,7 +158,7 @@ export class AdminLoginComponent implements OnInit {
         this.resendCountdown?.unsubscribe(); this.resendSeconds.set(0);
         this.emailStep.set(false); this.googleLinkStep.set(false);
         this.codeForm.reset(); this.form.reset(); this.error.set(null); this.message.set('');
-        void this.router.navigate([], { relativeTo: this.route, queryParams: { google: null }, queryParamsHandling: 'merge', replaceUrl: true });
+        void this.router.navigate(['/admin/login'], { queryParams: this.returnQuery(), replaceUrl: true });
       },
       error: err => this.error.set(this.getLoginErrorMessage(err)),
     });
@@ -153,15 +177,22 @@ export class AdminLoginComponent implements OnInit {
   private handleLoginResult(result: LoginResult): void {
     this.form.controls.password.reset();
     if ('twoFactorRequired' in result) {
-      this.googleLinkStep.set(false); this.emailStep.set(true);
-      this.maskedEmail.set(result.maskedEmail); this.startResendCountdown(); this.focusCode();
+      this.openVerification();
     } else if (result.ok) this.navigateAfterLogin();
+  }
+
+  private returnQuery(): { returnUrl: string | null } {
+    return { returnUrl: this.route.snapshot.queryParamMap.get('returnUrl') };
+  }
+
+  private openVerification(): void {
+    void this.router.navigate(['/admin/login/verify'], { queryParams: this.returnQuery(), replaceUrl: true });
   }
 
   private navigateAfterLogin(): void {
     const requested = this.route.snapshot.queryParamMap.get('returnUrl');
     const path = requested?.split(/[?#]/)[0];
-    const safe = path === '/admin' || (path?.startsWith('/admin/') && path !== '/admin/login');
+    const safe = path === '/admin' || (path?.startsWith('/admin/') && path !== '/admin/login' && path !== '/admin/login/verify');
     void this.router.navigateByUrl(safe && requested ? requested : '/admin');
   }
 
@@ -178,7 +209,7 @@ export class AdminLoginComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.loading()) {
+    if (this.verificationPage || this.loading()) {
       return;
     }
 

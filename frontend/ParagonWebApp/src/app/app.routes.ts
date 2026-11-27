@@ -73,6 +73,13 @@ export const routes: Routes = [
   },
 
   {
+    path: 'admin/login/verify',
+    loadComponent: () =>
+      import('./features/admin/login/admin-login').then(m => m.AdminLoginComponent),
+    data: { verification: true },
+    title: 'Verify your email | Paragon',
+  },
+  {
     path: 'admin/login',
     loadComponent: () =>
       import('./features/admin/login/admin-login').then(m => m.AdminLoginComponent),

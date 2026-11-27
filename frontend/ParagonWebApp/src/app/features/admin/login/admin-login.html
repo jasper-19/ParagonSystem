@@ -18,16 +18,16 @@
           <h1
             id="admin-login-title"
           >
-            {{ emailStep() ? 'Check your Gmail' : googleLinkStep() ? 'Link your Google account' : 'Welcome home' }}
+            {{ verificationPage ? 'Verify your email' : googleLinkStep() ? 'Link your Google account' : 'Welcome home' }}
           </h1>
           <p>
-            {{ emailStep() ? 'Enter the six-digit code sent to ' + maskedEmail() + '.' : googleLinkStep() ? 'Confirm your PARAGON username and password. Your registered staff Gmail must match ' + maskedEmail() + '.' : 'Please enter your details.' }}
+            {{ verificationPage ? (emailStep() ? 'Enter the six-digit code sent to ' + maskedEmail() + '.' : '') : googleLinkStep() ? 'Confirm your PARAGON username and password. Your registered staff Gmail must match ' + maskedEmail() + '.' : 'Please enter your details.' }}
           </p>
         </div>
       </header>
 
       <form
-        *ngIf="!emailStep()"
+        *ngIf="!verificationPage"
         [formGroup]="form"
         (ngSubmit)="submit()"
         [attr.aria-busy]="loading()"
@@ -227,14 +227,26 @@
         </div>
       </form>
 
+      @if (verificationPage && !emailStep()) {
+        @if (loading()) { <p class="login-notice" role="status">Loading your verification request?</p> }
+        @if (error()) { <p class="login-server-error" role="alert">{{ error() }}</p> }
+        <a class="login-secondary otp-back" routerLink="/admin/login" [queryParams]="{ returnUrl: routeReturnUrl }">Back to login</a>
+      }
       <form *ngIf="emailStep()" [formGroup]="codeForm" (ngSubmit)="verifyCode()" [attr.aria-busy]="loading()" novalidate>
         <div>
           <label for="admin-email-code" class="field-label">Verification code</label>
-          <div class="login-input-wrap">
-            <input id="admin-email-code" type="text" formControlName="code" inputmode="numeric"
-              autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-required="true"
+          <div class="otp-entry">
+            <input #codeInput id="admin-email-code" class="otp-input" type="text"
+              [value]="codeForm.controls.code.value" (input)="updateCode(codeInput)"
+              (blur)="codeForm.controls.code.markAsTouched()" inputmode="numeric"
+              autocomplete="one-time-code" spellcheck="false" [readonly]="loading()" required
               [attr.aria-invalid]="codeForm.controls.code.touched && codeForm.controls.code.invalid"
               aria-describedby="admin-code-help" />
+            <div class="otp-slots" aria-hidden="true">
+              @for (slot of digitSlots; track slot) {
+                <span [class.otp-slot-filled]="codeForm.controls.code.value.length > slot">{{ codeForm.controls.code.value.charAt(slot) }}</span>
+              }
+            </div>
           </div>
           <p id="admin-code-help" class="login-notice">Codes expire after five minutes and can be used once.</p>
           <p *ngIf="codeForm.controls.code.touched && codeForm.controls.code.invalid" class="login-field-error" role="alert">Enter the six-digit code from your email.</p>

@@ -56,3 +56,12 @@ button:focus-visible, input[type=checkbox]:focus-visible { outline: 2px solid va
 @media (max-width: 1023px) { .login-form-panel { width: 100%; } .login-photo-panel { display: none; } }
 @media (max-width: 639px) { .login-page { padding: 1rem .75rem; } .login-form-panel { padding: 1.75rem 1.25rem; } .login-form-panel > header { margin-bottom: 1.5rem; } header img { width: 3.5rem; height: 3.5rem; } header h1 { font-size: 1.875rem; } form { gap: 1.125rem; } }
 @media (max-height: 720px) { .login-page { align-items: flex-start; } }
+
+.otp-entry { position: relative; margin-block: .625rem 1rem; }
+.otp-slots { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(.25rem, 1.4vw, .625rem); pointer-events: none; }
+.otp-slots span { display: grid; place-items: center; min-width: 0; height: clamp(3rem, 7vw, 3.75rem); border: 1px solid #9292a4; border-radius: .25rem; background: #fff; color: var(--login-ink); font-size: 1.375rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.otp-slots .otp-slot-filled { background: #f6f6fb; border-color: var(--login-ink); }
+.otp-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: text; font-size: 1rem; }
+.otp-entry:focus-within .otp-slots { outline: 2px solid var(--login-ink); outline-offset: 4px; }
+.otp-input[aria-invalid=true] + .otp-slots span { border-color: #a52222; }
+.otp-back { display: inline-flex; align-items: center; justify-content: center; margin-top: 1rem; }
