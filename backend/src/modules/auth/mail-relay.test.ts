@@ -22,18 +22,19 @@ test('signed mail envelopes reject changed signatures and invalid recipient/code
 });
 test('Render transport uses HTTPS without SMTP or browser credentials', async () => {
   configure();
+  const expiresAt = Date.now() + 120_000;
   mock.method(globalThis, 'fetch', async (url: string, options: RequestInit) => {
     assert.equal(url, process.env.AUTH_MAIL_RELAY_URL); assert.equal(options.redirect, 'error');
-    assert.ok(verifyDelivery(JSON.parse(String(options.body))));
+    assert.equal(verifyDelivery(JSON.parse(String(options.body)))?.expiresAt, expiresAt);
     assert.deepEqual(options.headers, { 'Content-Type': 'application/json' });
     return new Response(null, { status: 204 });
   });
-  await sendEmailCode('fixture@gmail.com', '000001');
+  await sendEmailCode('fixture@gmail.com', '000001', expiresAt);
 });
 test('relay failures are sanitized and HTTPS configuration fails closed', async () => {
   configure();
   mock.method(globalThis, 'fetch', async () => { throw new Error('private provider details'); });
-  await assert.rejects(sendEmailCode('fixture@gmail.com', '000001'), /Verification email could not be delivered/);
+  await assert.rejects(sendEmailCode('fixture@gmail.com', '000001', Date.now() + 120_000), /Verification email could not be delivered/);
   process.env.AUTH_MAIL_RELAY_URL = 'http://unsafe.test';
   assert.throws(requireMailConfiguration);
 });

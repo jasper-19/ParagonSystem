@@ -59,9 +59,10 @@ export async function deliverChallenge(challenge: challenges.LoginChallenge): Pr
     throw loginError('Please wait at least a minute before requesting another code. A maximum of five emails can be sent in 15 minutes.', 429);
   }
   const code = generateEmailCode();
-  if (!await challenges.setEmailCode(challenge.id, codeHash(challenge.id, code))) throw loginError();
+  const expiresAt = await challenges.setEmailCode(challenge.id, codeHash(challenge.id, code));
+  if (expiresAt === undefined) throw loginError();
   try {
-    await sendEmailCode(challenge.data.email!, code);
+    await sendEmailCode(challenge.data.email!, code, expiresAt);
   } catch (error) {
     await challenges.cancelChallenge(challenge.id);
     throw error;

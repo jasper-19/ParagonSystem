@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import nodemailer from 'nodemailer';
+import { renderSignInEmail } from './email/transactional.cjs';
 
 // This module is server-only. Never import it from Angular src/.
 export function verifyDelivery(body, secret, now = Date.now()) {
@@ -14,6 +15,8 @@ export function verifyDelivery(body, secret, now = Date.now()) {
     if (typeof data.email !== 'string' || data.email.length > 254 || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@gmail\.com$/.test(data.email)
       || typeof data.code !== 'string' || !/^\d{6}$/.test(data.code)
       || typeof data.nonce !== 'string' || !/^[a-f0-9]{64}$/.test(data.nonce)
+      || (data.expiresAt !== undefined && (!Number.isSafeInteger(data.expiresAt) || data.expiresAt <= 0
+        || data.expiresAt > 8_640_000_000_000_000))
       || !Number.isSafeInteger(data.issuedAt) || data.issuedAt > now + 5000 || now - data.issuedAt > 60_000) return;
     return data;
   } catch { return; }
@@ -57,8 +60,7 @@ export function createAuthMailHandler({ env = process.env, request = fetch, crea
         auth: { user: sender, pass: env.AUTH_GMAIL_APP_PASSWORD }, connectionTimeout: 8000, greetingTimeout: 8000,
         socketTimeout: 12_000, disableFileAccess: true, disableUrlAccess: true });
       await transport.sendMail({ from: { name: 'PARAGON', address: sender }, to: delivery.email,
-        subject: 'Your PARAGON sign-in code',
-        text: `Your PARAGON verification code is ${delivery.code}.\n\nIt expires in 5 minutes and can be used once. If you did not try to sign in, ignore this email.` });
+        ...renderSignInEmail({ code: delivery.code, expiresAt: delivery.expiresAt, appUrl: env.PUBLIC_SITE_URL }) });
       return reply(204);
     } catch {
       // Provider errors can expose credentials and message contents. Never log them.

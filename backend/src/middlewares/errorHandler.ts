@@ -5,6 +5,7 @@ export interface AppError extends Error {
   statusCode?: number;
   status?: number;
   usage?: unknown;
+  type?: string;
 }
 
 /**
@@ -32,12 +33,14 @@ export function errorHandler(
       ? requestedStatusCode
       : 500;
 
-  // Log full error details server-side only
+  // JSON parser errors can include submitted secrets from the raw request body.
+  const invalidJson = err.type === "entity.parse.failed";
+  const message = invalidJson ? "Invalid JSON request body" : err.message;
   console.error(
     `[ERROR] ${new Date().toISOString()} ${req.method} ${req.path} – ${statusCode}:`,
-    err.message
+    message
   );
-  if (process.env.NODE_ENV !== "production") {
+  if (!invalidJson && process.env.NODE_ENV !== "production") {
     console.error(err.stack);
   }
 
@@ -54,7 +57,7 @@ export function errorHandler(
           ? multerCode === "LIMIT_FILE_SIZE"
             ? "Uploaded file is too large"
             : "Invalid file upload"
-          : err.message,
+          : message,
   };
   if (pdfUnavailable) response["code"] = (err as PdfProcessingError).code;
 

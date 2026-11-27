@@ -1,5 +1,6 @@
 import { createHmac, randomInt } from 'node:crypto';
 import nodemailer from 'nodemailer';
+import { renderSignInEmail } from '../../email/transactional.cjs';
 import { relayUrl, requireRelaySecret, signDelivery } from './mail-relay.service';
 
 export function requireChallengeSecret(): string {
@@ -39,13 +40,13 @@ export function requireMailConfiguration(): void {
   if (port !== 465 && port !== 587) throw Object.assign(new Error('Email transport requires TLS'), { statusCode: 503 });
 }
 
-export async function sendEmailCode(email: string, code: string): Promise<void> {
+export async function sendEmailCode(email: string, code: string, expiresAt: number): Promise<void> {
   requireMailConfiguration();
   if (process.env.AUTH_MAIL_RELAY_URL) {
     try {
       const response = await fetch(relayUrl(), {
         method: 'POST', redirect: 'error', signal: AbortSignal.timeout(65_000),
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(signDelivery(email, code)),
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(signDelivery(email, code, expiresAt)),
       });
       if (!response.ok) throw new Error('Relay delivery failed');
       await response.body?.cancel();
@@ -64,8 +65,7 @@ export async function sendEmailCode(email: string, code: string): Promise<void> 
   try {
     await transport.sendMail({
       from: process.env.AUTH_EMAIL_FROM!, to: email,
-      subject: 'Your PARAGON sign-in code',
-      text: `Your PARAGON verification code is ${code}.\n\nIt expires in 5 minutes and can be used once. If you did not try to sign in, ignore this email.`,
+      ...renderSignInEmail({ code, expiresAt, appUrl: process.env.FRONTEND_URL }),
     });
   } catch {
     // SMTP errors can contain credentials, recipients, and message content.

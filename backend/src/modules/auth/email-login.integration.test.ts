@@ -45,9 +45,13 @@ test('local PostgreSQL: Google linking, email verification, replay, limits, and 
     delete process.env.AUTH_MAIL_RELAY_URL; // Always use the mocked transport.
     let sentCode = ''; let failMail = false;
     mock.method(nodemailer, 'createTransport', () => ({
-      sendMail: async (mail: { text: string }) => {
+      sendMail: async (mail: { html: string; text: string; subject: string }) => {
         if (failMail) throw new Error('Synthetic SMTP failure');
         sentCode = mail.text.match(/\b\d{6}\b/)![0];
+        assert.equal(mail.subject, 'Your PARAGON sign-in code');
+        assert.ok(mail.html.includes('Verify your sign-in.'));
+        assert.ok(mail.html.includes(`>${sentCode}</p>`));
+        assert.match(mail.text, /This code expires on .+ Philippine time\./);
       }, close: () => {},
     }));
     mock.method(OAuth2Client.prototype, 'getToken', async () => ({ tokens: { id_token: 'fixture-token' } }));
@@ -70,7 +74,11 @@ test('local PostgreSQL: Google linking, email verification, replay, limits, and 
           user_agent text, ip_address text, browser_name text, browser_version text, os_name text, os_version text,
           device_type text, revoked_at timestamptz, last_active_at timestamptz DEFAULT NOW(), created_at timestamptz DEFAULT NOW());
         CREATE TABLE activity_logs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid, action text,
-          resource_type text, resource_id uuid, details jsonb, ip_address inet, user_agent text, created_at timestamptz DEFAULT NOW());`);
+          resource_type text, resource_id uuid, details jsonb, ip_address inet, user_agent text, created_at timestamptz DEFAULT NOW());
+        CREATE TABLE system_settings (id smallint PRIMARY KEY, general jsonb, publishing_media jsonb,
+          notifications jsonb, maintenance jsonb, version bigint, updated_at timestamptz, updated_by uuid);
+        CREATE TABLE notifications (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), message text NOT NULL,
+          type varchar(50) NOT NULL, is_read boolean NOT NULL DEFAULT FALSE, created_at timestamptz DEFAULT NOW());`);
       await client.query(rewrite(await readFile('src/config/migrate.security.sql', 'utf8')));
       await client.query('INSERT INTO staff_members (id,email,full_name) VALUES ($1,$2,$3)', [staffId, 'fixture@gmail.com', 'Fixture']);
       await client.query('INSERT INTO users (id,username,password_hash,role,staff_id) VALUES ($1,$2,$3,$4,$5)',

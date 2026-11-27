@@ -15,12 +15,12 @@ export function relayUrl(): string {
   }
   return url.href;
 }
-export function signDelivery(email: string, code: string): { payload: string; signature: string } {
+export function signDelivery(email: string, code: string, expiresAt?: number): { payload: string; signature: string } {
   const payload = Buffer.from(JSON.stringify({ email, code, nonce: randomBytes(32).toString('hex'),
-    issuedAt: Date.now() })).toString('base64url');
+    issuedAt: Date.now(), expiresAt })).toString('base64url');
   return { payload, signature: createHmac('sha256', requireRelaySecret()).update(PREFIX + payload).digest('hex') };
 }
-export function verifyDelivery(body: unknown): { email: string; code: string; nonce: string; issuedAt: number } | undefined {
+export function verifyDelivery(body: unknown): { email: string; code: string; nonce: string; issuedAt: number; expiresAt?: number } | undefined {
   if (!body || typeof body !== 'object') return;
   const { payload, signature } = body as Record<string, unknown>;
   if (typeof payload !== 'string' || payload.length > 1024 || !/^[A-Za-z0-9_-]+$/.test(payload)

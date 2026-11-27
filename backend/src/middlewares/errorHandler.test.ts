@@ -64,3 +64,13 @@ test("a recognized PDF code with a different server status remains generic", asy
   assert.equal(response.status, 500);
   assert.deepEqual(response.body, { error: "Internal server error" });
 });
+
+test("malformed JSON details stay out of responses and logs", async () => {
+  const response = await requestError(Object.assign(new SyntaxError(internalMessage), {
+    status: 400, type: "entity.parse.failed",
+  }));
+  assert.deepEqual(response, { status: 400, body: { error: "Invalid JSON request body" } });
+  const calls = (console.error as typeof console.error & { mock: { calls: { arguments: unknown[] }[] } }).mock.calls;
+  assert.equal(calls.length, 1);
+  assert.doesNotMatch(JSON.stringify(calls[0]?.arguments), /secret-detail/);
+});

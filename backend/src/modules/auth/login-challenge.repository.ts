@@ -114,10 +114,10 @@ export async function reserveCredentialAttempt(username: string, ipAddress: stri
   return reservations.every(Boolean);
 }
 
-export async function setEmailCode(id: string, hash: string): Promise<boolean> {
-  const result = await db.query(`UPDATE paragon_internal.login_challenges
+export async function setEmailCode(id: string, hash: string): Promise<number | undefined> {
+  const result = await db.query<{ code_expires_at: Date }>(`UPDATE paragon_internal.login_challenges
     SET code_hash = $2, code_expires_at = LEAST(expires_at, NOW() + INTERVAL '5 minutes')
     WHERE id = $1 AND kind = 'email' AND consumed_at IS NULL AND attempts < 5 AND expires_at > NOW()
-    RETURNING id`, [id, hash]);
-  return Boolean(result.rowCount);
+    RETURNING code_expires_at`, [id, hash]);
+  return result.rows[0]?.code_expires_at.getTime();
 }
