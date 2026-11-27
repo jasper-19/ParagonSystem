@@ -25,7 +25,9 @@ a, button { -webkit-tap-highlight-color: rgb(244 180 0 / .2); }
 .issues-browse-label { font-size: .75rem; font-weight: 600; flex-shrink: 0; }
 .issues-filters { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
 .issues-filters button { min-height: 44px; min-width: 44px; padding: .625rem .25rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--issue-muted); font-size: .8125rem; }
-.issues-filters button:hover { color: var(--issue-ink); background: #f7f6f2; }
+@media (hover: hover) {
+  .issues-filters button:hover { color: var(--issue-ink); background: #f7f6f2; }
+}
 .issues-filters button.is-active { color: var(--issue-ink); border-bottom-color: var(--issue-gold); font-weight: 600; }
 .issue-feature { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: clamp(2rem, 5vw, 4.5rem); align-items: center; padding-block: 3rem; }
 .issue-cover { display: flex; align-items: center; justify-content: center; overflow: hidden; background: #f7f6f2; }
@@ -34,7 +36,9 @@ a, button { -webkit-tap-highlight-color: rgb(244 180 0 / .2); }
 .issue-cover-fallback { padding: 1rem; color: var(--issue-muted); font-size: .8125rem; line-height: 1.6; text-align: center; }
 .issue-feature-copy { min-width: 0; }
 .issue-feature h2 { font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.14; letter-spacing: -.025em; }
-:is(h2, h4) a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .12em; }
+@media (hover: hover) {
+  :is(h2, h4) a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .12em; }
+}
 .issue-meta { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem 1.25rem; margin-top: 1rem; color: var(--issue-muted); font-size: .75rem; line-height: 1.7; font-variant-numeric: tabular-nums; }
 .issue-latest { color: var(--issue-ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--issue-gold); text-decoration-thickness: 2px; text-underline-offset: 5px; }
 .issue-date { display: block; margin-top: .625rem; color: var(--issue-muted); font-size: .75rem; line-height: 1.7; }
@@ -42,11 +46,15 @@ a, button { -webkit-tap-highlight-color: rgb(244 180 0 / .2); }
 .issue-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1.5rem; margin-top: 1.75rem; }
 .issue-actions svg { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .issue-button { display: inline-flex; align-items: center; justify-content: center; gap: 1.25rem; min-height: 48px; padding: .75rem 1.25rem; background: var(--issue-ink); border: 1px solid var(--issue-ink); color: white; font-size: .8125rem; font-weight: 600; line-height: 1.5; text-align: center; }
-.issue-button:hover { background: var(--issue-gold); border-color: var(--issue-gold); color: var(--issue-ink); }
+@media (hover: hover) {
+  .issue-button:hover { background: var(--issue-gold); border-color: var(--issue-gold); color: var(--issue-ink); }
+}
 .issue-download, .issue-read { display: inline-flex; align-items: center; justify-content: center; gap: .625rem; min-height: 44px; padding-block: .625rem; font-size: .8125rem; line-height: 1.5; text-decoration: underline; text-underline-offset: .3em; }
 .issue-download { color: var(--issue-muted); }
 .issue-read { font-weight: 600; text-decoration-color: var(--issue-gold); }
-.issue-download:hover, .issue-read:hover { color: var(--issue-ink); text-decoration-thickness: 2px; }
+@media (hover: hover) {
+  .issue-download:hover, .issue-read:hover { color: var(--issue-ink); text-decoration-thickness: 2px; }
+}
 .issue-catalog { padding-top: 2.5rem; border-top: 1px solid var(--issue-ink); }
 .issue-catalog > h2 { font-size: 2rem; line-height: 1.2; font-weight: 400; }
 .issue-year { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 2.5rem; margin-top: 2rem; }
@@ -96,4 +104,10 @@ a, button { -webkit-tap-highlight-color: rgb(244 180 0 / .2); }
   .issue-row .issue-actions { gap: 0 1rem; }
   .issue-row .issue-download, .issue-row .issue-read { font-size: .75rem; }
   .issue-row .issue-cover-fallback { padding: .5rem; font-size: .6875rem; }
+}
+
+.issues-filters button { transition: background-color 150ms ease-out, color 150ms ease-out; }
+
+@media (hover: hover) {
+  .issue-cover:hover:not(:focus-visible) { outline: 1px solid var(--issue-ink); outline-offset: -1px; }
 }

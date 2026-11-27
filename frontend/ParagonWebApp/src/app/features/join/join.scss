@@ -20,11 +20,17 @@
   svg { width: 1.125rem; height: 1.125rem; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
   .join-muted { color: var(--join-muted); }
   .join-button { display: inline-flex; align-items: center; justify-content: center; gap: .875rem; min-height: 3rem; width: fit-content; padding: .75rem 1.125rem; border: 1px solid var(--join-ink); background: var(--join-ink); color: white; font-size: .8125rem; font-weight: 600; line-height: 1.5; text-decoration: none; text-align: center; }
-  .join-button:hover { background: #25254d; }
+  @media (hover: hover) {
+    .join-button:not(:disabled):hover { background: #25254d; }
+  }
   .join-button-gold { background: var(--join-gold); color: var(--join-ink); border-color: var(--join-gold); }
-  .join-button-gold:hover { background: #ffd04d; border-color: #ffd04d; }
+  @media (hover: hover) {
+    .join-button-gold:not(:disabled):hover { background: #ffd04d; border-color: #ffd04d; }
+  }
   .join-text-link { display: inline-flex; align-items: center; justify-content: center; gap: .75rem; min-height: 2.75rem; padding-block: .5rem; background: transparent; color: inherit; border: 0; font-size: .8125rem; font-weight: 600; line-height: 1.5; text-decoration: underline; text-decoration-color: var(--join-gold); text-underline-offset: .3em; }
-  .join-text-link:hover { text-decoration-thickness: 2px; }
+  @media (hover: hover) {
+    .join-text-link:hover { text-decoration-thickness: 2px; }
+  }
   .join-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; margin-top: 2rem; }
   .join-hero { padding-block: 4.5rem; border-bottom: 3px solid var(--join-gold); background: var(--join-ink); color: white; }
   .join-hero-layout { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; align-items: end; gap: 5rem; }
@@ -77,7 +83,9 @@
   .join-required { color: #a52222; }
   .join-field :is(input, select, textarea) { display: block; width: 100%; min-width: 0; min-height: 3rem; padding: .75rem; border: 1px solid #9292a4; border-radius: 0; background: white; color: var(--join-ink); outline: 0; font-size: 1rem; caret-color: var(--join-ink); }
   .join-field :is(input, textarea)::placeholder { color: var(--join-muted); opacity: 1; }
-  .join-field :is(input, select, textarea):hover { border-color: var(--join-ink); }
+  @media (hover: hover) {
+    .join-field :is(input, select, textarea):enabled:not([aria-invalid="true"]):hover { border-color: var(--join-ink); }
+  }
   .join-field :is(input, select, textarea):focus { outline: 2px solid var(--join-ink); outline-offset: 2px; }
   .join-field :is(input, select, textarea)[aria-invalid=true] { border-color: #a52222; }
   .join-field textarea { resize: vertical; line-height: 1.75; }
@@ -90,7 +98,9 @@
   .join-position-option { border-bottom: 1px solid var(--join-rule); }
   .join-position-option:first-child { border-top: 1px solid var(--join-rule); }
   .join-position-label { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem .75rem; cursor: pointer; }
-  .join-position-label:hover { background: #f7f6f2; }
+  @media (hover: hover) {
+    .join-position-option:not(.is-selected) .join-position-label:hover { background: #fffaf0; }
+  }
   .join-option-title { display: block; font-size: .9375rem; font-weight: 600; }
   .join-option-description { display: block; margin-top: .25rem; color: var(--join-muted); font-size: .8125rem; line-height: 1.7; }
   .join-position-option.is-selected .join-position-label { background: #f7f6f2; }
@@ -117,7 +127,9 @@
   .join-faq-list { border-top: 1px solid var(--join-ink); }
   .join-faq-list article { border-bottom: 1px solid var(--join-rule); }
   .join-faq-list button { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; width: 100%; min-height: 4rem; padding-block: 1rem; border: 0; background: white; color: var(--join-ink); text-align: left; font-size: .9375rem; font-weight: 600; }
-  .join-faq-list button:hover { color: #755000; }
+  @media (hover: hover) {
+    .join-faq-list button:hover { color: #755000; }
+  }
   .join-faq-list article > div { padding-bottom: 1.25rem; }
   .join-faq-list p { max-width: 65ch; padding-right: 2.5rem; color: var(--join-muted); font-size: .875rem; line-height: 1.85; }
   .join-final { padding-block: 3rem; background: var(--join-ink); color: white; border-bottom: 1px solid #38385c; }
@@ -137,15 +149,21 @@
   .join-feedback-icon.is-error { background: #fee2e2; color: #dc2626; }
   .join-feedback-dialog h2 { margin: 0; padding-inline: .25rem; color: #202027; font: 650 clamp(1.375rem, 4vw, 1.625rem)/1.25 'Segoe UI', Helvetica, Arial, sans-serif; letter-spacing: -.025em; overflow-wrap: anywhere; }
   .join-dialog-close { position: absolute; top: .75rem; right: .75rem; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1px solid #e2e2e9; border-radius: .625rem; background: white; color: #52525b; }
-  .join-dialog-close:hover { background: #f7f7fa; color: var(--join-ink); }
+  @media (hover: hover) {
+    .join-dialog-close:hover { background: #f7f7fa; color: var(--join-ink); }
+  }
   .join-feedback-body { padding-top: .625rem; }
   .join-feedback-body > p { color: #666671; font-size: .875rem; line-height: 1.6; overflow-wrap: anywhere; }
   .join-feedback-actions { display: flex; flex-direction: column; gap: .75rem; margin-top: 2rem; }
   .join-feedback-actions button { display: flex; align-items: center; justify-content: center; min-height: 2.75rem; width: 100%; padding: .625rem 1rem; border: 1px solid #dcdce3; border-radius: .625rem; font: 600 .875rem/1.5 'Segoe UI', Helvetica, Arial, sans-serif; }
   .join-feedback-actions .join-feedback-primary { background: var(--join-ink); color: white; border-color: var(--join-ink); }
-  .join-feedback-primary:hover { background: #25254d; }
+  @media (hover: hover) {
+    .join-feedback-primary:hover { background: #25254d; }
+  }
   .join-feedback-dismiss { background: white; color: #27272f; }
-  .join-feedback-dismiss:hover { background: #f7f7fa; }
+  @media (hover: hover) {
+    .join-feedback-dismiss:hover { background: #f7f7fa; }
+  }
   ::selection { background: var(--join-gold); color: var(--join-ink); }
   @media (max-width: 1023px) {
     .join-hero-layout { gap: 3rem; grid-template-columns: minmax(0, 1fr) 15rem; }
@@ -188,5 +206,12 @@
     .join-submit .join-button { width: 100%; }
     .join-faq-list p { padding-right: 0; }
     .join-final h2 { font-size: 1.75rem; }
+  }
+}
+
+:host ::ng-deep .join-page {
+  .join-button, .join-field :is(input, select, textarea), .join-dialog-close,
+  .join-feedback-primary, .join-feedback-dismiss, .join-position-label {
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
   }
 }

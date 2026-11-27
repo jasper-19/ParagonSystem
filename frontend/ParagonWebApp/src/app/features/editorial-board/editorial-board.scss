@@ -42,7 +42,9 @@ h1 { font: 400 clamp(2.75rem, 5vw, 4rem)/1.12 var(--font-serif); letter-spacing:
 .board-message h2 { font: 400 1.875rem/1.25 var(--font-serif); }
 .board-message p { max-width: 65ch; margin-top: 1rem; color: var(--board-muted); font-size: .9375rem; line-height: 1.75; }
 .board-message button { min-height: 3rem; margin-top: 1.5rem; padding: .75rem 1.5rem; border: 1px solid var(--board-ink); border-radius: 0; background: var(--board-ink); color: white; cursor: pointer; font: 600 .8125rem/1.5 var(--font-sans); }
-.board-message button:hover { background: #25254d; }
+@media (hover: hover) {
+  .board-message button:hover { background: #25254d; }
+}
 .board-message button:focus-visible { outline: 2px solid var(--board-ink); outline-offset: 4px; }
 ::selection { background: var(--board-gold); color: var(--board-ink); }
 @media (max-width: 1023px) {
@@ -68,3 +70,5 @@ h1 { font: 400 clamp(2.75rem, 5vw, 4rem)/1.12 var(--font-serif); letter-spacing:
   .board-mission { padding-block: 2.5rem; }
   .board-mission h2 { font-size: 1.75rem; }
 }
+
+.board-message button { transition: background-color 150ms ease-out; }

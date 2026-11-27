@@ -16,10 +16,17 @@
 h3 { font: 700 1.375rem/1.25 var(--font-serif); margin-top: .625rem; text-wrap: pretty; overflow-wrap: anywhere; }
 .recommendation-excerpt { margin-top: .75rem; font-size: .8125rem; line-height: 1.75; color: var(--article-muted); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .recommendation-author { margin-top: 1rem; font-size: .6875rem; color: var(--article-muted); }
-a:hover :is(h3), .recommendations-heading a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+@media (hover: hover) {
+  .recommendation-story a:hover h3, .recommendations-heading a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--article-gold); text-decoration-thickness: 2px; }
+}
 a:focus-visible { outline: 2px solid var(--article-ink); outline-offset: 4px; }
 .more .recommendation-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .more .recommendation-story > a:has(.recommendation-image) { display: grid; grid-template-columns: 6rem minmax(0,1fr); gap: 1.25rem; }
 .more .recommendation-image { aspect-ratio: 1; margin: 0; }
 @media (max-width: 1023px) { .recommendation-list { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 639px) { .recommendations-inner { width: calc(100% - 2rem); } .recommendation-list, .more .recommendation-list { grid-template-columns: minmax(0,1fr); gap: 1.5rem; } .article-recommendations { padding-block: 2rem; } .recommendations-heading { flex-wrap: wrap; gap: .5rem; } .recommendations-heading h2 { font-size: 1.5rem; } .more .recommendation-story > a:has(.recommendation-image) { grid-template-columns: 4.5rem minmax(0,1fr); gap: 1rem; } }
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .recommendation-image img { transition: transform 280ms ease-out; }
+  .recommendation-story a:hover .recommendation-image img { transform: scale(1.035); }
+}

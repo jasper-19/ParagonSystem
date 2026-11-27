@@ -17,10 +17,14 @@ h1 { max-width: 26ch; font: 700 clamp(2rem, 4.1vw, 3.5rem)/1.12 var(--font-serif
 .article-sharing button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; padding: .5rem .875rem; font-size: .75rem; font-weight: 600; cursor: pointer; border: 1px solid var(--article-rule); }
 .article-sharing svg { width: 18px; height: 18px; }
 .share-copy { background: var(--article-ink); border-color: var(--article-ink) !important; color: #fff; }
-.article-sharing button:hover { background: var(--article-gold); border-color: var(--article-gold) !important; color: var(--article-ink); }
+@media (hover: hover) {
+  .article-sharing button:hover { background: var(--article-gold); border-color: var(--article-gold) !important; color: var(--article-ink); }
+}
 .share-feedback { width: 100%; color: var(--article-muted); font-size: .75rem; }
 .share-feedback:empty { display: none; }
-a:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (hover: hover) {
+  a:hover { text-decoration: underline; text-underline-offset: 4px; }
+}
 :is(a, button):focus-visible { outline: 2px solid var(--article-ink); outline-offset: 4px; }
 @media (max-width: 767px) { .article-byline-row { align-items: start; flex-direction: column; gap: 1rem; } }
 @media (max-width: 639px) { .article-header-inner { width: calc(100% - 2rem); } .article-header { padding-bottom: 1.5rem; } .article-navigation { margin-bottom: 1rem; } .article-deck { font-size: .9375rem; line-height: 1.75; } }

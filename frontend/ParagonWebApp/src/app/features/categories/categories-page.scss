@@ -27,7 +27,9 @@
 .control input { padding: .75rem 1rem .75rem 2.75rem; caret-color: var(--stories-ink); }
 .control select { appearance: none; padding: .75rem 2.75rem .75rem 1rem; cursor: pointer; }
 .control input::placeholder { color: var(--stories-muted); opacity: 1; }
-.control input:hover, .control select:hover { border-color: var(--stories-muted); }
+@media (hover: hover) {
+  .control input:hover, .control select:hover { border-color: var(--stories-muted); }
+}
 .filter-group { min-width: 0; margin-top: 1.25rem; border: 0; padding: 0; }
 .filter-group legend { font-size: .75rem; font-weight: 600; margin-bottom: .625rem; }
 .filter-options { display: flex; flex-wrap: wrap; gap: .375rem .5rem; }
@@ -37,7 +39,9 @@
 .filter-chip--tag { border-color: transparent; background: #f7f6f2; }
 .filter-chip--tag[aria-pressed='true'] { background: var(--stories-gold); color: var(--stories-ink); }
 .tags-toggle { border-color: transparent; text-decoration: underline; text-underline-offset: 4px; font-weight: 600; }
-.filter-chip:hover, .tags-toggle:hover { border-color: var(--stories-ink); }
+@media (hover: hover) {
+  .filter-chip:not([aria-pressed="true"]):hover, .tags-toggle:hover { border-color: var(--stories-muted); background: #f7f6f2; }
+}
 .stories-shell { padding-block: 2.5rem 3.5rem; }
 .stories-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--stories-ink); padding-bottom: 1rem; margin-bottom: 1.5rem; }
 .stories-heading h2 { font: 700 clamp(1.5rem, 3vw, 2rem)/1.2 var(--font-serif); }
@@ -54,4 +58,12 @@
   .filter-chip--category { flex-shrink: 0; }
   .stories-shell { padding-block: 2rem; }
   .stories-heading { align-items: center; flex-wrap: wrap; gap: .5rem; }
+}
+
+.control :is(input, select), .filter-chip, .tags-toggle {
+  transition: border-color 150ms ease-out;
+}
+
+@media (hover: hover) {
+  .clear-button:enabled:hover { text-decoration-thickness: 2px; }
 }
