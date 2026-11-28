@@ -26,6 +26,7 @@ export interface ArticleCredit {
 
 export interface Article {
   id: string;
+  revision?: string;
 
   title: string;
   slug: string;

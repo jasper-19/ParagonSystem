@@ -625,8 +625,9 @@ private fetchArticleFeed(
     );
   }
 
-  updateArticle(id: string, updated: Partial<Article>): Observable<Article> {
+  updateArticle(id: string, updated: Partial<Article>, expectedRevision?: string): Observable<Article> {
     const dto = {
+      expectedRevision,
       title: updated.title,
       slug: updated.slug,
       excerpt: updated.excerpt,

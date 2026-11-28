@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import db from "../../config/db";
-import type {  PoolClient } from "pg";
+import type { PoolClient } from "pg";
 import { sanitizeArticleHtml } from "../../security/sanitize-html";
 
 export const ARTICLE_CREDIT_TYPES = [
@@ -12,6 +13,7 @@ export const ARTICLE_CREDIT_TYPES = [
 export type CreateArticleRepositoryInput =
   Record<string, unknown> & {
     credits?: ArticleCreditInput[];
+    creditTypes?: ArticleCreditType[];
   };
 
 export type ArticleCreditType = (typeof ARTICLE_CREDIT_TYPES)[number];
@@ -105,6 +107,16 @@ function mapCreditRow(row: any): ArticleCredit {
   };
 }
 
+export function articleRevision(
+  article: ReturnType<typeof mapRow> & { credits: ArticleCreditInput[] }
+): string {
+  const { views, modifiedAt, credits, ...editable } = article;
+  const identities = credits
+    .map(credit => JSON.stringify([credit.creditType, credit.staffId, credit.creditedName]))
+    .sort();
+  return createHash("sha256").update(JSON.stringify([editable, identities])).digest("hex");
+}
+
 async function insertArticleCredits(
   client: PoolClient,
   articleId: string,
@@ -148,12 +160,13 @@ async function insertArticleCredits(
 async function replaceArticleCredits(
   client: PoolClient,
   articleId: string,
-  credits: ArticleCreditInput[]
+  credits: ArticleCreditInput[],
+  creditTypes: ArticleCreditType[]
 ): Promise<void> {
   await client.query(
     `DELETE FROM article_credits
-     WHERE article_id = $1`,
-    [articleId]
+     WHERE article_id = $1 AND credit_type = ANY($2)`,
+    [articleId, creditTypes]
   );
 
   await insertArticleCredits(
@@ -194,23 +207,29 @@ export type PaginatedAdminArticles = {
   totalPages: number;
 }
 
-async function enforceMaxFeaturedPublished(max: number): Promise<void> {
+async function lockFeaturedWrites(client: PoolClient): Promise<void> {
+  await client.query("SELECT pg_advisory_xact_lock(hashtext('articles_featured_limit'))");
+}
+
+async function enforceMaxFeaturedPublished(client: PoolClient, articleId: string): Promise<boolean> {
   // Keep the newest `max` featured+published articles featured, unfeature the rest.
   // Uses created_at as "added" time.
-  await db.query(
+  const result = await client.query(
     `WITH to_unfeature AS (
       SELECT id
       FROM articles
       WHERE featured = true
         AND LOWER(status::text) = 'published'
-      ORDER BY created_at DESC
+      ORDER BY created_at DESC, id DESC
       OFFSET $1
     )
     UPDATE articles
     SET featured = false
-    WHERE id IN (SELECT id FROM to_unfeature)`,
-    [max]
+    WHERE id IN (SELECT id FROM to_unfeature)
+    RETURNING id`,
+    [5]
   );
+  return !result.rows.some(row => String(row.id) === articleId);
 }
 
 export async function findAll(filters: FindAllFilters = {}) {
@@ -563,13 +582,14 @@ export async function findPublicPreview(slug: string) {
 }
 
 export async function findCreditsByArticleId(
-  articleId: string
+  articleId: string,
+  connection: Pick<PoolClient, "query"> = db
 ): Promise<ArticleCredit[]> {
   if (!articleId) {
     throw new Error("Missing article ID");
   }
 
-  const result = await db.query(
+  const result = await connection.query(
     `SELECT
        id,
        article_id,
@@ -659,6 +679,10 @@ export async function create(data: unknown) {
   try {
     await client.query("BEGIN");
 
+    const isFeaturedPublished = d.featured === true && d.status === "Published";
+    if (isFeaturedPublished) {
+      await lockFeaturedWrites(client);
+    }
     const result = await client.query(
       `INSERT INTO articles
       (
@@ -721,17 +745,12 @@ export async function create(data: unknown) {
       credits
     );
 
-    await client.query("COMMIT");
-
     const created = mapRow(createdRow);
 
-    if (
-      created.featured &&
-      String(created.status).toLowerCase() ===
-        "published"
-    ) {
-      await enforceMaxFeaturedPublished(5);
+    if (isFeaturedPublished) {
+      created.featured = await enforceMaxFeaturedPublished(client, created.id);
     }
+    await client.query("COMMIT");
 
     return {
       ...created,
@@ -761,37 +780,45 @@ export async function create(data: unknown) {
 
 export async function update(
   id: string,
-  data: unknown
+  d: CreateArticleRepositoryInput,
+  expectedRevision?: string
 ) {
   if (!id) {
     throw new Error("Missing article ID");
   }
-  const d =
-    data as CreateArticleRepositoryInput;
-  const credits = Array.isArray(d.credits)
-    ? d.credits
-    : [];
   const client = await db.connect();
   try {
     await client.query("BEGIN");
+    await lockFeaturedWrites(client);
+    const currentResult = await client.query("SELECT * FROM articles WHERE id = $1 FOR UPDATE", [id]);
+    if (!currentResult.rows[0]) {
+      throw Object.assign(new Error("Article not found"), { statusCode: 404 });
+    }
+    const current = mapRow(currentResult.rows[0]);
+    let credits = await findCreditsByArticleId(id, client);
+    if (expectedRevision !== undefined && expectedRevision !== articleRevision({ ...current, credits })) {
+      throw Object.assign(new Error("This article changed. Reload it before saving again."), { statusCode: 409 });
+    }
     const result = await client.query(
       `UPDATE articles
        SET
-         title = $1,
-         slug = $2,
-         excerpt = $3,
-         content = $4,
-         image = $5,
-         author = $6,
-         photo_by = $7,
-         graphic_by = $8,
-         illustration_by = $9,
-         category = $10,
-         tags = $11,
-         status = $12,
-         featured = $13,
+         title = COALESCE($1, title),
+         slug = COALESCE($2, slug),
+         excerpt = COALESCE($3, excerpt),
+         content = COALESCE($4, content),
+         image = COALESCE($5, image),
+         author = COALESCE($6, author),
+         photo_by = COALESCE($7, photo_by),
+         graphic_by = COALESCE($8, graphic_by),
+         illustration_by = COALESCE($9, illustration_by),
+         category = COALESCE($10, category),
+         tags = COALESCE($11, tags),
+         status = COALESCE($12, status),
+         featured = COALESCE($13, featured),
          seo_description = CASE WHEN $15::boolean THEN $16 ELSE seo_description END,
-         language = COALESCE($17, language)
+         language = COALESCE($17, language),
+         published_at = CASE WHEN COALESCE($12, status) = 'Published'
+           THEN COALESCE(published_at, NOW()) ELSE published_at END
        WHERE id = $14
        RETURNING *`,
       [
@@ -807,40 +834,27 @@ export async function update(
           d.illustrationby ??
           null,
         d.category,
-        d.tags ?? [],
+        d.tags,
         d.status,
-        d.featured ?? false,
+        d.featured,
         id,
         Object.prototype.hasOwnProperty.call(d, "seoDescription"),
         d.seoDescription || null,
         d.language ?? null,
       ]
     );
-    const updatedRow = result.rows[0];
-    if (!updatedRow) {
-      throw Object.assign(
-        new Error("Article not found"),
-        { statusCode: 404 }
-      );
+    if (d.credits !== undefined && d.creditTypes?.length) {
+      await replaceArticleCredits(client, id, d.credits, d.creditTypes);
+      credits = await findCreditsByArticleId(id, client);
     }
-    await replaceArticleCredits(
-      client,
-      id,
-      credits
-    );
+    const updated = mapRow(result.rows[0]);
+    if (updated.featured && updated.status === "Published") {
+      updated.featured = await enforceMaxFeaturedPublished(client, id);
+    }
+    const article = { ...updated, credits };
+    const revision = articleRevision(article);
     await client.query("COMMIT");
-    const updated = mapRow(updatedRow);
-    if (
-      updated.featured &&
-      String(updated.status).toLowerCase() ===
-        "published"
-    ) {
-      await enforceMaxFeaturedPublished(5);
-    }
-    return {
-      ...updated,
-      credits: await findCreditsByArticleId(id),
-    };
+    return { ...article, revision };
   } catch (error) {
     await client.query("ROLLBACK");
     if ((error as { code?: string }).code === "23505") {
@@ -857,47 +871,12 @@ export async function update(
   }
 }
 
-export async function publish(id: string) {
-  if (!id) throw new Error("Missing article ID");
-
-  try {
-    const result = await db.query(
-      `UPDATE articles
-       SET status = 'Published',
-           published_at = NOW()
-       WHERE id = $1
-       RETURNING *`,
-      [id]
-    );
-
-    const published = mapRow(result.rows[0]);
-    if (published.featured) {
-      await enforceMaxFeaturedPublished(5);
-    }
-    return published;
-  } catch (error) {
-    console.error("Error publishing article:", error);
-    throw error;
-  }
+export async function publish(id: string, expectedRevision?: string) {
+  return update(id, { status: "Published" }, expectedRevision);
 }
 
 export async function archive(id: string) {
-  if (!id) throw new Error("Missing article ID");
-
-  try {
-    const result = await db.query(
-      `UPDATE articles
-       SET status = 'Archived'
-       WHERE id = $1
-       RETURNING *`,
-      [id]
-    );
-
-    return mapRow(result.rows[0]);
-  } catch (error) {
-    console.error("Error archiving article:", error);
-    throw error;
-  }
+  return update(id, { status: "Archived" });
 }
 
 export async function incrementViews(slug: string) {

@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "migrate": "tsx src/scripts/migrate.ts",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "tsx --test \"src/**/*.test.ts\"",
     "benchmark:special-issue-pdfs": "tsx src/scripts/benchmark-special-issue-pdfs.ts",
     "cleanup:special-issue-storage": "tsx src/scripts/retry-storage-cleanup.ts",
     "migrate:special-issue-pdfs": "tsx src/scripts/migrate-special-issue-pdfs.ts",

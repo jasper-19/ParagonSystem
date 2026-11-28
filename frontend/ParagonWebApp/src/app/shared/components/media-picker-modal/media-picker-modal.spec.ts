@@ -124,21 +124,25 @@ describe('Media picker selection and loading', () => {
     expect(fixture.nativeElement.querySelector('[role="option"]')).not.toBeNull();
   });
 
-  it('waits for every upload to settle, ignores progress and reloads after a failed sibling', () => {
+  it('uploads files sequentially, ignores progress and reloads after a failed sibling', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const first = new Subject<number | Media>();
     const second = new Subject<number | Media>();
     uploadMedia.mockReturnValueOnce(first).mockReturnValueOnce(second);
     open();
     modal.onUploadFiles([new File(['a'], 'first.jpg', { type: 'image/jpeg' }), new File(['b'], 'second.jpg', { type: 'image/jpeg' })]);
+    expect(uploadMedia).toHaveBeenCalledTimes(1);
     first.next(50);
     expect(modal.selectedMedia()).toBeNull();
     first.next(image);
     first.complete();
+    expect(uploadMedia).toHaveBeenCalledTimes(2);
     expect(modal.selectedMedia()).toEqual(image);
     expect(getMedia).toHaveBeenCalledTimes(1);
     second.error(new Error('Upload failed'));
     expect(getMedia).toHaveBeenCalledTimes(2);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="status"]').textContent).toContain('Could not upload second.jpg');
   });
 
   it('cancels pending library requests when the dialog component is destroyed', () => {

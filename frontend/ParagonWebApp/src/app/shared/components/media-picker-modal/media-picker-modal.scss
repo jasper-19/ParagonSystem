@@ -41,6 +41,7 @@
 .mp-empty { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; min-height:260px; padding:24px; border:1px dashed #cbd2de; border-radius:5px; text-align:center; }
 .mp-empty h3 { font-size:16px; font-weight:600; }
 .mp-empty p { font-size:13px; color:#626d81; line-height:1.7; }
+.mp-upload-failure { margin-block-end:12px; padding:8px 12px; border-radius:5px; background:#f4f5f8; color:#000035; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
 .mp-mobile-details { display:none; }
 .mp-skeletons { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
 .mp-skeletons span { display:block; aspect-ratio:4/3; background:#edf0f5; border-radius:4px; }

@@ -114,3 +114,17 @@ test("unread snapshots stay bounded with deterministic ordering", async () => {
   assert.match(queries[0]!.sql, /ORDER BY created_at DESC, id DESC/);
   assert.match(queries[0]!.sql, /LIMIT 50/);
 });
+
+test("shutdown ends all streams and rejects new admissions", () => {
+  const first = stream();
+  const second = stream();
+
+  service.closeNotificationStreams();
+  service.closeNotificationStreams();
+
+  assert.equal(first.writableEnded, true);
+  assert.equal(second.writableEnded, true);
+  assert.equal(first.listenerCount("close"), 0);
+  assert.equal(second.listenerCount("close"), 0);
+  assert.equal(service.addClient(new Stream().response(), async () => true), false);
+});

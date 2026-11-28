@@ -25,7 +25,7 @@ export const getMedia = asyncHandler(async (req: Request, res: Response) => {
   res.json(response);
 });
 
-export const uploadMedia = asyncHandler(async (req: Request, res: Response) => {
+export async function uploadMedia(req: Request, res: Response): Promise<void> {
   const file = (req as Request & { file?: service.UploadInput }).file;
   const created = await service.createMediaFromUpload(file);
   await auditLog(req, "UPLOAD", "MEDIA", "Uploaded media", {
@@ -33,7 +33,7 @@ export const uploadMedia = asyncHandler(async (req: Request, res: Response) => {
     details: { mimeType: created.mimeType, size: created.size },
   });
   res.status(201).json(created);
-});
+}
 
 export const updateMedia = asyncHandler(async (req: Request, res: Response) => {
   const id = String(sanitizeValue(req.params["id"]) || "");

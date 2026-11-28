@@ -4,6 +4,9 @@ import {
   shouldApplyStaffTransition,
 } from "./editorial-board-transition";
 
+const BOARD_LIFECYCLE_LOCK =
+  "SELECT pg_advisory_xact_lock(hashtext('editorial_board_activation'))";
+
 // ── mappers ──────────────────────────────────────────────────────────────────
 
 function mapBoard(row: any) {
@@ -141,9 +144,7 @@ export async function activateBoard(id: string) {
 
   try {
     await client.query("BEGIN");
-    await client.query(
-      "SELECT pg_advisory_xact_lock(hashtext('editorial_board_activation'))"
-    );
+    await client.query(BOARD_LIFECYCLE_LOCK);
 
     const targetResult = await client.query(
       `SELECT *
@@ -312,17 +313,39 @@ export async function createBoard(
 }
 
 export async function removeBoard(id: string) {
-  // Explicitly remove child rows first in case ON DELETE CASCADE
-  // was not applied to the existing table (pre-migration databases).
-  await db.query(
-    `DELETE FROM editorial_board_members WHERE board_id = $1`,
-    [id]
-  );
-  const result = await db.query(
-    `DELETE FROM editorial_boards WHERE id = $1 RETURNING id`,
-    [id]
-  );
-  return result.rows[0] ?? undefined;
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+    await client.query(BOARD_LIFECYCLE_LOCK);
+    const { rows: [board] } = await client.query<{ is_active: boolean }>(
+      `SELECT is_active FROM editorial_boards WHERE id = $1 FOR UPDATE`,
+      [id]
+    );
+    if (!board) {
+      throw Object.assign(new Error("Editorial board not found"), { statusCode: 404 });
+    }
+    if (board.is_active) {
+      throw Object.assign(new Error("Cannot delete the active board"), { statusCode: 400 });
+    }
+
+    // Legacy schemas may lack ON DELETE CASCADE on the board membership foreign key.
+    await client.query(`DELETE FROM editorial_board_members WHERE board_id = $1`, [id]);
+    const { rows: [deletedBoard] } = await client.query(
+      `DELETE FROM editorial_boards WHERE id = $1 RETURNING id`,
+      [id]
+    );
+    if (!deletedBoard) {
+      throw Object.assign(new Error("Editorial board not found"), { statusCode: 404 });
+    }
+    await client.query("COMMIT");
+    return deletedBoard;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 /** Sets is_satisfied for a board (persisted to DB). */

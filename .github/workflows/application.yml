@@ -1,0 +1,72 @@
+name: Application
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend build and tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: paragon_test
+          POSTGRES_PASSWORD: paragon_test
+          POSTGRES_DB: paragon_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U paragon_test -d paragon_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_USER: paragon_test
+      DB_PASSWORD: paragon_test
+      DB_NAME: paragon_test
+      SUPABASE_URL: https://supabase.invalid
+      SUPABASE_SERVICE_ROLE_KEY: ci-fixture
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+        env:
+          AUTH_LOCAL_DB_TESTS: '1'
+          HARDENING_LOCAL_DB_TESTS: '1'
+          PHOTO_CREDIT_DB_TEST: '1'
+
+  frontend:
+    name: Frontend build and tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/ParagonWebApp
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/ParagonWebApp/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test -- --watch=false
+      - run: npm run test:share-previews

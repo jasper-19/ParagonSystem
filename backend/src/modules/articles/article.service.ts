@@ -35,6 +35,7 @@ type CreateArticleCreditPayload = {
   externalPhotoCredits?: string[];
   graphicByIds?: string[];
   illustrationByIds?: string[];
+  expectedRevision?: string;
 
   [key: string]: unknown;
 };
@@ -191,21 +192,9 @@ async function resolveCreditGroup(
 
 async function prepareArticleCredits(
   data: CreateArticleCreditPayload,
-  existingPhotos: repository.ArticleCreditInput[] = []
+  existing?: repository.ArticleCreditInput[]
 ): Promise<repository.ArticleCreditInput[]> {
-  const authorIds =
-    normalizeStaffIds(data.authorIds);
-
-  const photoByIds =
-    normalizeStaffIds(data.photoByIds);
-
-  const graphicByIds =
-    normalizeStaffIds(data.graphicByIds);
-
-  const illustrationByIds =
-    normalizeStaffIds(data.illustrationByIds);
-
-  if (!authorIds.length) {
+  if ((!existing || data.authorIds !== undefined) && !normalizeStaffIds(data.authorIds).length) {
     throw Object.assign(
       new Error(
         "At least one active editorial board member must be credited as an author."
@@ -214,31 +203,29 @@ async function prepareArticleCredits(
     );
   }
 
+  const resolve = (ids: string[] | undefined, creditType: repository.ArticleCreditType) => {
+    const historical = existing?.filter(credit => credit.creditType === creditType && credit.staffId !== null) ?? [];
+    if (ids === undefined) {
+      return Promise.resolve(historical);
+    }
+    return resolveStaffCredits(normalizeStaffIds(ids), creditType, historical);
+  };
+
   const [
     authors,
     photographers,
     graphicArtists,
     illustrators,
   ] = await Promise.all([
-    resolveCreditGroup(
-      authorIds,
-      "author"
-    ),
-
-    resolvePhotoCredits(photoByIds, existingPhotos),
-
-    resolveCreditGroup(
-      graphicByIds,
-      "graphic"
-    ),
-
-    resolveCreditGroup(
-      illustrationByIds,
-      "illustration"
-    ),
+    resolve(data.authorIds, "author"),
+    resolve(data.photoByIds, "photo"),
+    resolve(data.graphicByIds, "graphic"),
+    resolve(data.illustrationByIds, "illustration"),
   ]);
 
-  const externalNames = externalPhotoCreditsSchema.parse(data.externalPhotoCredits ?? []);
+  const externalNames = externalPhotoCreditsSchema.parse(data.externalPhotoCredits ??
+    existing?.filter(credit => credit.creditType === "photo" && credit.staffId === null)
+      .map(credit => credit.creditedName) ?? []);
   const seen = new Set(photographers.map(credit => credit.creditedName.trim().toLowerCase()));
   const externalPhotos: repository.ArticleCreditInput[] = [];
   for (const name of externalNames) {
@@ -260,14 +247,14 @@ async function prepareArticleCredits(
   ];
 }
 
-async function resolvePhotoCredits(
+async function resolveStaffCredits(
   staffIds: string[],
-  existingPhotos: repository.ArticleCreditInput[]
+  creditType: repository.ArticleCreditType,
+  historical: repository.ArticleCreditInput[]
 ): Promise<repository.ArticleCreditInput[]> {
   // Historical staff credits remain valid on edit after a board changes.
-  const existingById = new Map(existingPhotos.filter(credit => credit.staffId)
-    .map(credit => [credit.staffId, credit]));
-  const additions = await resolveCreditGroup(staffIds.filter(id => !existingById.has(id)), 'photo');
+  const existingById = new Map(historical.map(credit => [credit.staffId, credit]));
+  const additions = await resolveCreditGroup(staffIds.filter(id => !existingById.has(id)), creditType);
   const addedById = new Map(additions.map(credit => [credit.staffId, credit]));
   return staffIds.map(id => existingById.get(id) ?? addedById.get(id)!);
 }
@@ -462,7 +449,8 @@ export async function getPublicPreview(slug: string) {
 }
 
 export async function getEditorArticleBySlug(slug: string) {
-  return repository.findBySlugWithCredits(slug, true);
+  const article = await repository.findBySlugWithCredits(slug, true);
+  return article && { ...article, revision: repository.articleRevision(article) };
 }
 
 //**Retrieve admin articles */
@@ -604,7 +592,7 @@ export async function updateArticle(
   data: unknown
 ) {
   const existing =
-    await repository.findById(id);
+    await repository.findByIdWithCredits(id);
 
   if (!existing) {
     throw Object.assign(
@@ -615,6 +603,10 @@ export async function updateArticle(
 
   const articleData =
     data as CreateArticleCreditPayload;
+  const revision = repository.articleRevision(existing);
+  if (articleData.expectedRevision !== undefined && articleData.expectedRevision !== revision) {
+    throw Object.assign(new Error("This article changed. Reload it before saving again."), { statusCode: 409 });
+  }
   const policyInput = articleData as CreateArticleCreditPayload & {
     status?: string;
     image?: string;
@@ -646,64 +638,44 @@ export async function updateArticle(
     );
   }
 
-  const existingCredits = await repository.findCreditsByArticleId(id);
-  const existingPhotos = existingCredits.filter(credit => credit.creditType === 'photo');
-  // Omission means preserve external credits; [] explicitly clears them.
-  // Legacy free text stays a single name so commas are never interpreted as
-  // separators (organizations and individual names may legitimately use them).
-  const externalPhotoCredits = articleData.externalPhotoCredits ?? (
-    existingPhotos.length
-      ? existingPhotos.filter(credit => credit.staffId === null).map(credit => credit.creditedName)
-      : existing.photoby.trim() ? [existing.photoby.trim()] : []
-  );
-  const credits = await prepareArticleCredits({
+  const creditTypes: repository.ArticleCreditType[] = [];
+  const repositoryPayload: repository.CreateArticleRepositoryInput = {
     ...articleData,
-    photoByIds: articleData.photoByIds ?? existingPhotos.flatMap(credit => credit.staffId ? [credit.staffId] : []),
-    externalPhotoCredits,
-  }, existingPhotos);
-
-  const repositoryPayload = {
-    ...articleData,
-
-    /*
-     * Keep legacy display fields synchronized
-     * with the structured article credits.
-     */
-    author:
-      creditNames(
-        credits,
-        "author"
-      ),
-
-    photoby:
-      creditNames(
-        credits,
-        "photo"
-      ),
-
-    graphicby:
-      creditNames(
-        credits,
-        "graphic"
-      ),
-
-    /*
-     * Preserve the existing misspelled API field
-     * while the frontend and repository still use it.
-     */
-    illusrationby:
-      creditNames(
-        credits,
-        "illustration"
-      ),
-
-    credits,
+    // Structured IDs are authoritative. Preserve historical display snapshots
+    // for groups omitted by the caller, including rows predating structured credits.
+    author: undefined,
+    photoby: undefined,
+    graphicby: undefined,
+    illusrationby: undefined,
+    creditTypes,
   };
+  const photoChanged = articleData.photoByIds !== undefined || articleData.externalPhotoCredits !== undefined;
+  if (articleData.authorIds !== undefined) creditTypes.push("author");
+  if (photoChanged) creditTypes.push("photo");
+  if (articleData.graphicByIds !== undefined) creditTypes.push("graphic");
+  if (articleData.illustrationByIds !== undefined) creditTypes.push("illustration");
+  if (creditTypes.length) {
+    const hasPhotoCredits = existing.credits.some(credit => credit.creditType === "photo");
+    const legacyPhotoby = String(existing.photoby).trim();
+    const externalPhotoCredits = photoChanged
+      ? articleData.externalPhotoCredits ?? (!hasPhotoCredits && legacyPhotoby ? [legacyPhotoby] : undefined)
+      : [];
+    const credits = await prepareArticleCredits(
+      externalPhotoCredits === undefined ? articleData : { ...articleData, externalPhotoCredits },
+      existing.credits.filter(credit => creditTypes.includes(credit.creditType))
+    );
+    repositoryPayload.credits = credits;
+    repositoryPayload.author = articleData.authorIds === undefined ? undefined : creditNames(credits, "author");
+    repositoryPayload.photoby = photoChanged ? creditNames(credits, "photo") : undefined;
+    repositoryPayload.graphicby = articleData.graphicByIds === undefined ? undefined : creditNames(credits, "graphic");
+    repositoryPayload.illusrationby = articleData.illustrationByIds === undefined ? undefined : creditNames(credits, "illustration");
+  }
 
   const updated =
     await repository.update(
       id,
-      repositoryPayload
+      repositoryPayload,
+      revision
     );
 
   return {
@@ -719,20 +691,20 @@ export async function updateArticle(
  */
 export async function publishArticle(id: string) {
   const [existing, { publishingMedia }] = await Promise.all([
-    repository.findById(id),
+    repository.findByIdWithCredits(id),
     settingsService.getSettings(),
   ]);
   if (!existing) {
     throw Object.assign(new Error("Article not found"), { statusCode: 404 });
   }
-  if (!publishingMedia.allowDirectPublishing) {
+  if (existing.status !== "Published" && !publishingMedia.allowDirectPublishing) {
     throw Object.assign(
       new Error("Direct publishing is disabled by the global publishing policy"),
       { statusCode: 403 }
     );
   }
   if (
-    publishingMedia.requireFeaturedImage &&
+    existing.status !== "Published" && publishingMedia.requireFeaturedImage &&
     !String(existing.image ?? "").trim()
   ) {
     throw Object.assign(
@@ -740,7 +712,7 @@ export async function publishArticle(id: string) {
       { statusCode: 422 }
     );
   }
-  return repository.publish(id);
+  return repository.publish(id, repository.articleRevision(existing));
 }
 
 /**

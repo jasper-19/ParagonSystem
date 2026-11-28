@@ -181,9 +181,21 @@ export async function create(data: unknown) {
   }
 
   const d = data as Record<string, unknown>;
+  const client = await db.connect();
 
   try {
-    const result = await db.query(
+    await client.query("BEGIN");
+    const settings = await client.query<Pick<ApplicationSettingsRow, "is_open" | "announcement">>(
+      "SELECT is_open, announcement FROM application_settings WHERE id = 1 FOR SHARE"
+    );
+    if (!settings.rows[0]?.is_open) {
+      throw Object.assign(
+        new Error(settings.rows[0]?.announcement || "Applications are currently closed."),
+        { statusCode: 403 }
+      );
+    }
+
+    const result = await client.query(
       `INSERT INTO applications
       (
         full_name,
@@ -213,11 +225,14 @@ export async function create(data: unknown) {
       ]
     );
 
-    return mapRow(result.rows[0]);
-
+    const application = mapRow(result.rows[0]);
+    await client.query("COMMIT");
+    return application;
   } catch (error) {
-    console.error("Error creating application:", error);
+    await client.query("ROLLBACK");
     throw error;
+  } finally {
+    client.release();
   }
 }
 

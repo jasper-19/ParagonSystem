@@ -11,6 +11,11 @@
     </div>
     <div class="mp-content">
       <div class="mp-library" [attr.aria-busy]="isLoading()">
+        <div role="status" aria-atomic="true">
+          @if (uploadFailures().length) {
+            <div class="mp-upload-failure">Could not upload {{ uploadFailures().join(', ') }}. Select the failed files to try again.</div>
+          }
+        </div>
         <div class="mp-section-heading"><h3>Images</h3><span>{{ isLoading() ? 'Loading images…' : mediaList().length + ' available' }}</span></div>
         @if (isLoading()) {
           <app-page-loader variant="admin" label="Loading images…" />

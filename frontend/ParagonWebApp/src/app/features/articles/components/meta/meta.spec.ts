@@ -26,12 +26,13 @@ describe('Article link sharing', () => {
   });
 
   it('confirms success only when the clipboard accepts the article URL', async () => {
+    window.history.replaceState(null, '', '/article/campus-news');
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     Object.defineProperty(window, 'isSecureContext', { configurable: true, value: true });
     const meta = TestBed.runInInjectionContext(() => new ArticleMeta());
     await meta.copyArticleLink();
-    expect(writeText).toHaveBeenCalledWith(window.location.href);
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/article/campus-news`);
     expect(meta.linkCopied()).toBe(true);
     expect(meta.copyError()).toBe('');
   });

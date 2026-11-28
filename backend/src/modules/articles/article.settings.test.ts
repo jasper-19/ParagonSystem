@@ -17,6 +17,7 @@ test("generic Published transitions enforce direct publishing and cover image po
       publishing_media: { ...DEFAULT_PUBLISHING_MEDIA_SETTINGS, allowDirectPublishing },
       version: allowDirectPublishing ? 2 : 1, updated_at: "2026-11-15T00:00:00Z",
     }] };
+    if (sql.includes("FROM article_credits")) return { rows: [] };
     if (sql.includes("FROM articles")) return { rows: [{ id: "test", status: "Draft", image: "" }] };
     throw new Error("Publishing must be rejected before any database mutation");
   });

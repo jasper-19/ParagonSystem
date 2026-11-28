@@ -1380,22 +1380,7 @@ private executeSave(): void {
     }
 
     this.articleService
-      .updateArticle(id, dto)
-      .pipe(
-        switchMap(updated => {
-          this.originalArticle.set(updated);
-
-          if (
-            dto.status === 'Published' &&
-            !updated.publishedAt
-          ) {
-            return this.articleService
-              .publishArticle(id);
-          }
-
-          return of(updated);
-        })
-      )
+      .updateArticle(id, dto, existing.revision)
       .subscribe({
         next: updated => {
           this.originalArticle.set(updated);
@@ -1422,19 +1407,6 @@ private executeSave(): void {
 
   this.articleService
     .createArticle(dto)
-    .pipe(
-      switchMap(created => {
-        if (
-          dto.status === 'Published' &&
-          !created.publishedAt
-        ) {
-          return this.articleService
-            .publishArticle(created.id);
-        }
-
-        return of(created);
-      })
-    )
     .subscribe({
       next: () => {
         localStorage.removeItem(

@@ -1,6 +1,6 @@
 import { PageLoaderComponent } from '../page-loader/page-loader';
 import { Component, EventEmitter, Input, OnInit, Output, HostListener, Inject, OnChanges, OnDestroy, SimpleChanges, inject, DestroyRef, signal, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
-import { EMPTY, Subject, catchError, debounceTime, distinctUntilChanged, finalize, map, switchMap } from 'rxjs';
+import { EMPTY, Subject, catchError, concatMap, debounceTime, distinctUntilChanged, finalize, from, map, switchMap, tap } from 'rxjs';
 import { Media } from '../../../models/media.model';
 import { MediaService } from '../../../core/services/media.service';
 import { CommonModule, DOCUMENT } from '@angular/common';
@@ -48,10 +48,12 @@ export class MediaPickerModalComponent implements OnInit, OnChanges, OnDestroy, 
   readonly isLoading = signal(false);
   readonly isSubmitting = signal(false);
   readonly loadError = signal<string | null>(null);
+  readonly uploadFailures = signal<string[]>([]);
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly searchSubject = new Subject<string>();
   private readonly reloadSubject = new Subject<string>();
+  private readonly uploadSubject = new Subject<File[]>();
 
   private previousBodyOverflow = '';
 
@@ -62,6 +64,7 @@ export class MediaPickerModalComponent implements OnInit, OnChanges, OnDestroy, 
 
   ngOnInit(): void {
     this.setupSearch();
+    this.setupUploads();
     this.loadMedia();
   }
 
@@ -126,34 +129,28 @@ export class MediaPickerModalComponent implements OnInit, OnChanges, OnDestroy, 
   }
 
   onUploadFiles(files: File[]): void {
-    if (!files.length)  return;
+    if (files.length) this.uploadSubject.next(files);
+  }
 
-    let completed = 0;
-
-    files.forEach(file => {
-      this.mediaService.uploadMedia(file).subscribe({
-        next: (result) => {
-          if (typeof result === 'number') return;
-
-          if (!this.selectedMedia()) {
-            this.selectedMedia.set(result);
-          }
-        },
-        error: () => {
-          completed++;
-
-          if (completed === files.length) {
-            this.loadMedia();
-          }
-        },
-        complete: () => {
-          completed++;
-
-          if (completed === files.length) {
-            this.loadMedia();
-          }
-        }
-      });
+  private setupUploads(): void {
+    this.uploadSubject.pipe(
+      concatMap(files => {
+        this.uploadFailures.set([]);
+        return from(files).pipe(
+          concatMap(file => this.mediaService.uploadMedia(file).pipe(
+            catchError(() => {
+              this.uploadFailures.update(failures => [...failures, file.name]);
+              return EMPTY;
+            })
+          )),
+          tap({ complete: () => this.loadMedia() })
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(result => {
+      if (typeof result !== 'number' && !this.selectedMedia()) {
+        this.selectedMedia.set(result);
+      }
     });
   }
 

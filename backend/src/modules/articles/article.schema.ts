@@ -203,6 +203,8 @@ export const createArticleSchema = z.object({
 
 /** Schema for PATCH /api/articles/:id */
 export const updateArticleSchema = z.object({
+  expectedRevision: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+
   title: z
     .string()
     .min(1)

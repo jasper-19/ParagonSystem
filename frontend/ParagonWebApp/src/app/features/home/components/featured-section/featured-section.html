@@ -1,14 +1,17 @@
-<section aria-labelledby="featured-heading" class="pub-featured pub-container"
-  (focusin)="pauseAutoplay()" (focusout)="resumeAutoplay()"
-  (mouseenter)="pauseAutoplay()" (mouseleave)="resumeAutoplay()">
+<section #featuredSection aria-labelledby="featured-heading" class="pub-featured pub-container"
+  (focusin)="setFocused(true)" (focusout)="setFocused(featuredSection.contains($any($event.relatedTarget)))"
+  (mouseenter)="setHovered(true)" (mouseleave)="setHovered(false)">
   <div class="pub-section-heading">
     <h2 id="featured-heading">Featured articles</h2>
-    <span *ngIf="articles.length" class="pub-count" aria-live="polite">{{ currentIndex + 1 }} / {{ articles.length }}</span>
+    <span *ngIf="articles.length" class="pub-count" [attr.aria-live]="rotationPaused ? 'polite' : 'off'">{{ currentIndex + 1 }} / {{ articles.length }}</span>
+    <button *ngIf="articles.length > 1" type="button" class="featured-rotation" (click)="toggleRotation()">
+      {{ rotationPaused ? 'Resume rotation' : 'Pause rotation' }}
+    </button>
   </div>
   <ng-container *ngIf="articles.length; else featuredEmpty">
     <div #featuredCarousel class="featured-carousel" role="region" aria-roledescription="carousel" aria-label="Featured stories" tabindex="0"
       (keydown.arrowLeft)="prev(); featuredCarousel.focus(); $event.preventDefault()" (keydown.arrowRight)="next(); featuredCarousel.focus(); $event.preventDefault()"
-      (pointerdown)="onPointerDown($event)" (pointerup)="onPointerUp($event)" (pointercancel)="cancelPointer()">
+      (pointerdown)="onPointerDown($event)" (pointerup)="onPointerUp($event)" (pointercancel)="cancelPointer()" (pointerleave)="cancelPointer()">
       <article *ngFor="let article of articles; let i = index; trackBy: trackById" class="featured-slide"
         [class.is-active]="offsets[i] === 0" [attr.aria-hidden]="offsets[i] !== 0"
         role="group" aria-roledescription="slide" [attr.aria-label]="(i + 1) + ' of ' + articles.length">

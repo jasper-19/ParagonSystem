@@ -74,9 +74,24 @@ app.use(
   })
 );
 
-// Increase JSON body size to allow image/PDF uploads as base64 (short-term fix).
-// Consider switching to multipart uploads for files + smaller JSON payloads.
-// NOTE: base64 increases payload size by ~33% over the original file size.
+app.use("/api", auditRequestFailures);
+
+// Apply the per-IP limit before buffering or parsing request bodies.
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Bodyless byte-range reads use the PDF endpoint's own admission limits.
+  skip: req => ['GET', 'HEAD'].includes(req.method) &&
+    !req.get("transfer-encoding") && Number(req.get("content-length") ?? 0) === 0 &&
+    /^\/special-issues\/pdf\/[a-f0-9-]{36}$/.test(req.path),
+  message: { error: "Too many requests, please try again later." },
+});
+app.use("/api", apiLimiter);
+app.use("/api", csrfProtection);
+
+// Retain enough room for legacy requests that carry base64-encoded files.
 const configuredBodyLimitMb = Number(
   process.env.REQUEST_BODY_LIMIT_MB || "5"
 );
@@ -84,26 +99,10 @@ const requestBodyLimitMb = Number.isFinite(configuredBodyLimitMb)
   ? Math.min(Math.max(configuredBodyLimitMb, 1), 20)
   : 5;
 const requestBodyLimit = `${requestBodyLimitMb}mb`;
-app.use("/api", auditRequestFailures);
 app.use('/api/auth/mail-relay/claim', express.json({ limit: '2kb', inflate: false, type: () => true }));
 app.use(express.json({ limit: requestBodyLimit, inflate: false }));
 app.use(express.urlencoded({ extended: false, limit: requestBodyLimit, inflate: false }));
 
-app.use("/api", csrfProtection);
-
-// General API rate limit per IP
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-  // Byte-range reads have their own budget and stream admission limit. A large
-  // PDF must not exhaust the general API allowance while loading its chunks.
-  skip: req => ['GET', 'HEAD'].includes(req.method) &&
-    /^\/special-issues\/pdf\/[a-f0-9-]{36}$/.test(req.path),
-  message: { error: "Too many requests, please try again later." },
-});
-app.use("/api", apiLimiter);
 app.use("/api", enforceMaintenanceMode);
 
 // Health check endpoint for load balancers and uptime monitoring

@@ -38,7 +38,9 @@ set articles(value: Article[]) {
 
   private autoplayTimer: ReturnType<typeof setInterval> | null = null;
   private pointerStartX: number | null = null;
-  private interactionPaused = false;
+  private hovered = false;
+  private focused = false;
+  protected rotationPaused = false;
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -128,7 +130,10 @@ set articles(value: Article[]) {
 
   private startAutoplay(): void {
     if (
-      this.interactionPaused ||
+      this.rotationPaused ||
+      this.hovered ||
+      this.focused ||
+      this.pointerStartX !== null ||
       typeof window === 'undefined' ||
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
     ) {
@@ -157,22 +162,25 @@ set articles(value: Article[]) {
     }
   }
 
-  pauseAutoplay(): void {
-    this.interactionPaused = true;
-    this.stopAutoplay();
+  protected toggleRotation(): void {
+    this.rotationPaused = !this.rotationPaused;
+    this.resetAutoplay();
   }
 
-  resumeAutoplay(): void {
-    this.interactionPaused = false;
-    if (this.articles.length > 1) {
-      this.startAutoplay();
-    }
+  protected setHovered(hovered: boolean): void {
+    this.hovered = hovered;
+    this.resetAutoplay();
+  }
+
+  protected setFocused(focused: boolean): void {
+    this.focused = focused;
+    this.resetAutoplay();
   }
 
   onPointerDown(event: PointerEvent): void {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     this.pointerStartX = event.clientX;
-    this.pauseAutoplay();
+    this.stopAutoplay();
   }
 
   onPointerUp(event: PointerEvent): void {
@@ -185,11 +193,11 @@ set articles(value: Article[]) {
       distance < 0 ? this.next() : this.prev();
     }
 
-    this.resumeAutoplay();
+    this.resetAutoplay();
   }
 
   cancelPointer(): void {
     this.pointerStartX = null;
-    this.resumeAutoplay();
+    this.resetAutoplay();
   }
 }

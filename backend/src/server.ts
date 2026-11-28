@@ -12,12 +12,15 @@ import pool from "./config/db";
 import { validateEnvironment } from "./config/env";
 import { specialIssueUploadConfig } from "./config/special-issue-upload";
 import { drainAuditLogs } from "./modules/activity-logs/activity-log.audit";
+import { closeNotificationStreams } from "./modules/notifications/notification.service";
 import { SupabasePrivatePdfStorage } from './storage/private-pdf-storage';
 import { assertPrivatePdfAccessPolicy } from './storage/private-pdf-policy';
 import { assertAuthVersionSchema } from './security/auth-version';
 import { assertGoogleEmailSchema } from './security/google-email-schema';
 
 const PORT = Number(process.env.PORT) || 3000;
+const SHUTDOWN_DEADLINE_MS = 25_000;
+let shuttingDown = false;
 
 // Create a shared HTTP server for Express and Socket.IO
 const server = http.createServer(app);
@@ -39,7 +42,7 @@ server.on("clientError", (_error, socket) => {
 });
 
 // Initialize Socket.IO
-initializeSocket(server);
+const sockets = initializeSocket(server);
 
 // Start server
 async function startServer() {
@@ -53,12 +56,14 @@ async function startServer() {
     await assertAuthVersionSchema(pool);
     await assertGoogleEmailSchema(pool);
 
+    if (shuttingDown) return;
     server.listen(PORT, () => {
       console.log(
         `🚀 Server running on http://localhost:${PORT}`
       );
     });
   } catch (err) {
+    if (shuttingDown) return;
     console.error(
       "Failed to initialize database:",
       err
@@ -68,32 +73,44 @@ async function startServer() {
   }
 }
 
-void startServer();
-
 async function shutdown(signal: string): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
   console.log(`Received ${signal}; shutting down`);
 
-  server.close(async error => {
-    if (error) {
-      console.error("HTTP server shutdown failed:", error);
-      process.exitCode = 1;
-    }
+  const deadline = setTimeout(() => {
+    console.error("Server shutdown deadline exceeded");
+    process.exit(1);
+  }, SHUTDOWN_DEADLINE_MS);
+  deadline.unref();
 
+  try {
     try {
-      await drainAuditLogs();
-      await pool.end();
-    } catch (poolError) {
-      console.error("Database pool shutdown failed:", poolError);
-      process.exitCode = 1;
+      closeNotificationStreams();
+      // Socket.IO closes its transports and the attached HTTP server together.
+      await sockets.close(error => {
+        if (error && (error as NodeJS.ErrnoException).code !== "ERR_SERVER_NOT_RUNNING") {
+          console.error("HTTP server shutdown failed:", error);
+          process.exitCode = 1;
+        }
+      });
+    } finally {
+      await drainAuditLogs().finally(() => pool.end());
     }
-  });
+    clearTimeout(deadline);
+  } catch (error) {
+    console.error("Server shutdown failed:", error);
+    process.exitCode = 1;
+  }
 }
 
-process.once("SIGTERM", () => {
+process.on("SIGTERM", () => {
   void shutdown("SIGTERM");
 });
 
-process.once("SIGINT", () => {
+process.on("SIGINT", () => {
   void shutdown("SIGINT");
 });
+
+void startServer();
 

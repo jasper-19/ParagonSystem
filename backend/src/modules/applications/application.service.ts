@@ -24,18 +24,6 @@ export async function getApplicationById(id: string) {
 
 /** Submit a new application. */
 export async function createApplication(data: unknown) {
-  const settings = await repository.findApplicationSettings();
-
-  if (!settings.isOpen) {
-    throw Object.assign(
-      new Error(
-        settings.announcement ||
-          "Applications are currently closed."
-      ),
-      { statusCode: 403 }
-    );
-  }
-
   return repository.create(data);
 }
 

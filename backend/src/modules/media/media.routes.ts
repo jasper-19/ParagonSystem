@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from "express";
+import { Request, Response, Router } from "express";
 import multer from "multer";
 import { authenticate } from "../../middlewares/authenticate";
 import { requireAdmin } from "../../middlewares/requireAdmin";
@@ -11,14 +11,26 @@ import * as settingsService from "../settings/settings.service";
 const router = Router();
 
 const storage = multer.memoryStorage();
+let uploadInProgress = false;
 
-async function configuredUpload(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+async function configuredUpload(req: Request, res: Response): Promise<void> {
+  if (res.destroyed || res.headersSent) return;
+  if (!req.is("multipart/*")) {
+    await controller.uploadMedia(req, res);
+    return;
+  }
+  if (uploadInProgress) {
+    res.setHeader("Retry-After", "10");
+    res.status(503).json({ error: "Media uploads are busy. Please try again shortly." });
+    return;
+  }
+
+  // Keep one bounded file and its generated variants in flight per process.
+  // An early disconnect must not free the slot while processing is still running.
+  uploadInProgress = true;
   try {
     const { publishingMedia } = await settingsService.getSettings();
+    if (res.destroyed || res.headersSent) return;
     const allowedMimeTypes = new Set(publishingMedia.allowedMimeTypes);
     const upload = multer({
       storage,
@@ -45,21 +57,24 @@ async function configuredUpload(
       },
     }).single("file");
 
-    upload(req, res, (error: any) => {
-      if (error?.code === "LIMIT_FILE_SIZE") {
-        Object.assign(error, { statusCode: 413 });
-      }
-      next(error);
+    await new Promise<void>((resolve, reject) => {
+      upload(req, res, (error?: unknown) => {
+        if (error) reject(error);
+        else resolve();
+      });
     });
+    if (!res.destroyed && !res.headersSent) await controller.uploadMedia(req, res);
   } catch (error) {
-    next(error);
+    if (!res.destroyed && !res.headersSent) throw error;
+  } finally {
+    uploadInProgress = false;
   }
 }
 
 router.get("/:id/file", validateParams(idParamSchema), controller.getMediaFile);
 
 router.get("/", authenticate, requireAdmin, controller.getMedia);
-router.post("/upload", authenticate, requireAdmin, configuredUpload, controller.uploadMedia);
+router.post("/upload", authenticate, requireAdmin, configuredUpload);
 router.patch(
   "/:id",
   authenticate,

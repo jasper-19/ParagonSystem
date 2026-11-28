@@ -79,13 +79,6 @@ export async function createBoard(
 
 export async function deleteBoard(id: string) {
   if (!id) throw new Error("Board id required");
-  const board = await repository.findBoardById(id);
-  if (!board) {
-    throw Object.assign(new Error("Editorial board not found"), { statusCode: 404 });
-  }
-  if (board.isActive) {
-    throw Object.assign(new Error("Cannot delete the active board"), { statusCode: 400 });
-  }
   await repository.removeBoard(id);
 }
 

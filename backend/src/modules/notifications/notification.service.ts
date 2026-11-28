@@ -21,6 +21,7 @@ interface ClientState {
 }
 
 const clients = new Map<Response, ClientState>();
+let closingStreams = false;
 
 // Keep one authorization/write task per stream, even during a burst of saves.
 async function flushClient(res: Response, state: ClientState): Promise<void> {
@@ -67,12 +68,18 @@ function closeClient(res: Response, destroy = false): void {
   }
 }
 
+export function closeNotificationStreams(): void {
+  closingStreams = true;
+  for (const res of clients.keys()) closeClient(res);
+}
+
 /** Admission is bounded before the controller sends stream headers. */
 export function addClient(
   res: Response,
   authorize: () => Promise<boolean>,
   account = "unknown",
 ): boolean {
+  if (closingStreams) return false;
   if (clients.has(res)) return true;
   if (clients.size >= MAX_CLIENTS ||
       [...clients.values()].filter(client => client.account === account).length >= MAX_CLIENTS_PER_ACCOUNT) {

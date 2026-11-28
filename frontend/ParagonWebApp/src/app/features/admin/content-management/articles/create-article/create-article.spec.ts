@@ -96,13 +96,14 @@ describe('Article photo credits', () => {
   });
 
   it('hydrates external and historical staff credits during editing and explicitly saves removals', async () => {
-    const component = await setup({ ...base, photoby: 'Former Photographer, Agency, Inc.', credits: [...base.credits!,
+    const revision = 'a'.repeat(64);
+    const component = await setup({ ...base, revision, photoby: 'Former Photographer, Agency, Inc.', credits: [...base.credits!,
       { staffId: 'former-id', creditedName: 'Former Photographer', creditType: 'photo' },
       { staffId: null, creditedName: 'Agency, Inc.', creditType: 'photo' }] });
     expect(component.selectedCredits().photoby.map(c => c.name)).toEqual(['Former Photographer', 'Agency, Inc.']);
     component.removeCredit('photoby', null, 'Agency, Inc.');
     await save();
-    expect(update).toHaveBeenCalledWith(base.id, expect.objectContaining({ photoByIds: ['former-id'], externalPhotoCredits: [] }));
+    expect(update).toHaveBeenCalledWith(base.id, expect.objectContaining({ photoByIds: ['former-id'], externalPhotoCredits: [] }), revision);
   });
 
   it('retains a legacy text credit as one whole name', async () => {
@@ -110,7 +111,7 @@ describe('Article photo credits', () => {
     const component = await setup({ ...base, photoby: legacy });
     expect(component.selectedCredits().photoby).toEqual([{ staffId: null, name: legacy }]);
     await save();
-    expect(update).toHaveBeenCalledWith(base.id, expect.objectContaining({ externalPhotoCredits: [legacy] }));
+    expect(update).toHaveBeenCalledWith(base.id, expect.objectContaining({ externalPhotoCredits: [legacy] }), undefined);
   });
 
   it('restores structured draft credits without splitting comma-containing names or losing staff links', async () => {
