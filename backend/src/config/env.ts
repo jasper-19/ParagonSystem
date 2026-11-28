@@ -23,6 +23,10 @@ export function validateEnvironment(): void {
     return;
   }
 
+  if (process.env.ALLOW_ENV_ADMIN === "true") {
+    throw new Error("ALLOW_ENV_ADMIN must be disabled in production");
+  }
+
   const jwtSecret = requireEnvironmentVariable("JWT_SECRET");
   if (Buffer.byteLength(jwtSecret, "utf8") < 32) {
     throw new Error("JWT_SECRET must be at least 32 bytes in production");
@@ -38,12 +42,4 @@ export function validateEnvironment(): void {
     throw new Error('PDF storage must use a separate private bucket');
   }
 
-  if (
-    process.env.ALLOW_ENV_ADMIN === "true" &&
-    (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD_HASH)
-  ) {
-    throw new Error(
-      "ADMIN_USERNAME and ADMIN_PASSWORD_HASH are required when ALLOW_ENV_ADMIN is enabled"
-    );
-  }
 }

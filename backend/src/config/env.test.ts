@@ -14,6 +14,13 @@ function production() {
   process.env.API_BASE_URL = 'https://api.example';
   delete process.env.ALLOW_ENV_ADMIN;
 }
+test('production rejects environment admin even with credentials configured', () => {
+  production();
+  process.env.ALLOW_ENV_ADMIN = 'true';
+  process.env.ADMIN_USERNAME = 'test-admin';
+  process.env.ADMIN_PASSWORD_HASH = 'test-hash';
+  assert.throws(validateEnvironment, /ALLOW_ENV_ADMIN must be disabled/);
+});
 test('production requires database certificate verification', () => {
   production();
   assert.doesNotThrow(validateEnvironment);
